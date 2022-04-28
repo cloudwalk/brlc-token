@@ -11,10 +11,10 @@ import {RescuableUpgradeable} from "../base/RescuableUpgradeable.sol";
 import {IERC20Mintable} from "../base/interfaces/IERC20Mintable.sol";
 
 /**
- * @title BrlcCashierUpgradeable contract
- * @notice Wraps BRLC cash-in and cash-out functionality
+ * @title PixCashierUpgradeable contract
+ * @notice Wrapper for Pix cash-in and cash-out transactions
  */
-contract BrlcCashierUpgradeable is
+contract PixCashierUpgradeable is
     RescuableUpgradeable,
     PausableExUpgradeable,
     WhitelistableExUpgradeable
@@ -27,10 +27,10 @@ contract BrlcCashierUpgradeable is
     event CashOut(address indexed account, uint256 amount);
 
     function initialize(address token_) public initializer {
-        __BrlcCashier_init(token_);
+        __PixCashier_init(token_);
     }
 
-    function __BrlcCashier_init(address token_) internal initializer {
+    function __PixCashier_init(address token_) internal initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Rescuable_init_unchained();
@@ -38,15 +38,15 @@ contract BrlcCashierUpgradeable is
         __PausableEx_init_unchained();
         __Whitelistable_init_unchained();
         __WhitelistableEx_init_unchained();
-        __BrlcCashier_init_unchained(token_);
+        __PixCashier_init_unchained(token_);
     }
 
-    function __BrlcCashier_init_unchained(address token_) internal initializer {
+    function __PixCashier_init_unchained(address token_) internal initializer {
         token = token_;
     }
 
     /**
-     * @notice Executes cash-out transaction
+     * @notice Executes cash-in transaction
      * Can only be called when contract is not paused
      * Can only be called by whitelisted address
      * Emits an {CashIn} event
