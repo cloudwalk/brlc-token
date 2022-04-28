@@ -1,0 +1,17 @@
+{
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@openzeppelin/hardhat-upgrades": "^1.17.0",
+    "chai": "^4.3.6",
+    "ethereum-waffle": "^3.4.4",
+    "ethers": "^5.6.4",
+    "hardhat": "^2.9.3",
+    "install": "^0.13.0",
+    "npm": "^8.6.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.4.2",
+    "@openzeppelin/contracts-upgradeable": "^3.4.2"
+  }
+}
