@@ -22,9 +22,20 @@ contract PixCashierUpgradeable is
     using SafeMathUpgradeable for uint256;
 
     address public token;
+    mapping(address => uint256) private _cashOutBalances;
 
     event CashIn(address indexed account, uint256 amount);
-    event CashOut(address indexed account, uint256 amount);
+    event CashOut(address indexed account, uint256 amount, uint256 balance);
+    event CashOutConfirm(
+        address indexed account,
+        uint256 amount,
+        uint256 balance
+    );
+    event CashOutReverse(
+        address indexed account,
+        uint256 amount,
+        uint256 balance
+    );
 
     function initialize(address token_) public initializer {
         __PixCashier_init(token_);
@@ -46,6 +57,19 @@ contract PixCashierUpgradeable is
     }
 
     /**
+     * @notice Returns cash-out balance
+     * @param account The address of the tokens owner
+     */
+    function cashOutBalanceOf(address account)
+        external
+        view
+        virtual
+        returns (uint256)
+    {
+        return _cashOutBalances[account];
+    }
+
+    /**
      * @notice Executes cash-in transaction
      * Can only be called when contract is not paused
      * Can only be called by whitelisted address
@@ -63,17 +87,58 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @notice Executes cash-out transaction
+     * @notice Initiates cash-out transaction
      * Can only be called when contract is not paused
      * Emits an {CashOut} event
+     * @param amount The amount of tokens to be transferred to the contract
+     */
+    function cashOut(uint256 amount) external whenNotPaused {
+        IERC20Upgradeable(token).transferFrom(
+            _msgSender(),
+            address(this),
+            amount
+        );
+        _cashOutBalances[_msgSender()] = _cashOutBalances[_msgSender()].add(
+            amount
+        );
+        emit CashOut(_msgSender(), amount, _cashOutBalances[_msgSender()]);
+    }
+
+    /**
+     * @notice Confirms cash-out transaction
+     * Can only be called when contract is not paused
+     * Emits an {CashOutConfirm} event
      * @param amount The amount of tokens to be burned
      */
-    function cashOut(uint256 amount)
-        external
-        whenNotPaused
-    {
-        IERC20Upgradeable(token).transferFrom(_msgSender(), address(this), amount);
+    function cashOutConfirm(uint256 amount) external whenNotPaused {
+        _cashOutBalances[_msgSender()] = _cashOutBalances[_msgSender()].sub(
+            amount,
+            "PixCashier: cash-out confirm amount exceeds balance"
+        );
         IERC20Mintable(token).burn(amount);
-        emit CashOut(_msgSender(), amount);
+        emit CashOutConfirm(
+            _msgSender(),
+            amount,
+            _cashOutBalances[_msgSender()]
+        );
+    }
+
+    /**
+     * @notice Reverts cash-out transaction
+     * Can only be called when contract is not paused
+     * Emits an {CashOutReverse} event
+     * @param amount The amount of tokens to be transferred back to the sender
+     */
+    function cashOutReverse(uint256 amount) external whenNotPaused {
+        _cashOutBalances[_msgSender()] = _cashOutBalances[_msgSender()].sub(
+            amount,
+            "PixCashier: cash-out reverse amount exceeds balance"
+        );
+        IERC20Upgradeable(token).transfer(_msgSender(), amount);
+        emit CashOutReverse(
+            _msgSender(),
+            amount,
+            _cashOutBalances[_msgSender()]
+        );
     }
 }
