@@ -21,5 +21,21 @@ module.exports = {
         mnemonic: 'test test test test test test test test test test test junk'
       },
     },
+    ganache: {
+      url: 'http://127.0.0.1:7545',
+      accounts: {
+        mnemonic: 'test test test test test test test test test test test junk'
+      }
+    },
+    substrate: {
+      url: "http://127.0.0.1:9933",
+      accounts: {
+        mnemonic: 'test test test test test test test test test test test junk',
+      },
+      gas: "auto"
+    },
+  },
+  mocha: {
+    timeout: 120000
   },
 };
