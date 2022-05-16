@@ -6,7 +6,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 
 /**
  * @title WhitelistableUpgradeable base contract
- * @dev Allows accounts to be whitelisted by a "whitelister" role
+ * @dev Allows accounts to be whitelisted by a "whitelister" role.
  */
 abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     address private _whitelistAdmin;
@@ -25,7 +25,7 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     function __Whitelistable_init_unchained() internal initializer {}
 
     /**
-     * @dev Throws if called by any account other than the whitelist admin
+     * @dev Throws if called by any account other than the whitelist admin.
      */
     modifier onlyWhitelistAdmin() {
         require(
@@ -36,7 +36,7 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Throws if called by any account other than the whitelister
+     * @dev Throws if called by any account other than the whitelister.
      */
     modifier onlyWhitelister() {
         require(
@@ -47,7 +47,7 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Throws if whitelist is enabled and argument account is not whitelisted
+     * @dev Throws if whitelist is enabled and argument account is not whitelisted.
      * @param account The address to check.
      */
     modifier onlyWhitelisted(address account) {
@@ -61,14 +61,14 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Returns whitelist admin address
+     * @dev Returns whitelist admin address.
      */
     function getWhitelistAdmin() public view virtual returns (address) {
         return _whitelistAdmin;
     }
 
     /**
-     * @dev Checks if account is whitelisted
+     * @dev Checks if account is whitelisted.
      * @param account The address to check.
      * @return True if whitelisted.
      */
@@ -77,10 +77,10 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Adds account to whitelist
-     * Can only be called by the whitelister
-     * Emits an {Whitelisted} event
-     * @param account The address to whitelist
+     * @dev Adds account to whitelist.
+     * Can only be called by the whitelister.
+     * Emits an {Whitelisted} event.
+     * @param account The address to whitelist.
      */
     function whitelist(address account) external onlyWhitelister {
         _whitelisted[account] = true;
@@ -88,10 +88,10 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Removes account from whitelist
-     * Can only be called by the whitelister
-     * Emits an {UnWhitelisted} event
-     * @param account The address to remove from the whitelist
+     * @dev Removes account from whitelist.
+     * Can only be called by the whitelister.
+     * Emits an {UnWhitelisted} event.
+     * @param account The address to remove from the whitelist.
      */
     function unWhitelist(address account) external onlyWhitelister {
         _whitelisted[account] = false;
@@ -99,10 +99,10 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Updates whitelist admin address
-     * Can only be called by the contract owner
-     * Emits an {WhitelistAdminChanged} event
-     * @param newWhitelistAdmin The address of new whitelist admin
+     * @dev Updates whitelist admin address.
+     * Can only be called by the contract owner.
+     * Emits an {WhitelistAdminChanged} event.
+     * @param newWhitelistAdmin The address of new whitelist admin.
      */
     function setWhitelistAdmin(address newWhitelistAdmin) external onlyOwner {
         _whitelistAdmin = newWhitelistAdmin;
@@ -110,12 +110,12 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Returns True if whitelist is enabled
+     * @dev Returns True if whitelist is enabled.
      */
     function isWhitelistEnabled() public view virtual returns (bool);
 
     /**
-     * @dev Returns True if account is a whitelister
+     * @dev Returns True if account is a whitelister.
      */
     function isWhitelister(address account) public view virtual returns (bool);
 }

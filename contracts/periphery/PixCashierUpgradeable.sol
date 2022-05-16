@@ -12,7 +12,7 @@ import {IERC20Mintable} from "../base/interfaces/IERC20Mintable.sol";
 
 /**
  * @title PixCashierUpgradeable contract
- * @dev Wrapper for Pix cash-in and cash-out transactions
+ * @dev Wrapper for Pix cash-in and cash-out transactions.
  */
 contract PixCashierUpgradeable is
     RescuableUpgradeable,
@@ -57,8 +57,8 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @dev Returns cash-out balance
-     * @param account The address of the tokens owner
+     * @dev Returns cash-out balance.
+     * @param account The address of the tokens owner.
      */
     function cashOutBalanceOf(address account)
         external
@@ -70,12 +70,12 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @dev Executes cash-in transaction
-     * Can only be called when contract is not paused
-     * Can only be called by whitelisted address
-     * Emits an {CashIn} event
-     * @param account The address that will receive tokens
-     * @param amount The amount of tokens to be minted
+     * @dev Executes cash-in transaction.
+     * Can only be called when contract is not paused.
+     * Can only be called by whitelisted address.
+     * Emits an {CashIn} event.
+     * @param account The address that will receive tokens.
+     * @param amount The amount of tokens to be minted.
      */
     function cashIn(address account, uint256 amount)
         external
@@ -87,10 +87,10 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @dev Initiates cash-out transaction
-     * Can only be called when contract is not paused
-     * Emits an {CashOut} event
-     * @param amount The amount of tokens to be transferred to the contract
+     * @dev Initiates cash-out transaction.
+     * Can only be called when contract is not paused.
+     * Emits an {CashOut} event.
+     * @param amount The amount of tokens to be transferred to the contract.
      */
     function cashOut(uint256 amount) external whenNotPaused {
         IERC20Upgradeable(token).transferFrom(
@@ -105,10 +105,10 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @dev Confirms cash-out transaction
-     * Can only be called when contract is not paused
-     * Emits an {CashOutConfirm} event
-     * @param amount The amount of tokens to be burned
+     * @dev Confirms cash-out transaction.
+     * Can only be called when contract is not paused.
+     * Emits an {CashOutConfirm} event.
+     * @param amount The amount of tokens to be burned.
      */
     function cashOutConfirm(uint256 amount) external whenNotPaused {
         _cashOutBalances[_msgSender()] = _cashOutBalances[_msgSender()].sub(
@@ -124,10 +124,10 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @dev Reverts cash-out transaction
-     * Can only be called when contract is not paused
-     * Emits an {CashOutReverse} event
-     * @param amount The amount of tokens to be transferred back to the sender
+     * @dev Reverts cash-out transaction.
+     * Can only be called when contract is not paused.
+     * Emits an {CashOutReverse} event.
+     * @param amount The amount of tokens to be transferred back to the sender.
      */
     function cashOutReverse(uint256 amount) external whenNotPaused {
         _cashOutBalances[_msgSender()] = _cashOutBalances[_msgSender()].sub(

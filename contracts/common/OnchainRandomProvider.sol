@@ -6,7 +6,7 @@ import {IRandomProvider} from "../base/interfaces/IRandomProvider.sol";
 
 contract OnchainRandomProvider is IRandomProvider {
     /**
-     * @dev Returns (pseudo) random number
+     * @dev Returns (pseudo) random number.
      */
     function getRandomness() external view override returns (uint256) {
         return

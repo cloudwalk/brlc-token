@@ -25,7 +25,7 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
     function __Rescuable_init_unchained() internal initializer {}
 
     /**
-     * @dev Revert if called by any account other than the rescuer
+     * @dev Revert if called by any account other than the rescuer.
      */
     modifier onlyRescuer() {
         require(
@@ -36,18 +36,18 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Returns current rescuer
-     * @return Rescuer's address
+     * @dev Returns current rescuer.
+     * @return Rescuer's address.
      */
     function getRescuer() public view virtual returns (address) {
         return _rescuer;
     }
 
     /**
-     * @dev Assign the rescuer role to a given address
-     * Can only be called by the contract owner
-     * Emits an {RescuerChanged} event
-     * @param newRescuer New rescuer's address
+     * @dev Assign the rescuer role to a given address.
+     * Can only be called by the contract owner.
+     * Emits an {RescuerChanged} event.
+     * @param newRescuer New rescuer's address.
      */
     function setRescuer(address newRescuer) external onlyOwner {
         _rescuer = newRescuer;
@@ -55,11 +55,11 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Rescue ERC20 tokens locked up in this contract
-     * Can only be called by the rescuer
-     * @param tokenContract ERC20 token contract address
-     * @param to Recipient address
-     * @param amount Amount to withdraw
+     * @dev Rescue ERC20 tokens locked up in this contract.
+     * Can only be called by the rescuer.
+     * @param tokenContract ERC20 token contract address.
+     * @param to Recipient address.
+     * @param amount Amount to withdraw.
      */
     function rescueERC20(
         IERC20Upgradeable tokenContract,

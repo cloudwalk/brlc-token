@@ -10,7 +10,7 @@ import {RescuableUpgradeable} from "../base/RescuableUpgradeable.sol";
 
 /**
  * @title MultisendUpgradeable contract
- * @dev Used for ERC20 token distribution & airdrops
+ * @dev Used for ERC20 token distribution & airdrops.
  */
 contract MultisendUpgradeable is
     RescuableUpgradeable,
@@ -39,13 +39,13 @@ contract MultisendUpgradeable is
     function __Multisend_init_unchained() internal initializer {}
 
     /**
-     * @dev Executes token distribution/airdrop
-     * Can only be called when contract is not paused
-     * Can only be called by whitelisted address
-     * Emits an {Multisend} event
-     * @param token The address of distribution token
-     * @param recipients Token recipient addresses
-     * @param balances Token recipient balances
+     * @dev Executes token distribution/airdrop.
+     * Can only be called when contract is not paused.
+     * Can only be called by whitelisted address.
+     * Emits an {Multisend} event.
+     * @param token The address of distribution token.
+     * @param recipients Token recipient addresses.
+     * @param balances Token recipient balances.
      */
     function multisendToken(
         address token,
