@@ -12,7 +12,7 @@ contract BRLCTokenUpgradeableMock is BRLCTokenUpgradeable {
 
     event TestBeforeTokenTransferSucceeded();
 
-    //This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
+    // This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
     function initialize(
         string memory name_,
         string memory symbol_,
@@ -21,7 +21,7 @@ contract BRLCTokenUpgradeableMock is BRLCTokenUpgradeable {
         __BRLCToken_init(name_, symbol_, decimals_);
     }
 
-    //This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
+    // This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
     function initialize_unchained(
         uint8 decimals_
     ) public {

@@ -16,12 +16,12 @@ contract WhitelistableUpgradeableMock is WhitelistableUpgradeable {
     event TestOnlyWhitelistAdminModifierSucceeded();
     event TestOnlyWhitelistedModifierSucceeded();
 
-    //This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
+    // This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
     function initialize() public {
         __Whitelistable_init();
     }
 
-    //This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
+    // This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
     function initialize_unchained() public {
         __Whitelistable_init_unchained();
     }

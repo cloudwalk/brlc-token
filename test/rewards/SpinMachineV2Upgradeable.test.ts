@@ -34,5 +34,5 @@ describe("Contract 'SpinMachineV2Upgradeable'", async () => {
       .to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
   });
 
-  //All other checks are in the test files for the ancestor contracts
+  // All other checks are in the test files for the ancestor contracts
 });

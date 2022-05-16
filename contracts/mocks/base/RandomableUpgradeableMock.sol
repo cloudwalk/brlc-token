@@ -10,12 +10,12 @@ import {RandomableUpgradeable} from "../../base/RandomableUpgradeable.sol";
  */
 contract RandomableUpgradeableMock is RandomableUpgradeable {
 
-    //This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
+    // This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
     function initialize() public {
         __Randomable_init();
     }
 
-    //This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
+    // This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
     function initialize_unchained() public {
         __Randomable_init_unchained();
     }

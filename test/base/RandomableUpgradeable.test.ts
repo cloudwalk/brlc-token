@@ -55,7 +55,7 @@ describe("Contract 'RandomableUpgradeable'", async () => {
     let randomProviderMock: Contract;
 
     beforeEach(async () => {
-      //Deploy a mock random provider
+      // Deploy a mock random provider
       const RandomProviderMock: ContractFactory = await ethers.getContractFactory("RandomProviderMock");
       randomProviderMock = await RandomProviderMock.deploy();
       await randomProviderMock.deployed();

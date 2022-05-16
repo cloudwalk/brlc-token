@@ -12,12 +12,12 @@ contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
 
     event TestNotBlacklistedModifierSucceeded();
 
-    //This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
+    // This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
     function initialize() public {
         __Blacklistable_init();
     }
 
-    //This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
+    // This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
     function initialize_unchained() public {
         __Blacklistable_init_unchained();
     }

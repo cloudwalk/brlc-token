@@ -522,31 +522,31 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
       });
 
       it("Function 'spin()' executes as expected with a complex scenario", async () => {
-        //The user is not in the whitelist
+        // The user is not in the whitelist
         expect(await spinMachine.isWhitelisted(user1.address)).to.equal(false);
         await expect(spinMachine.connect(user1).spin())
           .to.be.revertedWith(REVERT_MESSAGE_IF_ACCOUNT_IS_NOT_WHITELISTED);
 
-        //The user is added to the whitelist, free spin
+        // The user is added to the whitelist, free spin
         await proveTx(spinMachine.whitelist(user1.address));
         expect(await spinMachine.isWhitelisted(user1.address)).to.equal(true);
         await expect(spinMachine.connect(user1).spin())
           .to.emit(spinMachine, "Spin")
           .withArgs(user1.address, prize, prize, false);
 
-        //The user is removed from the list again
+        // The user is removed from the list again
         await proveTx(spinMachine.unWhitelist(user1.address));
         await expect(spinMachine.connect(user1).spin())
           .to.be.revertedWith(REVERT_MESSAGE_IF_ACCOUNT_IS_NOT_WHITELISTED);
 
-        //The user is added to the whitelist again, extra spin
+        // The user is added to the whitelist again, extra spin
         await proveTx(spinMachine.whitelist(user1.address));
         expect(await spinMachine.isWhitelisted(user1.address)).to.equal(true);
         await expect(spinMachine.connect(user1).spin())
           .to.emit(spinMachine, "Spin")
           .withArgs(user1.address, prize, prize, true);
 
-        //All spins should be exhausted
+        // All spins should be exhausted
         expect(await spinMachine.canSpin(user1.address)).to.equal(false);
       });
     });
@@ -590,7 +590,7 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
       });
 
       it("Function 'spin()' transfers zero tokens both during the free spin and extra spin", async () => {
-        //The free spin
+        // The free spin
         await expect(async () => {
           await proveTx(spinMachine.connect(user1).spin());
         }).to.changeTokenBalances(
@@ -599,7 +599,7 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
           [0, 0]
         );
 
-        //The extra spin
+        // The extra spin
         await expect(async () => {
           await proveTx(spinMachine.connect(user1).spin());
         }).to.changeTokenBalances(
@@ -610,12 +610,12 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
       });
 
       it("Function 'spin()' emits the correct events both during the free spin and extra spin", async () => {
-        //The free spin
+        // The free spin
         await expect(spinMachine.connect(user1).spin())
           .to.emit(spinMachine, "Spin")
           .withArgs(user1.address, 0, 0, false);
 
-        //The extra spin
+        // The extra spin
         await expect(spinMachine.connect(user1).spin())
           .to.emit(spinMachine, "Spin")
           .withArgs(user1.address, 0, 0, true);
@@ -630,7 +630,7 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
       let mockRandomProvider: Contract;
 
       beforeEach(async () => {
-        //Deploy an out of chain RandomProvider
+        // Deploy an out of chain RandomProvider
         const RandomProviderMock: ContractFactory = await ethers.getContractFactory("RandomProviderMock");
         mockRandomProvider = await RandomProviderMock.deploy();
         await mockRandomProvider.deployed();
@@ -638,9 +638,9 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
         await proveTx(spinMachine.setRandomProvider(mockRandomProvider.address));
         await proveTx(spinMachine.setPrizes(prizes));
         await proveTx(spinMachine.grantExtraSpin(user1.address, numberOfPrizes));
-        await proveTx(brlcMock.mint(spinMachine.address, prizes[0] + prizeTotal)); //free spin + extra spins
+        await proveTx(brlcMock.mint(spinMachine.address, prizes[0] + prizeTotal)); // free spin + extra spins
 
-        //Spend the free spin, only extra spins should stay
+        // Spend the free spin, only extra spins should stay
         await proveTx(spinMachine.connect(user1).spin());
       });
 

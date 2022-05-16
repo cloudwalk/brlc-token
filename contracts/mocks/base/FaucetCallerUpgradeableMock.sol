@@ -10,12 +10,12 @@ import {FaucetCallerUpgradeable} from "../../base/FaucetCallerUpgradeable.sol";
  */
 contract FaucetCallerUpgradeableMock is FaucetCallerUpgradeable {
 
-    //This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
+    // This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
     function initialize() public {
         __FaucetCaller_init();
     }
 
-    //This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
+    // This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
     function initialize_unchained() public {
         __FaucetCaller_init_unchained();
     }

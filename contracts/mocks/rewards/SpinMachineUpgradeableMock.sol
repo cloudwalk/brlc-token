@@ -13,12 +13,12 @@ contract SpinMachineUpgradeableMock is SpinMachineUpgradeable {
     bool private _isWhitelistEnabled;
     address private _stubWhitelister;
 
-    //This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
+    // This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
     function initialize(address token_) public {
         __SpinMachine_init(token_);
     }
 
-    //This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
+    // This function is intentionally deprived the "initializer" modifier to test that the ancestor contract has it
     function initialize_unchained(address token_) public {
         __SpinMachine_init_unchained(token_);
     }
