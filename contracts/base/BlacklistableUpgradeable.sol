@@ -37,8 +37,8 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Throws if argument account is blacklisted.
-     * @param account The address to check.
+     * @dev Throws if an argument account is blacklisted.
+     * @param account An address to check.
      */
     modifier notBlacklisted(address account) {
         require(
@@ -49,15 +49,15 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Returns blacklister address.
+     * @dev Returns the blacklister address.
      */
     function getBlacklister() public view virtual returns (address) {
         return _blacklister;
     }
 
     /**
-     * @dev Checks if account is blacklisted.
-     * @param account The address to check.
+     * @dev Checks if an account is blacklisted.
+     * @param account An address to check.
      * @return True if blacklisted.
      */
     function isBlacklisted(address account) public view returns (bool) {
@@ -65,10 +65,10 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Adds account to blacklist.
+     * @dev Adds an account to blacklist.
      * Can only be called by the blacklister.
-     * Emits an {Blacklisted} event.
-     * @param account The address to blacklist.
+     * Emits a {Blacklisted} event.
+     * @param account An address to blacklist.
      */
     function blacklist(address account) external onlyBlacklister {
         _blacklisted[account] = true;
@@ -76,10 +76,10 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Removes account from blacklist.
+     * @dev Removes an account from blacklist.
      * Can only be called by the blacklister.
-     * Emits an {Blacklisted} event.
-     * @param account The address to remove from the blacklist.
+     * Emits a {Blacklisted} event.
+     * @param account An address to remove from the blacklist.
      */
     function unBlacklist(address account) external onlyBlacklister {
         _blacklisted[account] = false;
@@ -87,10 +87,10 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Updates blacklister address.
+     * @dev Updates the blacklister address.
      * Can only be called by the contract owner.
-     * Emits an {BlacklisterChanged} event.
-     * @param newBlacklister The address of new blacklister.
+     * Emits a {BlacklisterChanged} event.
+     * @param newBlacklister The address of a new blacklister.
      */
     function setBlacklister(address newBlacklister) external onlyOwner {
         require(
@@ -102,9 +102,9 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Adds _msgSender() to blacklist (self-blacklist).
-     * Emits an {SelfBlacklisted} event.
-     * Emits an {Blacklisted} event.
+     * @dev Adds _msgSender() to the blacklist (self-blacklist).
+     * Emits a {SelfBlacklisted} event.
+     * Emits a {Blacklisted} event.
      */
     function selfBlacklist() external {
         _blacklisted[_msgSender()] = true;

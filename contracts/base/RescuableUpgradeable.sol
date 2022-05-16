@@ -36,7 +36,7 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Returns current rescuer.
+     * @dev Returns the current rescuer.
      * @return Rescuer's address.
      */
     function getRescuer() public view virtual returns (address) {
@@ -46,8 +46,8 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
     /**
      * @dev Assign the rescuer role to a given address.
      * Can only be called by the contract owner.
-     * Emits an {RescuerChanged} event.
-     * @param newRescuer New rescuer's address.
+     * Emits a {RescuerChanged} event.
+     * @param newRescuer A new rescuer's address.
      */
     function setRescuer(address newRescuer) external onlyOwner {
         _rescuer = newRescuer;
@@ -57,9 +57,9 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
     /**
      * @dev Rescue ERC20 tokens locked up in this contract.
      * Can only be called by the rescuer.
-     * @param tokenContract ERC20 token contract address.
-     * @param to Recipient address.
-     * @param amount Amount to withdraw.
+     * @param tokenContract The ERC20 token contract address.
+     * @param to The recipient address.
+     * @param amount The amount to withdraw.
      */
     function rescueERC20(
         IERC20Upgradeable tokenContract,

@@ -57,8 +57,8 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @dev Returns cash-out balance.
-     * @param account The address of the tokens owner.
+     * @dev Returns the cash-out balance.
+     * @param account The address of a tokens owner.
      */
     function cashOutBalanceOf(address account)
         external
@@ -70,11 +70,11 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @dev Executes cash-in transaction.
-     * Can only be called when contract is not paused.
-     * Can only be called by whitelisted address.
-     * Emits an {CashIn} event.
-     * @param account The address that will receive tokens.
+     * @dev Executes a cash-in transaction.
+     * Can only be called when the contract is not paused.
+     * Can only be called by a whitelisted address.
+     * Emits a {CashIn} event.
+     * @param account An address that will receive tokens.
      * @param amount The amount of tokens to be minted.
      */
     function cashIn(address account, uint256 amount)
@@ -87,9 +87,9 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @dev Initiates cash-out transaction.
-     * Can only be called when contract is not paused.
-     * Emits an {CashOut} event.
+     * @dev Initiates a cash-out transaction.
+     * Can only be called when the contract is not paused.
+     * Emits a {CashOut} event.
      * @param amount The amount of tokens to be transferred to the contract.
      */
     function cashOut(uint256 amount) external whenNotPaused {
@@ -105,9 +105,9 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @dev Confirms cash-out transaction.
-     * Can only be called when contract is not paused.
-     * Emits an {CashOutConfirm} event.
+     * @dev Confirms a cash-out transaction.
+     * Can only be called when the contract is not paused.
+     * Emits a {CashOutConfirm} event.
      * @param amount The amount of tokens to be burned.
      */
     function cashOutConfirm(uint256 amount) external whenNotPaused {
@@ -124,9 +124,9 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @dev Reverts cash-out transaction.
-     * Can only be called when contract is not paused.
-     * Emits an {CashOutReverse} event.
+     * @dev Reverts a cash-out transaction.
+     * Can only be called when the contract is not paused.
+     * Emits a {CashOutReverse} event.
      * @param amount The amount of tokens to be transferred back to the sender.
      */
     function cashOutReverse(uint256 amount) external whenNotPaused {

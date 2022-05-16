@@ -38,17 +38,17 @@ abstract contract PausableExUpgradeable is
     }
 
     /**
-     * @dev Returns pauser address.
+     * @dev Returns the pauser address.
      */
     function getPauser() public view virtual returns (address) {
         return _pauser;
     }
 
     /**
-     * @dev Updates pauser address.
+     * @dev Updates the pauser address.
      * Can only be called by the contract owner.
-     * Emits an {PauserChanged} event.
-     * @param newPauser The address of new pauser.
+     * Emits a {PauserChanged} event.
+     * @param newPauser The address of a new pauser.
      */
     function setPauser(address newPauser) external onlyOwner {
         _pauser = newPauser;
@@ -56,7 +56,7 @@ abstract contract PausableExUpgradeable is
     }
 
     /**
-     * @dev Triggers paused state.
+     * @dev Triggers the paused state.
      * Can only be called by the pauser account.
      * Requirements:
      * - The contract must not be paused.
@@ -66,7 +66,7 @@ abstract contract PausableExUpgradeable is
     }
 
     /**
-     * @dev Triggers unpaused state.
+     * @dev Triggers the unpaused state.
      * Can only be called by the pauser account.
      * Requirements:
      * - The contract must be paused.

@@ -47,8 +47,8 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Throws if whitelist is enabled and argument account is not whitelisted.
-     * @param account The address to check.
+     * @dev Throws if the whitelist is enabled and the argument account is not whitelisted.
+     * @param account An address to check.
      */
     modifier onlyWhitelisted(address account) {
         if (isWhitelistEnabled()) {
@@ -61,15 +61,15 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Returns whitelist admin address.
+     * @dev Returns the whitelist admin address.
      */
     function getWhitelistAdmin() public view virtual returns (address) {
         return _whitelistAdmin;
     }
 
     /**
-     * @dev Checks if account is whitelisted.
-     * @param account The address to check.
+     * @dev Checks if an account is whitelisted.
+     * @param account An address to check.
      * @return True if whitelisted.
      */
     function isWhitelisted(address account) public view returns (bool) {
@@ -77,10 +77,10 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Adds account to whitelist.
+     * @dev Adds account to the whitelist.
      * Can only be called by the whitelister.
-     * Emits an {Whitelisted} event.
-     * @param account The address to whitelist.
+     * Emits a {Whitelisted} event.
+     * @param account An address to whitelist.
      */
     function whitelist(address account) external onlyWhitelister {
         _whitelisted[account] = true;
@@ -88,10 +88,10 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Removes account from whitelist.
+     * @dev Removes account from the whitelist.
      * Can only be called by the whitelister.
      * Emits an {UnWhitelisted} event.
-     * @param account The address to remove from the whitelist.
+     * @param account An address to remove from the whitelist.
      */
     function unWhitelist(address account) external onlyWhitelister {
         _whitelisted[account] = false;
@@ -99,10 +99,10 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Updates whitelist admin address.
+     * @dev Updates the whitelist admin address.
      * Can only be called by the contract owner.
-     * Emits an {WhitelistAdminChanged} event.
-     * @param newWhitelistAdmin The address of new whitelist admin.
+     * Emits a {WhitelistAdminChanged} event.
+     * @param newWhitelistAdmin The address of a new whitelist admin.
      */
     function setWhitelistAdmin(address newWhitelistAdmin) external onlyOwner {
         _whitelistAdmin = newWhitelistAdmin;
@@ -110,12 +110,12 @@ abstract contract WhitelistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Returns True if whitelist is enabled.
+     * @dev Returns True if the whitelist is enabled.
      */
     function isWhitelistEnabled() public view virtual returns (bool);
 
     /**
-     * @dev Returns True if account is a whitelister.
+     * @dev Returns True if an account is a whitelister.
      */
     function isWhitelister(address account) public view virtual returns (bool);
 }

@@ -23,8 +23,8 @@ abstract contract FaucetCallerUpgradeable is OwnableUpgradeable {
     function __FaucetCaller_init_unchained() internal initializer {}
 
     /**
-     * @dev Renews recipient's native balance.
-     * @param recipient The address of recipient.
+     * @dev Renews the recipient's native balance.
+     * @param recipient The address of a recipient.
      */
     function _faucetRequest(address recipient) internal {
         if (_faucet != address(0)) {
@@ -33,17 +33,17 @@ abstract contract FaucetCallerUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Returns faucet address.
+     * @dev Returns the faucet address.
      */
     function getFaucet() external view returns (address) {
         return _faucet;
     }
 
     /**
-     * @dev Updates faucet contract address.
+     * @dev Updates the faucet contract address.
      * Can only be called by the contract owner.
-     * Emits an {FaucetChanged} event.
-     * @param newFaucet The address of faucet contract.
+     * Emits a {FaucetChanged} event.
+     * @param newFaucet The address of a new faucet contract.
      */
     function setFaucet(address newFaucet) external onlyOwner {
         if (newFaucet != address(0)) {

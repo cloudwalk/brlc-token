@@ -40,10 +40,10 @@ contract MultisendUpgradeable is
 
     /**
      * @dev Executes token distribution/airdrop.
-     * Can only be called when contract is not paused.
-     * Can only be called by whitelisted address.
-     * Emits an {Multisend} event.
-     * @param token The address of distribution token.
+     * Can only be called when the contract is not paused.
+     * Can only be called by a whitelisted address.
+     * Emits a {Multisend} event.
+     * @param token The address of a distribution token.
      * @param recipients Token recipient addresses.
      * @param balances Token recipient balances.
      */

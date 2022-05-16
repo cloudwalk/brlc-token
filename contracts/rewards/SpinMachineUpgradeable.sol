@@ -74,9 +74,9 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @dev Updates time delay before the next free spin.
+     * @dev Updates the time delay before the next free spin.
      * Can only be called by the contract owner.
-     * Emits an {FreeSpinDelayChanged} event.
+     * Emits a {FreeSpinDelayChanged} event.
      */
     function setFreeSpinDelay(uint256 newDelay) public onlyOwner {
         emit FreeSpinDelayChanged(newDelay, freeSpinDelay);
@@ -84,7 +84,7 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @dev Updates price of a single extra spin.
+     * @dev Updates the price of a single extra spin.
      * Can only be called by the contract owner.
      * Emits an {ExtraSpinPriceChanged} event.
      */
@@ -95,13 +95,13 @@ abstract contract SpinMachineUpgradeable is
 
     /**
      * @dev Allows to purchase extra spins.
-     * Can only be called when contract is not paused.
+     * Can only be called when the contract is not paused.
      * Emits an {ExtraSpinPurchased} event.
      * Requirements:
      * - `spinOwner` cannot be the zero address;
      * - `count` must be greater than 0;
      * - ERC20 allowance required.
-     * @param spinOwner The address of extra spins owner.
+     * @param spinOwner The address of an extra spins owner.
      * @param count The number of purchased extra spins.
      */
     function buyExtraSpin(address spinOwner, uint256 count)
@@ -129,7 +129,7 @@ abstract contract SpinMachineUpgradeable is
      * Requirements:
      * - `spinOwner` cannot be the zero address;
      * - `count` must be greater than 0.
-     * @param spinOwner The address of extra spins owner.
+     * @param spinOwner The address of an extra spins owner.
      * @param count The number of granted extra spins.
      */
     function grantExtraSpin(address spinOwner, uint256 count) public onlyOwner {
@@ -143,10 +143,10 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @dev Executes spin. Makes faucet request internally.
-     * Can only be called when contract is not paused.
-     * Can only be called if caller is whitelisted.
-     * Emits an {Spin} event.
+     * @dev Executes spin. Makes a faucet request internally.
+     * Can only be called when the contract is not paused.
+     * Can only be called if the caller is whitelisted.
+     * Emits a {Spin} event.
      */
     function spin()
         external
@@ -163,12 +163,12 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @dev Updates prizes distribution array.
+     * @dev Updates the prizes distribution array.
      * Can only be called by the contract owner.
-     * Emits an {PrizesDistributionChanged} event.
+     * Emits a {PrizesDistributionChanged} event.
      * Requirements:
      * - `prizes` array cannot be empty.
-     * @param prizes New prizes distribution array.
+     * @param prizes A new prizes distribution array.
      */
     function setPrizes(uint256[] memory prizes) public onlyOwner {
         require(
@@ -180,14 +180,14 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @dev Returns prizes distribution array.
+     * @dev Returns the prizes distribution array.
      */
     function getPrizes() public view returns (uint256[] memory) {
         return _prizes;
     }
 
     /**
-     * @dev Returns balance of underlying token.
+     * @dev Returns the balance of the underlying token.
      */
     function getBalance() public view returns (uint256) {
         return IERC20Upgradeable(token).balanceOf(address(this));
@@ -195,7 +195,7 @@ abstract contract SpinMachineUpgradeable is
 
     /**
      * @dev Checks if an account is allowed to execute a spin regardless of the paused state of the contract.
-     * @param account The address to check.
+     * @param account An address to check.
      * @return True if allowed.
      */
     function canSpin(address account) external view override returns (bool) {
@@ -206,7 +206,7 @@ abstract contract SpinMachineUpgradeable is
 
     /**
      * @dev Checks if an account is allowed to execute a free spin regardless of the paused state of the contract.
-     * @param account The address to check.
+     * @param account An address to check.
      * @return True if allowed.
      */
     function canFreeSpin(address account)
