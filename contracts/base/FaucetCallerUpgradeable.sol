@@ -7,7 +7,7 @@ import {IFaucet} from "./interfaces/IFaucet.sol";
 
 /**
  * @title FaucetCallerUpgradeable base contract
- * @notice Allows accounts to renew their native balance
+ * @dev Allows accounts to renew their native balance
  */
 abstract contract FaucetCallerUpgradeable is OwnableUpgradeable {
     address private _faucet;
@@ -23,7 +23,7 @@ abstract contract FaucetCallerUpgradeable is OwnableUpgradeable {
     function __FaucetCaller_init_unchained() internal initializer {}
 
     /**
-     * @notice Renews recipient's native balance
+     * @dev Renews recipient's native balance
      * @param recipient The address of recipient
      */
     function _faucetRequest(address recipient) internal {
@@ -33,14 +33,14 @@ abstract contract FaucetCallerUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @notice Returns faucet address
+     * @dev Returns faucet address
      */
     function getFaucet() external view returns (address) {
         return _faucet;
     }
 
     /**
-     * @notice Updates faucet contract address
+     * @dev Updates faucet contract address
      * Can only be called by the contract owner
      * Emits an {FaucetChanged} event
      * @param newFaucet The address of faucet contract

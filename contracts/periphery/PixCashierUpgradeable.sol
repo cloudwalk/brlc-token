@@ -12,7 +12,7 @@ import {IERC20Mintable} from "../base/interfaces/IERC20Mintable.sol";
 
 /**
  * @title PixCashierUpgradeable contract
- * @notice Wrapper for Pix cash-in and cash-out transactions
+ * @dev Wrapper for Pix cash-in and cash-out transactions
  */
 contract PixCashierUpgradeable is
     RescuableUpgradeable,
@@ -57,7 +57,7 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @notice Returns cash-out balance
+     * @dev Returns cash-out balance
      * @param account The address of the tokens owner
      */
     function cashOutBalanceOf(address account)
@@ -70,7 +70,7 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @notice Executes cash-in transaction
+     * @dev Executes cash-in transaction
      * Can only be called when contract is not paused
      * Can only be called by whitelisted address
      * Emits an {CashIn} event
@@ -87,7 +87,7 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @notice Initiates cash-out transaction
+     * @dev Initiates cash-out transaction
      * Can only be called when contract is not paused
      * Emits an {CashOut} event
      * @param amount The amount of tokens to be transferred to the contract
@@ -105,7 +105,7 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @notice Confirms cash-out transaction
+     * @dev Confirms cash-out transaction
      * Can only be called when contract is not paused
      * Emits an {CashOutConfirm} event
      * @param amount The amount of tokens to be burned
@@ -124,7 +124,7 @@ contract PixCashierUpgradeable is
     }
 
     /**
-     * @notice Reverts cash-out transaction
+     * @dev Reverts cash-out transaction
      * Can only be called when contract is not paused
      * Emits an {CashOutReverse} event
      * @param amount The amount of tokens to be transferred back to the sender

@@ -6,7 +6,7 @@ import {WhitelistableUpgradeable} from "./WhitelistableUpgradeable.sol";
 
 /**
  * @title WhitelistableExUpgradeable base contract
- * @notice Extends WhitelistableUpgradeable contract
+ * @dev Extends WhitelistableUpgradeable contract
  */
 abstract contract WhitelistableExUpgradeable is WhitelistableUpgradeable {
     bool private _isWhitelistEnabled;
@@ -25,7 +25,7 @@ abstract contract WhitelistableExUpgradeable is WhitelistableUpgradeable {
     function __WhitelistableEx_init_unchained() internal initializer {}
 
     /**
-     * @notice Checks if whitelister is enabled
+     * @dev Checks if whitelister is enabled
      * @return True if enabled
      */
     function isWhitelister(address account)
@@ -38,7 +38,7 @@ abstract contract WhitelistableExUpgradeable is WhitelistableUpgradeable {
     }
 
     /**
-     * @notice Checks if whitelist is enabled
+     * @dev Checks if whitelist is enabled
      * @return True if enabled
      */
     function isWhitelistEnabled() public view override returns (bool) {
@@ -46,7 +46,7 @@ abstract contract WhitelistableExUpgradeable is WhitelistableUpgradeable {
     }
 
     /**
-     * @notice Updates whitelister address
+     * @dev Updates whitelister address
      * Can only be called by the whitelist admin
      * Emits an {WhitelisterChanged} event
      * @param whitelister The address of the whitelister
@@ -61,7 +61,7 @@ abstract contract WhitelistableExUpgradeable is WhitelistableUpgradeable {
     }
 
     /**
-     * @notice Allows to enable or disable whitelist
+     * @dev Allows to enable or disable whitelist
      * Can only be called by the contract owner
      * Emits an {WhitelistEnabled} event
      * @param enabled True for enabling, False - for disabling

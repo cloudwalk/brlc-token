@@ -6,7 +6,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 
 /**
  * @title BlacklistableUpgradeable base contract
- * @notice Allows accounts to be blacklisted by a "blacklister" role
+ * @dev Allows accounts to be blacklisted by a "blacklister" role
  */
 abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     address private _blacklister;
@@ -26,7 +26,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     function __Blacklistable_init_unchained() internal initializer {}
 
     /**
-     * @notice Throws if called by any account other than the blacklister
+     * @dev Throws if called by any account other than the blacklister
      */
     modifier onlyBlacklister() {
         require(
@@ -37,7 +37,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @notice Throws if argument account is blacklisted
+     * @dev Throws if argument account is blacklisted
      * @param account The address to check
      */
     modifier notBlacklisted(address account) {
@@ -49,14 +49,14 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @notice Returns blacklister address
+     * @dev Returns blacklister address
      */
     function getBlacklister() public view virtual returns (address) {
         return _blacklister;
     }
 
     /**
-     * @notice Checks if account is blacklisted
+     * @dev Checks if account is blacklisted
      * @param account The address to check
      * @return True if blacklisted
      */
@@ -65,7 +65,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @notice Adds account to blacklist
+     * @dev Adds account to blacklist
      * Can only be called by the blacklister
      * Emits an {Blacklisted} event
      * @param account The address to blacklist
@@ -76,7 +76,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @notice Removes account from blacklist
+     * @dev Removes account from blacklist
      * Can only be called by the blacklister
      * Emits an {Blacklisted} event
      * @param account The address to remove from the blacklist
@@ -87,7 +87,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @notice Updates blacklister address
+     * @dev Updates blacklister address
      * Can only be called by the contract owner
      * Emits an {BlacklisterChanged} event
      * @param newBlacklister The address of new blacklister
@@ -102,7 +102,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @notice Adds _msgSender() to blacklist (self-blacklist)
+     * @dev Adds _msgSender() to blacklist (self-blacklist)
      * Emits an {SelfBlacklisted} event
      * Emits an {Blacklisted} event
      */

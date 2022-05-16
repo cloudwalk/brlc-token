@@ -7,7 +7,7 @@ import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Pau
 
 /**
  * @title PausableExUpgradeable base contract
- * @notice Extends OpenZeppelin's PausableUpgradeable contract
+ * @dev Extends OpenZeppelin's PausableUpgradeable contract
  */
 abstract contract PausableExUpgradeable is
     OwnableUpgradeable,
@@ -27,7 +27,7 @@ abstract contract PausableExUpgradeable is
     function __PausableEx_init_unchained() internal initializer {}
 
     /**
-     * @notice Throws if called by any account other than the pauser
+     * @dev Throws if called by any account other than the pauser
      */
     modifier onlyPauser() {
         require(
@@ -38,14 +38,14 @@ abstract contract PausableExUpgradeable is
     }
 
     /**
-     * @notice Returns pauser address
+     * @dev Returns pauser address
      */
     function getPauser() public view virtual returns (address) {
         return _pauser;
     }
 
     /**
-     * @notice Updates pauser address
+     * @dev Updates pauser address
      * Can only be called by the contract owner
      * Emits an {PauserChanged} event
      * @param newPauser The address of new pauser
@@ -56,7 +56,7 @@ abstract contract PausableExUpgradeable is
     }
 
     /**
-     * @notice Triggers paused state
+     * @dev Triggers paused state
      * Can only be called by the pauser account
      * Requirements:
      * - The contract must not be paused
@@ -66,7 +66,7 @@ abstract contract PausableExUpgradeable is
     }
 
     /**
-     * @notice Triggers unpaused state
+     * @dev Triggers unpaused state
      * Can only be called by the pauser account
      * Requirements:
      * - The contract must be paused

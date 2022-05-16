@@ -15,7 +15,7 @@ import {ISpinMachine} from "../base/interfaces/ISpinMachine.sol";
 
 /**
  * @title SpinMachineUpgradeable contract
- * @notice Allows accounts to execute spins and win underlying tokens
+ * @dev Allows accounts to execute spins and win underlying tokens
  */
 abstract contract SpinMachineUpgradeable is
     RescuableUpgradeable,
@@ -74,7 +74,7 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Updates time delay before the next free spin
+     * @dev Updates time delay before the next free spin
      * Can only be called by the contract owner
      * Emits an {FreeSpinDelayChanged} event
      */
@@ -84,7 +84,7 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Updates price of a single extra spin
+     * @dev Updates price of a single extra spin
      * Can only be called by the contract owner
      * Emits an {ExtraSpinPriceChanged} event
      */
@@ -94,7 +94,7 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Allows to purchase extra spins
+     * @dev Allows to purchase extra spins
      * Can only be called when contract is not paused
      * Emits an {ExtraSpinPurchased} event
      * Requirements:
@@ -123,7 +123,7 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Allows to grant extra spins
+     * @dev Allows to grant extra spins
      * Can only be called by the contract owner
      * Emits an {ExtraSpinGranted} event
      * Requirements:
@@ -143,7 +143,7 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Executes spin. Makes faucet request internally
+     * @dev Executes spin. Makes faucet request internally
      * Can only be called when contract is not paused
      * Can only be called if caller is whitelisted
      * Emits an {Spin} event
@@ -163,7 +163,7 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Updates prizes distribution array
+     * @dev Updates prizes distribution array
      * Can only be called by the contract owner
      * Emits an {PrizesDistributionChanged} event
      * Requirements:
@@ -180,21 +180,21 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Returns prizes distribution array
+     * @dev Returns prizes distribution array
      */
     function getPrizes() public view returns (uint256[] memory) {
         return _prizes;
     }
 
     /**
-     * @notice Returns balance of underlying token
+     * @dev Returns balance of underlying token
      */
     function getBalance() public view returns (uint256) {
         return IERC20Upgradeable(token).balanceOf(address(this));
     }
 
     /**
-     * @notice Checks if an account is allowed to execute a spin regardless of the paused state of the contract
+     * @dev Checks if an account is allowed to execute a spin regardless of the paused state of the contract
      * @param account The address to check
      * @return True if allowed
      */
@@ -205,7 +205,7 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Checks if an account is allowed to execute a free spin regardless of the paused state of the contract
+     * @dev Checks if an account is allowed to execute a free spin regardless of the paused state of the contract
      * @param account The address to check
      * @return True if allowed
      */
