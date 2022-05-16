@@ -5,12 +5,12 @@ import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/
 
 /**
  * @title ERC20UpgradeableMock contract
- * @notice An implementation of the {ERC20Upgradeable} contract for test purposes.
+ * @dev An implementation of the {ERC20Upgradeable} contract for test purposes.
  */
 contract ERC20UpgradeableMock is ERC20Upgradeable {
 
     /**
-     * @notice The initialize function of the upgradable contract.
+     * @dev The initialize function of the upgradable contract.
      * @param name_ The name of the token to set for this ERC20-comparable contract.
      * @param symbol_ The symbol of the token to set for this ERC20-comparable contract.
      * @param decimals_ The decimals of the token to set for this ERC20-comparable contract.
@@ -25,7 +25,7 @@ contract ERC20UpgradeableMock is ERC20Upgradeable {
     }
 
     /**
-     * @notice Cals the appropriate internal function to mint needed amount of tokens for an account.
+     * @dev Cals the appropriate internal function to mint needed amount of tokens for an account.
      * @param account The address of an account to mint for.
      * @param amount The amount of tokens to mint.
      */
@@ -35,7 +35,7 @@ contract ERC20UpgradeableMock is ERC20Upgradeable {
     }
 
     /**
-     * @notice Cals the appropriate internal function to burn needed amount of tokens.
+     * @dev Cals the appropriate internal function to burn needed amount of tokens.
      * @param amount The amount of tokens of this contract to burn.
      */
     function burn(uint256 amount) external {

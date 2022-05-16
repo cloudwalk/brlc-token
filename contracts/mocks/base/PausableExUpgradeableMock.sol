@@ -6,12 +6,12 @@ import {PausableExUpgradeable} from "../../base/PausableExUpgradeable.sol";
 
 /**
  * @title PausableExUpgradeableMock contract
- * @notice An implementation of the {PausableExUpgradeable} contract for test perposes.
+ * @dev An implementation of the {PausableExUpgradeable} contract for test perposes.
  */
 contract PausableExUpgradeableMock is PausableExUpgradeable {
 
     /**
-     * @notice The initialize function of the upgradable contract
+     * @dev The initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize() public {
@@ -19,7 +19,7 @@ contract PausableExUpgradeableMock is PausableExUpgradeable {
     }
 
     /**
-     * @notice The unchained initialize function of the upgradable contract
+     * @dev The unchained initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize_unchained() public {

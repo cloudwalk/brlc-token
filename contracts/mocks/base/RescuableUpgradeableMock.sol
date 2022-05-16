@@ -6,12 +6,12 @@ import {RescuableUpgradeable} from "../../base/RescuableUpgradeable.sol";
 
 /**
  * @title RescuableUpgradeableMock contract
- * @notice An implementation of the {RescuableUpgradeable} contract for test purposes.
+ * @dev An implementation of the {RescuableUpgradeable} contract for test purposes.
  */
 contract RescuableUpgradeableMock is RescuableUpgradeable {
 
     /**
-     * @notice The initialize function of the upgradable contract
+     * @dev The initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize() public {
@@ -19,7 +19,7 @@ contract RescuableUpgradeableMock is RescuableUpgradeable {
     }
 
     /**
-     * @notice The unchained initialize function of the upgradable contract
+     * @dev The unchained initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize_unchained() public {

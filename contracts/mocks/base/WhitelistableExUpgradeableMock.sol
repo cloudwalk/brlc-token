@@ -6,12 +6,12 @@ import {WhitelistableExUpgradeable} from "../../base/WhitelistableExUpgradeable.
 
 /**
  * @title WhitelistableExUpgradeableMock contract
- * @notice An implementation of the {WhitelistableExUpgradeable} contract for test purposes.
+ * @dev An implementation of the {WhitelistableExUpgradeable} contract for test purposes.
  */
 contract WhitelistableExUpgradeableMock is WhitelistableExUpgradeable {
 
     /**
-     * @notice The initialize function of the upgradable contract
+     * @dev The initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize() public {
@@ -19,7 +19,7 @@ contract WhitelistableExUpgradeableMock is WhitelistableExUpgradeable {
     }
 
     /**
-     * @notice The unchained initialize function of the upgradable contract
+     * @dev The unchained initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize_unchained() public {

@@ -6,14 +6,14 @@ import {BlacklistableUpgradeable} from "../../base/BlacklistableUpgradeable.sol"
 
 /**
  * @title BlacklistableUpgradeableMock contract
- * @notice An implementation of the {BlacklistableUpgradeable} contract for test purposes.
+ * @dev An implementation of the {BlacklistableUpgradeable} contract for test purposes.
  */
 contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
 
     event TestNotBlacklistedModifierSucceeded();
 
     /**
-     * @notice The initialize function of the upgradable contract
+     * @dev The initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize() public {
@@ -21,7 +21,7 @@ contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
     }
 
     /**
-     * @notice The unchained initialize function of the upgradable contract
+     * @dev The unchained initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize_unchained() public {
@@ -29,7 +29,7 @@ contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
     }
 
     /**
-     * @notice Checks the execution of the {notBlacklisted} modifier.
+     * @dev Checks the execution of the {notBlacklisted} modifier.
      * If that modifier executed without reverting emits an event {TestNotBlacklistedModifierSucceeded}.
      */
     function testNotBlacklistedModifier() external notBlacklisted(_msgSender()) {

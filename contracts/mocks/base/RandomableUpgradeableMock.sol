@@ -6,12 +6,12 @@ import {RandomableUpgradeable} from "../../base/RandomableUpgradeable.sol";
 
 /**
  * @title RandomableUpgradeableMock contract
- * @notice An implementation of the {RandomableUpgradeable} contract for test purposes.
+ * @dev An implementation of the {RandomableUpgradeable} contract for test purposes.
  */
 contract RandomableUpgradeableMock is RandomableUpgradeable {
 
     /**
-     * @notice The initialize function of the upgradable contract
+     * @dev The initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize() public {
@@ -19,7 +19,7 @@ contract RandomableUpgradeableMock is RandomableUpgradeable {
     }
 
     /**
-     * @notice The unchained initialize function of the upgradable contract
+     * @dev The unchained initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize_unchained() public {
@@ -27,7 +27,7 @@ contract RandomableUpgradeableMock is RandomableUpgradeable {
     }
 
     /**
-     * @notice Cals the appropriate internal function of the {RandomableUpgradeable} contract.
+     * @dev Cals the appropriate internal function of the {RandomableUpgradeable} contract.
      */
     function getRandomness() external view returns (uint256) {
         return _getRandomness();

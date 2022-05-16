@@ -6,12 +6,12 @@ import {FaucetCallerUpgradeable} from "../../base/FaucetCallerUpgradeable.sol";
 
 /**
  * @title FaucetCallerUpgradeableMock contract
- * @notice An implementation of the {FaucetCallerUpgradeable} contract for test purposes.
+ * @dev An implementation of the {FaucetCallerUpgradeable} contract for test purposes.
  */
 contract FaucetCallerUpgradeableMock is FaucetCallerUpgradeable {
 
     /**
-     * @notice The initialize function of the upgradable contract
+     * @dev The initialize function of the upgradable contract
      * But without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize() public {
@@ -19,7 +19,7 @@ contract FaucetCallerUpgradeableMock is FaucetCallerUpgradeable {
     }
 
     /**
-     * @notice The unchained initialize function of the upgradable contract
+     * @dev The unchained initialize function of the upgradable contract
      * But without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize_unchained() public {
@@ -27,7 +27,7 @@ contract FaucetCallerUpgradeableMock is FaucetCallerUpgradeable {
     }
 
     /**
-     * @notice Cals the appropriate internal function of the {FaucetCallerUpgradeable} contract.
+     * @dev Cals the appropriate internal function of the {FaucetCallerUpgradeable} contract.
      * @param recipient The address of a recipient of the gotten from a faucet native tokens.
      */
     function faucetRequest(address recipient) external {

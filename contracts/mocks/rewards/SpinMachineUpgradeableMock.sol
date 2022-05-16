@@ -6,7 +6,7 @@ import {SpinMachineUpgradeable} from "../../rewards/SpinMachineUpgradeable.sol";
 
 /**
  * @title SpinMachineUpgradeableMock contract
- * @notice An implementation of the {SpinMachineUpgradeable} contract for test purposes.
+ * @dev An implementation of the {SpinMachineUpgradeable} contract for test purposes.
  */
 contract SpinMachineUpgradeableMock is SpinMachineUpgradeable {
 
@@ -14,7 +14,7 @@ contract SpinMachineUpgradeableMock is SpinMachineUpgradeable {
     address private _stubWhitelister;
 
     /**
-     * @notice The initialize function of the upgradable contract
+     * @dev The initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      * @param token_ The address of a token that can be won.
      */
@@ -23,7 +23,7 @@ contract SpinMachineUpgradeableMock is SpinMachineUpgradeable {
     }
 
     /**
-     * @notice The unchained initialize function of the upgradable contract
+     * @dev The unchained initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      * @param token_ The address of a token that can be won.
      */
@@ -32,7 +32,7 @@ contract SpinMachineUpgradeableMock is SpinMachineUpgradeable {
     }
 
     /**
-     * @notice Checks if the whitelist is enabled.
+     * @dev Checks if the whitelist is enabled.
      * @return True if enabled.
      */
     function isWhitelistEnabled() public override view returns (bool) {
@@ -40,7 +40,7 @@ contract SpinMachineUpgradeableMock is SpinMachineUpgradeable {
     }
 
     /**
-     * @notice Allows to enable or disable the whitelist.
+     * @dev Allows to enable or disable the whitelist.
      * @param enabled True for enabling, False - for disabling.
      */
     function setWhitelistEnabled(bool enabled) external {
@@ -48,7 +48,7 @@ contract SpinMachineUpgradeableMock is SpinMachineUpgradeable {
     }
 
     /**
-     * @notice Checks if an account is a whitelister.
+     * @dev Checks if an account is a whitelister.
      * @param account The address of an account to check.
      * @return True if an account is a whitelister, False otherwise.
      */
@@ -57,7 +57,7 @@ contract SpinMachineUpgradeableMock is SpinMachineUpgradeable {
     }
 
     /**
-     * @notice Set an account as a stub wthitelister for test purposes.
+     * @dev Set an account as a stub wthitelister for test purposes.
      * @param account The account's address to set as a wthitelister.
      */
     function setStubWhitelister(address account) external {

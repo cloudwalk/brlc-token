@@ -6,14 +6,14 @@ import {BRLCTokenUpgradeable} from "../../tokens/BRLCTokenUpgradeable.sol";
 
 /**
  * @title BRLCTokenUpgradeableMock contract
- * @notice An implementation of the {BRLCTokenUpgradeable} contract for test purposes.
+ * @dev An implementation of the {BRLCTokenUpgradeable} contract for test purposes.
  */
 contract BRLCTokenUpgradeableMock is BRLCTokenUpgradeable {
 
     event TestBeforeTokenTransferSucceeded();
 
     /**
-     * @notice The initialize function of the upgradable contract
+     * @dev The initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      * @param name_ The name of the token to set for this ERC20-comparable contract.
      * @param symbol_ The symbol of the token to set for this ERC20-comparable contract.
@@ -28,7 +28,7 @@ contract BRLCTokenUpgradeableMock is BRLCTokenUpgradeable {
     }
 
     /**
-     * @notice The unchained initialize function of the upgradable contract
+     * @dev The unchained initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      * @param decimals_ The decimals of the token to set for this ERC20-comparable contract.
      */
@@ -39,7 +39,7 @@ contract BRLCTokenUpgradeableMock is BRLCTokenUpgradeable {
     }
 
     /**
-     * @notice Cals the appropriate internal function to mint needed amount of tokens for an account.
+     * @dev Cals the appropriate internal function to mint needed amount of tokens for an account.
      * @param account The address of an account to mint for.
      * @param amount The amount of tokens to mint.
      */
@@ -49,7 +49,7 @@ contract BRLCTokenUpgradeableMock is BRLCTokenUpgradeable {
     }
 
     /**
-     * @notice Cals the appropriate internal function.
+     * @dev Cals the appropriate internal function.
      * If that function executed without reverting emits an event {TestBeforeTokenTransferSucceeded}.
      * @param from The address of an account to transfer tokens from.
      * @param to The address of an account to transfer tokens to.
