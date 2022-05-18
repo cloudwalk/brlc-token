@@ -15,7 +15,7 @@ import {ISpinMachine} from "../base/interfaces/ISpinMachine.sol";
 
 /**
  * @title SpinMachineUpgradeable contract
- * @notice Allows accounts to execute spins and win underlying tokens
+ * @dev Allows accounts to execute spins and win underlying tokens.
  */
 abstract contract SpinMachineUpgradeable is
     RescuableUpgradeable,
@@ -74,9 +74,9 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Updates time delay before the next free spin
-     * Can only be called by the contract owner
-     * Emits an {FreeSpinDelayChanged} event
+     * @dev Updates the time delay before the next free spin.
+     * Can only be called by the contract owner.
+     * Emits a {FreeSpinDelayChanged} event.
      */
     function setFreeSpinDelay(uint256 newDelay) public onlyOwner {
         emit FreeSpinDelayChanged(newDelay, freeSpinDelay);
@@ -84,9 +84,9 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Updates price of a single extra spin
-     * Can only be called by the contract owner
-     * Emits an {ExtraSpinPriceChanged} event
+     * @dev Updates the price of a single extra spin.
+     * Can only be called by the contract owner.
+     * Emits an {ExtraSpinPriceChanged} event.
      */
     function setExtraSpinPrice(uint256 newPrice) public onlyOwner {
         emit ExtraSpinPriceChanged(newPrice, extraSpinPrice);
@@ -94,15 +94,15 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Allows to purchase extra spins
-     * Can only be called when contract is not paused
-     * Emits an {ExtraSpinPurchased} event
+     * @dev Allows to purchase extra spins.
+     * Can only be called when the contract is not paused.
+     * Emits an {ExtraSpinPurchased} event.
      * Requirements:
-     * - `spinOwner` cannot be the zero address
-     * - `count` must be greater than 0
-     * - ERC20 allowance required
-     * @param spinOwner The address of extra spins owner
-     * @param count The number of purchased extra spins
+     * - `spinOwner` cannot be the zero address;
+     * - `count` must be greater than 0;
+     * - ERC20 allowance required.
+     * @param spinOwner The address of an extra spins owner.
+     * @param count The number of purchased extra spins.
      */
     function buyExtraSpin(address spinOwner, uint256 count)
         public
@@ -123,14 +123,14 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Allows to grant extra spins
-     * Can only be called by the contract owner
-     * Emits an {ExtraSpinGranted} event
+     * @dev Allows to grant extra spins.
+     * Can only be called by the contract owner.
+     * Emits an {ExtraSpinGranted} event.
      * Requirements:
-     * - `spinOwner` cannot be the zero address
-     * - `count` must be greater than 0
-     * @param spinOwner The address of extra spins owner
-     * @param count The number of granted extra spins
+     * - `spinOwner` cannot be the zero address;
+     * - `count` must be greater than 0.
+     * @param spinOwner The address of an extra spins owner.
+     * @param count The number of granted extra spins.
      */
     function grantExtraSpin(address spinOwner, uint256 count) public onlyOwner {
         require(
@@ -143,10 +143,10 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Executes spin. Makes faucet request internally
-     * Can only be called when contract is not paused
-     * Can only be called if caller is whitelisted
-     * Emits an {Spin} event
+     * @dev Executes spin. Makes a faucet request internally.
+     * Can only be called when the contract is not paused.
+     * Can only be called if the caller is whitelisted.
+     * Emits a {Spin} event.
      */
     function spin()
         external
@@ -163,12 +163,12 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Updates prizes distribution array
-     * Can only be called by the contract owner
-     * Emits an {PrizesDistributionChanged} event
+     * @dev Updates the prizes distribution array.
+     * Can only be called by the contract owner.
+     * Emits a {PrizesDistributionChanged} event.
      * Requirements:
-     * - `prizes` array cannot be empty
-     * @param prizes New prizes distribution array
+     * - `prizes` array cannot be empty.
+     * @param prizes A new prizes distribution array.
      */
     function setPrizes(uint256[] memory prizes) public onlyOwner {
         require(
@@ -180,23 +180,23 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Returns prizes distribution array
+     * @dev Returns the prizes distribution array.
      */
     function getPrizes() public view returns (uint256[] memory) {
         return _prizes;
     }
 
     /**
-     * @notice Returns balance of underlying token
+     * @dev Returns the balance of the underlying token.
      */
     function getBalance() public view returns (uint256) {
         return IERC20Upgradeable(token).balanceOf(address(this));
     }
 
     /**
-     * @notice Checks if an account is allowed to execute a spin regardless of the paused state of the contract
-     * @param account The address to check
-     * @return True if allowed
+     * @dev Checks if an account is allowed to execute a spin regardless of the paused state of the contract.
+     * @param account An address to check.
+     * @return True if allowed.
      */
     function canSpin(address account) external view override returns (bool) {
         return
@@ -205,9 +205,9 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @notice Checks if an account is allowed to execute a free spin regardless of the paused state of the contract
-     * @param account The address to check
-     * @return True if allowed
+     * @dev Checks if an account is allowed to execute a free spin regardless of the paused state of the contract.
+     * @param account An address to check.
+     * @return True if allowed.
      */
     function canFreeSpin(address account)
         external

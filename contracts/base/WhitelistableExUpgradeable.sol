@@ -6,7 +6,7 @@ import {WhitelistableUpgradeable} from "./WhitelistableUpgradeable.sol";
 
 /**
  * @title WhitelistableExUpgradeable base contract
- * @notice Extends WhitelistableUpgradeable contract
+ * @dev Extends the WhitelistableUpgradeable contract.
  */
 abstract contract WhitelistableExUpgradeable is WhitelistableUpgradeable {
     bool private _isWhitelistEnabled;
@@ -25,8 +25,8 @@ abstract contract WhitelistableExUpgradeable is WhitelistableUpgradeable {
     function __WhitelistableEx_init_unchained() internal initializer {}
 
     /**
-     * @notice Checks if whitelister is enabled
-     * @return True if enabled
+     * @dev Checks if the whitelister is enabled.
+     * @return True if enabled.
      */
     function isWhitelister(address account)
         public
@@ -38,19 +38,19 @@ abstract contract WhitelistableExUpgradeable is WhitelistableUpgradeable {
     }
 
     /**
-     * @notice Checks if whitelist is enabled
-     * @return True if enabled
+     * @dev Checks if the whitelist is enabled.
+     * @return True if enabled.
      */
     function isWhitelistEnabled() public view override returns (bool) {
         return _isWhitelistEnabled;
     }
 
     /**
-     * @notice Updates whitelister address
-     * Can only be called by the whitelist admin
-     * Emits an {WhitelisterChanged} event
-     * @param whitelister The address of the whitelister
-     * @param enabled True if whitelister is enabled
+     * @dev Updates the whitelister address.
+     * Can only be called by the whitelist admin.
+     * Emits a {WhitelisterChanged} event.
+     * @param whitelister The address of a whitelister.
+     * @param enabled True if a whitelister is enabled.
      */
     function updateWhitelister(address whitelister, bool enabled)
         public
@@ -61,10 +61,10 @@ abstract contract WhitelistableExUpgradeable is WhitelistableUpgradeable {
     }
 
     /**
-     * @notice Allows to enable or disable whitelist
-     * Can only be called by the contract owner
-     * Emits an {WhitelistEnabled} event
-     * @param enabled True for enabling, False - for disabling
+     * @dev Allows to enable or disable the whitelist.
+     * Can only be called by the contract owner.
+     * Emits a {WhitelistEnabled} event.
+     * @param enabled True for enabling, False - for disabling.
      */
     function setWhitelistEnabled(bool enabled) public onlyOwner {
         _isWhitelistEnabled = enabled;

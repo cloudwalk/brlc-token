@@ -7,7 +7,7 @@ import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Pau
 
 /**
  * @title PausableExUpgradeable base contract
- * @notice Extends OpenZeppelin's PausableUpgradeable contract
+ * @dev Extends OpenZeppelin's PausableUpgradeable contract.
  */
 abstract contract PausableExUpgradeable is
     OwnableUpgradeable,
@@ -27,7 +27,7 @@ abstract contract PausableExUpgradeable is
     function __PausableEx_init_unchained() internal initializer {}
 
     /**
-     * @notice Throws if called by any account other than the pauser
+     * @dev Throws if called by any account other than the pauser.
      */
     modifier onlyPauser() {
         require(
@@ -38,17 +38,17 @@ abstract contract PausableExUpgradeable is
     }
 
     /**
-     * @notice Returns pauser address
+     * @dev Returns the pauser address.
      */
     function getPauser() public view virtual returns (address) {
         return _pauser;
     }
 
     /**
-     * @notice Updates pauser address
-     * Can only be called by the contract owner
-     * Emits an {PauserChanged} event
-     * @param newPauser The address of new pauser
+     * @dev Updates the pauser address.
+     * Can only be called by the contract owner.
+     * Emits a {PauserChanged} event.
+     * @param newPauser The address of a new pauser.
      */
     function setPauser(address newPauser) external onlyOwner {
         _pauser = newPauser;
@@ -56,20 +56,20 @@ abstract contract PausableExUpgradeable is
     }
 
     /**
-     * @notice Triggers paused state
-     * Can only be called by the pauser account
+     * @dev Triggers the paused state.
+     * Can only be called by the pauser account.
      * Requirements:
-     * - The contract must not be paused
+     * - The contract must not be paused.
      */
     function pause() external onlyPauser {
         _pause();
     }
 
     /**
-     * @notice Triggers unpaused state
-     * Can only be called by the pauser account
+     * @dev Triggers the unpaused state.
+     * Can only be called by the pauser account.
      * Requirements:
-     * - The contract must be paused
+     * - The contract must be paused.
      */
     function unpause() external onlyPauser {
         _unpause();
