@@ -39,6 +39,7 @@ contract TokenBridgeUpgradeable is
     );
     event ConfirmArrival(
         uint256 indexed nonce,
+        uint256 indexed chainId,
         address indexed account,
         uint256 amount
     );
@@ -51,11 +52,14 @@ contract TokenBridgeUpgradeable is
     }
 
     address public token;
-    uint256 public arrivalNonce;
+
     uint256 public relocationNonce;
     uint256 public pendingRelocations;
-    mapping(uint256 => bool) public supportedChains;
+    mapping(uint256 => bool) public relocationChains;
     mapping(uint256 => Relocation) public relocations;
+
+    mapping(uint256 => bool) public arrivalChains;
+    mapping(uint256 => uint256) public arrivalNonces;
 
     function initialize(address _token) public initializer {
         __TokenBridge_init(_token);
@@ -82,7 +86,7 @@ contract TokenBridgeUpgradeable is
         returns (uint256 nonce)
     {
         require(
-            supportedChains[chainId],
+            relocationChains[chainId],
             "TokenBridge: relocation chain is not supported"
         );
         require(
@@ -192,11 +196,16 @@ contract TokenBridgeUpgradeable is
     }
 
     function accommodate(
+        uint256 chainId,
         uint256[] memory nonces,
         address[] memory accounts,
         uint256[] memory amounts,
         bool[] memory canceled
     ) public whenNotPaused onlyWhitelisted(_msgSender()) {
+        require(
+            arrivalChains[chainId],
+            "TokenBridge: arrival chain is not supported"
+        );
         require(
             nonces.length != 0 &&
                 nonces.length == accounts.length &&
@@ -205,7 +214,7 @@ contract TokenBridgeUpgradeable is
             "TokenBridge: input arrays error"
         );
 
-        uint256 nonce = arrivalNonce;
+        uint256 nonce = arrivalNonces[chainId];
 
         for (uint256 i = 0; i < nonces.length; i++) {
             nonce = nonce.add(1);
@@ -223,17 +232,29 @@ contract TokenBridgeUpgradeable is
             );
             if (!canceled[i]) {
                 IERC20Mintable(token).mint(accounts[i], amounts[i]);
-                emit ConfirmArrival(nonces[i], accounts[i], amounts[i]);
+                emit ConfirmArrival(
+                    nonces[i],
+                    chainId,
+                    accounts[i],
+                    amounts[i]
+                );
             }
         }
 
-        arrivalNonce = nonce;
+        arrivalNonces[chainId] = nonce;
     }
 
-    function setSupportedChain(uint256 chainId, bool supported)
+    function setRelocationChain(uint256 chainId, bool supported)
         external
         onlyOwner
     {
-        supportedChains[chainId] = supported;
+        relocationChains[chainId] = supported;
+    }
+
+    function setArrivalChain(uint256 chainId, bool supported)
+        external
+        onlyOwner
+    {
+        arrivalChains[chainId] = supported;
     }
 }
