@@ -19,43 +19,43 @@ contract TokenBridgeUpgradeable is
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using SafeMathUpgradeable for uint256;
 
-    event RegisterDeposit(
+    event RegisterRelocation(
         uint256 indexed nonce,
-        address indexed account,
         uint256 indexed chainId,
+        address indexed account,
         uint256 amount
     );
-    event CancelDeposit(
+    event CancelRelocation(
         uint256 indexed nonce,
-        address indexed account,
         uint256 indexed chainId,
+        address indexed account,
         uint256 amount
     );
-    event ConfirmBurn(
-        uint256 indexed depositNonce,
-        address indexed account,
+    event ConfirmRelocation(
+        uint256 indexed nonce,
         uint256 indexed chainId,
+        address indexed account,
         uint256 amount
     );
-    event ConfirmMint(
-        uint256 indexed depositNonce,
+    event ConfirmArrival(
+        uint256 indexed nonce,
         address indexed account,
         uint256 amount
     );
 
-    struct Deposit {
-        address account;
+    struct Relocation {
         uint256 chainId;
+        address account;
         uint256 amount;
         bool canceled;
     }
 
     address public token;
-    uint256 public burnNonce;
-    uint256 public mintNonce;
-    uint256 public pendingDeposits;
-    mapping(uint256 => bool) public chains;
-    mapping(uint256 => Deposit) public deposits;
+    uint256 public arrivalNonce;
+    uint256 public relocationNonce;
+    uint256 public pendingRelocations;
+    mapping(uint256 => bool) public supportedChains;
+    mapping(uint256 => Relocation) public relocations;
 
     function initialize(address _token) public initializer {
         __TokenBridge_init(_token);
@@ -76,20 +76,26 @@ contract TokenBridgeUpgradeable is
         token = _token;
     }
 
-    function registerDeposit(uint256 chainId, uint256 amount)
+    function registerRelocation(uint256 chainId, uint256 amount)
         external
         whenNotPaused
-        returns (uint256 depositNonce)
+        returns (uint256 nonce)
     {
-        require(chains[chainId], "TokenBridge: chain is not supported");
-        require(amount > 0, "TokenBridge: amount must be greater than 0");
+        require(
+            supportedChains[chainId],
+            "TokenBridge: relocation chain is not supported"
+        );
+        require(
+            amount > 0,
+            "TokenBridge: relocation amount must be greater than 0"
+        );
 
-        pendingDeposits = pendingDeposits.add(1);
-        depositNonce = burnNonce.add(pendingDeposits);
-        Deposit storage deposit = deposits[depositNonce];
-        deposit.account = _msgSender();
-        deposit.chainId = chainId;
-        deposit.amount = amount;
+        pendingRelocations = pendingRelocations.add(1);
+        nonce = relocationNonce.add(pendingRelocations);
+        Relocation storage relocation = relocations[nonce];
+        relocation.account = _msgSender();
+        relocation.chainId = chainId;
+        relocation.amount = amount;
 
         IERC20Upgradeable(token).safeTransferFrom(
             _msgSender(),
@@ -97,104 +103,116 @@ contract TokenBridgeUpgradeable is
             amount
         );
 
-        emit RegisterDeposit(depositNonce, _msgSender(), chainId, amount);
+        emit RegisterRelocation(nonce, chainId, _msgSender(), amount);
     }
 
-    function cancelDeposit(uint256 depositNonce) public whenNotPaused {
+    function cancelRelocation(uint256 nonce) public whenNotPaused {
         require(
-            deposits[depositNonce].account == _msgSender(),
-            "TokenBridge: sender not authorized"
+            relocations[nonce].account == _msgSender(),
+            "TokenBridge: transaction sender not authorized"
         );
 
-        cancelDepositInternal(depositNonce);
+        cancelRelocationInternal(nonce);
     }
 
-    function cancelDeposits(uint256[] memory depositNonces)
+    function cancelRelocations(uint256[] memory nonces)
         public
         whenNotPaused
         onlyWhitelisted(_msgSender())
     {
         require(
-            depositNonces.length != 0,
-            "TokenBridge: deposit nonces array is empty"
+            nonces.length != 0,
+            "TokenBridge: relocation nonces array is empty"
         );
 
-        for (uint256 i = 0; i < depositNonces.length; i++) {
-            cancelDepositInternal(depositNonces[i]);
+        for (uint256 i = 0; i < nonces.length; i++) {
+            cancelRelocationInternal(nonces[i]);
         }
     }
 
-    function cancelDepositInternal(uint256 depositNonce) internal {
+    function cancelRelocationInternal(uint256 nonce) internal {
         require(
-            depositNonce > burnNonce,
-            "TokenBridge: deposit already processed"
+            nonce > relocationNonce,
+            "TokenBridge: relocation nonce already processed"
         );
         require(
-            depositNonce <= burnNonce.add(pendingDeposits),
-            "TokenBridge: deposit nonce doesn't exist"
+            nonce <= relocationNonce.add(pendingRelocations),
+            "TokenBridge: relocation nonce doesn't exist"
         );
 
-        Deposit storage deposit = deposits[depositNonce];
+        Relocation storage relocation = relocations[nonce];
 
-        require(!deposit.canceled, "TokenBridge: deposit already canceled");
+        require(
+            !relocation.canceled,
+            "TokenBridge: relocation already canceled"
+        );
 
-        deposit.canceled = true;
-        IERC20Upgradeable(token).transfer(deposit.account, deposit.amount);
+        relocation.canceled = true;
+        IERC20Upgradeable(token).transfer(
+            relocation.account,
+            relocation.amount
+        );
 
-        emit CancelDeposit(
-            depositNonce,
-            deposit.account,
-            deposit.chainId,
-            deposit.amount
+        emit CancelRelocation(
+            nonce,
+            relocation.chainId,
+            relocation.account,
+            relocation.amount
         );
     }
 
-    function burn(uint256 count)
+    function relocate(uint256 count)
         public
         whenNotPaused
         onlyWhitelisted(_msgSender())
     {
-        require(pendingDeposits <= count, "TokenBridge: burns count overflow");
+        require(
+            pendingRelocations <= count,
+            "TokenBridge: pending relocations count overflow"
+        );
 
-        pendingDeposits = pendingDeposits.sub(count);
-        burnNonce = burnNonce.add(count);
+        pendingRelocations = pendingRelocations.sub(count);
+        relocationNonce = relocationNonce.add(count);
 
-        uint256 fromNonce = burnNonce.add(1);
-        uint256 toNonce = burnNonce.add(count);
+        uint256 fromNonce = relocationNonce.add(1);
+        uint256 toNonce = relocationNonce.add(count);
 
         for (uint256 i = fromNonce; i <= toNonce; i++) {
-            Deposit memory deposit = deposits[i];
-            if (!deposit.canceled) {
-                IERC20Mintable(token).burn(deposit.amount);
-                emit ConfirmBurn(
+            Relocation memory relocation = relocations[i];
+            if (!relocation.canceled) {
+                IERC20Mintable(token).burn(relocation.amount);
+                emit ConfirmRelocation(
                     i,
-                    deposit.account,
-                    deposit.chainId,
-                    deposit.amount
+                    relocation.chainId,
+                    relocation.account,
+                    relocation.amount
                 );
             }
         }
     }
 
-    function mint(
+    function accommodate(
         uint256[] memory nonces,
         address[] memory accounts,
         uint256[] memory amounts,
         bool[] memory canceled
     ) public whenNotPaused onlyWhitelisted(_msgSender()) {
-        require(nonces.length != 0, "TokenBridge: nonces array is empty");
         require(
-            nonces.length == accounts.length &&
+            nonces.length != 0 &&
+                nonces.length == accounts.length &&
                 accounts.length == amounts.length &&
                 amounts.length == canceled.length,
-            "TokenBridge: array length mismatch"
+            "TokenBridge: input arrays error"
         );
 
-        uint256 nonce = mintNonce;
+        uint256 nonce = arrivalNonce;
 
         for (uint256 i = 0; i < nonces.length; i++) {
             nonce = nonce.add(1);
-            require(nonces[i] == nonce, "TokenBridge: mint nonce mismatch");
+            require(
+                nonces[i] == nonce,
+                "TokenBridge: relocation nonce mismatch"
+            );
             require(
                 accounts[i] != address(0),
                 "TokenBridge: account is the zero address"
@@ -205,14 +223,17 @@ contract TokenBridgeUpgradeable is
             );
             if (!canceled[i]) {
                 IERC20Mintable(token).mint(accounts[i], amounts[i]);
-                emit ConfirmMint(nonces[i], accounts[i], amounts[i]);
+                emit ConfirmArrival(nonces[i], accounts[i], amounts[i]);
             }
         }
 
-        mintNonce = nonce;
+        arrivalNonce = nonce;
     }
 
-    function setChain(uint256 chainId, bool enabled) external onlyOwner {
-        chains[chainId] = enabled;
+    function setSupportedChain(uint256 chainId, bool supported)
+        external
+        onlyOwner
+    {
+        supportedChains[chainId] = supported;
     }
 }
