@@ -113,7 +113,7 @@ contract TokenBridgeUpgradeable is
     function cancelRelocation(uint256 nonce) public whenNotPaused {
         require(
             relocations[nonce].account == _msgSender(),
-            "TokenBridge: transaction sender not authorized"
+            "TokenBridge: transaction sender is not authorized"
         );
 
         cancelRelocationInternal(nonce);
@@ -137,18 +137,18 @@ contract TokenBridgeUpgradeable is
     function cancelRelocationInternal(uint256 nonce) internal {
         require(
             nonce > relocationNonce,
-            "TokenBridge: relocation nonce already processed"
+            "TokenBridge: relocation with the nonce already processed"
         );
         require(
             nonce <= relocationNonce.add(pendingRelocations),
-            "TokenBridge: relocation nonce doesn't exist"
+            "TokenBridge: relocation with the nonce doesn't exist"
         );
 
         Relocation storage relocation = relocations[nonce];
 
         require(
             !relocation.canceled,
-            "TokenBridge: relocation already canceled"
+            "TokenBridge: relocation was already canceled"
         );
 
         relocation.canceled = true;
@@ -172,7 +172,7 @@ contract TokenBridgeUpgradeable is
     {
         require(
             pendingRelocations <= count,
-            "TokenBridge: pending relocations count overflow"
+            "TokenBridge: the count exceeds the number of pending relocations"
         );
 
         pendingRelocations = pendingRelocations.sub(count);
