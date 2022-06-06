@@ -53,8 +53,8 @@ contract TokenBridgeUpgradeable is
 
     address public token;
 
-    uint256 public relocationNonce;
     uint256 public pendingRelocations;
+    uint256 public lastConfirmedRelocationNonce;
     mapping(uint256 => bool) public relocationChains;
     mapping(uint256 => Relocation) public relocations;
 
@@ -95,7 +95,7 @@ contract TokenBridgeUpgradeable is
         );
 
         pendingRelocations = pendingRelocations.add(1);
-        nonce = relocationNonce.add(pendingRelocations);
+        nonce = lastConfirmedRelocationNonce.add(pendingRelocations);
         Relocation storage relocation = relocations[nonce];
         relocation.account = _msgSender();
         relocation.chainId = chainId;
@@ -136,11 +136,11 @@ contract TokenBridgeUpgradeable is
 
     function cancelRelocationInternal(uint256 nonce) internal {
         require(
-            nonce > relocationNonce,
+            nonce > lastConfirmedRelocationNonce,
             "TokenBridge: relocation with the nonce already processed"
         );
         require(
-            nonce <= relocationNonce.add(pendingRelocations),
+            nonce <= lastConfirmedRelocationNonce.add(pendingRelocations),
             "TokenBridge: relocation with the nonce doesn't exist"
         );
 
@@ -175,11 +175,11 @@ contract TokenBridgeUpgradeable is
             "TokenBridge: the count exceeds the number of pending relocations"
         );
 
-        uint256 fromNonce = relocationNonce.add(1);
-        uint256 toNonce = relocationNonce.add(count);
+        uint256 fromNonce = lastConfirmedRelocationNonce.add(1);
+        uint256 toNonce = lastConfirmedRelocationNonce.add(count);
 
         pendingRelocations = pendingRelocations.sub(count);
-        relocationNonce = relocationNonce.add(count);
+        lastConfirmedRelocationNonce = lastConfirmedRelocationNonce.add(count);
 
         for (uint256 i = fromNonce; i <= toNonce; i++) {
             Relocation memory relocation = relocations[i];
