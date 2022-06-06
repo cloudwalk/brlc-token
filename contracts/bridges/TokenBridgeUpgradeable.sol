@@ -175,11 +175,11 @@ contract TokenBridgeUpgradeable is
             "TokenBridge: the count exceeds the number of pending relocations"
         );
 
-        pendingRelocations = pendingRelocations.sub(count);
-        relocationNonce = relocationNonce.add(count);
-
         uint256 fromNonce = relocationNonce.add(1);
         uint256 toNonce = relocationNonce.add(count);
+
+        pendingRelocations = pendingRelocations.sub(count);
+        relocationNonce = relocationNonce.add(count);
 
         for (uint256 i = fromNonce; i <= toNonce; i++) {
             Relocation memory relocation = relocations[i];
