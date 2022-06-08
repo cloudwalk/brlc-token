@@ -35,7 +35,7 @@ abstract contract BRLCTokenUpgradeable is
     }
 
     /**
-     * @dev ERC20 `transfer` function
+     * @dev ERC20 `transfer` function.
      */
     function transfer(address recipient, uint256 amount)
         public
@@ -50,7 +50,7 @@ abstract contract BRLCTokenUpgradeable is
     }
 
     /**
-     * @dev ERC20 `approve` function
+     * @dev ERC20 `approve` function.
      */
     function approve(address spender, uint256 amount)
         public
@@ -65,7 +65,7 @@ abstract contract BRLCTokenUpgradeable is
     }
 
     /**
-     * @dev ERC20 `transferFrom` function
+     * @dev ERC20 `transferFrom` function.
      */
     function transferFrom(
         address sender,

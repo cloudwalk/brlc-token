@@ -22,16 +22,16 @@ abstract contract RandomableUpgradeable is OwnableUpgradeable {
     function __Randomable_init_unchained() internal initializer {}
 
     /**
-     * @notice Requests and returns random number form random provider
+     * @dev Requests and returns a random number from the random provider.
      */
     function _getRandomness() internal view returns (uint256) {
         return IRandomProvider(_randomProvider).getRandomness();
     }
 
     /**
-     * @notice Updates randomProvider address
-     * Can only be called by the contract owner
-     * Emits an {RandomProviderChanged} event
+     * @dev Updates the random provider address.
+     * Can only be called by the contract owner.
+     * Emits a {RandomProviderChanged} event.
      */
     function setRandomProvider(address newRandomProvider) external onlyOwner {
         _randomProvider = newRandomProvider;
@@ -39,7 +39,7 @@ abstract contract RandomableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @notice Returns randomProvider address
+     * @dev Returns the random provider address.
      */
     function getRandomProvider() external view returns (address) {
         return _randomProvider;

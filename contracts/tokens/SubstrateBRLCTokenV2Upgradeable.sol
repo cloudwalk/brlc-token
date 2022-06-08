@@ -7,8 +7,8 @@ import {SubstrateBRLCTokenUpgradeable} from "./SubstrateBRLCTokenUpgradeable.sol
 
 /**
  * @title SubstrateBRLCTokenV2Upgradeable contract
- * V2 changes:
- * - Added `trusted mint` and `trusted burn` functionality
+ * @dev V2 changes:
+ * - Added `trusted mint` and `trusted burn` functionality.
  */
 contract SubstrateBRLCTokenV2Upgradeable is
     SubstrateBRLCTokenUpgradeable,
@@ -35,7 +35,7 @@ contract SubstrateBRLCTokenV2Upgradeable is
     {}
 
     /**
-     * @dev Throws if called by any account other than the masterMinter
+     * @dev Throws if called by any account other than the masterMinter.
      */
     modifier onlyMasterMinter() {
         require(
@@ -46,7 +46,7 @@ contract SubstrateBRLCTokenV2Upgradeable is
     }
 
     /**
-     * @dev Throws if called by any account other than a minter
+     * @dev Throws if called by any account other than a minter.
      */
     modifier onlyMinters() {
         require(_minters[_msgSender()], "MintAndBurn: caller is not a minter");
@@ -54,23 +54,23 @@ contract SubstrateBRLCTokenV2Upgradeable is
     }
 
     /**
-     * @dev Returns masterMinter address
+     * @dev Returns masterMinter address.
      */
     function masterMinter() public view override returns (address) {
         return _masterMinter;
     }
 
     /**
-     * @dev Checks if account is a minter
-     * @param account The address to check
+     * @dev Checks if account is a minter.
+     * @param account An address to check.
      */
     function isMinter(address account) external view override returns (bool) {
         return _minters[account];
     }
 
     /**
-     * @dev Returns minter allowance for an account
-     * @param minter The address of the minter
+     * @dev Returns the minter allowance for an account.
+     * @param minter The address of a minter.
      */
     function minterAllowance(address minter)
         external
@@ -82,8 +82,8 @@ contract SubstrateBRLCTokenV2Upgradeable is
     }
 
     /**
-     * @dev Updates master minter address
-     * @param newMasterMinter The address of new master minter
+     * @dev Updates the master minter address.
+     * @param newMasterMinter The address of a new master minter.
      */
     function updateMasterMinter(address newMasterMinter)
         external
@@ -95,10 +95,10 @@ contract SubstrateBRLCTokenV2Upgradeable is
     }
 
     /**
-     * @dev Updates minter configuration
-     * @param minter The address of the minter to configure
-     * @param mintAllowance The minting amount allowed for the minter
-     * @return True if the operation was successful
+     * @dev Updates a minter configuration.
+     * @param minter The address of a minter to configure.
+     * @param mintAllowance The minting amount allowed for a minter.
+     * @return True if the operation was successful.
      */
     function configureMinter(address minter, uint256 mintAllowance)
         external
@@ -114,9 +114,9 @@ contract SubstrateBRLCTokenV2Upgradeable is
     }
 
     /**
-     * @dev Removes minter
-     * @param minter The address of the minter to remove
-     * @return True if the operation was successful
+     * @dev Removes a minter.
+     * @param minter The address of a minter to remove.
+     * @return True if the operation was successful.
      */
     function removeMinter(address minter)
         external
@@ -131,11 +131,11 @@ contract SubstrateBRLCTokenV2Upgradeable is
     }
 
     /**
-     * @dev Mints tokens in a trusted way
-     * @param to The address that will receive the minted tokens
+     * @dev Mints tokens in a trusted way.
+     * @param to The address that will receive the minted tokens.
      * @param amount The amount of tokens to mint. Must be less
-     * than or equal to the mintAllowance of the caller
-     * @return True if the operation was successful
+     * than or equal to the mint allowance of the caller.
+     * @return True if the operation was successful.
      */
     function mint(address to, uint256 amount)
         external
@@ -162,9 +162,9 @@ contract SubstrateBRLCTokenV2Upgradeable is
     }
 
     /**
-     * @dev Burns tokens in a trusted way
+     * @dev Burns tokens in a trusted way.
      * @param amount The amount of tokens to be burned. Must be less
-     * than or equal to the token balance of the caller
+     * than or equal to the token balance of the caller.
      */
     function burn(uint256 amount)
         external

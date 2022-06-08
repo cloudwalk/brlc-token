@@ -7,7 +7,7 @@ import {SpinMachineUpgradeable} from "./SpinMachineUpgradeable.sol";
 
 /**
  * @title SpinMachineV2Upgradeable contract
- * @notice Allows accounts to execute spins and win underlying tokens
+ * @dev Allows accounts to execute spins and win underlying tokens.
  */
 contract SpinMachineV2Upgradeable is
     SpinMachineUpgradeable,
