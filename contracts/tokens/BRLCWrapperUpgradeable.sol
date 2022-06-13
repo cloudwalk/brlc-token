@@ -51,6 +51,14 @@ contract BRLCWrapperUpgradeable is
     }
 
     /**
+     * @dev Flag function to check if contract implements IERC20Wrapper interface.
+     * @return true if contract implements IERC20Wrapper interface.
+     */
+    function isIERC20Wrapper() external pure override returns (bool) {
+        return true;
+    }
+
+    /**
      * @dev Allows the owner to wrap underlying tokens.
      * @param account The owner of underlying tokens.
      * @param amount Amount of tokens to wrap.
