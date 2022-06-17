@@ -171,7 +171,7 @@ contract TokenBridgeUpgradeable is
         onlyWhitelisted(_msgSender())
     {
         require(
-            pendingRelocations <= count,
+            count <= pendingRelocations,
             "TokenBridge: the count exceeds the number of pending relocations"
         );
 
