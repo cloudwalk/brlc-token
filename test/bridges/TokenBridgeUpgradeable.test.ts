@@ -53,6 +53,7 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
   const REVERT_MESSAGE_IF_RELOCATION_CHAIN_IF_NOT_SUPPORTED = "TokenBridge: relocation chain is not supported";
   const REVERT_MESSAGE_IF_RELOCATION_AMOUNT_IS_ZERO = "TokenBridge: relocation amount must be greater than 0";
   const REVERT_MESSAGE_IF_ACCOUNT_IS_NOT_WHITELISTED = "Whitelistable: account is not whitelisted";
+  const REVERT_MESSAGE_IF_RELOCATION_COUNT_IS_ZERO = "TokenBridge: the count should be greater than zero"
   const REVERT_MESSAGE_IF_RELOCATION_COUNT_EXCEEDS_NUMBER_OF_PENDING_RELOCATIONS =
     "TokenBridge: the count exceeds the number of pending relocations";
   const REVERT_MESSAGE_IF_TOKEN_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
@@ -166,14 +167,24 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
         ).to.be.revertedWith(REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER);
       });
 
-      it("Updates the availability of relocation to the chain correctly if called by the owner", async () => {
+      it("Emits the correct events and updates the configuration correctly", async () => {
         const chainAvailabilityOld = await tokenBridge.relocationChains(chainId);
         expect(chainAvailabilityOld).to.equal(false);
-        await proveTx(tokenBridge.setRelocationChain(chainId, true));
+        await expect(
+          tokenBridge.setRelocationChain(chainId, true)
+        ).to.emit(
+          tokenBridge,
+          "SetRelocationChain"
+        ).withArgs(chainId, true);
         const chainAvailabilityNew = await tokenBridge.relocationChains(chainId);
         expect(chainAvailabilityNew).to.equal(true);
 
-        await proveTx(tokenBridge.setRelocationChain(chainId, false));
+        await expect(
+          tokenBridge.setRelocationChain(chainId, false)
+        ).to.emit(
+          tokenBridge,
+          "SetRelocationChain"
+        ).withArgs(chainId, false);
         const chainAvailabilityNew2 = await tokenBridge.relocationChains(chainId);
         expect(chainAvailabilityNew2).to.equal(false);
       });
@@ -188,14 +199,24 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
         ).to.be.revertedWith(REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER);
       });
 
-      it("Updates the availability of relocation from the chain correctly if called by the owner", async () => {
+      it("Emits the correct events and updates the configuration correctly", async () => {
         const chainAvailabilityOld = await tokenBridge.arrivalChains(chainId);
         expect(chainAvailabilityOld).to.equal(false);
-        await proveTx(tokenBridge.setArrivalChain(chainId, true));
+        await expect(
+          tokenBridge.setArrivalChain(chainId, true)
+        ).to.emit(
+          tokenBridge,
+          "SetArrivalChain"
+        ).withArgs(chainId, true);
         const chainAvailabilityNew = await tokenBridge.arrivalChains(chainId);
         expect(chainAvailabilityNew).to.equal(true);
 
-        await proveTx(tokenBridge.setArrivalChain(chainId, false));
+        await expect(
+          tokenBridge.setArrivalChain(chainId, false)
+        ).to.emit(
+          tokenBridge,
+          "SetArrivalChain"
+        ).withArgs(chainId, false);
         const chainAvailabilityNew2 = await tokenBridge.arrivalChains(chainId);
         expect(chainAvailabilityNew2).to.equal(false);
       });
@@ -468,6 +489,12 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
         ).to.be.revertedWith(REVERT_MESSAGE_IF_ACCOUNT_IS_NOT_WHITELISTED);
       });
 
+      it("Is reverted if the relocation count is zero", async () => {
+        await expect(
+          tokenBridge.connect(relocator).relocate(0)
+        ).to.be.revertedWith(REVERT_MESSAGE_IF_RELOCATION_COUNT_IS_ZERO);
+      });
+
       it("Is reverted if the relocation count exceeds the number of pending relocations", async () => {
         await expect(
           tokenBridge.connect(relocator).relocate(relocationCount + 1)
@@ -615,7 +642,6 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
       let relocationNonces: number[];
       let relocationAccounts: string[];
       let relocationAmounts: number[];
-      let relocationCancelStates: boolean[];
       let expectedMintingAmounts: number[];
       let expectedMintingAmountTotal: number;
 
@@ -625,22 +651,20 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
             chainId: chainId,
             account: user1,
             amount: 456,
-            nonce: 1,
+            nonce: 2,
           },
           {
             chainId: chainId,
             account: user2,
             amount: 789,
-            nonce: 2,
-            canceled: true,
+            nonce: 5,
           },
         ]
         accommodator = user2;
         relocationNonces = relocations.map(relocation => relocation.nonce);
         relocationAccounts = relocations.map(relocation => relocation.account.address);
         relocationAmounts = relocations.map(relocation => relocation.amount);
-        relocationCancelStates = relocations.map(relocation => !!relocation.canceled);
-        expectedMintingAmounts = relocations.map(relocation => (!relocation.canceled) ? relocation.amount : 0);
+        expectedMintingAmounts = relocations.map(relocation => relocation.amount);
         expectedMintingAmountTotal = expectedMintingAmounts.reduce((sum: number, current: number) => sum + current);
 
         await proveTx(tokenBridge.setArrivalChain(chainId, true));
@@ -655,8 +679,7 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
             chainId,
             relocationNonces,
             relocationAccounts,
-            relocationAmounts,
-            relocationCancelStates
+            relocationAmounts
           )
         ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_PAUSED);
       });
@@ -667,8 +690,7 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
             chainId,
             relocationNonces,
             relocationAccounts,
-            relocationAmounts,
-            relocationCancelStates
+            relocationAmounts
           )
         ).to.be.revertedWith(REVERT_MESSAGE_IF_ACCOUNT_IS_NOT_WHITELISTED);
       });
@@ -679,8 +701,7 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
             chainId + 1,
             relocationNonces,
             relocationAccounts,
-            relocationAmounts,
-            relocationCancelStates
+            relocationAmounts
           )
         ).to.be.revertedWith(REVERT_MESSAGE_IF_ARRIVAL_CHAIN_IS_NOT_SUPPORTED);
       });
@@ -691,8 +712,7 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
             chainId,
             [],
             relocationAccounts,
-            relocationAmounts,
-            relocationCancelStates
+            relocationAmounts
           )
         ).to.be.revertedWith(REVERT_MESSAGE_IF_INPUT_ARRAY_ERROR);
       });
@@ -704,8 +724,7 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
             chainId,
             relocationNonces,
             relocationAccounts,
-            relocationAmounts,
-            relocationCancelStates
+            relocationAmounts
           )
         ).to.be.revertedWith(REVERT_MESSAGE_IF_INPUT_ARRAY_ERROR);
       });
@@ -717,8 +736,7 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
             chainId,
             relocationNonces,
             relocationAccounts,
-            relocationAmounts,
-            relocationCancelStates
+            relocationAmounts
           )
         ).to.be.revertedWith(REVERT_MESSAGE_IF_INPUT_ARRAY_ERROR);
       });
@@ -730,47 +748,19 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
             chainId,
             relocationNonces,
             relocationAccounts,
-            relocationAmounts,
-            relocationCancelStates
+            relocationAmounts
           )
         ).to.be.revertedWith(REVERT_MESSAGE_IF_INPUT_ARRAY_ERROR);
-      });
-
-      it("Is reverted if the canceled states array has a different length than other input arrays", async () => {
-        relocationCancelStates.pop();
-        await expect(
-          tokenBridge.connect(accommodator).accommodate(
-            chainId,
-            relocationNonces,
-            relocationAccounts,
-            relocationAmounts,
-            relocationCancelStates,
-          )
-        ).to.be.revertedWith(REVERT_MESSAGE_IF_INPUT_ARRAY_ERROR);
-      });
-
-      it("Is reverted if one of the input nonces is greater than it is expected", async () => {
-        relocationNonces[1] += 1;
-        await expect(
-          tokenBridge.connect(accommodator).accommodate(
-            chainId,
-            relocationNonces,
-            relocationAccounts,
-            relocationAmounts,
-            relocationCancelStates
-          )
-        ).to.be.revertedWith(REVERT_MESSAGE_IF_RELOCATION_NONCE_MISMATCH);
       });
 
       it("Is reverted if one of the input nonces is less than it is expected", async () => {
-        relocationNonces[1] -= 1;
+        relocationNonces[1] = relocationNonces[0] - 1;
         await expect(
           tokenBridge.connect(accommodator).accommodate(
             chainId,
             relocationNonces,
             relocationAccounts,
-            relocationAmounts,
-            relocationCancelStates
+            relocationAmounts
           )
         ).to.be.revertedWith(REVERT_MESSAGE_IF_RELOCATION_NONCE_MISMATCH);
       });
@@ -782,8 +772,7 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
             chainId,
             relocationNonces,
             relocationAccounts,
-            relocationAmounts,
-            relocationCancelStates
+            relocationAmounts
           )
         ).to.be.revertedWith(REVERT_MESSAGE_IF_ACCOUNT_IS_ZERO_ADDRESS);
       });
@@ -795,8 +784,7 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
             chainId,
             relocationNonces,
             relocationAccounts,
-            relocationAmounts,
-            relocationCancelStates
+            relocationAmounts
           )
         ).to.be.revertedWith(REVERT_MESSAGE_IF_AMOUNT_MUST_BE_GREATER_THAN_ZERO);
       });
@@ -807,8 +795,7 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
             chainId,
             relocationNonces,
             relocationAccounts,
-            relocationAmounts,
-            relocationCancelStates
+            relocationAmounts
           )
         ).to.changeTokenBalances(
           brlcMock,
@@ -822,6 +809,14 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
           chainId,
           relocationAccounts[0],
           expectedMintingAmounts[0],
+        ).and.to.emit(
+          tokenBridge,
+          "ConfirmArrival"
+        ).withArgs(
+          relocationNonces[1],
+          chainId,
+          relocationAccounts[1],
+          expectedMintingAmounts[1],
         );
         expect(await tokenBridge.arrivalNonces(chainId)).to.equal(relocationNonces.pop());
       });
