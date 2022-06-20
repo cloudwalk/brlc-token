@@ -173,7 +173,11 @@ contract TokenBridgeUpgradeable is
         onlyWhitelisted(_msgSender())
     {
         require(
-            pendingRelocations <= count,
+            count >= 0,
+            "TokenBridge: the count should be greater than zero"
+        );
+        require(
+            count >= pendingRelocations,
             "TokenBridge: the count exceeds the number of pending relocations"
         );
 
@@ -201,8 +205,7 @@ contract TokenBridgeUpgradeable is
         uint256 chainId,
         uint256[] memory nonces,
         address[] memory accounts,
-        uint256[] memory amounts,
-        bool[] memory canceled
+        uint256[] memory amounts
     ) public whenNotPaused onlyWhitelisted(_msgSender()) {
         require(
             arrivalChains[chainId],
@@ -219,9 +222,8 @@ contract TokenBridgeUpgradeable is
         uint256 nonce = arrivalNonces[chainId];
 
         for (uint256 i = 0; i < nonces.length; i++) {
-            nonce = nonce.add(1);
             require(
-                nonces[i] == nonce,
+                nonces[i] > nonce,
                 "TokenBridge: relocation nonce mismatch"
             );
             require(
@@ -232,15 +234,9 @@ contract TokenBridgeUpgradeable is
                 amounts[i] != 0,
                 "TokenBridge: amount must be greater than 0"
             );
-            if (!canceled[i]) {
-                IERC20Mintable(token).mint(accounts[i], amounts[i]);
-                emit ConfirmArrival(
-                    nonces[i],
-                    chainId,
-                    accounts[i],
-                    amounts[i]
-                );
-            }
+            nonce = nonces[i];
+            IERC20Mintable(token).mint(accounts[i], amounts[i]);
+            emit ConfirmArrival(nonces[i], chainId, accounts[i], amounts[i]);
         }
 
         arrivalNonces[chainId] = nonce;
