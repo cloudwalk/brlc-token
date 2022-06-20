@@ -19,6 +19,8 @@ contract TokenBridgeUpgradeable is
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using SafeMathUpgradeable for uint256;
 
+    event SetRelocationChain(uint256 indexed chainId, bool supported);
+    event SetArrivalChain(uint256 indexed chainId, bool supported);
     event RegisterRelocation(
         uint256 indexed nonce,
         uint256 indexed chainId,
@@ -171,7 +173,11 @@ contract TokenBridgeUpgradeable is
         onlyWhitelisted(_msgSender())
     {
         require(
-            count <= pendingRelocations,
+            count >= 0,
+            "TokenBridge: the count should be greater than zero"
+        );
+        require(
+            count >= pendingRelocations,
             "TokenBridge: the count exceeds the number of pending relocations"
         );
 
@@ -199,8 +205,7 @@ contract TokenBridgeUpgradeable is
         uint256 chainId,
         uint256[] memory nonces,
         address[] memory accounts,
-        uint256[] memory amounts,
-        bool[] memory canceled
+        uint256[] memory amounts
     ) public whenNotPaused onlyWhitelisted(_msgSender()) {
         require(
             arrivalChains[chainId],
@@ -209,17 +214,15 @@ contract TokenBridgeUpgradeable is
         require(
             nonces.length != 0 &&
                 nonces.length == accounts.length &&
-                accounts.length == amounts.length &&
-                amounts.length == canceled.length,
+                accounts.length == amounts.length,
             "TokenBridge: input arrays error"
         );
 
         uint256 nonce = arrivalNonces[chainId];
 
         for (uint256 i = 0; i < nonces.length; i++) {
-            nonce = nonce.add(1);
             require(
-                nonces[i] == nonce,
+                nonces[i] > nonce,
                 "TokenBridge: relocation nonce mismatch"
             );
             require(
@@ -230,15 +233,9 @@ contract TokenBridgeUpgradeable is
                 amounts[i] != 0,
                 "TokenBridge: amount must be greater than 0"
             );
-            if (!canceled[i]) {
-                IERC20Mintable(token).mint(accounts[i], amounts[i]);
-                emit ConfirmArrival(
-                    nonces[i],
-                    chainId,
-                    accounts[i],
-                    amounts[i]
-                );
-            }
+            nonce = nonces[i];
+            IERC20Mintable(token).mint(accounts[i], amounts[i]);
+            emit ConfirmArrival(nonces[i], chainId, accounts[i], amounts[i]);
         }
 
         arrivalNonces[chainId] = nonce;
@@ -249,6 +246,7 @@ contract TokenBridgeUpgradeable is
         onlyOwner
     {
         relocationChains[chainId] = supported;
+        emit SetRelocationChain(chainId, supported);
     }
 
     function setArrivalChain(uint256 chainId, bool supported)
@@ -256,5 +254,6 @@ contract TokenBridgeUpgradeable is
         onlyOwner
     {
         arrivalChains[chainId] = supported;
+        emit SetArrivalChain(chainId, supported);
     }
 }
