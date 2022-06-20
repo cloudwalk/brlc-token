@@ -214,8 +214,7 @@ contract TokenBridgeUpgradeable is
         require(
             nonces.length != 0 &&
                 nonces.length == accounts.length &&
-                accounts.length == amounts.length &&
-                amounts.length == canceled.length,
+                accounts.length == amounts.length,
             "TokenBridge: input arrays error"
         );
 
@@ -247,7 +246,7 @@ contract TokenBridgeUpgradeable is
         onlyOwner
     {
         relocationChains[chainId] = supported;
-        emit setRelocationChain(chainId, supported);
+        emit SetRelocationChain(chainId, supported);
     }
 
     function setArrivalChain(uint256 chainId, bool supported)
