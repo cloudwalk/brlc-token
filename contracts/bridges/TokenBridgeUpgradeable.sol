@@ -19,6 +19,8 @@ contract TokenBridgeUpgradeable is
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using SafeMathUpgradeable for uint256;
 
+    event SetRelocationChain(uint256 indexed chainId, bool supported);
+    event SetArrivalChain(uint256 indexed chainId, bool supported);
     event RegisterRelocation(
         uint256 indexed nonce,
         uint256 indexed chainId,
@@ -249,6 +251,7 @@ contract TokenBridgeUpgradeable is
         onlyOwner
     {
         relocationChains[chainId] = supported;
+        emit setRelocationChain(chainId, supported);
     }
 
     function setArrivalChain(uint256 chainId, bool supported)
@@ -256,5 +259,6 @@ contract TokenBridgeUpgradeable is
         onlyOwner
     {
         arrivalChains[chainId] = supported;
+        emit SetArrivalChain(chainId, supported);
     }
 }
