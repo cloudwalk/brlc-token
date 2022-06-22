@@ -7,26 +7,25 @@ import { proveTx } from "../../test-utils/eth";
 describe("Contract 'OnhainRandomProvider'", async () => {
   let onchainRandomProvider: Contract;
   let deployer: SignerWithAddress;
-  let user: SignerWithAddress;
 
   beforeEach(async () => {
     const OnchainRandomProvider: ContractFactory = await ethers.getContractFactory("OnchainRandomProvider");
     onchainRandomProvider = await OnchainRandomProvider.deploy();
     await onchainRandomProvider.deployed();
 
-    [deployer, user] = await ethers.getSigners();
+    [deployer] = await ethers.getSigners();
   });
 
   it("Returns random numbers", async () => {
     const randomNumber1: BigNumber = await onchainRandomProvider.getRandomness();
 
     // Wait for the next block
-    await proveTx(deployer.sendTransaction({ to: user.address, value: 100 }));
+    await proveTx(deployer.sendTransaction({ to: deployer.address, value: 0 }));
 
     const randomNumber2: BigNumber = await onchainRandomProvider.getRandomness();
 
     // Wait for the next block
-    await proveTx(deployer.sendTransaction({ to: user.address, value: 100 }));
+    await proveTx(deployer.sendTransaction({ to: deployer.address, value: 0 }));
 
     const randomNumber3: BigNumber = await onchainRandomProvider.getRandomness();
 
