@@ -6,7 +6,7 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 
-import {IERC20Mintable} from "../base/interfaces/IERC20Mintable.sol";
+import {IERC20Bridgeable} from "../base/interfaces/IERC20Bridgeable.sol";
 import {RescuableUpgradeable} from "../base/RescuableUpgradeable.sol";
 import {PausableExUpgradeable} from "../base/PausableExUpgradeable.sol";
 import {WhitelistableExUpgradeable} from "../base/WhitelistableExUpgradeable.sol";
@@ -228,7 +228,13 @@ contract TokenBridgeUpgradeable is
         for (uint256 i = fromNonce; i <= toNonce; i++) {
             Relocation memory relocation = relocations[i];
             if (!relocation.canceled) {
-                IERC20Mintable(token).burn(relocation.amount);
+                require(
+                    IERC20Bridgeable(token).burnAndRelocate(
+                        relocation.account,
+                        relocation.amount
+                    ),
+                    "TokenBridge: burn and relocate tokens failed"
+                );
                 emit ConfirmRelocation(
                     i,
                     relocation.chainId,
@@ -281,7 +287,13 @@ contract TokenBridgeUpgradeable is
                 "TokenBridge: amount must be greater than 0"
             );
             nonce = nonces[i];
-            IERC20Mintable(token).mint(accounts[i], amounts[i]);
+            require(
+                IERC20Bridgeable(token).mintAndAccommodate(
+                    accounts[i],
+                    amounts[i]
+                ),
+                "TokenBridge: mint and accommodate tokens failed"
+            );
             emit ConfirmArrival(nonces[i], chainId, accounts[i], amounts[i]);
         }
 
