@@ -56,21 +56,24 @@ contract TokenBridgeUpgradeable is
         bool canceled;
     }
 
+    /// @dev The address of the underlying token.
+    address public token;
+
     /// @dev The number of pending relocation requests.
     uint256 public pendingRelocations;
-​
+
     /// @dev The nonce of the last confirmed relocation requests.
     uint256 public lastConfirmedRelocationNonce;
-​
+
     /// @dev The mapping of supported networks to relocate to.
     mapping(uint256 => bool) public relocationChains;
-​
+
     /// @dev The mapping of registered relocation requests.
     mapping(uint256 => Relocation) public relocations;
-​
+
     /// @dev The mapping of supported networks to arrive from.
     mapping(uint256 => bool) public arrivalChains;
-​
+
     /// @dev The mapping of nonces for accommodated relocation requests.
     mapping(uint256 => uint256) public arrivalNonces;
 
