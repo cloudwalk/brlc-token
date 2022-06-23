@@ -24,7 +24,7 @@ contract SubstrateBRLCTokenV2Upgradeable is
         string memory name_,
         string memory symbol_,
         uint8 decimals_
-    ) public override initializer {
+    ) public virtual override initializer {
         __SubstrateBRLCTokenUpgradeable_init(name_, symbol_, decimals_);
         __SubstrateBRLCTokenV2Upgradeable_init_unchained();
     }
