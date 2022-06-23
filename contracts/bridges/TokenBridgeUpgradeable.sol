@@ -11,6 +11,9 @@ import {RescuableUpgradeable} from "../base/RescuableUpgradeable.sol";
 import {PausableExUpgradeable} from "../base/PausableExUpgradeable.sol";
 import {WhitelistableExUpgradeable} from "../base/WhitelistableExUpgradeable.sol";
 
+/**
+ * @title TokenBridgeUpgradeable contract
+ */
 contract TokenBridgeUpgradeable is
     RescuableUpgradeable,
     PausableExUpgradeable,
@@ -53,14 +56,22 @@ contract TokenBridgeUpgradeable is
         bool canceled;
     }
 
-    address public token;
-
+    /// @dev The number of pending relocation requests.
     uint256 public pendingRelocations;
+​
+    /// @dev The nonce of the last confirmed relocation requests.
     uint256 public lastConfirmedRelocationNonce;
+​
+    /// @dev The mapping of supported networks to relocate to.
     mapping(uint256 => bool) public relocationChains;
+​
+    /// @dev The mapping of registered relocation requests.
     mapping(uint256 => Relocation) public relocations;
-
+​
+    /// @dev The mapping of supported networks to arrive from.
     mapping(uint256 => bool) public arrivalChains;
+​
+    /// @dev The mapping of nonces for accommodated relocation requests.
     mapping(uint256 => uint256) public arrivalNonces;
 
     function initialize(address _token) public initializer {
@@ -82,6 +93,13 @@ contract TokenBridgeUpgradeable is
         token = _token;
     }
 
+    /**
+     * @dev Registers a new relocation request with transferring tokens from an account to the bridge.
+     * Can only be called when the contract is not paused.
+     * @param chainId The ID of the destination network.
+     * @param amount Amount of tokens that will be relocated.
+     * @return nonce The nonce of the relocation request.
+     */
     function registerRelocation(uint256 chainId, uint256 amount)
         external
         whenNotPaused
@@ -112,6 +130,11 @@ contract TokenBridgeUpgradeable is
         emit RegisterRelocation(nonce, chainId, _msgSender(), amount);
     }
 
+    /**
+     * @dev Cancels the relocation request with transferring tokens back from the bridge to the account.
+     * Can only be called when the contract is not paused.
+     * @param nonce The nonce of the relocation request to cancel.
+     */
     function cancelRelocation(uint256 nonce) public whenNotPaused {
         require(
             relocations[nonce].account == _msgSender(),
@@ -121,6 +144,12 @@ contract TokenBridgeUpgradeable is
         cancelRelocationInternal(nonce);
     }
 
+    /**
+     * @dev Cancels multiple relocation requests with transferring tokens back from the bridge to the accounts.
+     * Can only be called when the contract is not paused.
+     * Can only be called by a whitelisted address.
+     * @param nonces The array of relocation request nonces to cancel.
+     */
     function cancelRelocations(uint256[] memory nonces)
         public
         whenNotPaused
@@ -167,6 +196,12 @@ contract TokenBridgeUpgradeable is
         );
     }
 
+    /**
+     * @dev Completes pending relocation requests with burning of tokens previously received from accounts.
+     * Can only be called when the contract is not paused.
+     * Can only be called by a whitelisted address.
+     * @param count The number of pending relocation requests to complete.
+     */
     function relocate(uint256 count)
         public
         whenNotPaused
@@ -201,6 +236,15 @@ contract TokenBridgeUpgradeable is
         }
     }
 
+    /**
+     * @dev Accommodates new relocation requests with token minting for the accounts.
+     * Can only be called when the contract is not paused.
+     * Can only be called by a whitelisted address.
+     * @param chainId The ID of the source network.
+     * @param nonces The array of relocation nonces to accommodate.
+     * @param accounts The array of accounts to accommodate.
+     * @param amounts The array of token amounts to accommodate.
+     */
     function accommodate(
         uint256 chainId,
         uint256[] memory nonces,
@@ -241,6 +285,12 @@ contract TokenBridgeUpgradeable is
         arrivalNonces[chainId] = nonce;
     }
 
+    /**
+     * @dev Sets the relocation network supporting.
+     * Can only be called by the current owner.
+     * @param chainId The ID of the destination network to relocate.
+     * @param supported True if the destination network is supported to relocate.
+     */
     function setRelocationChain(uint256 chainId, bool supported)
         external
         onlyOwner
@@ -249,6 +299,12 @@ contract TokenBridgeUpgradeable is
         emit SetRelocationChain(chainId, supported);
     }
 
+    /**
+     * @dev Sets the arrival network supporting.
+     * Can only be called by the current owner.
+     * @param chainId The ID of the foreign network to arrive from.
+     * @param supported True if the foreign network is supported to arrive from.
+     */
     function setArrivalChain(uint256 chainId, bool supported)
         external
         onlyOwner
