@@ -8,7 +8,7 @@ import {SubstrateBRLCTokenV2Upgradeable} from "./SubstrateBRLCTokenV2Upgradeable
 /**
  * @title SubstrateBRLCTokenV3Upgradeable contract
  * @dev V3 changes:
- * - Added `relocate` and `accomodate` functionality.
+ * - Added bridging functionality.
  */
 contract SubstrateBRLCTokenV3Upgradeable is
     SubstrateBRLCTokenV2Upgradeable,
@@ -45,12 +45,12 @@ contract SubstrateBRLCTokenV3Upgradeable is
     }
 
     /**
-     * @dev Mints and accommodates tokens from the bridge.
-     * @param account The owner of tokens to accommodate.
-     * @param amount The amount of tokens to accommodate.
+     * @dev Mints tokens as part of a bridge operation.
+     * @param account The owner of the tokens passing through the bridge.
+     * @param amount The amount of tokens passing through the bridge.
      * @return True if the operation was successful.
      */
-    function mintAndAccommodate(address account, uint256 amount)
+    function mintForBridging(address account, uint256 amount)
         external
         override
         onlyBridge
@@ -58,39 +58,39 @@ contract SubstrateBRLCTokenV3Upgradeable is
     {
         require(
             account != address(0),
-            "Bridgeable: accommodate to the zero address"
+            "Bridgeable: minting for the zero address"
         );
         require(
             amount > 0,
-            "Bridgeable: accommodate amount not greater than 0"
+            "Bridgeable: minting amount is not greater than 0"
         );
 
         _mint(account, amount);
-        emit MintAndAccommodate(account, amount);
+        emit MintForBridging(account, amount);
 
         return true;
     }
 
     /**
-     * @dev Burns and relocates tokens from the bridge.
-     * @param account The owner of tokens to relocate.
-     * @param amount The amount of tokens to relocate.
+     * @dev Burns tokens as part of a bridge operation.
+     * @param account The owner of the tokens passing through the bridge.
+     * @param amount The amount of tokens passing through the bridge.
      * @return True if the operation was successful.
      */
-    function burnAndRelocate(address account, uint256 amount)
+    function burnForBridging(address account, uint256 amount)
         external
         override
         onlyBridge
         returns (bool)
     {
-        require(amount > 0, "Bridgeable: relocate amount not greater than 0");
+        require(amount > 0, "Bridgeable: burning amount is not greater than 0");
         require(
             balanceOf(_msgSender()) >= amount,
-            "Bridgeable: relocate amount exceeds balance"
+            "Bridgeable: burning amount exceeds the bridge balance"
         );
 
         _burn(_msgSender(), amount);
-        emit BurnAndRelocate(account, amount);
+        emit BurnForBridging(account, amount);
 
         return true;
     }

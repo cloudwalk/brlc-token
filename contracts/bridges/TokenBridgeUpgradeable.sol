@@ -116,6 +116,10 @@ contract TokenBridgeUpgradeable is
             amount > 0,
             "TokenBridge: relocation amount must be greater than 0"
         );
+        require(
+            IERC20Bridgeable(token).bridge() == address(this),
+            "TokenBridge: registration failed due to this bridge is not supported by the token contract"
+        );
 
         pendingRelocations = pendingRelocations.add(1);
         nonce = lastConfirmedRelocationNonce.add(pendingRelocations);
@@ -218,6 +222,10 @@ contract TokenBridgeUpgradeable is
             count <= pendingRelocations,
             "TokenBridge: the count exceeds the number of pending relocations"
         );
+        require(
+            IERC20Bridgeable(token).bridge() == address(this),
+            "TokenBridge: relocation failed due to this bridge is not supported by the token contract"
+        );
 
         uint256 fromNonce = lastConfirmedRelocationNonce.add(1);
         uint256 toNonce = lastConfirmedRelocationNonce.add(count);
@@ -229,11 +237,11 @@ contract TokenBridgeUpgradeable is
             Relocation memory relocation = relocations[i];
             if (!relocation.canceled) {
                 require(
-                    IERC20Bridgeable(token).burnAndRelocate(
+                    IERC20Bridgeable(token).burnForBridging(
                         relocation.account,
                         relocation.amount
                     ),
-                    "TokenBridge: burn and relocate tokens failed"
+                    "TokenBridge: burning of tokens failed"
                 );
                 emit ConfirmRelocation(
                     i,
@@ -270,6 +278,10 @@ contract TokenBridgeUpgradeable is
                 accounts.length == amounts.length,
             "TokenBridge: input arrays error"
         );
+        require(
+            IERC20Bridgeable(token).bridge() == address(this),
+            "TokenBridge: accommodation failed due to this bridge is not supported by the token contract"
+        );
 
         uint256 nonce = arrivalNonces[chainId];
 
@@ -288,11 +300,11 @@ contract TokenBridgeUpgradeable is
             );
             nonce = nonces[i];
             require(
-                IERC20Bridgeable(token).mintAndAccommodate(
+                IERC20Bridgeable(token).mintForBridging(
                     accounts[i],
                     amounts[i]
                 ),
-                "TokenBridge: mint and accommodate tokens failed"
+                "TokenBridge: minting of tokens failed"
             );
             emit ConfirmArrival(nonces[i], chainId, accounts[i], amounts[i]);
         }
