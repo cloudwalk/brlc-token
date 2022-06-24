@@ -118,7 +118,7 @@ contract TokenBridgeUpgradeable is
         );
         require(
             IERC20Bridgeable(token).bridge() == address(this),
-            "TokenBridge: registration failed due to this bridge is not supported by the token contract"
+            "TokenBridge: bridge is not supported by the token contract"
         );
 
         pendingRelocations = pendingRelocations.add(1);
@@ -179,7 +179,7 @@ contract TokenBridgeUpgradeable is
         );
         require(
             nonce <= lastConfirmedRelocationNonce.add(pendingRelocations),
-            "TokenBridge: relocation with the nonce doesn't exist"
+            "TokenBridge: relocation with the nonce does not exist"
         );
 
         Relocation storage relocation = relocations[nonce];
@@ -216,15 +216,15 @@ contract TokenBridgeUpgradeable is
     {
         require(
             count > 0,
-            "TokenBridge: the count should be greater than zero"
+            "TokenBridge: count should be greater than zero"
         );
         require(
             count <= pendingRelocations,
-            "TokenBridge: the count exceeds the number of pending relocations"
+            "TokenBridge: count exceeds the number of pending relocations"
         );
         require(
             IERC20Bridgeable(token).bridge() == address(this),
-            "TokenBridge: relocation failed due to this bridge is not supported by the token contract"
+            "TokenBridge: bridge is not supported by the token contract"
         );
 
         uint256 fromNonce = lastConfirmedRelocationNonce.add(1);
@@ -276,11 +276,11 @@ contract TokenBridgeUpgradeable is
             nonces.length != 0 &&
                 nonces.length == accounts.length &&
                 accounts.length == amounts.length,
-            "TokenBridge: input arrays error"
+            "TokenBridge: input arrays have different length"
         );
         require(
             IERC20Bridgeable(token).bridge() == address(this),
-            "TokenBridge: accommodation failed due to this bridge is not supported by the token contract"
+            "TokenBridge: bridge is not supported by the token contract"
         );
 
         uint256 nonce = arrivalNonces[chainId];
