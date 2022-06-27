@@ -9,7 +9,8 @@ describe("Contract 'BRLCWrapperUpgradeable'", async () => {
   const WRAPPER_SYMBOL = "BRLCX";
 
   const REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
-  const REVERT_MESSAGE_IF_CONTRACT_IS_INITIALIZED_WITH_ZERO_UNDERLYING_TOKEN_ADDRESS = "!underlying_";
+  const REVERT_MESSAGE_IF_CONTRACT_IS_INITIALIZED_WITH_ZERO_UNDERLYING_TOKEN_ADDRESS =
+    "the address of the underlying token contract is zero";
   const REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER = "Ownable: caller is not the owner";
   const REVERT_MESSAGE_IF_TOKEN_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
   const REVERT_MESSAGE_IF_TOKEN_BURN_AMOUNT_EXCEEDS_BALANCE = "ERC20: burn amount exceeds balance";
@@ -93,6 +94,12 @@ describe("Contract 'BRLCWrapperUpgradeable'", async () => {
         [user1, brlcWrapper],
         [+amount, 0]
       ).and.to.emit(
+        brlcWrapper,
+        "Wrap"
+      ).withArgs(
+        user1.address,
+        amount
+      ).and.to.emit(
         brlcMock,
         "Transfer"
       ).withArgs(
@@ -143,6 +150,12 @@ describe("Contract 'BRLCWrapperUpgradeable'", async () => {
         brlcWrapper,
         [user1, brlcWrapper],
         [-amount, 0]
+      ).and.to.emit(
+        brlcWrapper,
+        "Unwrap"
+      ).withArgs(
+        user1.address,
+        amount
       ).and.to.emit(
         brlcMock,
         "Transfer"
