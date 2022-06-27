@@ -45,7 +45,7 @@ contract BRLCWrapperUpgradeable is
         internal
         initializer
     {
-        require(underlying_ != address(0), "!underlying_");
+        require(underlying_ != address(0), "BRLCWrapper: the address of the underlying token contract is zero");
         _setupDecimals(IERC20Detailed(underlying_).decimals());
         _underlying = IERC20Upgradeable(underlying_);
     }
@@ -59,10 +59,10 @@ contract BRLCWrapperUpgradeable is
     }
 
     /**
-     * @dev Allows the owner to wrap underlying tokens.
+     * @dev Allows the owner to wrap underlying tokens for an account.
      * @param account The owner of underlying tokens.
-     * @param amount Amount of tokens to wrap.
-     * @return true if warp was successful.
+     * @param amount The amount of tokens to wrap.
+     * @return true if wrapping was successful.
      */
     function wrapFor(address account, uint256 amount)
         external
@@ -72,14 +72,15 @@ contract BRLCWrapperUpgradeable is
     {
         _underlying.safeTransferFrom(account, address(this), amount);
         _mint(account, amount);
+        emit Wrap(account, amount);
         return true;
     }
 
     /**
-     * @dev Allows the owner to unwrap underlying tokens.
+     * @dev Allows the owner to unwrap underlying tokens for an account.
      * @param account The owner of underlying tokens.
-     * @param amount Amount of tokens to unwrap.
-     * @return true if unwrap was successful.
+     * @param amount The amount of tokens to unwrap.
+     * @return true if unwrapping was successful.
      */
     function unwrapFor(address account, uint256 amount)
         external
@@ -89,6 +90,7 @@ contract BRLCWrapperUpgradeable is
     {
         _burn(account, amount);
         _underlying.safeTransfer(account, amount);
+        emit Unwrap(account, amount);
         return true;
     }
 
