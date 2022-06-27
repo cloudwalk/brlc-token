@@ -54,11 +54,8 @@ describe("Contract 'BRLCWrapperUpgradeable'", async () => {
   })
 
   describe("Function 'isIERC20Wrapper()'", async () => {
-    it("Returns true if is called by the owner", async () => {
+    it("Always returns true", async () => {
       expect(await brlcWrapper.isIERC20Wrapper()).to.equal(true);
-    });
-    it("Returns true if is called not by the owner", async () => {
-      expect(await brlcWrapper.connect(user1).isIERC20Wrapper()).to.equal(true);
     });
   });
 
