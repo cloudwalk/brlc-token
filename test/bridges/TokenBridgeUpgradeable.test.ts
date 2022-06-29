@@ -52,14 +52,12 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
   const REVERT_MESSAGE_IF_CONTRACT_IS_PAUSED = "Pausable: paused";
   const REVERT_MESSAGE_IF_RELOCATION_CHAIN_IF_NOT_SUPPORTED = "TokenBridge: relocation chain is not supported";
   const REVERT_MESSAGE_IF_RELOCATION_AMOUNT_IS_ZERO = "TokenBridge: relocation amount must be greater than 0";
-  const REVERT_MESSAGE_IF_REGISTRATION_FAILED_DUE_TO_BRIDGE_IS_UNSUPPORTED =
-    "TokenBridge: registration failed due to this bridge is not supported by the token contract";
+  const REVERT_MESSAGE_IF_BRIDGE_IS_UNSUPPORTED =
+    "TokenBridge: bridge is not supported by the token contract";
   const REVERT_MESSAGE_IF_ACCOUNT_IS_NOT_WHITELISTED = "Whitelistable: account is not whitelisted";
-  const REVERT_MESSAGE_IF_RELOCATION_COUNT_IS_ZERO = "TokenBridge: the count should be greater than zero"
+  const REVERT_MESSAGE_IF_RELOCATION_COUNT_IS_ZERO = "TokenBridge: count should be greater than zero"
   const REVERT_MESSAGE_IF_RELOCATION_COUNT_EXCEEDS_NUMBER_OF_PENDING_RELOCATIONS =
-    "TokenBridge: the count exceeds the number of pending relocations";
-  const REVERT_MESSAGE_IF_RELOCATION_FAILED_DUE_TO_BRIDGE_IS_UNSUPPORTED =
-    "TokenBridge: relocation failed due to this bridge is not supported by the token contract";
+    "TokenBridge: count exceeds the number of pending relocations";
   const REVERT_MESSAGE_IF_BURNING_OF_TOKENS_FAILED = "TokenBridge: burning of tokens failed";
   const REVERT_MESSAGE_IF_TOKEN_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
   const REVERT_MESSAGE_IF_TRANSACTION_SENDER_IS_NOT_AUTHORIZED = "TokenBridge: transaction sender is not authorized";
@@ -67,12 +65,10 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
   const REVERT_MESSAGE_IF_RELOCATION_WITH_THE_NONCE_ALREADY_PROCESSED =
     "TokenBridge: relocation with the nonce already processed";
   const REVERT_MESSAGE_IF_RELOCATION_WITH_THE_NONCE_DOES_NOT_EXIST =
-    "TokenBridge: relocation with the nonce doesn't exist";
+    "TokenBridge: relocation with the nonce does not exist";
   const REVERT_MESSAGE_IF_RELOCATION_WAS_ALREADY_CANCELED = "TokenBridge: relocation was already canceled";
   const REVERT_MESSAGE_IF_ARRIVAL_CHAIN_IS_NOT_SUPPORTED = "TokenBridge: arrival chain is not supported";
-  const REVERT_MESSAGE_IF_INPUT_ARRAY_ERROR = "TokenBridge: input arrays error";
-  const REVERT_MESSAGE_IF_ACCOMMODATION_FAILED_DUE_TO_BRIDGE_IS_UNSUPPORTED =
-    "TokenBridge: accommodation failed due to this bridge is not supported by the token contract";
+  const REVERT_MESSAGE_IF_INPUT_ARRAY_ERROR = "TokenBridge: input arrays have different length";
   const REVERT_MESSAGE_IF_RELOCATION_NONCE_MISMATCH = "TokenBridge: relocation nonce mismatch";
   const REVERT_MESSAGE_IF_ACCOUNT_IS_ZERO_ADDRESS = "TokenBridge: account is the zero address";
   const REVERT_MESSAGE_IF_AMOUNT_MUST_BE_GREATER_THAN_ZERO = "TokenBridge: amount must be greater than 0";
@@ -273,7 +269,7 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
         await proveTx(brlcMock.setBridge(deployer.address));
         await expect(
           tokenBridge.connect(relocation.account).registerRelocation(relocation.chainId, relocation.amount)
-        ).to.be.revertedWith(REVERT_MESSAGE_IF_REGISTRATION_FAILED_DUE_TO_BRIDGE_IS_UNSUPPORTED);
+        ).to.be.revertedWith(REVERT_MESSAGE_IF_BRIDGE_IS_UNSUPPORTED);
       });
 
       it("Is reverted if the user has not enough token balance", async () => {
@@ -523,7 +519,7 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
         await proveTx(brlcMock.setBridge(deployer.address));
         await expect(
           tokenBridge.connect(relocator).relocate(relocationCount)
-        ).to.be.revertedWith(REVERT_MESSAGE_IF_RELOCATION_FAILED_DUE_TO_BRIDGE_IS_UNSUPPORTED);
+        ).to.be.revertedWith(REVERT_MESSAGE_IF_BRIDGE_IS_UNSUPPORTED);
       });
 
       it("Is reverted if burning of tokens had failed", async () => {
@@ -794,7 +790,7 @@ describe("Contract 'TokenBridgeUpgradeable'", async () => {
             relocationAccounts,
             relocationAmounts
           )
-        ).to.be.revertedWith(REVERT_MESSAGE_IF_ACCOMMODATION_FAILED_DUE_TO_BRIDGE_IS_UNSUPPORTED);
+        ).to.be.revertedWith(REVERT_MESSAGE_IF_BRIDGE_IS_UNSUPPORTED);
       });
 
       it("Is reverted if one of the input nonces is less than it is expected", async () => {
