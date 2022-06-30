@@ -11,12 +11,12 @@ describe("Contract 'SubstrateBRLCTokenV3Upgradeable'", async () => {
 
   const REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED = 'Initializable: contract is already initialized';
   const REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER = "Ownable: caller is not the owner";
-  const REVERT_MESSAGE_IF_CALLER_IS_NOT_BRIDGE = "Bridgeable: caller is not the bridge";
-  const REVERT_MESSAGE_IF_MINTING_FOR_ZERO_ADDRESS = "Bridgeable: minting for the zero address";
-  const REVERT_MESSAGE_IF_MINTING_AMOUNT_IS_ZERO = "Bridgeable: minting amount is not greater than 0";
-  const REVERT_MESSAGE_IF_BURNING_AMOUNT_IS_ZERO = "Bridgeable: burning amount is not greater than 0";
+  const REVERT_MESSAGE_IF_CALLER_IS_NOT_BRIDGE = "BridgeableToken: caller is not the bridge";
+  const REVERT_MESSAGE_IF_MINTING_FOR_ZERO_ADDRESS = "BridgeableToken: minting for the zero address";
+  const REVERT_MESSAGE_IF_MINTING_AMOUNT_IS_ZERO = "BridgeableToken: minting amount is not greater than 0";
+  const REVERT_MESSAGE_IF_BURNING_AMOUNT_IS_ZERO = "BridgeableToken: burning amount is not greater than 0";
   const REVERT_MESSAGE_IF_BURNING_AMOUNT_EXCEEDS_THE_BRIDGE_BALANCE =
-    "Bridgeable: burning amount exceeds the bridge balance";
+    "BridgeableToken: burning amount exceeds the bridge balance";
 
   let brlcToken: Contract;
   let deployer: SignerWithAddress;

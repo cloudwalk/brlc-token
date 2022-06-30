@@ -38,7 +38,7 @@ contract BridgeableTokenUpgradeable is BaseTokenUpgradeable, IERC20Bridgeable {
     modifier onlyBridge() {
         require(
             _msgSender() == bridge(),
-            "Bridgeable: caller is not the bridge"
+            "BridgeableToken: caller is not the bridge"
         );
         _;
     }
@@ -57,9 +57,12 @@ contract BridgeableTokenUpgradeable is BaseTokenUpgradeable, IERC20Bridgeable {
     {
         require(
             account != address(0),
-            "Bridgeable: minting for the zero address"
+            "BridgeableToken: minting for the zero address"
         );
-        require(amount > 0, "Bridgeable: minting amount is not greater than 0");
+        require(
+            amount > 0,
+            "BridgeableToken: minting amount is not greater than 0"
+        );
 
         _mint(account, amount);
         emit MintForBridging(account, amount);
@@ -79,10 +82,13 @@ contract BridgeableTokenUpgradeable is BaseTokenUpgradeable, IERC20Bridgeable {
         onlyBridge
         returns (bool)
     {
-        require(amount > 0, "Bridgeable: burning amount is not greater than 0");
+        require(
+            amount > 0,
+            "BridgeableToken: burning amount is not greater than 0"
+        );
         require(
             balanceOf(_msgSender()) >= amount,
-            "Bridgeable: burning amount exceeds the bridge balance"
+            "BridgeableToken: burning amount exceeds the bridge balance"
         );
 
         _burn(_msgSender(), amount);
