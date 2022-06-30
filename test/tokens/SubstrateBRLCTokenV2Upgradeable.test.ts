@@ -12,14 +12,14 @@ describe("Contract 'SubstrateBRLCTokenV2Upgradeable'", async () => {
   const REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED = 'Initializable: contract is already initialized';
   const REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER = "Ownable: caller is not the owner";
   const REVERT_MESSAGE_IF_CONTRACT_IS_PAUSED = "Pausable: paused";
-  const REVERT_MESSAGE_IF_CALLER_IS_NOT_MASTER_MINTER = "MintAndBurn: caller is not the masterMinter";
-  const REVERT_MESSAGE_IF_CALLER_IS_NOT_MINTER = "MintAndBurn: caller is not a minter";
+  const REVERT_MESSAGE_IF_CALLER_IS_NOT_MASTER_MINTER = "MintableToken: caller is not the masterMinter";
+  const REVERT_MESSAGE_IF_CALLER_IS_NOT_MINTER = "MintableToken: caller is not a minter";
   const REVERT_MESSAGE_IF_ACCOUNT_IS_BLACKLISTED = 'Blacklistable: account is blacklisted';
-  const REVERT_MESSAGE_IF_MINT_TO_ZERO_ADDRESS = 'MintAndBurn: mint to the zero address';
-  const REVERT_MESSAGE_IF_MINT_AMOUNT_IS_NOT_GREATER_THAN_ZERO = 'MintAndBurn: mint amount not greater than 0';
-  const REVERT_MESSAGE_IF_MINT_AMOUNT_EXCEEDS_ALLOWANCE = 'MintAndBurn: mint amount exceeds mintAllowance';
-  const REVERT_MESSAGE_IF_BURN_AMOUNT_IS_NOT_GREATER_THAN_ZERO = 'MintAndBurn: burn amount not greater than 0';
-  const REVERT_MESSAGE_IF_BURN_AMOUNT_EXCEEDS_BALANCE = 'MintAndBurn: burn amount exceeds balance';
+  const REVERT_MESSAGE_IF_MINT_TO_ZERO_ADDRESS = 'MintableToken: mint to the zero address';
+  const REVERT_MESSAGE_IF_MINT_AMOUNT_IS_NOT_GREATER_THAN_ZERO = 'MintableToken: mint amount not greater than 0';
+  const REVERT_MESSAGE_IF_MINT_AMOUNT_EXCEEDS_ALLOWANCE = 'MintableToken: mint amount exceeds mintAllowance';
+  const REVERT_MESSAGE_IF_BURN_AMOUNT_IS_NOT_GREATER_THAN_ZERO = 'MintableToken: burn amount not greater than 0';
+  const REVERT_MESSAGE_IF_BURN_AMOUNT_EXCEEDS_BALANCE = 'MintableToken: burn amount exceeds balance';
 
   let brlcToken: Contract;
   let deployer: SignerWithAddress;

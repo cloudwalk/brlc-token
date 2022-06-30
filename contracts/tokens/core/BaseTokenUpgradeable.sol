@@ -2,20 +2,20 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {RescuableUpgradeable} from "../base/RescuableUpgradeable.sol";
-import {PausableExUpgradeable} from "../base/PausableExUpgradeable.sol";
-import {BlacklistableUpgradeable} from "../base/BlacklistableUpgradeable.sol";
+import {RescuableUpgradeable} from "../../base/RescuableUpgradeable.sol";
+import {PausableExUpgradeable} from "../../base/PausableExUpgradeable.sol";
+import {BlacklistableUpgradeable} from "../../base/BlacklistableUpgradeable.sol";
 
 /**
- * @title BRLCTokenUpgradeable base contract
+ * @title BaseTokenUpgradeable contract
  */
-abstract contract BRLCTokenUpgradeable is
+abstract contract BaseTokenUpgradeable is
     RescuableUpgradeable,
     PausableExUpgradeable,
     BlacklistableUpgradeable,
     ERC20Upgradeable
 {
-    function __BRLCToken_init(
+    function __BaseToken_init(
         string memory name_,
         string memory symbol_,
         uint8 decimals_
@@ -27,10 +27,10 @@ abstract contract BRLCTokenUpgradeable is
         __PausableEx_init_unchained();
         __Blacklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
-        __BRLCToken_init_unchained(decimals_);
+        __BaseToken_init_unchained(decimals_);
     }
 
-    function __BRLCToken_init_unchained(uint8 decimals_) internal initializer {
+    function __BaseToken_init_unchained(uint8 decimals_) internal initializer {
         _setupDecimals(decimals_);
     }
 

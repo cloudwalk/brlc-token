@@ -2,13 +2,13 @@
 
 pragma solidity >=0.6.0 <0.8.0;
 
-import {BRLCTokenUpgradeable} from "../../tokens/BRLCTokenUpgradeable.sol";
+import {BaseTokenUpgradeable} from "../../tokens/core/BaseTokenUpgradeable.sol";
 
 /**
- * @title BRLCTokenUpgradeableMock contract
- * @dev An implementation of the {BRLCTokenUpgradeable} contract for test purposes.
+ * @title BaseTokenUpgradeableMock contract
+ * @dev An implementation of the {BaseTokenUpgradeable} contract for test purposes.
  */
-contract BRLCTokenUpgradeableMock is BRLCTokenUpgradeable {
+contract BaseTokenUpgradeableMock is BaseTokenUpgradeable {
 
     event TestBeforeTokenTransferSucceeded();
 
@@ -24,7 +24,7 @@ contract BRLCTokenUpgradeableMock is BRLCTokenUpgradeable {
         string memory symbol_,
         uint8 decimals_
     ) public {
-        __BRLCToken_init(name_, symbol_, decimals_);
+        __BaseToken_init(name_, symbol_, decimals_);
     }
 
     /**
@@ -35,7 +35,7 @@ contract BRLCTokenUpgradeableMock is BRLCTokenUpgradeable {
     function initialize_unchained(
         uint8 decimals_
     ) public {
-        __BRLCToken_init_unchained(decimals_);
+        __BaseToken_init_unchained(decimals_);
     }
 
     /**
