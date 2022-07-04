@@ -25,8 +25,8 @@ contract IssuingCashierUpgradeable is
     mapping(address => uint256) private _clearedBalances;
 
     event CardPayment(address indexed account, uint256 amount);
-    event CardPaymentClear(address indexed account, uint256 amount uint256 cleared_balance, uint256 uncleared_balance);
-    event CardPaymentUnclear(address indexed account, uint256 amount uint256 cleared_balance, uint256 uncleared_balance);
+    event CardPaymentClear(address indexed account, uint256 amount, uint256 cleared_balance, uint256 uncleared_balance);
+    event CardPaymentUnclear(address indexed account, uint256 amount, uint256 cleared_balance, uint256 uncleared_balance);
     event CardPaymentReverse(address indexed account, uint256 amount, bytes32 indexed original_transaction);
 
     function initialize(address token_) public initializer {
@@ -53,7 +53,7 @@ contract IssuingCashierUpgradeable is
         view
         virtual
     returns(uint256) {
-        return _unclearedBalances[account]
+        return _unclearedBalances[account];
     }
 
     function clearedBalanceOf(address account)
@@ -61,7 +61,7 @@ contract IssuingCashierUpgradeable is
         view
         virtual
     returns(uint256) {
-        return _clearedBalances[account]
+        return _clearedBalances[account];
     }
 
     function cardPayment(address account, uint256 amount)

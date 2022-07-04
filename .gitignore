@@ -10,3 +10,6 @@ artifacts
 
 #IDE files
 /.idea/
+
+#Version manager files
+.tool-versions
