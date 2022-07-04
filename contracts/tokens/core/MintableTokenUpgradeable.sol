@@ -8,7 +8,7 @@ import {BaseTokenUpgradeable} from "./BaseTokenUpgradeable.sol";
 /**
  * @title MintableTokenUpgradeable contract
  */
-contract MintableTokenUpgradeable is BaseTokenUpgradeable, IERC20Mintable {
+abstract contract MintableTokenUpgradeable is BaseTokenUpgradeable, IERC20Mintable {
     using SafeMathUpgradeable for uint256;
 
     /// @dev The address of the master minter.

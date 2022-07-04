@@ -8,7 +8,7 @@ import {BaseTokenUpgradeable} from "./BaseTokenUpgradeable.sol";
 /**
  * @title BridgeableTokenUpgradeable contract
  */
-contract BridgeableTokenUpgradeable is BaseTokenUpgradeable, IERC20Bridgeable {
+abstract contract BridgeableTokenUpgradeable is BaseTokenUpgradeable, IERC20Bridgeable {
     event BridgeChanged(address indexed newBridge);
 
     /// @dev The address of the bridge.

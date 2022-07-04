@@ -2,7 +2,7 @@ import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 import { BigNumber, Contract, ContractFactory } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import { proveTx } from "../../test-utils/eth";
+import { proveTx } from "../../../test-utils/eth";
 
 describe("Contract 'BaseTokenUpgradeable'", async () => {
   const TOKEN_NAME = "BRL Coin";
