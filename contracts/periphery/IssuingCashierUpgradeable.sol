@@ -24,10 +24,10 @@ contract IssuingCashierUpgradeable is
     mapping(address => uint256) private _unclearedBalances;
     mapping(address => uint256) private _clearedBalances;
 
-    event CardPayment(address indexed account, uint256 amount);
+    event CardPayment(address indexed account, uint256 amount, bytes16 indexed internal_transaction_id);
     event CardPaymentClear(address indexed account, uint256 amount, uint256 cleared_balance, uint256 uncleared_balance);
     event CardPaymentUnclear(address indexed account, uint256 amount, uint256 cleared_balance, uint256 uncleared_balance);
-    event CardPaymentReverse(address indexed account, uint256 amount, bytes32 indexed original_transaction);
+    event CardPaymentReverse(address indexed account, uint256 amount, bytes16 indexed internal_transaction_id, bytes32 indexed parent_transaction_hash);
 
     function initialize(address token_) public initializer {
         __IssuingCashier_init(token_);
@@ -64,7 +64,7 @@ contract IssuingCashierUpgradeable is
         return _clearedBalances[account];
     }
 
-    function cardPayment(address account, uint256 amount)
+    function cardPayment(address account, uint256 amount, bytes16 internal_transaction_id)
         external
         whenNotPaused
     {
@@ -75,7 +75,7 @@ contract IssuingCashierUpgradeable is
         );
 
         _unclearedBalances[_msgSender()] = _unclearedBalances[_msgSender()].add(amount);
-        emit CardPayment(account, amount);
+        emit CardPayment(account, amount, internal_transaction_id);
     }
 
     function cardPaymentClear(address account, uint256 amount)
@@ -129,11 +129,14 @@ contract IssuingCashierUpgradeable is
      * Emits a {CardPaymentReverse} event
      *
     */
-    function cardPaymentReverse(address account, uint256 amount, bytes32 original_transaction)
+    function cardPaymentReverse(address account, uint256 amount, bytes16 internal_transaction_id, bytes32 parent_transaction_hash)
         external
         whenNotPaused
         onlyWhitelisted(_msgSender())
-    {}
+    {
+        // TODO
+        emit CardPaymentReverse(account, amount, internal_transaction_id, parent_transaction_hash);
+    }
 
 
     // function to bulk transfer all uncleared money to cleared?
