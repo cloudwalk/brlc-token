@@ -10,7 +10,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  compile-contracts:
 
     runs-on: ubuntu-latest
 
@@ -27,5 +27,4 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - run: npm install
-    - run: npm install hardhat@2.9.9
     - run: npx hardhat compile
