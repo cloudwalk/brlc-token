@@ -85,6 +85,15 @@ contract PixCashierUpgradeable is
     }
 
     /**
+     * @dev Executes a cash-in transaction and mocks tx id.
+     * @param account An address that will receive tokens.
+     * @param amount The amount of tokens to be minted.
+     */
+    function cashIn(address account, uint256 amount) external {
+        cashIn(account, amount, "mock_tx_id");
+    }
+
+    /**
      * @dev Executes a cash-in transaction.
      * Can only be called when the contract is not paused.
      * Can only be called by a whitelisted address.
@@ -97,7 +106,7 @@ contract PixCashierUpgradeable is
         address account,
         uint256 amount,
         string memory txId
-    ) external whenNotPaused onlyWhitelisted(_msgSender()) {
+    ) public whenNotPaused onlyWhitelisted(_msgSender()) {
         require(
             bytes(txId).length > 0,
             "PixCashier: transaction id must be provided"
@@ -107,16 +116,21 @@ contract PixCashierUpgradeable is
     }
 
     /**
+     * @dev Initiates a cash-out transaction and mocks tx id.
+     * @param amount The amount of tokens to be transferred to the contract.
+     */
+    function cashOut(uint256 amount) external {
+        cashOut(amount, "mock_tx_id");
+    }
+
+    /**
      * @dev Initiates a cash-out transaction.
      * Can only be called when the contract is not paused.
      * Emits a {CashOut} event.
      * @param amount The amount of tokens to be transferred to the contract.
      * @param txId The off-chain transaction identifier.
      */
-    function cashOut(uint256 amount, string memory txId)
-        external
-        whenNotPaused
-    {
+    function cashOut(uint256 amount, string memory txId) public whenNotPaused {
         require(
             bytes(txId).length > 0,
             "PixCashier: transaction id must be provided"
@@ -139,6 +153,14 @@ contract PixCashierUpgradeable is
     }
 
     /**
+     * @dev Confirms a cash-out transaction and mocks tx id.
+     * @param amount The amount of tokens to be burned.
+     */
+    function cashOutConfirm(uint256 amount) external {
+        cashOutConfirm(amount, "mock_tx_id");
+    }
+
+    /**
      * @dev Confirms a cash-out transaction.
      * Can only be called when the contract is not paused.
      * Emits a {CashOutConfirm} event.
@@ -146,7 +168,7 @@ contract PixCashierUpgradeable is
      * @param txId The off-chain transaction identifier.
      */
     function cashOutConfirm(uint256 amount, string memory txId)
-        external
+        public
         whenNotPaused
     {
         require(
@@ -168,6 +190,14 @@ contract PixCashierUpgradeable is
     }
 
     /**
+     * @dev Reverts a cash-out transaction and mocks tx id.
+     * @param amount The amount of tokens to be transferred back to the sender.
+     */
+    function cashOutReverse(uint256 amount) external {
+        cashOutReverse(amount, "mock_tx_id");
+    }
+
+    /**
      * @dev Reverts a cash-out transaction.
      * Can only be called when the contract is not paused.
      * Emits a {CashOutReverse} event.
@@ -175,7 +205,7 @@ contract PixCashierUpgradeable is
      * @param txId The off-chain transaction identifier.
      */
     function cashOutReverse(uint256 amount, string memory txId)
-        external
+        public
         whenNotPaused
     {
         require(
