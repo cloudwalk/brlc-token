@@ -20,16 +20,34 @@ contract IssuingCashierUpgradeable is
     WhitelistableExUpgradeable
 {
     using SafeMathUpgradeable for uint256; // should we use Solidity 0.8.0 already and ditch SafeMath altogether?
+
     address public token;
+
     mapping(address => uint256) private _unclearedBalances;
     mapping(address => uint256) private _clearedBalances;
+    mapping(bytes32 => bool) private _reversedTransactions;
 
-    event CardPayment(uint256 amount, bytes16 indexed client_transaction_id);
-    event CardPaymentClear(address indexed account, uint256 amount, uint256 cleared_balance, uint256 uncleared_balance);
-    event CardPaymentUnclear(address indexed account, uint256 amount, uint256 cleared_balance, uint256 uncleared_balance);
-    event CardPaymentReverse(address indexed account, uint256 amount, uint256 uncleared_balance, bytes16 indexed client_transaction_id, bytes32 indexed parent_transaction_hash);
-    event Clear(address indexed account, uint256 amount);
-    event Unclear(address indexed account, uint256 amount);
+    event CardPayment(address indexed from,
+                      uint256 amount,
+                      bytes16 indexed clientTransactionId);
+
+    event CardPaymentClear(address indexed account,
+                           uint256 amount,
+                           uint256 clearedBalance,
+                           uint256 unclearedBalance);
+
+    event CardPaymentUnclear(address indexed account,
+                             uint256 amount,
+                             uint256 clearedBalance,
+                             uint256 unclearedBalance);
+
+    event CardPaymentReverse(address indexed account,
+                             uint256 amount,
+                             uint256 unclearedBalance,
+                             bytes16 indexed clientTransactionId,
+                             bytes32 indexed parentTransactionHash);
+
+    event ClearConfirm(address indexed account, uint256 amount);
 
     function initialize(address token_) public initializer {
         __IssuingCashier_init(token_);
@@ -50,10 +68,10 @@ contract IssuingCashierUpgradeable is
         token = token_;
     }
 
-    /*
-     * @dev Returns the uncleared balance
-     * @param account The address of the token owner
-        */
+    /**
+     * @dev Returns the uncleared balance.
+     * @param account The address of the token owner.
+     */
     function unclearedBalanceOf(address account)
         external
         view
@@ -62,10 +80,10 @@ contract IssuingCashierUpgradeable is
         return _unclearedBalances[account];
     }
 
-    /*
+    /**
      * @dev Returns the cleared balance
      * @param account The address of the token owner
-        */
+     */
     function clearedBalanceOf(address account)
         external
         view
@@ -74,15 +92,14 @@ contract IssuingCashierUpgradeable is
         return _clearedBalances[account];
     }
 
-    /*
+    /**
      * @dev Executes an Issuing operation transaction
      * Can only be called when the contract is not paused
-     * Can only be called by a whitelisted address
      * Emits a {CardPayment} event
      * @param amount The transaction amount to be transferred to this contract
      * @param client_transaction_id The transaction id from the Issuing operation backend
-        */
-    function cardPayment(uint256 amount, bytes16 client_transaction_id)
+     */
+    function cardPayment(uint256 amount, bytes16 clientTransactionId)
         external
         whenNotPaused
     {
@@ -94,10 +111,10 @@ contract IssuingCashierUpgradeable is
 
         _unclearedBalances[_msgSender()] = _unclearedBalances[_msgSender()].add(amount);
 
-        emit CardPayment(amount, client_transaction_id);
+        emit CardPayment(_msgSender(), amount, clientTransactionId);
     }
 
-    /*
+    /**
      * @dev Initiates a clearing operation
      * Can only be called by whitelisted address
      * Can only be called when contract is not paused
@@ -118,7 +135,7 @@ contract IssuingCashierUpgradeable is
         emit CardPaymentClear(account, amount, _clearedBalances[account], _unclearedBalances[account]);
     }
 
-    /*
+    /**
      * @dev Initiates a clearing operation
      * Can only be called by whitelisted address
      * Can only be called when contract is not paused
@@ -139,27 +156,52 @@ contract IssuingCashierUpgradeable is
         emit CardPaymentUnclear(account, amount, _clearedBalances[account], _unclearedBalances[account]);
     }
 
-    /*
+    /**
      * @dev Initiates a card payment reversal
      * Can only be called by whitelisted address
      * Can only be called when contract is not paused
      * Emits a {CardPaymentReverse} event
      *
-    */
-    function cardPaymentReverse(address account, uint256 amount, bytes16 client_transaction_id, bytes32 parent_transaction_hash)
+     */
+    function cardPaymentReverse(address account, uint256 amount, bytes16 clientTransactionId, bytes32 parentTransactionHash)
         external
         whenNotPaused
         onlyWhitelisted(_msgSender())
     {
+        require(_reversedTransactions[parentTransactionHash] != true, "IssuingCashier: card payment already reversed");
+
         _unclearedBalances[account] = _unclearedBalances[account].sub(amount, "IssuingCashier: card payment reverse amount exceeds balance");
 
         IERC20Upgradeable(token).transfer(account, amount);
+
+        _reversedTransactions[parentTransactionHash] = true;
 
         emit CardPaymentReverse(
             account,
             amount,
             _unclearedBalances[account],
-            client_transaction_id,
-            parent_transaction_hash);
+            clientTransactionId,
+            parentTransactionHash);
+    }
+
+    /** @dev Initiates Clearing final step (initiates token burning)
+     *  Can only be called when the contract is not paused.
+     *  Can only be called by whitelisted address.
+     *  Emits a {ClearConfirm} event.
+     *  @param account The token owner.
+     *  @param amount The amount of tokens that will be burnt.
+     */
+    function clearConfirm(address account, uint256 amount)
+        external
+        whenNotPaused
+        onlyWhitelisted(_msgSender())
+    {
+        _claredBalances[account] = _clearedBalances[account].sub(
+            amount,
+            "IssuingCashier: clearConfirm amount exceeds cleared balance");
+
+        IERC20Mintable(token).burnFrom(account, amount);
+
+        emit ClearConfirm(account, amount, _clearedBalances[account]);
     }
 }
