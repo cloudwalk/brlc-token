@@ -97,7 +97,7 @@ contract IssuingCashierUpgradeable is
      * Can only be called when the contract is not paused
      * Emits a {CardPayment} event
      * @param amount The transaction amount to be transferred to this contract
-     * @param client_transaction_id The transaction id from the Issuing operation backend
+     * @param clientTransactionId The transaction id from the Issuing operation backend
      */
     function cardPayment(uint256 amount, bytes16 clientTransactionId)
         external
@@ -196,11 +196,13 @@ contract IssuingCashierUpgradeable is
         whenNotPaused
         onlyWhitelisted(_msgSender())
     {
-        _claredBalances[account] = _clearedBalances[account].sub(
+        _clearedBalances[account] = _clearedBalances[account].sub(
             amount,
             "IssuingCashier: clearConfirm amount exceeds cleared balance");
 
         IERC20Mintable(token).burnFrom(account, amount);
+        // this would require implementation of IERC20Burnable or
+        // adding burnFrom(account, amount) to IERC20Mintable
 
         emit ClearConfirm(account, amount, _clearedBalances[account]);
     }
