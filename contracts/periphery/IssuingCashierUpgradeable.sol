@@ -27,25 +27,33 @@ contract IssuingCashierUpgradeable is
     mapping(address => uint256) private _clearedBalances;
     mapping(bytes32 => bool) private _reversedTransactions;
 
-    event CardPayment(address indexed from,
-                      uint256 amount,
-                      bytes16 indexed clientTransactionId);
+    event CardPayment(
+        address indexed from,
+        uint256 amount,
+        bytes16 indexed clientTransactionId
+    );
 
-    event CardPaymentClear(address indexed account,
-                           uint256 amount,
-                           uint256 clearedBalance,
-                           uint256 unclearedBalance);
+    event CardPaymentClear(
+        address indexed account,
+        uint256 amount,
+        uint256 clearedBalance,
+        uint256 unclearedBalance
+    );
 
-    event CardPaymentUnclear(address indexed account,
-                             uint256 amount,
-                             uint256 clearedBalance,
-                             uint256 unclearedBalance);
+    event CardPaymentUnclear(
+        address indexed account,
+        uint256 amount,
+        uint256 clearedBalance,
+        uint256 unclearedBalance
+    );
 
-    event CardPaymentReverse(address indexed account,
-                             uint256 amount,
-                             uint256 unclearedBalance,
-                             bytes16 indexed clientTransactionId,
-                             bytes32 indexed parentTransactionHash);
+    event CardPaymentReverse(
+        address indexed account,
+        uint256 amount,
+        uint256 unclearedBalance,
+        bytes16 indexed clientTransactionId,
+        bytes32 indexed parentTransactionHash
+    );
 
     event ClearConfirm(address indexed account, uint256 amount);
 
@@ -132,7 +140,12 @@ contract IssuingCashierUpgradeable is
 
         _clearedBalances[account] = _clearedBalances[account].add(amount);
 
-        emit CardPaymentClear(account, amount, _clearedBalances[account], _unclearedBalances[account]);
+        emit CardPaymentClear(
+            account,
+            amount,
+            _clearedBalances[account],
+            _unclearedBalances[account]
+        );
     }
 
     /**
@@ -153,7 +166,12 @@ contract IssuingCashierUpgradeable is
 
         _unclearedBalances[account] = _unclearedBalances[account].add(amount);
 
-        emit CardPaymentUnclear(account, amount, _clearedBalances[account], _unclearedBalances[account]);
+        emit CardPaymentUnclear(
+            account,
+            amount,
+            _clearedBalances[account],
+            _unclearedBalances[account]
+        );
     }
 
     /**
@@ -163,14 +181,25 @@ contract IssuingCashierUpgradeable is
      * Emits a {CardPaymentReverse} event
      *
      */
-    function cardPaymentReverse(address account, uint256 amount, bytes16 clientTransactionId, bytes32 parentTransactionHash)
+    function cardPaymentReverse(
+        address account,
+        uint256 amount,
+        bytes16 clientTransactionId,
+        bytes32 parentTransactionHash
+    )
         external
         whenNotPaused
         onlyWhitelisted(_msgSender())
     {
-        require(_reversedTransactions[parentTransactionHash] != true, "IssuingCashier: card payment already reversed");
+        require(
+            _reversedTransactions[parentTransactionHash] != true,
+            "IssuingCashier: card payment already reversed"
+        );
 
-        _unclearedBalances[account] = _unclearedBalances[account].sub(amount, "IssuingCashier: card payment reverse amount exceeds balance");
+        _unclearedBalances[account] = _unclearedBalances[account].sub(
+            amount,
+            "IssuingCashier: card payment reverse amount exceeds balance"
+        );
 
         IERC20Upgradeable(token).transfer(account, amount);
 
@@ -196,6 +225,8 @@ contract IssuingCashierUpgradeable is
         whenNotPaused
         onlyWhitelisted(_msgSender())
     {
+        // IMPLEMENTATION TO BE DEFINED
+        /*
         _clearedBalances[account] = _clearedBalances[account].sub(
             amount,
             "IssuingCashier: clearConfirm amount exceeds cleared balance");
@@ -205,5 +236,6 @@ contract IssuingCashierUpgradeable is
         // adding burnFrom(account, amount) to IERC20Mintable
 
         emit ClearConfirm(account, amount, _clearedBalances[account]);
+        */
     }
 }
