@@ -55,7 +55,11 @@ contract IssuingCashierUpgradeable is
         bytes32 indexed parentTransactionHash
     );
 
-    event ClearConfirm(address indexed account, uint256 amount);
+    event ClearConfirm(
+        address indexed account,
+        uint256 amount,
+        uint256 clearedBalance
+    );
 
     function initialize(address token_) public initializer {
         __IssuingCashier_init(token_);
@@ -179,7 +183,6 @@ contract IssuingCashierUpgradeable is
      * Can only be called by whitelisted address
      * Can only be called when contract is not paused
      * Emits a {CardPaymentReverse} event
-     *
      */
     function cardPaymentReverse(
         address account,
@@ -210,10 +213,11 @@ contract IssuingCashierUpgradeable is
             amount,
             _unclearedBalances[account],
             clientTransactionId,
-            parentTransactionHash);
+            parentTransactionHash
+        );
     }
 
-    /** @dev Initiates Clearing final step (initiates token burning)
+    /** @dev Initiates Clearing final step (token burning)
      *  Can only be called when the contract is not paused.
      *  Can only be called by whitelisted address.
      *  Emits a {ClearConfirm} event.
@@ -225,17 +229,13 @@ contract IssuingCashierUpgradeable is
         whenNotPaused
         onlyWhitelisted(_msgSender())
     {
-        // IMPLEMENTATION TO BE DEFINED
-        /*
         _clearedBalances[account] = _clearedBalances[account].sub(
             amount,
-            "IssuingCashier: clearConfirm amount exceeds cleared balance");
+            "IssuingCashier: clearConfirm amount exceeds cleared balance"
+        );
 
-        IERC20Mintable(token).burnFrom(account, amount);
-        // this would require implementation of IERC20Burnable or
-        // adding burnFrom(account, amount) to IERC20Mintable
+        IERC20Mintable(token).burn(amount);
 
         emit ClearConfirm(account, amount, _clearedBalances[account]);
-        */
     }
 }
