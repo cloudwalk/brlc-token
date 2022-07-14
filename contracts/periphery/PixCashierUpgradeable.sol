@@ -27,29 +27,25 @@ contract PixCashierUpgradeable is
     event CashIn(
         address indexed account,
         uint256 amount,
-        string indexed indexedTxId,
-        string originalTxId
+        bytes32 indexed txId
     );
     event CashOut(
         address indexed account,
         uint256 amount,
         uint256 balance,
-        string indexed indexedTxId,
-        string originalTxId
+        bytes32 indexed txId
     );
     event CashOutConfirm(
         address indexed account,
         uint256 amount,
         uint256 balance,
-        string indexed indexedTxId,
-        string originalTxId
+        bytes32 indexed txId
     );
     event CashOutReverse(
         address indexed account,
         uint256 amount,
         uint256 balance,
-        string indexed indexedTxId,
-        string originalTxId
+        bytes32 indexed txId
     );
 
     function initialize(address token_) public initializer {
@@ -90,7 +86,7 @@ contract PixCashierUpgradeable is
      * @param amount The amount of tokens to be minted.
      */
     function cashIn(address account, uint256 amount) external {
-        cashIn(account, amount, "mock_tx_id");
+        cashIn(account, amount, "MOCK_TRANSACTION_ID");
     }
 
     /**
@@ -105,14 +101,14 @@ contract PixCashierUpgradeable is
     function cashIn(
         address account,
         uint256 amount,
-        string memory txId
+        bytes32 txId
     ) public whenNotPaused onlyWhitelisted(_msgSender()) {
         require(
-            bytes(txId).length > 0,
+            txId != 0,
             "PixCashier: transaction id must be provided"
         );
         IERC20Mintable(token).mint(account, amount);
-        emit CashIn(account, amount, txId, txId);
+        emit CashIn(account, amount, txId);
     }
 
     /**
@@ -120,7 +116,7 @@ contract PixCashierUpgradeable is
      * @param amount The amount of tokens to be transferred to the contract.
      */
     function cashOut(uint256 amount) external {
-        cashOut(amount, "mock_tx_id");
+        cashOut(amount, "MOCK_TRANSACTION_ID");
     }
 
     /**
@@ -130,9 +126,9 @@ contract PixCashierUpgradeable is
      * @param amount The amount of tokens to be transferred to the contract.
      * @param txId The off-chain transaction identifier.
      */
-    function cashOut(uint256 amount, string memory txId) public whenNotPaused {
+    function cashOut(uint256 amount, bytes32 txId) public whenNotPaused {
         require(
-            bytes(txId).length > 0,
+            txId != 0,
             "PixCashier: transaction id must be provided"
         );
         IERC20Upgradeable(token).transferFrom(
@@ -147,7 +143,6 @@ contract PixCashierUpgradeable is
             _msgSender(),
             amount,
             _cashOutBalances[_msgSender()],
-            txId,
             txId
         );
     }
@@ -157,7 +152,7 @@ contract PixCashierUpgradeable is
      * @param amount The amount of tokens to be burned.
      */
     function cashOutConfirm(uint256 amount) external {
-        cashOutConfirm(amount, "mock_tx_id");
+        cashOutConfirm(amount, "MOCK_TRANSACTION_ID");
     }
 
     /**
@@ -167,12 +162,12 @@ contract PixCashierUpgradeable is
      * @param amount The amount of tokens to be burned.
      * @param txId The off-chain transaction identifier.
      */
-    function cashOutConfirm(uint256 amount, string memory txId)
+    function cashOutConfirm(uint256 amount, bytes32 txId)
         public
         whenNotPaused
     {
         require(
-            bytes(txId).length > 0,
+            txId != 0,
             "PixCashier: transaction id must be provided"
         );
         _cashOutBalances[_msgSender()] = _cashOutBalances[_msgSender()].sub(
@@ -184,7 +179,6 @@ contract PixCashierUpgradeable is
             _msgSender(),
             amount,
             _cashOutBalances[_msgSender()],
-            txId,
             txId
         );
     }
@@ -194,7 +188,7 @@ contract PixCashierUpgradeable is
      * @param amount The amount of tokens to be transferred back to the sender.
      */
     function cashOutReverse(uint256 amount) external {
-        cashOutReverse(amount, "mock_tx_id");
+        cashOutReverse(amount, "MOCK_TRANSACTION_ID");
     }
 
     /**
@@ -204,12 +198,12 @@ contract PixCashierUpgradeable is
      * @param amount The amount of tokens to be transferred back to the sender.
      * @param txId The off-chain transaction identifier.
      */
-    function cashOutReverse(uint256 amount, string memory txId)
+    function cashOutReverse(uint256 amount, bytes32 txId)
         public
         whenNotPaused
     {
         require(
-            bytes(txId).length > 0,
+            txId != 0,
             "PixCashier: transaction id must be provided"
         );
         _cashOutBalances[_msgSender()] = _cashOutBalances[_msgSender()].sub(
@@ -221,7 +215,6 @@ contract PixCashierUpgradeable is
             _msgSender(),
             amount,
             _cashOutBalances[_msgSender()],
-            txId,
             txId
         );
     }
