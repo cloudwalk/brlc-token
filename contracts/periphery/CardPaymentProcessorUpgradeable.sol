@@ -162,7 +162,7 @@ contract CardPaymentProcessorUpgradeable is
      * @return amount The amount of tokens for the payment.
      * @return status The current status of the payment according to the appropriate enum.
      */
-    function cardPaymentFor(bytes16 authorizationId)
+    function paymentFor(bytes16 authorizationId)
         external
         view
         virtual
