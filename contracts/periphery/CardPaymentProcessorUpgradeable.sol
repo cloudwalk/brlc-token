@@ -85,6 +85,7 @@ contract CardPaymentProcessorUpgradeable is
     mapping(address => uint256) private _unclearedBalances;
     mapping(address => uint256) private _clearedBalances;
     mapping(bytes16 => Payment) private _payments;
+    mapping(bytes32 => bool) private _paymentReverseFlags;
 
     function initialize(address token_) public initializer {
         __CardPaymentProcessor_init(token_);
@@ -179,6 +180,19 @@ contract CardPaymentProcessorUpgradeable is
     }
 
     /**
+     * @dev Checks if a payment related to a parent transaction hash has been reversed.
+     * @param parentTxHash The hash of the transaction where the payment was made.
+     */
+    function isPaymentReversed(bytes32 parentTxHash)
+        external
+        view
+        virtual
+        returns (bool)
+    {
+        return _paymentReverseFlags[parentTxHash];
+    }
+
+    /**
      * @dev Makes a card payment.
      * Transfers the underlying tokens from the payer (who is the caller of the function) to this contract.
      * Can only be called when the contract is not paused.
@@ -193,7 +207,7 @@ contract CardPaymentProcessorUpgradeable is
         bytes16 correlationId
     ) external whenNotPaused {
         Payment storage payment = _payments[authorizationId];
-        address payable sender = _msgSender();
+        address sender = _msgSender();
 
         require(
             payment.status == PaymentStatus.Nonexistent,
@@ -241,31 +255,31 @@ contract CardPaymentProcessorUpgradeable is
 
         uint256 totalAmount = 0;
         for (uint256 i = 0; i < authorizationIds.length; i++) {
-            Payment storage payment = _payments[authorizationIds[i]];
-
-            checkUnclearedStatus(payment.status);
-            payment.status = PaymentStatus.Cleared;
-
-            address account = payment.account;
-            uint256 amount = payment.amount;
-
-            _unclearedBalances[account] = _unclearedBalances[account].sub(
-                amount,
-                "CardPaymentProcessor: amount to clear greater than the uncleared balance"
-            );
-            _clearedBalances[account] = _clearedBalances[account].add(amount);
-
-            emit ClearPayment(
-                authorizationIds[i],
-                account,
-                amount,
-                _clearedBalances[account],
-                _unclearedBalances[account]
-            );
+            totalAmount = totalAmount.add(clearPaymentInternal(authorizationIds[i]));
         }
         // We can use unsafe '-' operation here instead of '.sub()' because all balances are fine in the cycle above
         _totalUnclearedBalance = _totalUnclearedBalance - totalAmount;
         _totalClearedBalance = _totalClearedBalance.add(totalAmount);
+    }
+
+    /**
+     * @dev Executes a clearing operation for a single previously made card payment.
+     * The payment should have the "uncleared" status or the call will be reverted.
+     * Can only be called by a whitelisted address.
+     * Can only be called when the contract is not paused.
+     * Emits a {ClearPayment} event for the payment.
+     * @param authorizationId The card transaction authorization ID from the off-chain card processing backend.
+     */
+    function clearPayment(bytes16 authorizationId)
+        external
+        whenNotPaused
+        onlyWhitelisted(_msgSender())
+    {
+        uint256 amount = clearPaymentInternal(authorizationId);
+
+        // We can use unsafe '-' operation here instead of '.sub()' because the balance is fine in the operation above
+        _totalUnclearedBalance = _totalUnclearedBalance - amount;
+        _totalClearedBalance = _totalClearedBalance.add(amount);
     }
 
     /**
@@ -287,32 +301,31 @@ contract CardPaymentProcessorUpgradeable is
         );
         uint256 totalAmount = 0;
         for (uint256 i = 0; i < authorizationIds.length; i++) {
-            Payment storage payment = _payments[authorizationIds[i]];
-
-            checkClearedStatus(payment.status);
-            payment.status = PaymentStatus.Uncleared;
-
-            address account = payment.account;
-            uint256 amount = payment.amount;
-
-            _clearedBalances[account] = _clearedBalances[account].sub(
-                amount,
-                "CardPaymentProcessor: amount to unclear greater than the cleared balance of an account"
-            );
-            _unclearedBalances[account] = _unclearedBalances[account].add(amount);
-            totalAmount += amount;
-
-            emit UnclearPayment(
-                authorizationIds[i],
-                account,
-                amount,
-                _clearedBalances[account],
-                _unclearedBalances[account]
-            );
+            totalAmount = totalAmount.add(unclearPaymentInternal(authorizationIds[i]));
         }
         // We can use unsafe '-' operation here instead of '.sub()' because all balances are fine in the cycle above
         _totalClearedBalance = _totalClearedBalance - totalAmount;
         _totalUnclearedBalance = _totalUnclearedBalance.add(totalAmount);
+    }
+
+    /**
+     * @dev Cancels a previously executed clearing operation for a single card payment.
+     * The payment should have the "cleared" status or the call will be reverted.
+     * Can only be called by a whitelisted address.
+     * Can only be called when the contract is not paused.
+     * Emits a {UnclearPayment} event for the payment.
+     * @param authorizationId The card transaction authorization ID from the off-chain card processing backend.
+     */
+    function unclearPayment(bytes16 authorizationId)
+        external
+        whenNotPaused
+        onlyWhitelisted(_msgSender())
+    {
+        uint256 amount = unclearPaymentInternal(authorizationId);
+
+        // We can use unsafe '-' operation here instead of '.sub()' because the balance is fine in the operation above
+        _totalClearedBalance = _totalClearedBalance - amount;
+        _totalUnclearedBalance = _totalUnclearedBalance.add(amount);
     }
 
     /**
@@ -324,12 +337,12 @@ contract CardPaymentProcessorUpgradeable is
      * Emits a {ReversePayment} event.
      * @param authorizationId The card transaction authorization ID from the off-chain card processing backend.
      * @param correlationId The ID that is correlated to call of this function in the off-chain card processing backend.
-     * @param parentTransactionHash The hash of the transaction where the payment was made.
+     * @param parentTxHash The hash of the transaction where the payment was made.
      */
     function reversePayment(
         bytes16 authorizationId,
         bytes16 correlationId,
-        bytes32 parentTransactionHash
+        bytes32 parentTxHash
     )
         external
         whenNotPaused
@@ -363,6 +376,7 @@ contract CardPaymentProcessorUpgradeable is
         }
 
         payment.status = PaymentStatus.Reversed;
+        _paymentReverseFlags[parentTxHash] = true;
 
         IERC20Upgradeable(token).transfer(account, amount);
 
@@ -374,26 +388,8 @@ contract CardPaymentProcessorUpgradeable is
             _clearedBalances[account],
             _unclearedBalances[account],
             status == PaymentStatus.Cleared,
-            parentTransactionHash
+            parentTxHash
         );
-    }
-
-    /**
-     * @dev Executes the final step of several card payments processing with token burning.
-     * Finalizes the payments and burns previously cleared tokens gotten from payers.
-     * Each payment should have the "cleared" status or the call will be reverted.
-     * Can only be called when the contract is not paused.
-     * Can only be called by whitelisted address.
-     * Emits a {ConfirmPayment} event for each payment.
-     * @param authorizationIds The card transaction authorization IDs from the off-chain card processing backend.
-     */
-    function confirmPaymentsAndBurn(bytes16[] memory authorizationIds)
-        external
-        whenNotPaused
-        onlyWhitelisted(_msgSender())
-    {
-        uint256 totalAmount = confirmPaymentsInternal(authorizationIds);
-        IERC20Mintable(token).burn(totalAmount);
     }
 
     /**
@@ -407,7 +403,7 @@ contract CardPaymentProcessorUpgradeable is
      * @param authorizationIds The card transaction authorization IDs from the off-chain card processing backend.
      * @param cashOutAccount The account to transfer cleared tokens to.
      */
-    function confirmPaymentsAndTransfer(bytes16[] memory authorizationIds, address cashOutAccount)
+    function confirmPayments(bytes16[] memory authorizationIds, address cashOutAccount)
         external
         whenNotPaused
         onlyWhitelisted(_msgSender())
@@ -424,29 +420,80 @@ contract CardPaymentProcessorUpgradeable is
 
         totalAmount = 0;
         for (uint256 i = 0; i < authorizationIds.length; i++) {
-            Payment storage payment = _payments[authorizationIds[i]];
-
-            checkClearedStatus(payment.status);
-            payment.status = PaymentStatus.Confirmed;
-
-            address account = payment.account;
-            uint256 amount = payment.amount;
-            uint256 newBalance = _clearedBalances[account].sub(
-                amount,
-                "CardPaymentProcessor: payment confirming amount exceeds the cleared balance of an account"
-            );
-            _clearedBalances[account] = newBalance;
-            totalAmount += amount;
-
-            emit ConfirmPayment(
-                authorizationIds[i],
-                account,
-                amount,
-                newBalance
-            );
+            totalAmount = totalAmount.add(confirmPaymentInternal(authorizationIds[i]));
         }
         // We can use unsafe '-' operation here instead of '.sub()' because all balances are fine in the cycle above
         _totalClearedBalance = _totalClearedBalance - totalAmount;
+    }
+
+    function confirmPaymentInternal(bytes16 authorizationId) internal returns (uint256 amount) {
+        Payment storage payment = _payments[authorizationId];
+
+        checkClearedStatus(payment.status);
+        payment.status = PaymentStatus.Confirmed;
+
+        address account = payment.account;
+        amount = payment.amount;
+        uint256 newBalance = _clearedBalances[account].sub(
+            amount,
+            "CardPaymentProcessor: payment confirming amount exceeds the cleared balance of an account"
+        );
+        _clearedBalances[account] = newBalance;
+
+        emit ConfirmPayment(
+            authorizationId,
+            account,
+            amount,
+            newBalance
+        );
+    }
+
+    function clearPaymentInternal(bytes16 authorizationId) internal returns (uint256 amount){
+        Payment storage payment = _payments[authorizationId];
+
+        checkUnclearedStatus(payment.status);
+        payment.status = PaymentStatus.Cleared;
+
+        address account = payment.account;
+        amount = payment.amount;
+
+        _unclearedBalances[account] = _unclearedBalances[account].sub(
+            amount,
+            "CardPaymentProcessor: amount to clear greater than the uncleared balance"
+        );
+        _clearedBalances[account] = _clearedBalances[account].add(amount);
+
+        emit ClearPayment(
+            authorizationId,
+            account,
+            amount,
+            _clearedBalances[account],
+            _unclearedBalances[account]
+        );
+    }
+
+    function unclearPaymentInternal(bytes16 authorizationId) internal returns (uint256 amount) {
+        Payment storage payment = _payments[authorizationId];
+
+        checkClearedStatus(payment.status);
+        payment.status = PaymentStatus.Uncleared;
+
+        address account = payment.account;
+        amount = payment.amount;
+
+        _clearedBalances[account] = _clearedBalances[account].sub(
+            amount,
+            "CardPaymentProcessor: amount to unclear greater than the cleared balance of an account"
+        );
+        _unclearedBalances[account] = _unclearedBalances[account].add(amount);
+
+        emit UnclearPayment(
+            authorizationId,
+            account,
+            amount,
+            _clearedBalances[account],
+            _unclearedBalances[account]
+        );
     }
 
     function checkClearedStatus(PaymentStatus status) internal pure {
