@@ -427,22 +427,41 @@ contract CardPaymentProcessorUpgradeable is
         whenNotPaused
         onlyWhitelisted(_msgSender())
     {
-        uint256 totalAmount = confirmPaymentsInternal(authorizationIds);
-        IERC20Upgradeable(token).transfer(cashOutAccount, totalAmount);
-    }
-
-    function confirmPaymentsInternal(bytes16[] memory authorizationIds) internal returns (uint256 totalAmount) {
         require(
             authorizationIds.length != 0,
             "CardPaymentProcessor: input array of authorization IDs is empty"
         );
 
-        totalAmount = 0;
+        uint256 totalAmount = 0;
         for (uint256 i = 0; i < authorizationIds.length; i++) {
             totalAmount = totalAmount.add(confirmPaymentInternal(authorizationIds[i]));
         }
         // We can use unsafe '-' operation here instead of '.sub()' because all balances are fine in the cycle above
         _totalClearedBalance = _totalClearedBalance - totalAmount;
+
+        IERC20Upgradeable(token).transfer(cashOutAccount, totalAmount);
+    }
+
+    /**
+     * @dev Executes the final step of single card payments processing with token transferring.
+     * Finalizes the payment and transfers previously cleared tokens gotten from a payer
+     * to a dedicated cash-out account for further operations.
+     * The payment should have the "cleared" status or the call will be reverted.
+     * Can only be called when the contract is not paused.
+     * Can only be called by whitelisted address.
+     * Emits a {ConfirmPayment} event for the payment.
+     * @param authorizationId The card transaction authorization ID from the off-chain card processing backend.
+     * @param cashOutAccount The account to transfer cleared tokens to.
+     */
+    function confirmPayment(bytes16 authorizationId, address cashOutAccount)
+        external
+        whenNotPaused
+        onlyWhitelisted(_msgSender())
+    {
+        uint256 amount = confirmPaymentInternal(authorizationId);
+        // We can use unsafe '-' operation here instead of '.sub()' because the balance is fine in the operation above
+        _totalClearedBalance = _totalClearedBalance - amount;
+        IERC20Upgradeable(token).transfer(cashOutAccount, amount);
     }
 
     function confirmPaymentInternal(bytes16 authorizationId) internal returns (uint256 amount) {
