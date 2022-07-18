@@ -210,6 +210,16 @@ contract CardPaymentProcessorUpgradeable is
         address sender = _msgSender();
 
         require(
+            amount > 0,
+            "CardPaymentProcessor: payment amount must be greater than 0"
+        );
+
+        require(
+            authorizationId != 0,
+            "CardPaymentProcessor: authorization ID must not equal 0"
+        );
+
+        require(
             payment.status == PaymentStatus.Nonexistent,
             "CardPaymentProcessor: payment with the provided authorization ID already exists"
         );
@@ -348,6 +358,15 @@ contract CardPaymentProcessorUpgradeable is
         whenNotPaused
         onlyWhitelisted(_msgSender())
     {
+        require(
+            authorizationId != 0,
+            "CardPaymentProcessor: authorization ID must not equal 0"
+        );
+        require(
+            parentTxHash != 0,
+            "CardPaymentProcessor: parent transaction hash should not equal 0"
+        );
+
         Payment storage payment = _payments[authorizationId];
         PaymentStatus status = payment.status;
 
@@ -427,6 +446,11 @@ contract CardPaymentProcessorUpgradeable is
     }
 
     function confirmPaymentInternal(bytes16 authorizationId) internal returns (uint256 amount) {
+        require(
+            authorizationId != 0,
+            "CardPaymentProcessor: authorization ID must not equal 0"
+        );
+
         Payment storage payment = _payments[authorizationId];
 
         checkClearedStatus(payment.status);
@@ -449,6 +473,11 @@ contract CardPaymentProcessorUpgradeable is
     }
 
     function clearPaymentInternal(bytes16 authorizationId) internal returns (uint256 amount){
+        require(
+            authorizationId != 0,
+            "CardPaymentProcessor: authorization ID must not equal 0"
+        );
+
         Payment storage payment = _payments[authorizationId];
 
         checkUnclearedStatus(payment.status);
@@ -473,6 +502,11 @@ contract CardPaymentProcessorUpgradeable is
     }
 
     function unclearPaymentInternal(bytes16 authorizationId) internal returns (uint256 amount) {
+        require(
+            authorizationId != 0,
+            "CardPaymentProcessor: authorization ID must not equal 0"
+        );
+
         Payment storage payment = _payments[authorizationId];
 
         checkClearedStatus(payment.status);
