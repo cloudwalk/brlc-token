@@ -246,6 +246,26 @@ contract CardPaymentProcessorUpgradeable is
     }
 
     /**
+ * @dev Executes a clearing operation for a single previously made card payment.
+     * The payment should have the "uncleared" status or the call will be reverted.
+     * Can only be called by a whitelisted address.
+     * Can only be called when the contract is not paused.
+     * Emits a {ClearPayment} event for the payment.
+     * @param authorizationId The card transaction authorization ID from the off-chain card processing backend.
+     */
+    function clearPayment(bytes16 authorizationId)
+        external
+        whenNotPaused
+        onlyWhitelisted(_msgSender())
+    {
+        uint256 amount = clearPaymentInternal(authorizationId);
+
+        // We can use unsafe '-' operation here instead of '.sub()' because the balance is fine in the operation above
+        _totalUnclearedBalance = _totalUnclearedBalance - amount;
+        _totalClearedBalance = _totalClearedBalance.add(amount);
+    }
+
+    /**
      * @dev Executes a clearing operation for several previously made card payments.
      * Each payment should have the "uncleared" status or the call will be reverted.
      * Can only be called by a whitelisted address.
@@ -273,23 +293,23 @@ contract CardPaymentProcessorUpgradeable is
     }
 
     /**
-     * @dev Executes a clearing operation for a single previously made card payment.
-     * The payment should have the "uncleared" status or the call will be reverted.
+     * @dev Cancels a previously executed clearing operation for a single card payment.
+     * The payment should have the "cleared" status or the call will be reverted.
      * Can only be called by a whitelisted address.
      * Can only be called when the contract is not paused.
-     * Emits a {ClearPayment} event for the payment.
+     * Emits a {UnclearPayment} event for the payment.
      * @param authorizationId The card transaction authorization ID from the off-chain card processing backend.
      */
-    function clearPayment(bytes16 authorizationId)
+    function unclearPayment(bytes16 authorizationId)
         external
         whenNotPaused
         onlyWhitelisted(_msgSender())
     {
-        uint256 amount = clearPaymentInternal(authorizationId);
+        uint256 amount = unclearPaymentInternal(authorizationId);
 
         // We can use unsafe '-' operation here instead of '.sub()' because the balance is fine in the operation above
-        _totalUnclearedBalance = _totalUnclearedBalance - amount;
-        _totalClearedBalance = _totalClearedBalance.add(amount);
+        _totalClearedBalance = _totalClearedBalance - amount;
+        _totalUnclearedBalance = _totalUnclearedBalance.add(amount);
     }
 
     /**
@@ -316,26 +336,6 @@ contract CardPaymentProcessorUpgradeable is
         // We can use unsafe '-' operation here instead of '.sub()' because all balances are fine in the cycle above
         _totalClearedBalance = _totalClearedBalance - totalAmount;
         _totalUnclearedBalance = _totalUnclearedBalance.add(totalAmount);
-    }
-
-    /**
-     * @dev Cancels a previously executed clearing operation for a single card payment.
-     * The payment should have the "cleared" status or the call will be reverted.
-     * Can only be called by a whitelisted address.
-     * Can only be called when the contract is not paused.
-     * Emits a {UnclearPayment} event for the payment.
-     * @param authorizationId The card transaction authorization ID from the off-chain card processing backend.
-     */
-    function unclearPayment(bytes16 authorizationId)
-        external
-        whenNotPaused
-        onlyWhitelisted(_msgSender())
-    {
-        uint256 amount = unclearPaymentInternal(authorizationId);
-
-        // We can use unsafe '-' operation here instead of '.sub()' because the balance is fine in the operation above
-        _totalClearedBalance = _totalClearedBalance - amount;
-        _totalUnclearedBalance = _totalUnclearedBalance.add(amount);
     }
 
     /**
@@ -412,37 +412,6 @@ contract CardPaymentProcessorUpgradeable is
     }
 
     /**
-     * @dev Executes the final step of several card payments processing with token transferring.
-     * Finalizes the payments and transfers previously cleared tokens gotten from payers
-     * to a dedicated cash-out account for further operations.
-     * Each payment should have the "cleared" status or the call will be reverted.
-     * Can only be called when the contract is not paused.
-     * Can only be called by whitelisted address.
-     * Emits a {ConfirmPayment} event for each payment.
-     * @param authorizationIds The card transaction authorization IDs from the off-chain card processing backend.
-     * @param cashOutAccount The account to transfer cleared tokens to.
-     */
-    function confirmPayments(bytes16[] memory authorizationIds, address cashOutAccount)
-        external
-        whenNotPaused
-        onlyWhitelisted(_msgSender())
-    {
-        require(
-            authorizationIds.length != 0,
-            "CardPaymentProcessor: input array of authorization IDs is empty"
-        );
-
-        uint256 totalAmount = 0;
-        for (uint256 i = 0; i < authorizationIds.length; i++) {
-            totalAmount = totalAmount.add(confirmPaymentInternal(authorizationIds[i]));
-        }
-        // We can use unsafe '-' operation here instead of '.sub()' because all balances are fine in the cycle above
-        _totalClearedBalance = _totalClearedBalance - totalAmount;
-
-        IERC20Upgradeable(token).transfer(cashOutAccount, totalAmount);
-    }
-
-    /**
      * @dev Executes the final step of single card payments processing with token transferring.
      * Finalizes the payment and transfers previously cleared tokens gotten from a payer
      * to a dedicated cash-out account for further operations.
@@ -464,31 +433,38 @@ contract CardPaymentProcessorUpgradeable is
         IERC20Upgradeable(token).transfer(cashOutAccount, amount);
     }
 
-    function confirmPaymentInternal(bytes16 authorizationId) internal returns (uint256 amount) {
+    /**
+ * @dev Executes the final step of several card payments processing with token transferring.
+     * Finalizes the payments and transfers previously cleared tokens gotten from payers
+     * to a dedicated cash-out account for further operations.
+     * Each payment should have the "cleared" status or the call will be reverted.
+     * Can only be called when the contract is not paused.
+     * Can only be called by whitelisted address.
+     * Emits a {ConfirmPayment} event for each payment.
+     * @param authorizationIds The card transaction authorization IDs from the off-chain card processing backend.
+     * @param cashOutAccount The account to transfer cleared tokens to.
+     */
+    function confirmPayments(
+        bytes16[] memory authorizationIds,
+        address cashOutAccount
+    )
+        external
+        whenNotPaused
+        onlyWhitelisted(_msgSender())
+    {
         require(
-            authorizationId != 0,
-            "CardPaymentProcessor: authorization ID must not equal 0"
+            authorizationIds.length != 0,
+            "CardPaymentProcessor: input array of authorization IDs is empty"
         );
 
-        Payment storage payment = _payments[authorizationId];
+        uint256 totalAmount = 0;
+        for (uint256 i = 0; i < authorizationIds.length; i++) {
+            totalAmount = totalAmount.add(confirmPaymentInternal(authorizationIds[i]));
+        }
+        // We can use unsafe '-' operation here instead of '.sub()' because all balances are fine in the cycle above
+        _totalClearedBalance = _totalClearedBalance - totalAmount;
 
-        checkClearedStatus(payment.status);
-        payment.status = PaymentStatus.Confirmed;
-
-        address account = payment.account;
-        amount = payment.amount;
-        uint256 newBalance = _clearedBalances[account].sub(
-            amount,
-            "CardPaymentProcessor: payment confirming amount exceeds the cleared balance of an account"
-        );
-        _clearedBalances[account] = newBalance;
-
-        emit ConfirmPayment(
-            authorizationId,
-            account,
-            amount,
-            newBalance
-        );
+        IERC20Upgradeable(token).transfer(cashOutAccount, totalAmount);
     }
 
     function clearPaymentInternal(bytes16 authorizationId) internal returns (uint256 amount){
@@ -546,6 +522,33 @@ contract CardPaymentProcessorUpgradeable is
             amount,
             _clearedBalances[account],
             _unclearedBalances[account]
+        );
+    }
+
+    function confirmPaymentInternal(bytes16 authorizationId) internal returns (uint256 amount) {
+        require(
+            authorizationId != 0,
+            "CardPaymentProcessor: authorization ID must not equal 0"
+        );
+
+        Payment storage payment = _payments[authorizationId];
+
+        checkClearedStatus(payment.status);
+        payment.status = PaymentStatus.Confirmed;
+
+        address account = payment.account;
+        amount = payment.amount;
+        uint256 newBalance = _clearedBalances[account].sub(
+            amount,
+            "CardPaymentProcessor: payment confirming amount exceeds the cleared balance of an account"
+        );
+        _clearedBalances[account] = newBalance;
+
+        emit ConfirmPayment(
+            authorizationId,
+            account,
+            amount,
+            newBalance
         );
     }
 
