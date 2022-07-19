@@ -24,17 +24,28 @@ contract PixCashierUpgradeable is
     address public token;
     mapping(address => uint256) private _cashOutBalances;
 
-    event CashIn(address indexed account, uint256 amount);
-    event CashOut(address indexed account, uint256 amount, uint256 balance);
+    event CashIn(
+        address indexed account,
+        uint256 amount,
+        bytes32 indexed txId
+    );
+    event CashOut(
+        address indexed account,
+        uint256 amount,
+        uint256 balance,
+        bytes32 indexed txId
+    );
     event CashOutConfirm(
         address indexed account,
         uint256 amount,
-        uint256 balance
+        uint256 balance,
+        bytes32 indexed txId
     );
     event CashOutReverse(
         address indexed account,
         uint256 amount,
-        uint256 balance
+        uint256 balance,
+        bytes32 indexed txId
     );
 
     function initialize(address token_) public initializer {
@@ -70,20 +81,42 @@ contract PixCashierUpgradeable is
     }
 
     /**
+     * @dev Executes a cash-in transaction and mocks tx id.
+     * @param account An address that will receive tokens.
+     * @param amount The amount of tokens to be minted.
+     */
+    function cashIn(address account, uint256 amount) external {
+        cashIn(account, amount, "MOCK_TRANSACTION_ID");
+    }
+
+    /**
      * @dev Executes a cash-in transaction.
      * Can only be called when the contract is not paused.
      * Can only be called by a whitelisted address.
      * Emits a {CashIn} event.
      * @param account An address that will receive tokens.
      * @param amount The amount of tokens to be minted.
+     * @param txId The off-chain transaction identifier.
      */
-    function cashIn(address account, uint256 amount)
-        external
-        whenNotPaused
-        onlyWhitelisted(_msgSender())
-    {
+    function cashIn(
+        address account,
+        uint256 amount,
+        bytes32 txId
+    ) public whenNotPaused onlyWhitelisted(_msgSender()) {
+        require(
+            txId != 0,
+            "PixCashier: transaction id must be provided"
+        );
         IERC20Mintable(token).mint(account, amount);
-        emit CashIn(account, amount);
+        emit CashIn(account, amount, txId);
+    }
+
+    /**
+     * @dev Initiates a cash-out transaction and mocks tx id.
+     * @param amount The amount of tokens to be transferred to the contract.
+     */
+    function cashOut(uint256 amount) external {
+        cashOut(amount, "MOCK_TRANSACTION_ID");
     }
 
     /**
@@ -91,8 +124,13 @@ contract PixCashierUpgradeable is
      * Can only be called when the contract is not paused.
      * Emits a {CashOut} event.
      * @param amount The amount of tokens to be transferred to the contract.
+     * @param txId The off-chain transaction identifier.
      */
-    function cashOut(uint256 amount) external whenNotPaused {
+    function cashOut(uint256 amount, bytes32 txId) public whenNotPaused {
+        require(
+            txId != 0,
+            "PixCashier: transaction id must be provided"
+        );
         IERC20Upgradeable(token).transferFrom(
             _msgSender(),
             address(this),
@@ -101,7 +139,20 @@ contract PixCashierUpgradeable is
         _cashOutBalances[_msgSender()] = _cashOutBalances[_msgSender()].add(
             amount
         );
-        emit CashOut(_msgSender(), amount, _cashOutBalances[_msgSender()]);
+        emit CashOut(
+            _msgSender(),
+            amount,
+            _cashOutBalances[_msgSender()],
+            txId
+        );
+    }
+
+    /**
+     * @dev Confirms a cash-out transaction and mocks tx id.
+     * @param amount The amount of tokens to be burned.
+     */
+    function cashOutConfirm(uint256 amount) external {
+        cashOutConfirm(amount, "MOCK_TRANSACTION_ID");
     }
 
     /**
@@ -109,8 +160,16 @@ contract PixCashierUpgradeable is
      * Can only be called when the contract is not paused.
      * Emits a {CashOutConfirm} event.
      * @param amount The amount of tokens to be burned.
+     * @param txId The off-chain transaction identifier.
      */
-    function cashOutConfirm(uint256 amount) external whenNotPaused {
+    function cashOutConfirm(uint256 amount, bytes32 txId)
+        public
+        whenNotPaused
+    {
+        require(
+            txId != 0,
+            "PixCashier: transaction id must be provided"
+        );
         _cashOutBalances[_msgSender()] = _cashOutBalances[_msgSender()].sub(
             amount,
             "PixCashier: cash-out confirm amount exceeds balance"
@@ -119,8 +178,17 @@ contract PixCashierUpgradeable is
         emit CashOutConfirm(
             _msgSender(),
             amount,
-            _cashOutBalances[_msgSender()]
+            _cashOutBalances[_msgSender()],
+            txId
         );
+    }
+
+    /**
+     * @dev Reverts a cash-out transaction and mocks tx id.
+     * @param amount The amount of tokens to be transferred back to the sender.
+     */
+    function cashOutReverse(uint256 amount) external {
+        cashOutReverse(amount, "MOCK_TRANSACTION_ID");
     }
 
     /**
@@ -128,8 +196,16 @@ contract PixCashierUpgradeable is
      * Can only be called when the contract is not paused.
      * Emits a {CashOutReverse} event.
      * @param amount The amount of tokens to be transferred back to the sender.
+     * @param txId The off-chain transaction identifier.
      */
-    function cashOutReverse(uint256 amount) external whenNotPaused {
+    function cashOutReverse(uint256 amount, bytes32 txId)
+        public
+        whenNotPaused
+    {
+        require(
+            txId != 0,
+            "PixCashier: transaction id must be provided"
+        );
         _cashOutBalances[_msgSender()] = _cashOutBalances[_msgSender()].sub(
             amount,
             "PixCashier: cash-out reverse amount exceeds balance"
@@ -138,7 +214,8 @@ contract PixCashierUpgradeable is
         emit CashOutReverse(
             _msgSender(),
             amount,
-            _cashOutBalances[_msgSender()]
+            _cashOutBalances[_msgSender()],
+            txId
         );
     }
 }
