@@ -25,7 +25,8 @@ contract CardPaymentProcessorUpgradeable is
         bytes16 indexed authorizationId,
         bytes16 indexed correlationId,
         address indexed account,
-        uint256 amount
+        uint256 amount,
+        uint8   revocationCounter
     );
 
     event ClearPayment(
@@ -33,7 +34,8 @@ contract CardPaymentProcessorUpgradeable is
         address indexed account,
         uint256 amount,
         uint256 clearedBalance,
-        uint256 unclearedBalance
+        uint256 unclearedBalance,
+        uint8   revocationCounter
     );
 
     event UnclearPayment(
@@ -41,7 +43,20 @@ contract CardPaymentProcessorUpgradeable is
         address indexed account,
         uint256 amount,
         uint256 clearedBalance,
-        uint256 unclearedBalance
+        uint256 unclearedBalance,
+        uint8   revocationCounter
+    );
+
+    event RevokePayment(
+        bytes16 indexed authorizationId,
+        bytes16 indexed correlationId,
+        address indexed account,
+        uint256 amount,
+        uint256 clearedBalance,
+        uint256 unclearedBalance,
+        bool    wasPaymentCleared,
+        bytes32 parentTransactionHash,
+        uint8   revocationCounter
     );
 
     event ReversePayment(
@@ -52,28 +67,37 @@ contract CardPaymentProcessorUpgradeable is
         uint256 clearedBalance,
         uint256 unclearedBalance,
         bool    wasPaymentCleared,
-        bytes32 parentTransactionHash
+        bytes32 parentTransactionHash,
+        uint8   revocationCounter
     );
 
     event ConfirmPayment(
         bytes16 indexed authorizationId,
         address indexed account,
         uint256 amount,
-        uint256 clearedBalance
+        uint256 clearedBalance,
+        uint8   revocationCounter
+    );
+
+    event SetRevocationCounterMaximum(
+        uint8 oldValue,
+        uint8 newValue
     );
 
     enum PaymentStatus {
         Nonexistent, // 0
         Uncleared,   // 1
         Cleared,     // 2
-        Confirmed,   // 3
-        Reversed     // 4
+        Revoked,     // 3
+        Reversed,    // 4
+        Confirmed    // 5
     }
 
     struct Payment {
         address account;
         uint256 amount;
         PaymentStatus status;
+        uint8 revocationCounter;
     }
 
     /// @dev The address of the underlying token contract.
@@ -81,11 +105,13 @@ contract CardPaymentProcessorUpgradeable is
 
     uint256 private _totalClearedBalance;
     uint256 private _totalUnclearedBalance;
+    uint8 private _revocationCounterMaximum;
 
     mapping(address => uint256) private _unclearedBalances;
     mapping(address => uint256) private _clearedBalances;
     mapping(bytes16 => Payment) private _payments;
-    mapping(bytes32 => bool) private _paymentReverseFlags;
+    mapping(bytes32 => bool) private _paymentRevocationFlags;
+    mapping(bytes32 => bool) private _paymentReversionFlags;
 
     function initialize(address token_) public initializer {
         __CardPaymentProcessor_init(token_);
@@ -104,6 +130,7 @@ contract CardPaymentProcessorUpgradeable is
 
     function __CardPaymentProcessor_init_unchained(address token_) internal initializer {
         token = token_;
+        _revocationCounterMaximum = type(uint8).max;
     }
 
     /**
@@ -162,6 +189,7 @@ contract CardPaymentProcessorUpgradeable is
      * @return account The address of an account that made the card payment.
      * @return amount The amount of tokens for the payment.
      * @return status The current status of the payment according to the appropriate enum.
+     * @return revocationCounter The value of the revocation counter for the payment.
      */
     function paymentFor(bytes16 authorizationId)
         external
@@ -170,13 +198,28 @@ contract CardPaymentProcessorUpgradeable is
         returns (
             address account,
             uint256 amount,
-            PaymentStatus status
+            PaymentStatus status,
+            uint8 revocationCounter
         )
     {
         Payment storage payment = _payments[authorizationId];
         account = payment.account;
         amount = payment.amount;
         status = payment.status;
+        revocationCounter = payment.revocationCounter;
+    }
+
+    /**
+     * @dev Checks if a payment related to a parent transaction hash has been revoked.
+     * @param parentTxHash The hash of the transaction where the payment was made.
+     */
+    function isPaymentRevoked(bytes32 parentTxHash)
+        external
+        view
+        virtual
+        returns (bool)
+    {
+        return _paymentRevocationFlags[parentTxHash];
     }
 
     /**
@@ -189,7 +232,42 @@ contract CardPaymentProcessorUpgradeable is
         virtual
         returns (bool)
     {
-        return _paymentReverseFlags[parentTxHash];
+        return _paymentReversionFlags[parentTxHash];
+    }
+
+    /**
+     * @dev Sets a new value for the revocation counter maximum.
+     * Emits a {SetRevocationCounterMaximum} event if the new value differs from the old one.
+     * @param newValue The new value of revocation counter maximum to set.
+     */
+    function setRevocationCounterMaximum(uint8 newValue) external onlyOwner {
+        require(
+            newValue > 0,
+            "CardPaymentProcessor: new value of the revocation counter maximum must be greater than 0"
+        );
+
+        uint8 oldValue = _revocationCounterMaximum;
+        if (oldValue == newValue) {
+            return;
+        }
+
+        _revocationCounterMaximum = newValue;
+        emit SetRevocationCounterMaximum(
+            oldValue,
+            newValue
+        );
+    }
+
+    /**
+     * @dev Returns the value of the revocation counter maximum.
+     */
+    function revocationCounterMaximum()
+        external
+        virtual
+        view
+        returns(uint8)
+    {
+        return _revocationCounterMaximum;
     }
 
     /**
@@ -219,9 +297,16 @@ contract CardPaymentProcessorUpgradeable is
             "CardPaymentProcessor: authorization ID must not equal 0"
         );
 
+        PaymentStatus status = payment.status;
         require(
-            payment.status == PaymentStatus.Nonexistent,
-            "CardPaymentProcessor: payment with the provided authorization ID already exists"
+            status == PaymentStatus.Nonexistent || status == PaymentStatus.Revoked,
+            "CardPaymentProcessor: payment with the provided authorization ID already exists and was not revoked"
+        );
+
+        uint8 revocationCounter = payment.revocationCounter;
+        require(
+            revocationCounter < _revocationCounterMaximum,
+            "CardPaymentProcessor: revocation counter of the payment has reached the configured maximum"
         );
 
         payment.account = sender;
@@ -241,7 +326,8 @@ contract CardPaymentProcessorUpgradeable is
             authorizationId,
             correlationId,
             sender,
-            amount
+            amount,
+            revocationCounter
         );
     }
 
@@ -340,7 +426,8 @@ contract CardPaymentProcessorUpgradeable is
 
     /**
      * @dev Performs the reverse of a previously made card payment.
-     * Finalizes the payment and transfers tokens back from this contract to the payer.
+     * Finalizes the payment: no other operations can be done for the payment.
+     * Transfers tokens back from this contract to the payer.
      * The payment should have "cleared" or "uncleared" statuses. Otherwise the call will be reverted.
      * Can only be called by a whitelisted address.
      * Can only be called when the contract is not paused.
@@ -358,63 +445,47 @@ contract CardPaymentProcessorUpgradeable is
         whenNotPaused
         onlyWhitelisted(_msgSender())
     {
-        require(
-            authorizationId != 0,
-            "CardPaymentProcessor: authorization ID must not equal 0"
-        );
-        require(
-            parentTxHash != 0,
-            "CardPaymentProcessor: parent transaction hash should not equal 0"
-        );
-
-        Payment storage payment = _payments[authorizationId];
-        PaymentStatus status = payment.status;
-
-        require(
-            status != PaymentStatus.Nonexistent,
-            "CardPaymentProcessor: payment with the provided authorization ID does not exist"
-        );
-
-        address account = payment.account;
-        uint256 amount = payment.amount;
-
-        if (status == PaymentStatus.Uncleared) {
-            _unclearedBalances[account] = _unclearedBalances[account].sub(
-                amount,
-                "CardPaymentProcessor: payment reversing amount exceeds the uncleared balance of an account"
-            );
-            _totalUnclearedBalance = _totalUnclearedBalance.sub(amount);
-        } else if (status == PaymentStatus.Cleared) {
-            _clearedBalances[account] = _clearedBalances[account].sub(
-                amount,
-                "CardPaymentProcessor: payment reversing amount exceeds the cleared balance of an account"
-            );
-            _totalClearedBalance = _totalClearedBalance.sub(amount);
-        } else {
-            revert("CardPaymentProcessor: payment with the provided authorization ID is already reversed or confirmed");
-        }
-
-        payment.status = PaymentStatus.Reversed;
-        _paymentReverseFlags[parentTxHash] = true;
-
-        IERC20Upgradeable(token).transfer(account, amount);
-
-        emit ReversePayment(
+        cancelPaymentInternal(
             authorizationId,
             correlationId,
-            account,
-            amount,
-            _clearedBalances[account],
-            _unclearedBalances[account],
-            status == PaymentStatus.Cleared,
-            parentTxHash
+            parentTxHash,
+            PaymentStatus.Reversed
+        );
+    }
+
+    /**
+     * @dev Performs the revocation of a previously made card payment and increase its revocation counter.
+     * Does not finalize the payment: it can be made again until revocation counter reaches the configured maximum.
+     * Transfers tokens back from this contract to the payer.
+     * The payment should have "cleared" or "uncleared" statuses. Otherwise the call will be reverted.
+     * Can only be called by a whitelisted address.
+     * Can only be called when the contract is not paused.
+     * Emits a {RevokePayment} event.
+     * @param authorizationId The card transaction authorization ID from the off-chain card processing backend.
+     * @param correlationId The ID that is correlated to call of this function in the off-chain card processing backend.
+     * @param parentTxHash The hash of the transaction where the payment was made.
+     */
+    function revokePayment(
+        bytes16 authorizationId,
+        bytes16 correlationId,
+        bytes32 parentTxHash
+    )
+        external
+        whenNotPaused
+        onlyWhitelisted(_msgSender())
+    {
+        cancelPaymentInternal(
+            authorizationId,
+            correlationId,
+            parentTxHash,
+            PaymentStatus.Revoked
         );
     }
 
     /**
      * @dev Executes the final step of single card payments processing with token transferring.
-     * Finalizes the payment and transfers previously cleared tokens gotten from a payer
-     * to a dedicated cash-out account for further operations.
+     * Finalizes the payment: no other operations can be done for the payment.
+     * Transfers previously cleared tokens gotten from a payer to a dedicated cash-out account for further operations.
      * The payment should have the "cleared" status or the call will be reverted.
      * Can only be called when the contract is not paused.
      * Can only be called by whitelisted address.
@@ -434,9 +505,9 @@ contract CardPaymentProcessorUpgradeable is
     }
 
     /**
- * @dev Executes the final step of several card payments processing with token transferring.
-     * Finalizes the payments and transfers previously cleared tokens gotten from payers
-     * to a dedicated cash-out account for further operations.
+     * @dev Executes the final step of several card payments processing with token transferring.
+     * Finalizes the payment: no other operations can be done for the payments.
+     * Transfers previously cleared tokens gotten from payers to a dedicated cash-out account for further operations.
      * Each payment should have the "cleared" status or the call will be reverted.
      * Can only be called when the contract is not paused.
      * Can only be called by whitelisted address.
@@ -492,7 +563,8 @@ contract CardPaymentProcessorUpgradeable is
             account,
             amount,
             _clearedBalances[account],
-            _unclearedBalances[account]
+            _unclearedBalances[account],
+            payment.revocationCounter
         );
     }
 
@@ -521,7 +593,8 @@ contract CardPaymentProcessorUpgradeable is
             account,
             amount,
             _clearedBalances[account],
-            _unclearedBalances[account]
+            _unclearedBalances[account],
+            payment.revocationCounter
         );
     }
 
@@ -548,8 +621,90 @@ contract CardPaymentProcessorUpgradeable is
             authorizationId,
             account,
             amount,
-            newBalance
+            newBalance,
+            payment.revocationCounter
         );
+    }
+
+    function cancelPaymentInternal(
+        bytes16 authorizationId,
+        bytes16 correlationId,
+        bytes32 parentTxHash,
+        PaymentStatus targetStatus
+    )
+        internal
+    {
+        require(
+            authorizationId != 0,
+            "CardPaymentProcessor: authorization ID must not equal 0"
+        );
+        require(
+            parentTxHash != 0,
+            "CardPaymentProcessor: parent transaction hash should not equal 0"
+        );
+
+        Payment storage payment = _payments[authorizationId];
+        PaymentStatus status = payment.status;
+
+        require(
+            status != PaymentStatus.Nonexistent,
+            "CardPaymentProcessor: payment with the provided authorization ID does not exist"
+        );
+
+        address account = payment.account;
+        uint256 amount = payment.amount;
+
+        if (status == PaymentStatus.Uncleared) {
+            _unclearedBalances[account] = _unclearedBalances[account].sub(
+                amount,
+                "CardPaymentProcessor: transferring back tokens amount exceeds the uncleared balance of an account"
+            );
+            _totalUnclearedBalance = _totalUnclearedBalance.sub(amount);
+        } else if (status == PaymentStatus.Cleared) {
+            _clearedBalances[account] = _clearedBalances[account].sub(
+                amount,
+                "CardPaymentProcessor: transferring back tokens amount exceeds the cleared balance of an account"
+            );
+            _totalClearedBalance = _totalClearedBalance.sub(amount);
+        } else {
+            revert("CardPaymentProcessor: payment with the provided authorization ID has an inappropriate status");
+        }
+
+        IERC20Upgradeable(token).transfer(account, amount);
+
+        if (targetStatus == PaymentStatus.Revoked) {
+            payment.status = PaymentStatus.Revoked;
+            uint8 newRevocationCounter = payment.revocationCounter + 1;
+            payment.revocationCounter = newRevocationCounter;
+            _paymentRevocationFlags[parentTxHash] = true;
+
+            emit RevokePayment(
+                authorizationId,
+                correlationId,
+                account,
+                amount,
+                _clearedBalances[account],
+                _unclearedBalances[account],
+                status == PaymentStatus.Cleared,
+                parentTxHash,
+                newRevocationCounter
+            );
+        } else {
+            payment.status = PaymentStatus.Reversed;
+            _paymentReversionFlags[parentTxHash] = true;
+
+            emit ReversePayment(
+                authorizationId,
+                correlationId,
+                account,
+                amount,
+                _clearedBalances[account],
+                _unclearedBalances[account],
+                status == PaymentStatus.Cleared,
+                parentTxHash,
+                payment.revocationCounter
+            );
+        }
     }
 
     function checkClearedStatus(PaymentStatus status) internal pure {
@@ -563,7 +718,7 @@ contract CardPaymentProcessorUpgradeable is
         );
         require(
             status == PaymentStatus.Cleared,
-            "CardPaymentProcessor: payment with the provided authorization ID is already reversed or confirmed"
+            "CardPaymentProcessor: payment with the provided authorization ID has an inappropriate status"
         );
     }
 
@@ -578,7 +733,7 @@ contract CardPaymentProcessorUpgradeable is
         );
         require(
             status == PaymentStatus.Uncleared,
-            "CardPaymentProcessor: payment with the provided authorization ID is already reversed or confirmed"
+            "CardPaymentProcessor: payment with the provided authorization ID has an inappropriate status"
         );
     }
 }
