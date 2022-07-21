@@ -151,7 +151,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
 
   async function clearPayments(payments: TestPayment[], adminAccount: SignerWithAddress) {
     const authorizationIds: string[] = [];
-    payments.forEach(payment => {
+    payments.forEach((payment: TestPayment) => {
       authorizationIds.push(createBytesString(payment.authorizationId, BYTES16_LENGTH));
       payment.status = PaymentStatus.Cleared;
     });
@@ -161,7 +161,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
   function defineBalancesPerAccount(payments: TestPayment[], targetPaymentStatus: PaymentStatus) {
     const balancesPerAccount: Map<string, number> = new Map<string, number>();
 
-    payments.forEach(payment => {
+    payments.forEach((payment: TestPayment) => {
       const address: string = payment.account.address;
       let newBalance: number = balancesPerAccount.get(address) || 0;
       if (payment.status == targetPaymentStatus) {
@@ -174,30 +174,34 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
   }
 
   function defineExpectedCardPaymentProcessorState(payments: TestPayment[]): CardPaymentProcessorState {
-    const tokenBalance: number = payments.map(function (payment: TestPayment): number {
-      return payment.status == PaymentStatus.Uncleared || payment.status == PaymentStatus.Cleared ? payment.amount : 0
-    }).reduce((sum: number, current: number) => sum + current);
-    const totalClearedBalance: number = payments.map(function (payment: TestPayment): number {
-      return payment.status == PaymentStatus.Cleared ? payment.amount : 0
-    }).reduce((sum: number, current: number) => sum + current);
-    const totalUnclearedBalance: number = payments.map(function (payment: TestPayment): number {
-      return payment.status == PaymentStatus.Uncleared ? payment.amount : 0
-    }).reduce((sum: number, current: number) => sum + current);
-    const clearedBalancesPerAccount: Map<string, number> = defineBalancesPerAccount(
-      payments,
-      PaymentStatus.Cleared
-    );
-    const unclearedBalancesPerAccount: Map<string, number> = defineBalancesPerAccount(
-      payments,
-      PaymentStatus.Uncleared
-    );
+    const tokenBalance: number = payments.map(
+      function (payment: TestPayment): number {
+        return payment.status == PaymentStatus.Uncleared || payment.status == PaymentStatus.Cleared
+          ? payment.amount
+          : 0
+      }
+    ).reduce((sum: number, current: number) => sum + current);
+    const totalClearedBalance: number = payments.map(
+      function (payment: TestPayment): number {
+        return payment.status == PaymentStatus.Cleared ? payment.amount : 0
+      }
+    ).reduce((sum: number, current: number) => sum + current);
+    const totalUnclearedBalance: number = payments.map(
+      function (payment: TestPayment): number {
+        return payment.status == PaymentStatus.Uncleared ? payment.amount : 0
+      }
+    ).reduce((sum: number, current: number) => sum + current);
+    const clearedBalancesPerAccount: Map<string, number> =
+      defineBalancesPerAccount(payments, PaymentStatus.Cleared);
+    const unclearedBalancesPerAccount: Map<string, number> =
+      defineBalancesPerAccount(payments, PaymentStatus.Uncleared);
 
     return {
       tokenBalance,
       totalUnclearedBalance,
       totalClearedBalance,
       clearedBalancesPerAccount,
-      unclearedBalancesPerAccount
+      unclearedBalancesPerAccount,
     };
   }
 
@@ -214,7 +218,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         );
         expect(await cardPaymentProcessor.isPaymentRevoked(expectedPayment.parentTxHash)).to.equal(
           expectedPayment.status == PaymentStatus.Revoked
-        )
+        );
       }
     }
   }
@@ -232,12 +236,12 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         expect(await cardPaymentProcessor.clearedBalanceOf(account)).to.equal(
           expectedBalance,
           `The cleared balance for account ${account} is wrong`
-        )
+        );
       } else {
         expect(await cardPaymentProcessor.unclearedBalanceOf(account)).to.equal(
           expectedBalance,
           `The uncleared balance for account ${account} is wrong`
-        )
+        );
       }
     }
   }
@@ -251,17 +255,17 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
     expect(await cardPaymentProcessor.totalClearedBalance()).to.equal(
       expectedState.totalClearedBalance,
       `The total cleared balance is wrong`
-    )
+    );
 
     expect(await cardPaymentProcessor.totalUnclearedBalance()).to.equal(
       expectedState.totalUnclearedBalance,
       `The total uncleared balance is wrong`
-    )
+    );
 
     expect(await brlcMock.balanceOf(cardPaymentProcessor.address)).to.equal(
       expectedState.tokenBalance,
       `The processor token balance is wrong`
-    )
+    );
   }
 
   beforeEach(async () => {
@@ -337,7 +341,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       };
       authorizationId = createBytesString(payment.authorizationId, BYTES16_LENGTH);
       correlationId = createBytesString(payment.makingPaymentCorrelationId, BYTES16_LENGTH);
-      await setUpContractsForPayments([payment])
+      await setUpContractsForPayments([payment]);
     });
 
     it("Is reverted if the contract is paused", async () => {
@@ -518,12 +522,16 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
           amount: 567,
           status: PaymentStatus.Nonexistent,
           makingPaymentCorrelationId: 789,
-        }
-      ]
+        },
+      ];
       admin = user2;
-      authorizationIds = payments.map(payment => createBytesString(payment.authorizationId, BYTES16_LENGTH));
-      accountAddresses = payments.map(payment => payment.account.address);
-      expectedClearedBalances = payments.map(payment => payment.amount);
+      authorizationIds = payments.map(
+        (payment: TestPayment) => createBytesString(payment.authorizationId, BYTES16_LENGTH)
+      );
+      accountAddresses = payments.map(
+        (payment: TestPayment) => payment.account.address
+      );
+      expectedClearedBalances = payments.map((payment: TestPayment) => payment.amount);
       expectedUnclearedBalances = payments.map(() => 0);
       await setUpContractsForPayments(payments);
       await addAccountToCardPaymentProcessorWhitelist(admin);
@@ -560,7 +568,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       await expect(cardPaymentProcessor.connect(admin).clearPayments(
         [
           authorizationIds[0],
-          createBytesString(payments[payments.length - 1].authorizationId + 1, BYTES16_LENGTH)
+          createBytesString(payments[payments.length - 1].authorizationId + 1, BYTES16_LENGTH),
         ]
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_DOES_NOT_EXIST);
     });
@@ -603,7 +611,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         expectedUnclearedBalances[1],
         payments[1].revocationCounter || 0
       );
-      payments.forEach(payment => payment.status = PaymentStatus.Cleared)
+      payments.forEach((payment: TestPayment) => payment.status = PaymentStatus.Cleared);
       await checkCardPaymentProcessorState(payments);
     });
   });
@@ -657,7 +665,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
 
     it("Does not transfer tokens, emits the correct event, changes the state properly", async () => {
       await checkCardPaymentProcessorState([payment]);
-      const expectedClearedBalance: number = 0
+      const expectedClearedBalance: number = 0;
       const expectedUnclearedBalance: number = payment.amount;
       await expect(cardPaymentProcessor.connect(admin).unclearPayment(
         authorizationId
@@ -713,13 +721,15 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
           amount: 543,
           status: PaymentStatus.Nonexistent,
           makingPaymentCorrelationId: 432,
-        }
+        },
       ]
       admin = user2;
-      authorizationIds = payments.map(payment => createBytesString(payment.authorizationId, BYTES16_LENGTH));
-      accountAddresses = payments.map(payment => payment.account.address);
+      authorizationIds = payments.map(
+        (payment: TestPayment) => createBytesString(payment.authorizationId, BYTES16_LENGTH)
+      );
+      accountAddresses = payments.map((payment: TestPayment) => payment.account.address);
       expectedClearedBalances = payments.map(() => 0);
-      expectedUnclearedBalances = payments.map(payment => payment.amount);
+      expectedUnclearedBalances = payments.map((payment: TestPayment) => payment.amount);
       await setUpContractsForPayments(payments);
       await addAccountToCardPaymentProcessorWhitelist(admin);
       await makePayments(payments);
@@ -799,7 +809,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         expectedUnclearedBalances[1],
         payments[1].revocationCounter || 0
       );
-      payments.forEach(payment => payment.status = PaymentStatus.Uncleared)
+      payments.forEach((payment: TestPayment) => payment.status = PaymentStatus.Uncleared);
       await checkCardPaymentProcessorState(payments);
     });
   });
@@ -820,7 +830,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         status: PaymentStatus.Nonexistent,
         revocationCounter: 0,
         makingPaymentCorrelationId: 765,
-        parentTxHash: parentTxHash
+        parentTxHash: parentTxHash,
       };
       admin = user2;
       authorizationId = createBytesString(payment.authorizationId, BYTES16_LENGTH);
@@ -915,7 +925,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         await clearPayments([payment], admin);
         await checkRevocation(wasPaymentCleared);
       });
-    })
+    });
   });
 
   describe("Function 'reversePayment()'", async () => {
@@ -1026,7 +1036,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         await clearPayments([payment], admin);
         await checkReversion(wasPaymentCleared);
       });
-    })
+    });
   });
 
   describe("Function 'confirmPayment()'", async () => {
@@ -1140,15 +1150,19 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
           amount: 567,
           status: PaymentStatus.Nonexistent,
           makingPaymentCorrelationId: 789,
-        }
+        },
       ]
       admin = user2;
       cashOutAccount = deployer;
-      authorizationIds = payments.map(payment => createBytesString(payment.authorizationId, BYTES16_LENGTH));
-      accountAddresses = payments.map(payment => payment.account.address);
-      totalAmount = payments.map(function (payment: TestPayment): number {
-        return payment.amount
-      }).reduce((sum: number, current: number) => sum + current);
+      authorizationIds = payments.map(
+        (payment: TestPayment) => createBytesString(payment.authorizationId, BYTES16_LENGTH)
+      );
+      accountAddresses = payments.map((payment: TestPayment) => payment.account.address);
+      totalAmount = payments.map(
+        function (payment: TestPayment): number {
+          return payment.amount
+        }
+      ).reduce((sum: number, current: number) => sum + current);
       await setUpContractsForPayments(payments);
       await addAccountToCardPaymentProcessorWhitelist(admin);
       await makePayments(payments);
@@ -1234,7 +1248,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         expectedClearedBalance,
         payments[1].revocationCounter || 0
       );
-      payments.forEach(payment => payment.status = PaymentStatus.Confirmed)
+      payments.forEach((payment: TestPayment) => payment.status = PaymentStatus.Confirmed);
       await checkCardPaymentProcessorState(payments);
     });
   });
@@ -1307,7 +1321,9 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       ]
       admin = user2;
       cashOutAccount = deployer;
-      authorizationIds = payments.map(payment => createBytesString(payment.authorizationId, BYTES16_LENGTH));
+      authorizationIds = payments.map(
+        (payment: TestPayment) => createBytesString(payment.authorizationId, BYTES16_LENGTH)
+      );
       await setUpContractsForPayments(payments);
       await addAccountToCardPaymentProcessorWhitelist(admin);
     });

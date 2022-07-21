@@ -4,7 +4,10 @@ function countNumberArrayTotal(array: number[]) {
   });
 }
 
-function createBytesString(baseString: string | number | undefined, byteLength: number) {
+function createBytesString(
+  baseString: string | number | undefined,
+  byteLength: number
+) {
   baseString = !baseString ? "" : baseString.toString();
   if (baseString.length > byteLength * 2) {
     throw new Error(
@@ -23,8 +26,8 @@ function createBytesString(baseString: string | number | undefined, byteLength: 
   }
 
   return (
-    '0x' +
-    '0'.repeat(byteLength * 2 - baseString.length) +
+    "0x" +
+    "0".repeat(byteLength * 2 - baseString.length) +
     baseString.toLowerCase()
   );
 }
