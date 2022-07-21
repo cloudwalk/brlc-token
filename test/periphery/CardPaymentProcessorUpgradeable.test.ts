@@ -7,10 +7,10 @@ import { createBytesString } from "../../test-utils/misc";
 
 const BYTES16_LENGTH: number = 16;
 const BYTES32_LENGTH: number = 32;
-const ZERO_BYTES16_STRING: string = createBytesString('00', BYTES16_LENGTH);
-const ZERO_BYTES32_STRING: string = createBytesString('00', BYTES32_LENGTH);
-const SOME_BYTES16_STRING = createBytesString('ABCD', BYTES16_LENGTH);
-const SOME_BYTES32_STRING = createBytesString('DCBA', BYTES32_LENGTH);
+const ZERO_BYTES16_STRING: string = createBytesString("00", BYTES16_LENGTH);
+const ZERO_BYTES32_STRING: string = createBytesString("00", BYTES32_LENGTH);
+const SOME_BYTES16_STRING = createBytesString("ABCD", BYTES16_LENGTH);
+const SOME_BYTES32_STRING = createBytesString("DCBA", BYTES32_LENGTH);
 
 enum PaymentStatus {
   Nonexistent = 0,
@@ -22,21 +22,21 @@ enum PaymentStatus {
 }
 
 interface TestPayment {
-  authorizationId: number,
-  account: SignerWithAddress,
-  amount: number,
-  status: PaymentStatus,
-  revocationCounter?: number,
-  makingPaymentCorrelationId: number
-  parentTxHash?: string
+  authorizationId: number;
+  account: SignerWithAddress;
+  amount: number;
+  status: PaymentStatus;
+  revocationCounter?: number;
+  makingPaymentCorrelationId: number;
+  parentTxHash?: string;
 }
 
 interface CardPaymentProcessorState {
   tokenBalance: number;
-  totalClearedBalance: number,
-  totalUnclearedBalance: number,
-  clearedBalancesPerAccount: Map<string, number>,
-  unclearedBalancesPerAccount: Map<string, number>
+  totalClearedBalance: number;
+  totalUnclearedBalance: number;
+  clearedBalancesPerAccount: Map<string, number>;
+  unclearedBalancesPerAccount: Map<string, number>;
 }
 
 function checkEquality(
@@ -79,32 +79,38 @@ function checkEquality(
 }
 
 describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
-  const REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED = 'Initializable: contract is already initialized';
-  const REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER = "Ownable: caller is not the owner";
+  const REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED =
+    "Initializable: contract is already initialized";
+  const REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER =
+    "Ownable: caller is not the owner";
   const REVERT_MESSAGE_IF_CALLER_IS_NEW_REVOCATION_COUNTER_MAXIMUM_VALUE_IS_ZERO =
     "CardPaymentProcessor: new value of the revocation counter maximum must be greater than 0";
-  const REVERT_MESSAGE_IF_CONTRACT_IS_PAUSED = 'Pausable: paused';
-  const REVERT_MESSAGE_IF_PAYMENT_AMOUNT_IS_ZERO = 'CardPaymentProcessor: payment amount must be greater than 0';
+  const REVERT_MESSAGE_IF_CONTRACT_IS_PAUSED =
+    "Pausable: paused";
+  const REVERT_MESSAGE_IF_PAYMENT_AMOUNT_IS_ZERO =
+    "CardPaymentProcessor: payment amount must be greater than 0";
   const REVERT_MESSAGE_IF_INPUT_ARRAY_OF_AUTHORIZATION_IDS_IS_EMPTY =
-    'CardPaymentProcessor: input array of authorization IDs is empty';
+    "CardPaymentProcessor: input array of authorization IDs is empty";
   const REVERT_MESSAGE_IF_PAYMENT_AUTHORIZATION_ID_IS_ZERO =
-    'CardPaymentProcessor: authorization ID must not equal 0';
-  const REVERT_MESSAGE_IF_TOKEN_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
+    "CardPaymentProcessor: authorization ID must not equal 0";
+  const REVERT_MESSAGE_IF_TOKEN_TRANSFER_AMOUNT_EXCEEDS_BALANCE =
+    "ERC20: transfer amount exceeds balance";
   const REVERT_MESSAGE_IF_PAYMENT_AUTHORIZATION_ID_ALREADY_EXISTS =
-    'CardPaymentProcessor: payment with the provided authorization ID already exists and was not revoked';
-  const REVERT_MESSAGE_IF_ACCOUNT_IS_NOT_WHITELISTED = 'Whitelistable: account is not whitelisted';
+    "CardPaymentProcessor: payment with the provided authorization ID already exists and was not revoked";
+  const REVERT_MESSAGE_IF_ACCOUNT_IS_NOT_WHITELISTED =
+    "Whitelistable: account is not whitelisted";
   const REVERT_MESSAGE_IF_PAYMENT_DOES_NOT_EXIST =
-    'CardPaymentProcessor: payment with the provided authorization ID does not exist';
+    "CardPaymentProcessor: payment with the provided authorization ID does not exist";
   const REVERT_MESSAGE_IF_PAYMENT_IS_CLEARED =
-    'CardPaymentProcessor: payment with the provided authorization ID is cleared'
+    "CardPaymentProcessor: payment with the provided authorization ID is cleared";
   const REVERT_MESSAGE_IF_PAYMENT_IS_UNCLEARED =
-    'CardPaymentProcessor: payment with the provided authorization ID is uncleared'
+    "CardPaymentProcessor: payment with the provided authorization ID is uncleared";
   const REVERT_MESSAGE_IF_PARENT_TX_HASH_IS_ZERO =
-    'CardPaymentProcessor: parent transaction hash should not equal 0';
+    "CardPaymentProcessor: parent transaction hash should not equal 0";
   const REVERT_MESSAGE_IF_PAYMENT_HAS_INAPPROPRIATE_STATUS =
-    'CardPaymentProcessor: payment with the provided authorization ID has an inappropriate status'
+    "CardPaymentProcessor: payment with the provided authorization ID has an inappropriate status";
   const REVERT_MESSAGE_IF_PAYMENT_REVOCATION_COUNTER_HAS_REACHED_MAXIMUM =
-    'CardPaymentProcessor: revocation counter of the payment has reached the configured maximum'
+    "CardPaymentProcessor: revocation counter of the payment has reached the configured maximum";
 
   let cardPaymentProcessor: Contract;
   let brlcMock: Contract;
@@ -1233,7 +1239,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
     });
   });
 
-  describe("Complex scenarios'", async () => {
+  describe("Complex scenarios", async () => {
     const someCorrelationId: string = SOME_BYTES16_STRING;
     const someParentTxHash: string = SOME_BYTES32_STRING;
 
