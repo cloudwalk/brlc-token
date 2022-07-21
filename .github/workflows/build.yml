@@ -11,14 +11,43 @@ on:
 
 jobs:
   ubuntu-latest:
-
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [16.5]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - run: npm install
+    - run: npx hardhat compile
 
+  macos-latest:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        node-version: [16.5]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - run: npm install
+    - run: npx hardhat compile
+
+  windows-latest:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        node-version: [16.5]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
     steps:
     - uses: actions/checkout@v3
     - name: Use Node.js ${{ matrix.node-version }}
