@@ -9,6 +9,8 @@ const BYTES16_LENGTH: number = 16;
 const BYTES32_LENGTH: number = 32;
 const ZERO_BYTES16_STRING: string = createBytesString('00', BYTES16_LENGTH);
 const ZERO_BYTES32_STRING: string = createBytesString('00', BYTES32_LENGTH);
+const SOME_BYTES16_STRING = createBytesString('ABCD', BYTES16_LENGTH);
+const SOME_BYTES32_STRING = createBytesString('DCBA', BYTES32_LENGTH);
 
 enum PaymentStatus {
   Nonexistent = 0,
@@ -27,6 +29,14 @@ interface TestPayment {
   revocationCounter?: number,
   makingPaymentCorrelationId: number
   parentTxHash?: string
+}
+
+interface CardPaymentProcessorState {
+  tokenBalance: number;
+  totalClearedBalance: number,
+  totalUnclearedBalance: number,
+  clearedBalancesPerAccount: Map<string, number>,
+  unclearedBalancesPerAccount: Map<string, number>
 }
 
 function checkEquality(
@@ -117,12 +127,11 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
 
   async function makePayments(payments: TestPayment[]) {
     for (let payment of payments) {
-      await proveTx(
-        cardPaymentProcessor.connect(payment.account).makePayment(
-          payment.amount,
-          createBytesString(payment.authorizationId, BYTES16_LENGTH),
-          createBytesString(payment.makingPaymentCorrelationId, BYTES16_LENGTH)
-        ));
+      await proveTx(cardPaymentProcessor.connect(payment.account).makePayment(
+        payment.amount,
+        createBytesString(payment.authorizationId, BYTES16_LENGTH),
+        createBytesString(payment.makingPaymentCorrelationId, BYTES16_LENGTH)
+      ));
       payment.status = PaymentStatus.Uncleared;
     }
   }
@@ -136,10 +145,10 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
 
   async function clearPayments(payments: TestPayment[], adminAccount: SignerWithAddress) {
     const authorizationIds: string[] = [];
-    for (let payment of payments) {
+    payments.forEach(payment => {
       authorizationIds.push(createBytesString(payment.authorizationId, BYTES16_LENGTH));
       payment.status = PaymentStatus.Cleared;
-    }
+    });
     await proveTx(cardPaymentProcessor.connect(adminAccount).clearPayments(authorizationIds));
   }
 
@@ -153,29 +162,40 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         newBalance += payment.amount;
       }
       balancesPerAccount.set(address, newBalance);
-    })
+    });
 
     return balancesPerAccount;
   }
 
-  async function checkCardPaymentProcessorState(payments: TestPayment[]) {
-    const expectedTotalClearedBalance = payments.map(function (payment: TestPayment): number {
-      return payment.status == PaymentStatus.Cleared ? payment.amount : 0
-    }).reduce((sum: number, current: number) => sum + current);
-
-    const expectedTotalUnclearedBalance = payments.map(function (payment: TestPayment): number {
-      return payment.status == PaymentStatus.Uncleared ? payment.amount : 0
-    }).reduce((sum: number, current: number) => sum + current);
-
-    const clearedBalancesPerAccount: Map<string, number> =
-      defineBalancesPerAccount(payments, PaymentStatus.Cleared);
-    const unclearedBalancesPerAccount: Map<string, number> =
-      defineBalancesPerAccount(payments, PaymentStatus.Uncleared);
-
-    const expectedProcessorTokenBalance: number = payments.map(function (payment: TestPayment): number {
+  function defineExpectedCardPaymentProcessorState(payments: TestPayment[]): CardPaymentProcessorState {
+    const tokenBalance: number = payments.map(function (payment: TestPayment): number {
       return payment.status == PaymentStatus.Uncleared || payment.status == PaymentStatus.Cleared ? payment.amount : 0
     }).reduce((sum: number, current: number) => sum + current);
+    const totalClearedBalance: number = payments.map(function (payment: TestPayment): number {
+      return payment.status == PaymentStatus.Cleared ? payment.amount : 0
+    }).reduce((sum: number, current: number) => sum + current);
+    const totalUnclearedBalance: number = payments.map(function (payment: TestPayment): number {
+      return payment.status == PaymentStatus.Uncleared ? payment.amount : 0
+    }).reduce((sum: number, current: number) => sum + current);
+    const clearedBalancesPerAccount: Map<string, number> = defineBalancesPerAccount(
+      payments,
+      PaymentStatus.Cleared
+    );
+    const unclearedBalancesPerAccount: Map<string, number> = defineBalancesPerAccount(
+      payments,
+      PaymentStatus.Uncleared
+    );
 
+    return {
+      tokenBalance,
+      totalUnclearedBalance,
+      totalClearedBalance,
+      clearedBalancesPerAccount,
+      unclearedBalancesPerAccount
+    };
+  }
+
+  async function checkPaymentStructuresOnBlockchain(payments: TestPayment[]) {
     for (let i = 0; i < payments.length; ++i) {
       const expectedPayment: TestPayment = payments[i];
       const actualPayment = await cardPaymentProcessor.paymentFor(
@@ -191,41 +211,49 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         )
       }
     }
+  }
 
-    for (const clearedAccount of clearedBalancesPerAccount.keys()) {
-      const expectedClearedBalance = clearedBalancesPerAccount.get(clearedAccount);
-      if (!expectedClearedBalance) {
+  async function checkBalancesOnBlockchain(
+    expectedBalancesPerAccount: Map<string, number>,
+    isClearedBalance: boolean
+  ) {
+    for (const account of expectedBalancesPerAccount.keys()) {
+      const expectedBalance = expectedBalancesPerAccount.get(account);
+      if (!expectedBalance) {
         continue;
       }
-      expect(await cardPaymentProcessor.clearedBalanceOf(clearedAccount)).to.equal(
-        expectedClearedBalance,
-        `The cleared balance for account ${clearedAccount} is wrong`
-      )
-    }
-
-    for (const unclearedAccount of unclearedBalancesPerAccount.keys()) {
-      const expectedUnclearedBalance = unclearedBalancesPerAccount.get(unclearedAccount);
-      if (!expectedUnclearedBalance) {
-        continue;
+      if (isClearedBalance) {
+        expect(await cardPaymentProcessor.clearedBalanceOf(account)).to.equal(
+          expectedBalance,
+          `The cleared balance for account ${account} is wrong`
+        )
+      } else {
+        expect(await cardPaymentProcessor.unclearedBalanceOf(account)).to.equal(
+          expectedBalance,
+          `The uncleared balance for account ${account} is wrong`
+        )
       }
-      expect(await cardPaymentProcessor.unclearedBalanceOf(unclearedAccount)).to.equal(
-        expectedUnclearedBalance,
-        `The uncleared balance for account ${unclearedAccount} is wrong`
-      )
     }
+  }
+
+  async function checkCardPaymentProcessorState(payments: TestPayment[]) {
+    const expectedState: CardPaymentProcessorState = defineExpectedCardPaymentProcessorState(payments);
+    await checkPaymentStructuresOnBlockchain(payments);
+    await checkBalancesOnBlockchain(expectedState.clearedBalancesPerAccount, true);
+    await checkBalancesOnBlockchain(expectedState.unclearedBalancesPerAccount, false);
 
     expect(await cardPaymentProcessor.totalClearedBalance()).to.equal(
-      expectedTotalClearedBalance,
+      expectedState.totalClearedBalance,
       `The total cleared balance is wrong`
     )
 
     expect(await cardPaymentProcessor.totalUnclearedBalance()).to.equal(
-      expectedTotalUnclearedBalance,
+      expectedState.totalUnclearedBalance,
       `The total uncleared balance is wrong`
     )
 
     expect(await brlcMock.balanceOf(cardPaymentProcessor.address)).to.equal(
-      expectedProcessorTokenBalance,
+      expectedState.tokenBalance,
       `The processor token balance is wrong`
     )
   }
@@ -251,12 +279,12 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
   });
 
   describe("Function 'setRevocationCounterMaximum()'", async () => {
-    const newValue: number = 123;
-    const defaultValue: number = 255;
+    const revocationCounterNewValue: number = 123;
+    const revocationCounterMaximumDefaultValue: number = 255;
 
     it("Is reverted if is called not by the owner", async () => {
       await expect(cardPaymentProcessor.connect(user1).setRevocationCounterMaximum(
-        newValue
+        revocationCounterNewValue
       )).to.be.revertedWith(REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER);
     });
 
@@ -266,27 +294,27 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
     });
 
     it("Emits the correct event, changes the revocation counter maximum properly", async () => {
-      expect(await cardPaymentProcessor.revocationCounterMaximum()).to.equal(defaultValue);
+      expect(await cardPaymentProcessor.revocationCounterMaximum()).to.equal(revocationCounterMaximumDefaultValue);
       await expect(cardPaymentProcessor.setRevocationCounterMaximum(
-        newValue
+        revocationCounterNewValue
       )).to.emit(
         cardPaymentProcessor,
         "SetRevocationCounterMaximum"
       ).withArgs(
-        defaultValue,
-        newValue
+        revocationCounterMaximumDefaultValue,
+        revocationCounterNewValue
       );
     });
 
     it("Does not emit events if the new value equals the old one", async () => {
       await expect(cardPaymentProcessor.setRevocationCounterMaximum(
-        defaultValue
+        revocationCounterMaximumDefaultValue
       )).not.to.emit(
         cardPaymentProcessor,
         "SetRevocationCounterMaximum"
       );
     });
-  })
+  });
 
   describe("Function 'makePayment()'", async () => {
     let payment: TestPayment;
@@ -317,8 +345,9 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
     });
 
     it("Is reverted if the payment token amount is zero", async () => {
+      const zeroAmount: number = 0;
       await expect(cardPaymentProcessor.connect(payment.account).makePayment(
-        0,
+        zeroAmount,
         authorizationId,
         correlationId
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_AMOUNT_IS_ZERO);
@@ -341,7 +370,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       )).to.be.revertedWith(REVERT_MESSAGE_IF_TOKEN_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
-    it("Transfers tokens as expected, emits the correct events, changes the state properly", async () => {
+    it("Transfers tokens as expected, emits the correct event, changes the state properly", async () => {
       await checkCardPaymentProcessorState([payment]);
       await expect(cardPaymentProcessor.connect(payment.account).makePayment(
         payment.amount,
@@ -349,8 +378,8 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         correlationId
       )).to.changeTokenBalances(
         brlcMock,
-        [payment.account, cardPaymentProcessor],
-        [-payment.amount, payment.amount]
+        [cardPaymentProcessor, payment.account],
+        [+payment.amount, -payment.amount]
       ).and.to.emit(
         cardPaymentProcessor,
         "MakePayment"
@@ -371,7 +400,6 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         payment.makingPaymentCorrelationId + 1,
         BYTES16_LENGTH
       );
-      payment.makingPaymentCorrelationId = payment.makingPaymentCorrelationId + 1;
       await expect(cardPaymentProcessor.connect(payment.account).makePayment(
         payment.amount + 1,
         authorizationId,
@@ -420,13 +448,13 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_AUTHORIZATION_ID_IS_ZERO);
     });
 
-    it("Is reverted if the payment with provided authorization ID does not exist", async () => {
+    it("Is reverted if the payment with the provided authorization ID does not exist", async () => {
       await expect(cardPaymentProcessor.connect(admin).clearPayment(
         createBytesString(payment.authorizationId + 1, BYTES16_LENGTH)
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_DOES_NOT_EXIST);
     });
 
-    it("Does not transfer tokens, emits the correct events, changes the state properly", async () => {
+    it("Does not transfer tokens, emits the correct event, changes the state properly", async () => {
       await checkCardPaymentProcessorState([payment]);
       const expectedClearedBalance: number = payment.amount;
       const expectedUnclearedBalance: number = 0;
@@ -434,7 +462,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         authorizationId
       )).to.changeTokenBalances(
         brlcMock,
-        [payment.account, cardPaymentProcessor],
+        [cardPaymentProcessor, payment.account],
         [0, 0]
       ).and.to.emit(
         cardPaymentProcessor,
@@ -531,6 +559,15 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_DOES_NOT_EXIST);
     });
 
+    it("Is reverted if one of the payments has been already cleared", async () => {
+      await proveTx(cardPaymentProcessor.connect(admin).clearPayment(
+        authorizationIds[0]
+      ));
+      await expect(cardPaymentProcessor.connect(admin).clearPayments(
+        authorizationIds
+      )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_IS_CLEARED);
+    });
+
     it("Does not transfer tokens, emits the correct events, changes the state properly", async () => {
       await checkCardPaymentProcessorState(payments);
       await expect(cardPaymentProcessor.connect(admin).clearPayments(
@@ -562,15 +599,6 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       );
       payments.forEach(payment => payment.status = PaymentStatus.Cleared)
       await checkCardPaymentProcessorState(payments);
-    });
-
-    it("Is reverted if one of the payments has been already cleared", async () => {
-      await proveTx(cardPaymentProcessor.connect(admin).clearPayment(
-        authorizationIds[0]
-      ));
-      await expect(cardPaymentProcessor.connect(admin).clearPayments(
-        authorizationIds
-      )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_IS_CLEARED);
     });
   });
 
@@ -615,13 +643,13 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_AUTHORIZATION_ID_IS_ZERO);
     });
 
-    it("Is reverted if the payment with provided authorization ID does not exist", async () => {
+    it("Is reverted if the payment with the provided authorization ID does not exist", async () => {
       await expect(cardPaymentProcessor.connect(admin).unclearPayment(
         createBytesString(payment.authorizationId + 1, BYTES16_LENGTH)
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_DOES_NOT_EXIST);
     });
 
-    it("Does not transfer tokens, emits the correct events, changes the state properly", async () => {
+    it("Does not transfer tokens, emits the correct event, changes the state properly", async () => {
       await checkCardPaymentProcessorState([payment]);
       const expectedClearedBalance: number = 0
       const expectedUnclearedBalance: number = payment.amount;
@@ -629,7 +657,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         authorizationId
       )).to.changeTokenBalances(
         brlcMock,
-        [payment.account, cardPaymentProcessor],
+        [cardPaymentProcessor, payment.account],
         [0, 0]
       ).and.to.emit(
         cardPaymentProcessor,
@@ -727,6 +755,15 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_DOES_NOT_EXIST);
     });
 
+    it("Is reverted if one of the payments is uncleared", async () => {
+      await proveTx(cardPaymentProcessor.connect(admin).unclearPayment(
+        authorizationIds[0]
+      ));
+      await expect(cardPaymentProcessor.connect(admin).unclearPayments(
+        authorizationIds
+      )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_IS_UNCLEARED);
+    });
+
     it("Does not transfer tokens, emits the correct events, changes the state properly", async () => {
       await checkCardPaymentProcessorState(payments);
       await expect(cardPaymentProcessor.connect(admin).unclearPayments(
@@ -759,20 +796,11 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       payments.forEach(payment => payment.status = PaymentStatus.Uncleared)
       await checkCardPaymentProcessorState(payments);
     });
-
-    it("Is reverted if one of the payments is uncleared", async () => {
-      await proveTx(cardPaymentProcessor.connect(admin).unclearPayment(
-        authorizationIds[0]
-      ));
-      await expect(cardPaymentProcessor.connect(admin).unclearPayments(
-        authorizationIds
-      )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_IS_UNCLEARED);
-    });
   });
 
   describe("Function 'revokePayment()'", async () => {
-    const reversingPaymentCorrelationId: string = createBytesString('ABCD', BYTES16_LENGTH);
-    const parentTxHash: string = createBytesString('DCBA', BYTES32_LENGTH);
+    const reversingPaymentCorrelationId: string = SOME_BYTES16_STRING;
+    const parentTxHash: string = SOME_BYTES32_STRING;
 
     let payment: TestPayment;
     let authorizationId: string;
@@ -829,7 +857,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PARENT_TX_HASH_IS_ZERO);
     });
 
-    it("Is reverted if the payment with provided authorization ID does not exist", async () => {
+    it("Is reverted if the payment with the provided authorization ID does not exist", async () => {
       await expect(cardPaymentProcessor.connect(admin).revokePayment(
         createBytesString(payment.authorizationId + 1, BYTES16_LENGTH),
         reversingPaymentCorrelationId,
@@ -837,13 +865,12 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_DOES_NOT_EXIST);
     });
 
-    describe("Transfers tokens as expected, emits the correct events, changes the state properly", async () => {
+    describe("Transfers tokens as expected, emits the correct event, changes the state properly", async () => {
       const expectedClearedBalance: number = 0
       const expectedUnclearedBalance: number = 0;
-      let wasPaymentCleared: boolean;
+      const expectedRevocationCounter: number = 1;
 
-      it("If payment is uncleared", async () => {
-        wasPaymentCleared = false;
+      async function checkRevocation(wasPaymentCleared: boolean) {
         await checkCardPaymentProcessorState([payment]);
         await expect(cardPaymentProcessor.connect(admin).revokePayment(
           authorizationId,
@@ -865,49 +892,29 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
           expectedUnclearedBalance,
           wasPaymentCleared,
           parentTxHash,
-          (payment.revocationCounter || 0) + 1
+          expectedRevocationCounter
         );
         payment.status = PaymentStatus.Revoked;
-        payment.revocationCounter = (payment.revocationCounter || 0) + 1;
+        payment.revocationCounter = expectedRevocationCounter;
         await checkCardPaymentProcessorState([payment]);
+      }
+
+      it("If payment is uncleared", async () => {
+        const wasPaymentCleared: boolean = false;
+        await checkRevocation(wasPaymentCleared);
       });
 
       it("If payment is cleared", async () => {
-        wasPaymentCleared = true;
+        const wasPaymentCleared: boolean = true;
         await clearPayments([payment], admin);
-        await checkCardPaymentProcessorState([payment]);
-        await expect(cardPaymentProcessor.connect(admin).revokePayment(
-          authorizationId,
-          reversingPaymentCorrelationId,
-          parentTxHash
-        )).to.changeTokenBalances(
-          brlcMock,
-          [cardPaymentProcessor, payment.account],
-          [-payment.account, +payment.amount]
-        ).and.to.emit(
-          cardPaymentProcessor,
-          "RevokePayment"
-        ).withArgs(
-          authorizationId,
-          reversingPaymentCorrelationId,
-          payment.account.address,
-          payment.amount,
-          expectedClearedBalance,
-          expectedUnclearedBalance,
-          wasPaymentCleared,
-          parentTxHash,
-          (payment.revocationCounter || 0) + 1
-        );
-        payment.status = PaymentStatus.Revoked;
-        payment.revocationCounter = (payment.revocationCounter || 0) + 1;
-        await checkCardPaymentProcessorState([payment]);
+        await checkRevocation(wasPaymentCleared);
       });
     })
   });
 
   describe("Function 'reversePayment()'", async () => {
-    const reversingPaymentCorrelationId: string = createBytesString('ABCD', BYTES16_LENGTH);
-    const parentTxHash: string = createBytesString('DCBA', BYTES32_LENGTH);
+    const reversingPaymentCorrelationId: string = SOME_BYTES16_STRING;
+    const parentTxHash: string = SOME_BYTES32_STRING;
 
     let payment: TestPayment;
     let authorizationId: string;
@@ -963,7 +970,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PARENT_TX_HASH_IS_ZERO);
     });
 
-    it("Is reverted if the payment with provided authorization ID does not exist", async () => {
+    it("Is reverted if the payment with the provided authorization ID does not exist", async () => {
       await expect(cardPaymentProcessor.connect(admin).reversePayment(
         createBytesString(payment.authorizationId + 1, BYTES16_LENGTH),
         reversingPaymentCorrelationId,
@@ -971,13 +978,11 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_DOES_NOT_EXIST);
     });
 
-    describe("Transfers tokens as expected, emits the correct events, changes the state properly", async () => {
+    describe("Transfers tokens as expected, emits the correct event, changes the state properly", async () => {
       const expectedClearedBalance: number = 0
       const expectedUnclearedBalance: number = 0;
-      let wasPaymentCleared: boolean;
 
-      it("If payment is uncleared", async () => {
-        wasPaymentCleared = false;
+      async function checkReversion(wasPaymentCleared: boolean) {
         await checkCardPaymentProcessorState([payment]);
         await expect(cardPaymentProcessor.connect(admin).reversePayment(
           authorizationId,
@@ -1003,36 +1008,17 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         );
         payment.status = PaymentStatus.Reversed;
         await checkCardPaymentProcessorState([payment]);
+      }
+
+      it("If payment is uncleared", async () => {
+        const wasPaymentCleared: boolean = false;
+        await checkReversion(wasPaymentCleared);
       });
 
       it("If payment is cleared", async () => {
-        wasPaymentCleared = true;
+        const wasPaymentCleared: boolean = true;
         await clearPayments([payment], admin);
-        await checkCardPaymentProcessorState([payment]);
-        await expect(cardPaymentProcessor.connect(admin).reversePayment(
-          authorizationId,
-          reversingPaymentCorrelationId,
-          parentTxHash
-        )).to.changeTokenBalances(
-          brlcMock,
-          [cardPaymentProcessor, payment.account],
-          [-payment.account, +payment.amount]
-        ).and.to.emit(
-          cardPaymentProcessor,
-          "ReversePayment"
-        ).withArgs(
-          authorizationId,
-          reversingPaymentCorrelationId,
-          payment.account.address,
-          payment.amount,
-          expectedClearedBalance,
-          expectedUnclearedBalance,
-          wasPaymentCleared,
-          parentTxHash,
-          payment.revocationCounter || 0
-        );
-        payment.status = PaymentStatus.Reversed;
-        await checkCardPaymentProcessorState([payment]);
+        await checkReversion(wasPaymentCleared);
       });
     })
   });
@@ -1083,7 +1069,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_AUTHORIZATION_ID_IS_ZERO);
     });
 
-    it("Is reverted if the payment with provided authorization ID does not exist", async () => {
+    it("Is reverted if the payment with the provided authorization ID does not exist", async () => {
       await expect(cardPaymentProcessor.connect(admin).confirmPayment(
         createBytesString(payment.authorizationId + 1, BYTES16_LENGTH),
         cashOutAccount.address
@@ -1100,7 +1086,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_IS_UNCLEARED);
     });
 
-    it("Transfers tokens as expected, emits the correct events, changes the state properly", async () => {
+    it("Transfers tokens as expected, emits the correct event, changes the state properly", async () => {
       await checkCardPaymentProcessorState([payment]);
       const expectedClearedBalance: number = 0
       await expect(cardPaymentProcessor.connect(admin).confirmPayment(
@@ -1108,8 +1094,8 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         cashOutAccount.address
       )).to.changeTokenBalances(
         brlcMock,
-        [cardPaymentProcessor, payment.account, cashOutAccount],
-        [-payment.account, 0, +payment.amount]
+        [cardPaymentProcessor, cashOutAccount, payment.account],
+        [-payment.account, +payment.amount, 0]
       ).and.to.emit(
         cardPaymentProcessor,
         "ConfirmPayment"
@@ -1248,15 +1234,15 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
   });
 
   describe("Complex scenarios'", async () => {
-    const someCorrelationId: string = createBytesString('ABCD', BYTES16_LENGTH);
-    const someParentTxHash: string = createBytesString('BCDF', BYTES32_LENGTH);
+    const someCorrelationId: string = SOME_BYTES16_STRING;
+    const someParentTxHash: string = SOME_BYTES32_STRING;
 
     let payments: TestPayment[];
     let admin: SignerWithAddress;
     let cashOutAccount: SignerWithAddress;
     let authorizationIds: string[];
 
-    async function checkRevertingPaymentProcessingFunctionsExceptMaking() {
+    async function checkRevertingOfAllPaymentProcessingFunctionsExceptMaking() {
       await expect(cardPaymentProcessor.connect(admin).clearPayment(
         authorizationIds[0],
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_HAS_INAPPROPRIATE_STATUS);
@@ -1273,13 +1259,13 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         authorizationIds,
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_HAS_INAPPROPRIATE_STATUS);
 
-      await expect(cardPaymentProcessor.connect(admin).reversePayment(
+      await expect(cardPaymentProcessor.connect(admin).revokePayment(
         authorizationIds[0],
         someCorrelationId,
         someParentTxHash
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_HAS_INAPPROPRIATE_STATUS);
 
-      await expect(cardPaymentProcessor.connect(admin).revokePayment(
+      await expect(cardPaymentProcessor.connect(admin).reversePayment(
         authorizationIds[0],
         someCorrelationId,
         someParentTxHash
@@ -1320,7 +1306,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       await addAccountToCardPaymentProcessorWhitelist(admin);
     });
 
-    it("All payment processing functions except making are reverted if a payment is revoked", async () => {
+    it("All payment processing functions except making are reverted if a payment was revoked", async () => {
       await makePayments(payments);
       await proveTx(cardPaymentProcessor.connect(admin).revokePayment(
         authorizationIds[0],
@@ -1331,7 +1317,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       payments[0].revocationCounter = 1;
 
       await checkCardPaymentProcessorState(payments);
-      await checkRevertingPaymentProcessingFunctionsExceptMaking();
+      await checkRevertingOfAllPaymentProcessingFunctionsExceptMaking();
 
       await expect(cardPaymentProcessor.connect(payments[0].account).makePayment(
         payments[0].amount,
@@ -1356,7 +1342,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       await checkCardPaymentProcessorState(payments);
     });
 
-    it("All payment processing functions are reverted if a payment is reversed", async () => {
+    it("All payment processing functions are reverted if a payment was reversed", async () => {
       await makePayments(payments);
       await proveTx(cardPaymentProcessor.connect(admin).reversePayment(
         authorizationIds[0],
@@ -1371,11 +1357,11 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         createBytesString(payments[0].makingPaymentCorrelationId, BYTES16_LENGTH)
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_AUTHORIZATION_ID_ALREADY_EXISTS);
 
-      await checkRevertingPaymentProcessingFunctionsExceptMaking();
+      await checkRevertingOfAllPaymentProcessingFunctionsExceptMaking();
       await checkCardPaymentProcessorState(payments);
     });
 
-    it("All payment processing functions are reverted if a payment is confirmed", async () => {
+    it("All payment processing functions are reverted if a payment was confirmed", async () => {
       await makePayments(payments);
       await clearPayments(payments, admin);
       await proveTx(cardPaymentProcessor.connect(admin).confirmPayment(authorizationIds[0], cashOutAccount.address));
@@ -1387,8 +1373,19 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         createBytesString(payments[0].makingPaymentCorrelationId, BYTES16_LENGTH)
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_AUTHORIZATION_ID_ALREADY_EXISTS);
 
-      await checkRevertingPaymentProcessingFunctionsExceptMaking();
+      await checkRevertingOfAllPaymentProcessingFunctionsExceptMaking();
       await checkCardPaymentProcessorState(payments);
+    });
+
+    it("Making payment function is reverted if the payment has the 'Cleared' status", async () => {
+      await makePayments([payments[0]]);
+      await clearPayments([payments[0]], admin);
+
+      await expect(cardPaymentProcessor.connect(payments[0].account).makePayment(
+        payments[0].amount,
+        authorizationIds[0],
+        someCorrelationId
+      )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_AUTHORIZATION_ID_ALREADY_EXISTS);
     });
 
     it("Making payment function is reverted if the revocation counter has reached the maximum", async () => {
