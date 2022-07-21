@@ -178,17 +178,17 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       function (payment: TestPayment): number {
         return payment.status == PaymentStatus.Uncleared || payment.status == PaymentStatus.Cleared
           ? payment.amount
-          : 0
+          : 0;
       }
     ).reduce((sum: number, current: number) => sum + current);
     const totalClearedBalance: number = payments.map(
       function (payment: TestPayment): number {
-        return payment.status == PaymentStatus.Cleared ? payment.amount : 0
+        return payment.status == PaymentStatus.Cleared ? payment.amount : 0;
       }
     ).reduce((sum: number, current: number) => sum + current);
     const totalUnclearedBalance: number = payments.map(
       function (payment: TestPayment): number {
-        return payment.status == PaymentStatus.Uncleared ? payment.amount : 0
+        return payment.status == PaymentStatus.Uncleared ? payment.amount : 0;
       }
     ).reduce((sum: number, current: number) => sum + current);
     const clearedBalancesPerAccount: Map<string, number> =
@@ -943,7 +943,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         amount: 765,
         status: PaymentStatus.Nonexistent,
         makingPaymentCorrelationId: 543,
-        parentTxHash: parentTxHash
+        parentTxHash: parentTxHash,
       };
       admin = user2;
       authorizationId = createBytesString(payment.authorizationId, BYTES16_LENGTH);
@@ -995,7 +995,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
     });
 
     describe("Transfers tokens as expected, emits the correct event, changes the state properly", async () => {
-      const expectedClearedBalance: number = 0
+      const expectedClearedBalance: number = 0;
       const expectedUnclearedBalance: number = 0;
 
       async function checkReversion(wasPaymentCleared: boolean) {
@@ -1160,7 +1160,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       accountAddresses = payments.map((payment: TestPayment) => payment.account.address);
       totalAmount = payments.map(
         function (payment: TestPayment): number {
-          return payment.amount
+          return payment.amount;
         }
       ).reduce((sum: number, current: number) => sum + current);
       await setUpContractsForPayments(payments);
