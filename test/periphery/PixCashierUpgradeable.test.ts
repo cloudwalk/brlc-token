@@ -35,7 +35,7 @@ describe("Contract 'PixCashierUpgradeable'", async () => {
     [deployer, user] = await ethers.getSigners();
   });
 
-  it("The initialize function can't be called more than once", async () => {
+  it("The initialize function can only be called once", async () => {
     await expect(pixCashier.initialize(brlcMock.address))
       .to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
   });
