@@ -10,3 +10,6 @@ artifacts
 
 #IDE files
 /.idea/
+
+# OpenZeppelin
+.openzeppelin/unknown-*.json
