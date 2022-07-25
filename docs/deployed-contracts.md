@@ -10,7 +10,6 @@
 | 3 | SubstrateBRLCTokenV2Upgradeable | Implementation | [0xD898E193A8A2138b4BE66e5Bd8772BB352C8FD23](https://explorer.mainnet.cloudwalk.io/address/0xD898E193A8A2138b4BE66e5Bd8772BB352C8FD23) |
 |||| <strike>[0xD89Ef80CB826D16252eD63416776A62cadddE86F](https://explorer.mainnet.cloudwalk.io/address/0xD89Ef80CB826D16252eD63416776A62cadddE86F)</strike> |
 
-
 ### Spin Machine
 | # | Name | Description | Address |
 | --- | --- | --- | --- |
@@ -22,13 +21,12 @@
 |||| <strike>[0xD6dd600864EacEa397Edd8A36e285EA89bb2Ee89](https://explorer.mainnet.cloudwalk.io/address/0xD6dd600864EacEa397Edd8A36e285EA89bb2Ee89)</strike> |
 | 4 | OnchainRandomProvider | Periphery | [0xEdcc18b856cA3f90fcb4Dea92C9E1ee108816977](https://explorer.mainnet.cloudwalk.io/address/0xEdcc18b856cA3f90fcb4Dea92C9E1ee108816977) |
 
-### BRLC Cashier
+### PixCashier
 | # | Name | Description | Address |
 | --- | --- | --- | --- |
 | 1 | TransparentUpgradeableProxy | Proxy | [0xc8eb60d121EF768C94438a7F0a38AADfC401f301](https://explorer.mainnet.cloudwalk.io/address/0xc8eb60d121EF768C94438a7F0a38AADfC401f301) |
 | 2 | ProxyAdmin | Proxy admin | [0x7fAC46180531870C61633272Cec780C1676a7099](https://explorer.mainnet.cloudwalk.io/address/0x7fAC46180531870C61633272Cec780C1676a7099) |
 | 3 | BrlcCashierUpgradeable | Implementation | [0xAfCf300D7a9a5Fc4022250fEA6f039DceCd042b1](https://explorer.mainnet.cloudwalk.io/address/0xAfCf300D7a9a5Fc4022250fEA6f039DceCd042b1) |
-
 
 ### Multisend
 | # | Name | Description | Address |
