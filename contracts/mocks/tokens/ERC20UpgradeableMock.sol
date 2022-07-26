@@ -77,9 +77,21 @@ contract ERC20UpgradeableMock is ERC20Upgradeable, IERC20Bridgeable {
         return true;
     }
 
-    /// @dev Returns the address of the bridge.
-    function bridge() public view override returns (address) {
-        return _bridge;
+    /**
+     * @dev Checks whether a bridge is supported by the token or not.
+     * @param bridge The address of the bridge to check.
+     * @return bool True if the bridge is supported by the token.
+     */
+    function isBridgeSupported(address bridge) public view override returns (bool) {
+        return (bridge != address(0)) && (_bridge == bridge);
+    }
+
+    /**
+     * @dev Checks whether the token supports the bridge operations by implementing the IERC20Bridgeable interface.
+     * @return bool True in any case.
+     */
+    function isIERC20Bridgeable() public pure override returns (bool) {
+        return true;
     }
 
     /**

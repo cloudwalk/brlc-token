@@ -9,7 +9,7 @@ describe("Contract 'BridgeableTokenUpgradeable'", async () => {
   const TOKEN_SYMBOL = "BRLC";
   const TOKEN_DECIMALS = 6;
 
-  const REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED = 'Initializable: contract is already initialized';
+  const REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
   const REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER = "Ownable: caller is not the owner";
   const REVERT_MESSAGE_IF_CALLER_IS_NOT_BRIDGE = "BridgeableToken: caller is not the bridge";
   const REVERT_MESSAGE_IF_MINTING_FOR_ZERO_ADDRESS = "BridgeableToken: minting for the zero address";
@@ -34,13 +34,15 @@ describe("Contract 'BridgeableTokenUpgradeable'", async () => {
   });
 
   it("The initialize function can't be called more than once", async () => {
-    await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS))
-      .to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
+    await expect(
+      token.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS)
+    ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
   });
 
   it("The initialize unchained function can't be called more than once", async () => {
-    await expect(token.initialize_unchained())
-      .to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
+    await expect(
+      token.initialize_unchained()
+    ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
   });
 
   describe("Configuration", async () => {
@@ -52,15 +54,21 @@ describe("Contract 'BridgeableTokenUpgradeable'", async () => {
       });
 
       it("Sets the bridge address correctly", async () => {
-        expect(await token.bridge()).to.equal(ethers.constants.AddressZero);
+        expect(await token.isBridgeSupported(user1.address)).to.equal(false);
         await proveTx(token.setBridge(user1.address));
-        expect(await token.bridge()).to.equal(user1.address);
-      })
+        expect(await token.isBridgeSupported(user1.address)).to.equal(true);
+      });
+
+      describe("Function 'isIERC20Bridgeable()'", async () => {
+        it("Always returns true", async () => {
+          expect(await token.isIERC20Bridgeable()).to.equal(true);
+        });
+      });
     });
   });
 
   describe("Interactions related to the bridge operations", async () => {
-    const tokenAmount: number = 123;
+    const tokenAmount = 123;
     let bridge: SignerWithAddress;
     let client: SignerWithAddress;
 
@@ -68,7 +76,7 @@ describe("Contract 'BridgeableTokenUpgradeable'", async () => {
       bridge = user1;
       client = user2;
       await proveTx(token.setBridge(bridge.address));
-    })
+    });
 
     describe("Function 'mintForBridging()'", async () => {
       it("Is reverted if is called not by the bridge", async () => {
@@ -103,14 +111,14 @@ describe("Contract 'BridgeableTokenUpgradeable'", async () => {
           client.address,
           tokenAmount
         );
-      })
+      });
     });
 
     describe("Function 'burnForBridging()'", async () => {
 
       beforeEach(async () => {
         await proveTx(token.connect(bridge).mintForBridging(bridge.address, tokenAmount));
-      })
+      });
 
       it("Is reverted if is called not by the bridge", async () => {
         await expect(
@@ -144,7 +152,7 @@ describe("Contract 'BridgeableTokenUpgradeable'", async () => {
           client.address,
           tokenAmount
         );
-      })
+      });
     });
   });
 });

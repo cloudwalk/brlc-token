@@ -15,5 +15,6 @@ interface IERC20Bridgeable {
     function burnForBridging(address account, uint256 amount)
         external
         returns (bool);
-    function bridge() external view returns (address);
+    function isBridgeSupported(address bridge) external view returns (bool);
+    function isIERC20Bridgeable() external pure returns (bool);
 }

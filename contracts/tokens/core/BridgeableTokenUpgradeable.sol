@@ -37,7 +37,7 @@ abstract contract BridgeableTokenUpgradeable is BaseTokenUpgradeable, IERC20Brid
      */
     modifier onlyBridge() {
         require(
-            _msgSender() == bridge(),
+            _msgSender() == _bridge,
             "BridgeableToken: caller is not the bridge"
         );
         _;
@@ -98,18 +98,28 @@ abstract contract BridgeableTokenUpgradeable is BaseTokenUpgradeable, IERC20Brid
     }
 
     /**
-     * @dev Returns the address of the bridge.
-     */
-    function bridge() public view override returns (address) {
-        return _bridge;
-    }
-
-    /**
      * @dev Sets the address of the bridge.
      * @param newBridge The address of the new bridge.
      */
     function setBridge(address newBridge) external onlyOwner {
         _bridge = newBridge;
         emit BridgeChanged(newBridge);
+    }
+
+    /**
+     * @dev Checks whether a bridge is supported by the token or not.
+     * @param bridge The address of the bridge to check.
+     * @return bool True if the bridge is supported by the token.
+     */
+    function isBridgeSupported(address bridge) public view override returns (bool) {
+        return (bridge != address(0)) && (_bridge == bridge);
+    }
+
+    /**
+     * @dev Checks whether the token supports the bridge operations by implementing the IERC20Bridgeable interface.
+     * @return bool True in any case.
+     */
+    function isIERC20Bridgeable() public pure override returns (bool) {
+        return true;
     }
 }
