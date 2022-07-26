@@ -36,3 +36,10 @@
 | 1 | TransparentUpgradeableProxy | Proxy | [0x6c198Bc95A5DF3A051e86678fffBC3973477f918](https://explorer.mainnet.cloudwalk.io/address/0x6c198Bc95A5DF3A051e86678fffBC3973477f918) |
 | 2 | ProxyAdmin | Proxy admin | [0x7fAC46180531870C61633272Cec780C1676a7099](https://explorer.mainnet.cloudwalk.io/address/0x7fAC46180531870C61633272Cec780C1676a7099) |
 | 3 | MultisendUpgradeable | Implementation | [0xE62FC82482Bd5bEC0BfE1a1f37b3Bc21d0dac00b](https://explorer.mainnet.cloudwalk.io/address/0xE62FC82482Bd5bEC0BfE1a1f37b3Bc21d0dac00b) |
+
+### IssuingCashier
+| # | Name | Description | Address |
+| --- | --- | --- | --- |
+| 1 | TransparentUpgradeableProxy | Proxy | TBD |
+| 2 | ProxyAdmin | Proxy admin | TBD | 
+| 3 | IssuingCashierUpgradeable | Implementation | TBD |
