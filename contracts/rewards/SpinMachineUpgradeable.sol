@@ -200,8 +200,9 @@ abstract contract SpinMachineUpgradeable is
      */
     function canSpin(address account) external view override returns (bool) {
         return
-            (!isWhitelistEnabled() || isWhitelisted(account)) &&
-            (_hasFreeSpin(account) || _hasExtraSpin(account));
+            getBalance() > 0
+            && (!isWhitelistEnabled() || isWhitelisted(account))
+            && (_hasFreeSpin(account) || _hasExtraSpin(account));
     }
 
     /**
