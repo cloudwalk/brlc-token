@@ -7,10 +7,11 @@ import { Block, TransactionReceipt } from "@ethersproject/abstract-provider";
 import { proveTx } from "../../test-utils/eth";
 
 describe("Contract 'SpinMachineUpgradeable'", async () => {
-  const REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED = 'Initializable: contract is already initialized';
+  const REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
   const REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER = "Ownable: caller is not the owner";
   const REVERT_MESSAGE_IF_SPIN_OWNER_IS_ZERO_ADDRESS = "SpinMachine: spinOwner is the zero address";
   const REVERT_MESSAGE_IF_CONTRACT_IS_PAUSED = "Pausable: paused";
+  const REVERT_MESSAGE_IF_BALANCE_IS_ZERO = "SpinMachine: balance is zero";
   const REVERT_MESSAGE_IF_ACCOUNT_IS_NOT_WHITELISTED = "Whitelistable: account is not whitelisted";
   const REVERT_MESSAGE_IF_SPIN_COUNT_IS_NOT_GREATER_THAN_0 = "SpinMachine: spins count must be greater than 0";
   const REVERT_MESSAGE_IF_PRIZES_ARRAY_IS_EMPTY = "SpinMachineV1: prizes array cannot be empty";
@@ -54,6 +55,12 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
   });
 
   describe("Configurations", async () => {
+
+    it("Be sure that SpinMachine has right initial config", async () => {
+      expect(await brlcMock.balanceOf(spinMachine.address)).to.equal(0);
+      expect(await spinMachine.isWhitelistEnabled()).to.equal(false);
+    });
+
     describe("Function 'setPrizes()'", async () => {
       const prizes: number[] = [10, 20, 30];
 
@@ -137,7 +144,7 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
 
       beforeEach(() => {
         spinOwner = user1;
-      })
+      });
 
       it("Is reverted if is called not by the owner", async () => {
         await expect(spinMachine.connect(user1).grantExtraSpin(spinOwner.address, extraSpinCount))
@@ -184,11 +191,6 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
       // Required approvals
       await proveTx(brlcMock.connect(user1).approve(spinMachine.address, ethers.constants.MaxInt256));
     });
-
-    it("Be sure that SpinMachine has right initial config", async () => {
-      expect(await brlcMock.balanceOf(spinMachine.address)).to.equal(0);
-      expect(await spinMachine.isWhitelistEnabled()).to.equal(false);
-    })
 
     describe("Function 'buyExtraSpin()'", async () => {
       const purchasedSpinCount: number = 10;
@@ -249,25 +251,14 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
 
     describe("Free spin scenarios", async () => {
       it("Be sure that there is a free spin and no extra spin", async () => {
-        expect(await spinMachine.canFreeSpin(user1.address)).to.equal(true);
+        expect(await spinMachine.hasFreeSpin(user1.address)).to.equal(true);
         expect(await spinMachine.extraSpins(user1.address)).to.equal(0);
-      })
+      });
 
       describe("Function 'spin()' when SpinMachine has zero token balance", async () => {
-        it("Does not transfer any tokens", async () => {
-          await expect(async () => {
-            await proveTx(spinMachine.connect(user1).spin());
-          }).to.changeTokenBalances(
-            brlcMock,
-            [spinMachine, user1],
-            [0, 0]
-          );
-        });
-
-        it("Does not spend free spin", async () => {
-          const oldLastFreeSpin: BigNumber = await spinMachine.lastFreeSpin(user1.address);
-          await proveTx(spinMachine.connect(user1).spin());
-          expect(await spinMachine.lastFreeSpin(user1.address)).to.equal(oldLastFreeSpin);
+        it("Is reverted", async () => {
+          await expect(spinMachine.connect(user1).spin())
+            .to.be.revertedWith(REVERT_MESSAGE_IF_BALANCE_IS_ZERO);
         });
       });
 
@@ -348,7 +339,7 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
         it("Does not allow the second free spin in a row", async () => {
           // First spin
           await proveTx(spinMachine.connect(user1).spin());
-          expect(await spinMachine.canFreeSpin(user1.address)).to.equal(false);
+          expect(await spinMachine.hasFreeSpin(user1.address)).to.equal(false);
           expect(await brlcMock.balanceOf(spinMachine.address)).to.gt(0);
 
           // Second spin
@@ -378,24 +369,14 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
       });
 
       it("Be sure that no free spin is available, but there is an extra spin", async () => {
-        expect(await spinMachine.canFreeSpin(user1.address)).to.equal(false);
+        expect(await spinMachine.hasFreeSpin(user1.address)).to.equal(false);
         expect(await spinMachine.extraSpins(user1.address)).to.equal(extraSpinCount);
       });
 
       describe("Function 'spin()' when SpinMachine has zero token balance", async () => {
-        it("Does not transfer any tokens", async () => {
-          await expect(async () => {
-            await proveTx(spinMachine.connect(user1).spin());
-          }).to.changeTokenBalances(
-            brlcMock,
-            [spinMachine, user1],
-            [0, 0]
-          );
-        });
-
-        it("Does not spend extra spins", async () => {
-          await proveTx(spinMachine.connect(user1).spin());
-          expect(await spinMachine.extraSpins(user1.address)).to.equal(extraSpinCount);
+        it("Is reverted", async () => {
+          await expect(spinMachine.connect(user1).spin())
+            .to.be.revertedWith(REVERT_MESSAGE_IF_BALANCE_IS_ZERO);
         });
       });
 
@@ -475,7 +456,7 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
           const oldExtraSpinCount: BigNumber = await spinMachine.extraSpins(user1.address);
           await proveTx(spinMachine.connect(user1).spin());
           const newExtraSpinCount: BigNumber = await spinMachine.extraSpins(user1.address);
-          expect(await spinMachine.canSpin(user1.address)).to.equal(false);
+          expect(await spinMachine.hasExtraSpin(user1.address)).to.equal(false);
           expect(newExtraSpinCount).to.equal(oldExtraSpinCount.sub(BigNumber.from(1)));
         });
 
@@ -505,7 +486,7 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
         expect(await spinMachine.isWhitelister(deployer.address)).to.equal(true);
         expect(await spinMachine.extraSpins(user1.address)).to.equal(extraSpinCount);
         expect(await brlcMock.balanceOf(spinMachine.address)).to.equal(tokenBalanceEnough);
-      })
+      });
 
       it("Function 'spin()' is reverted if the user is not whitelisted", async () => {
         expect(await spinMachine.isWhitelisted(user1.address)).to.equal(false);
@@ -547,7 +528,8 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
           .withArgs(user1.address, prize, prize, true);
 
         // All spins should be exhausted
-        expect(await spinMachine.canSpin(user1.address)).to.equal(false);
+        expect(await spinMachine.hasFreeSpin(user1.address)).to.equal(false);
+        expect(await spinMachine.hasExtraSpin(user1.address)).to.equal(false);
       });
     });
 
@@ -652,6 +634,66 @@ describe("Contract 'SpinMachineUpgradeable'", async () => {
             .to.emit(spinMachine, "Spin")
             .withArgs(user1.address, prize, prize, true);
         }
+      });
+    });
+
+    describe("Functions 'canFreeSpin()' and 'canSpin()'", async () => {
+      it("Return 'true' with the default configuration and non-zero token balance of the contract", async () => {
+        await proveTx(brlcMock.mint(spinMachine.address, 1));
+        expect(await spinMachine.canFreeSpin(user1.address)).to.equal(true);
+        expect(await spinMachine.canSpin(user1.address)).to.equal(true);
+      });
+
+      it("Return 'false' with the default configuration and zero token balance of the contract", async () => {
+        expect(await spinMachine.canFreeSpin(user1.address)).to.equal(false);
+        expect(await spinMachine.canSpin(user1.address)).to.equal(false);
+      });
+
+      it("Return expected values in different cases", async () => {
+        //Non-zero balance of the spin machine
+        await proveTx(brlcMock.mint(spinMachine.address, 1));
+        expect(await spinMachine.canFreeSpin(user1.address)).to.equal(true);
+        expect(await spinMachine.canSpin(user1.address)).to.equal(true);
+
+        //Pause the spin machine
+        await proveTx(spinMachine.setPauser(deployer.address));
+        await proveTx(spinMachine.pause());
+        expect(await spinMachine.canFreeSpin(user1.address)).to.equal(false);
+        expect(await spinMachine.canSpin(user1.address)).to.equal(false);
+
+        //Unpause the spin machine
+        await proveTx(spinMachine.unpause());
+        expect(await spinMachine.canFreeSpin(user1.address)).to.equal(true);
+        expect(await spinMachine.canSpin(user1.address)).to.equal(true);
+
+        //Activate the whitelist
+        await proveTx(spinMachine.setWhitelistEnabled(true));
+        await proveTx(spinMachine.setWhitelistAdmin(deployer.address));
+        await proveTx(spinMachine.setStubWhitelister(deployer.address));
+        expect(await spinMachine.canFreeSpin(user1.address)).to.equal(false);
+        expect(await spinMachine.canSpin(user1.address)).to.equal(false);
+
+        //Put the user to the whitelist
+        await proveTx(spinMachine.whitelist(user1.address));
+        expect(await spinMachine.canFreeSpin(user1.address)).to.equal(true);
+        expect(await spinMachine.canSpin(user1.address)).to.equal(true);
+
+        //Spend the free spin and set non-zero balance of the spin machine again
+        await proveTx(spinMachine.connect(user1).spin());
+        await proveTx(brlcMock.mint(spinMachine.address, 1));
+        expect(await spinMachine.canFreeSpin(user1.address)).to.equal(false);
+        expect(await spinMachine.canSpin(user1.address)).to.equal(false);
+
+        //Grant an extra spin
+        await proveTx(spinMachine.grantExtraSpin(user1.address, 1));
+        expect(await spinMachine.canFreeSpin(user1.address)).to.equal(false);
+        expect(await spinMachine.canSpin(user1.address)).to.equal(true);
+
+        //Spend the extra spin and set non-zero balance of the spin machine again
+        await proveTx(spinMachine.connect(user1).spin());
+        await proveTx(brlcMock.mint(spinMachine.address, 1));
+        expect(await spinMachine.canFreeSpin(user1.address)).to.equal(false);
+        expect(await spinMachine.canSpin(user1.address)).to.equal(false);
       });
     });
   });
