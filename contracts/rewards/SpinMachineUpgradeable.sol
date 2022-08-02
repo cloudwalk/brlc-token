@@ -155,10 +155,12 @@ abstract contract SpinMachineUpgradeable is
         onlyWhitelisted(_msgSender())
         returns (bool success, uint256 winnings)
     {
-        if (getBalance() > 0) {
-            (success, winnings) = _freeSpin(_msgSender());
-            if (!success) (success, winnings) = _extraSpin(_msgSender());
-        }
+        require (
+            getBalance() > 0,
+            "SpinMachine: balance is zero"
+        );
+        (success, winnings) = _freeSpin(_msgSender());
+        if (!success) (success, winnings) = _extraSpin(_msgSender());
         _faucetRequest(_msgSender());
     }
 
@@ -194,21 +196,22 @@ abstract contract SpinMachineUpgradeable is
     }
 
     /**
-     * @dev Checks if an account is allowed to execute a spin regardless of the paused state of the contract.
+     * @dev Checks if an account is allowed to execute a spin taking into account the state of the contract itself.
      * @param account An address to check.
-     * @return True if allowed.
+     * @return True if a spin can be executed by the account.
      */
     function canSpin(address account) external view override returns (bool) {
         return
-            getBalance() > 0
+            !paused()
+            && getBalance() > 0
             && (!isWhitelistEnabled() || isWhitelisted(account))
-            && (_hasFreeSpin(account) || _hasExtraSpin(account));
+            && (hasFreeSpin(account) || hasExtraSpin(account));
     }
 
     /**
-     * @dev Checks if an account is allowed to execute a free spin regardless of the paused state of the contract.
+     * @dev Checks if an account is allowed to execute a free spin taking into account the state of the contract itself.
      * @param account An address to check.
-     * @return True if allowed.
+     * @return True if a spin can be executed by the account.
      */
     function canFreeSpin(address account)
         external
@@ -217,15 +220,25 @@ abstract contract SpinMachineUpgradeable is
         returns (bool)
     {
         return
-            (!isWhitelistEnabled() || isWhitelisted(account)) &&
-            _hasFreeSpin(account);
+            !paused()
+            && getBalance() > 0
+            && (!isWhitelistEnabled() || isWhitelisted(account))
+            && hasFreeSpin(account);
+    }
+
+    function hasExtraSpin(address account) public view returns (bool) {
+        return extraSpins[account] > 0;
+    }
+
+    function hasFreeSpin(address account) public view returns (bool) {
+        return lastFreeSpin[account].add(freeSpinDelay) <= block.timestamp;
     }
 
     function _extraSpin(address account)
         private
         returns (bool success, uint256 winnings)
     {
-        if (_hasExtraSpin(account)) {
+        if (hasExtraSpin(account)) {
             extraSpins[account] = extraSpins[account].sub(1);
             success = true;
             winnings = _winnings();
@@ -238,7 +251,7 @@ abstract contract SpinMachineUpgradeable is
         private
         returns (bool success, uint256 winnings)
     {
-        if (_hasFreeSpin(account)) {
+        if (hasFreeSpin(account)) {
             lastFreeSpin[account] = block.timestamp;
             success = true;
             winnings = _winnings();
@@ -254,14 +267,6 @@ abstract contract SpinMachineUpgradeable is
             IERC20Upgradeable(token).safeTransfer(to, send);
         }
         return send;
-    }
-
-    function _hasExtraSpin(address account) private view returns (bool) {
-        return extraSpins[account] > 0;
-    }
-
-    function _hasFreeSpin(address account) private view returns (bool) {
-        return lastFreeSpin[account].add(freeSpinDelay) <= block.timestamp;
     }
 
     function _randomIndex() private view returns (uint256) {
