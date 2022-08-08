@@ -93,6 +93,8 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
     "CardPaymentProcessor: input array of authorization IDs is empty";
   const REVERT_MESSAGE_IF_PAYMENT_AUTHORIZATION_ID_IS_ZERO =
     "CardPaymentProcessor: authorization ID must not equal 0";
+  const REVERT_MESSAGE_IF_CASH_OUT_ACCOUNT_IS_ZERO_ADDRESS =
+    "CardPaymentProcessor: cash out account is the zero address";
   const REVERT_MESSAGE_IF_TOKEN_TRANSFER_AMOUNT_EXCEEDS_BALANCE =
     "ERC20: transfer amount exceeds balance";
   const REVERT_MESSAGE_IF_PAYMENT_AUTHORIZATION_ID_ALREADY_EXISTS =
@@ -158,7 +160,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
     await proveTx(cardPaymentProcessor.connect(adminAccount).clearPayments(authorizationIds));
   }
 
-  function defineBalancesPerAccount(payments: TestPayment[], targetPaymentStatus: PaymentStatus) {
+  function defineBalancesPerAccount(payments: TestPayment[], targetPaymentStatus: PaymentStatus): Map<string, number> {
     const balancesPerAccount: Map<string, number> = new Map<string, number>();
 
     payments.forEach((payment: TestPayment) => {
@@ -722,7 +724,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
           status: PaymentStatus.Nonexistent,
           makingPaymentCorrelationId: 432,
         },
-      ]
+      ];
       admin = user2;
       authorizationIds = payments.map(
         (payment: TestPayment) => createBytesString(payment.authorizationId, BYTES16_LENGTH)
@@ -882,7 +884,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
     });
 
     describe("Transfers tokens as expected, emits the correct event, changes the state properly", async () => {
-      const expectedClearedBalance: number = 0
+      const expectedClearedBalance: number = 0;
       const expectedUnclearedBalance: number = 0;
       const expectedRevocationCounter: number = 1;
 
@@ -895,7 +897,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         )).to.changeTokenBalances(
           brlcMock,
           [cardPaymentProcessor, payment.account],
-          [-payment.account, +payment.amount]
+          [-payment.amount, +payment.amount]
         ).and.to.emit(
           cardPaymentProcessor,
           "RevokePayment"
@@ -1007,7 +1009,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         )).to.changeTokenBalances(
           brlcMock,
           [cardPaymentProcessor, payment.account],
-          [-payment.account, +payment.amount]
+          [-payment.amount, +payment.amount]
         ).and.to.emit(
           cardPaymentProcessor,
           "ReversePayment"
@@ -1085,6 +1087,13 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
       )).to.be.revertedWith(REVERT_MESSAGE_IF_PAYMENT_AUTHORIZATION_ID_IS_ZERO);
     });
 
+    it("Is reverted if the input cash out account is the zero address", async () => {
+      await expect(cardPaymentProcessor.connect(admin).confirmPayment(
+        authorizationId,
+        ethers.constants.AddressZero
+      )).to.be.revertedWith(REVERT_MESSAGE_IF_CASH_OUT_ACCOUNT_IS_ZERO_ADDRESS);
+    });
+
     it("Is reverted if the payment with the provided authorization ID does not exist", async () => {
       await expect(cardPaymentProcessor.connect(admin).confirmPayment(
         createBytesString(payment.authorizationId + 1, BYTES16_LENGTH),
@@ -1104,14 +1113,14 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
 
     it("Transfers tokens as expected, emits the correct event, changes the state properly", async () => {
       await checkCardPaymentProcessorState([payment]);
-      const expectedClearedBalance: number = 0
+      const expectedClearedBalance: number = 0;
       await expect(cardPaymentProcessor.connect(admin).confirmPayment(
         authorizationId,
         cashOutAccount.address
       )).to.changeTokenBalances(
         brlcMock,
         [cardPaymentProcessor, cashOutAccount, payment.account],
-        [-payment.account, +payment.amount, 0]
+        [-payment.amount, +payment.amount, 0]
       ).and.to.emit(
         cardPaymentProcessor,
         "ConfirmPayment"
@@ -1151,7 +1160,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
           status: PaymentStatus.Nonexistent,
           makingPaymentCorrelationId: 789,
         },
-      ]
+      ];
       admin = user2;
       cashOutAccount = deployer;
       authorizationIds = payments.map(
@@ -1190,6 +1199,13 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
         [],
         cashOutAccount.address
       )).to.be.revertedWith(REVERT_MESSAGE_IF_INPUT_ARRAY_OF_AUTHORIZATION_IDS_IS_EMPTY);
+    });
+
+    it("Is reverted if the input cash out account is the zero address", async () => {
+      await expect(cardPaymentProcessor.connect(admin).confirmPayments(
+        authorizationIds,
+        ethers.constants.AddressZero
+      )).to.be.revertedWith(REVERT_MESSAGE_IF_CASH_OUT_ACCOUNT_IS_ZERO_ADDRESS);
     });
 
     it("Is reverted if one of the payment authorization IDs is zero", async () => {
@@ -1318,7 +1334,7 @@ describe("Contract 'CardPaymentProcessorUpgradeable'", async () => {
           status: PaymentStatus.Nonexistent,
           makingPaymentCorrelationId: 6789,
         }
-      ]
+      ];
       admin = user2;
       cashOutAccount = deployer;
       authorizationIds = payments.map(
