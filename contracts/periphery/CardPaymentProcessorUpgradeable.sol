@@ -498,6 +498,11 @@ contract CardPaymentProcessorUpgradeable is
         whenNotPaused
         onlyWhitelisted(_msgSender())
     {
+        require(
+            cashOutAccount != address(0),
+            "CardPaymentProcessor: cash out account is the zero address"
+        );
+
         uint256 amount = confirmPaymentInternal(authorizationId);
         // We can use unsafe '-' operation here instead of '.sub()' because the balance is fine in the operation above
         _totalClearedBalance = _totalClearedBalance - amount;
@@ -526,6 +531,10 @@ contract CardPaymentProcessorUpgradeable is
         require(
             authorizationIds.length != 0,
             "CardPaymentProcessor: input array of authorization IDs is empty"
+        );
+        require(
+            cashOutAccount != address(0),
+            "CardPaymentProcessor: cash out account is the zero address"
         );
 
         uint256 totalAmount = 0;
