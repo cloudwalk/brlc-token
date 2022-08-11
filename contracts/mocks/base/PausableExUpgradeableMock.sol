@@ -6,7 +6,7 @@ import {PausableExUpgradeable} from "../../base/PausableExUpgradeable.sol";
 
 /**
  * @title PausableExUpgradeableMock contract
- * @dev An implementation of the {PausableExUpgradeable} contract for test perposes.
+ * @dev An implementation of the {PausableExUpgradeable} contract for test purposes.
  */
 contract PausableExUpgradeableMock is PausableExUpgradeable {
 
