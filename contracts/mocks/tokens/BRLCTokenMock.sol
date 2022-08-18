@@ -2,13 +2,13 @@
 
 pragma solidity 0.8.16;
 
-import { BRLCTokenUpgradeable } from "../../tokens/BRLCTokenUpgradeable.sol";
+import { BRLCToken } from "../../tokens/BRLCToken.sol";
 
 /**
- * @title BRLCTokenUpgradeableMock contract
- * @dev An implementation of the {BRLCTokenUpgradeable} contract for test purposes.
+ * @title BRLCTokenMock contract
+ * @dev An implementation of the {BRLCToken} contract for test purposes.
  */
-contract BRLCTokenUpgradeableMock is BRLCTokenUpgradeable {
+contract BRLCTokenMock is BRLCToken {
     event TestBeforeTokenTransferSucceeded();
 
     /**

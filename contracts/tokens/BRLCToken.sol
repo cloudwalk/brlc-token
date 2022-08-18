@@ -8,9 +8,9 @@ import { PausableExUpgradeable } from "../base/PausableExUpgradeable.sol";
 import { BlacklistableUpgradeable } from "../base/BlacklistableUpgradeable.sol";
 
 /**
- * @title BRLCTokenUpgradeable base contract
+ * @title BRLCToken base contract
  */
-abstract contract BRLCTokenUpgradeable is
+abstract contract BRLCToken is
     RescuableUpgradeable,
     PausableExUpgradeable,
     BlacklistableUpgradeable,

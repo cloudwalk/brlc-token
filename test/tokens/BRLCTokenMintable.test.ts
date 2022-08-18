@@ -4,7 +4,7 @@ import { BigNumber, Contract, ContractFactory } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { proveTx } from "../../test-utils/eth";
 
-describe("Contract 'SubstrateBRLCTokenV2Upgradeable'", async () => {
+describe("Contract 'BRLCTokenMin'", async () => {
   const TOKEN_NAME = "BRL Coin";
   const TOKEN_SYMBOL = "BRLC";
 
@@ -27,7 +27,7 @@ describe("Contract 'SubstrateBRLCTokenV2Upgradeable'", async () => {
 
   beforeEach(async () => {
     // Deploy the contract under test
-    const BrlcToken: ContractFactory = await ethers.getContractFactory("SubstrateBRLCTokenV2Upgradeable");
+    const BrlcToken: ContractFactory = await ethers.getContractFactory("BRLCTokenMintable");
     brlcToken = await upgrades.deployProxy(BrlcToken, [TOKEN_NAME, TOKEN_SYMBOL]);
     await brlcToken.deployed();
 

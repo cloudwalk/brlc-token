@@ -3,24 +3,32 @@
 pragma solidity 0.8.16;
 
 import { IERC20Mintable } from "../base/interfaces/IERC20Mintable.sol";
-import { SubstrateBRLCTokenUpgradeable } from "./SubstrateBRLCTokenUpgradeable.sol";
+import { BRLCToken } from "./BRLCToken.sol";
 
 /**
- * @title SubstrateBRLCTokenV2Upgradeable contract
- * @dev V2 changes:
- * - Added `trusted mint` and `trusted burn` functionality.
+ * @title BRLCTokenMintable contract
  */
-contract SubstrateBRLCTokenV2Upgradeable is SubstrateBRLCTokenUpgradeable, IERC20Mintable {
+contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
     address private _masterMinter;
     mapping(address => bool) private _minters;
     mapping(address => uint256) private _mintersAllowance;
 
-    function initialize(string memory name_, string memory symbol_) public override initializer {
-        __SubstrateBRLCTokenUpgradeable_init(name_, symbol_);
-        __SubstrateBRLCTokenV2Upgradeable_init_unchained();
+    function initialize(string memory name_, string memory symbol_) public virtual initializer {
+        __BRLCTokenMintable_init(name_, symbol_);
     }
 
-    function __SubstrateBRLCTokenV2Upgradeable_init_unchained() internal initializer {}
+    function __BRLCTokenMintable_init(string memory name_, string memory symbol_) internal initializer {
+        __Context_init_unchained();
+        __Ownable_init_unchained();
+        __Pausable_init_unchained();
+        __PausableEx_init_unchained();
+        __Blacklistable_init_unchained();
+        __ERC20_init_unchained(name_, symbol_);
+        __BRLCToken_init_unchained();
+        __BRLCTokenMintable_init_unchained();
+    }
+
+    function __BRLCTokenMintable_init_unchained() internal initializer {}
 
     /**
      * @dev Throws if called by any account other than the masterMinter.
