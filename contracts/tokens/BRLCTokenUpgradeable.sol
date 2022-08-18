@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.16;
 
-import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {RescuableUpgradeable} from "../base/RescuableUpgradeable.sol";
-import {PausableExUpgradeable} from "../base/PausableExUpgradeable.sol";
-import {BlacklistableUpgradeable} from "../base/BlacklistableUpgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import { RescuableUpgradeable } from "../base/RescuableUpgradeable.sol";
+import { PausableExUpgradeable } from "../base/PausableExUpgradeable.sol";
+import { BlacklistableUpgradeable } from "../base/BlacklistableUpgradeable.sol";
 
 /**
  * @title BRLCTokenUpgradeable base contract
@@ -16,10 +16,7 @@ abstract contract BRLCTokenUpgradeable is
     BlacklistableUpgradeable,
     ERC20Upgradeable
 {
-    function __BRLCToken_init(
-        string memory name_,
-        string memory symbol_
-    ) internal initializer {
+    function __BRLCToken_init(string memory name_, string memory symbol_) internal initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Rescuable_init_unchained();
@@ -76,15 +73,7 @@ abstract contract BRLCTokenUpgradeable is
         address sender,
         address recipient,
         uint256 amount
-    )
-        public
-        virtual
-        override
-        whenNotPaused
-        notBlacklisted(sender)
-        notBlacklisted(recipient)
-        returns (bool)
-    {
+    ) public virtual override whenNotPaused notBlacklisted(sender) notBlacklisted(recipient) returns (bool) {
         return super.transferFrom(sender, recipient, amount);
     }
 

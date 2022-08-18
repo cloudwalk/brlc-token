@@ -2,23 +2,17 @@
 
 pragma solidity 0.8.16;
 
-import {BRLCTokenUpgradeable} from "./BRLCTokenUpgradeable.sol";
+import { BRLCTokenUpgradeable } from "./BRLCTokenUpgradeable.sol";
 
 /**
  * @title SubstrateBRLCTokenUpgradeable contract
  */
 contract SubstrateBRLCTokenUpgradeable is BRLCTokenUpgradeable {
-    function initialize(
-        string memory name_,
-        string memory symbol_
-    ) public virtual initializer {
+    function initialize(string memory name_, string memory symbol_) public virtual initializer {
         __SubstrateBRLCTokenUpgradeable_init(name_, symbol_);
     }
 
-    function __SubstrateBRLCTokenUpgradeable_init(
-        string memory name_,
-        string memory symbol_
-    ) internal initializer {
+    function __SubstrateBRLCTokenUpgradeable_init(string memory name_, string memory symbol_) internal initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
@@ -29,8 +23,5 @@ contract SubstrateBRLCTokenUpgradeable is BRLCTokenUpgradeable {
         __SubstrateBRLCTokenUpgradeable_init_unchained();
     }
 
-    function __SubstrateBRLCTokenUpgradeable_init_unchained()
-        internal
-        initializer
-    {}
+    function __SubstrateBRLCTokenUpgradeable_init_unchained() internal initializer {}
 }

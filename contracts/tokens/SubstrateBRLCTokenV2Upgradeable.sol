@@ -2,43 +2,31 @@
 
 pragma solidity 0.8.16;
 
-import {IERC20Mintable} from "../base/interfaces/IERC20Mintable.sol";
-import {SubstrateBRLCTokenUpgradeable} from "./SubstrateBRLCTokenUpgradeable.sol";
+import { IERC20Mintable } from "../base/interfaces/IERC20Mintable.sol";
+import { SubstrateBRLCTokenUpgradeable } from "./SubstrateBRLCTokenUpgradeable.sol";
 
 /**
  * @title SubstrateBRLCTokenV2Upgradeable contract
  * @dev V2 changes:
  * - Added `trusted mint` and `trusted burn` functionality.
  */
-contract SubstrateBRLCTokenV2Upgradeable is
-    SubstrateBRLCTokenUpgradeable,
-    IERC20Mintable
-{
+contract SubstrateBRLCTokenV2Upgradeable is SubstrateBRLCTokenUpgradeable, IERC20Mintable {
     address private _masterMinter;
     mapping(address => bool) private _minters;
     mapping(address => uint256) private _mintersAllowance;
 
-    function initialize(
-        string memory name_,
-        string memory symbol_
-    ) public override initializer {
+    function initialize(string memory name_, string memory symbol_) public override initializer {
         __SubstrateBRLCTokenUpgradeable_init(name_, symbol_);
         __SubstrateBRLCTokenV2Upgradeable_init_unchained();
     }
 
-    function __SubstrateBRLCTokenV2Upgradeable_init_unchained()
-        internal
-        initializer
-    {}
+    function __SubstrateBRLCTokenV2Upgradeable_init_unchained() internal initializer {}
 
     /**
      * @dev Throws if called by any account other than the masterMinter.
      */
     modifier onlyMasterMinter() {
-        require(
-            _msgSender() == masterMinter(),
-            "MintAndBurn: caller is not the masterMinter"
-        );
+        require(_msgSender() == masterMinter(), "MintAndBurn: caller is not the masterMinter");
         _;
     }
 
@@ -69,12 +57,7 @@ contract SubstrateBRLCTokenV2Upgradeable is
      * @dev Returns the minter allowance for an account.
      * @param minter The address of a minter.
      */
-    function minterAllowance(address minter)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function minterAllowance(address minter) external view override returns (uint256) {
         return _mintersAllowance[minter];
     }
 
@@ -82,11 +65,7 @@ contract SubstrateBRLCTokenV2Upgradeable is
      * @dev Updates the master minter address.
      * @param newMasterMinter The address of a new master minter.
      */
-    function updateMasterMinter(address newMasterMinter)
-        external
-        override
-        onlyOwner
-    {
+    function updateMasterMinter(address newMasterMinter) external override onlyOwner {
         _masterMinter = newMasterMinter;
         emit MasterMinterChanged(_masterMinter);
     }
@@ -115,12 +94,7 @@ contract SubstrateBRLCTokenV2Upgradeable is
      * @param minter The address of a minter to remove.
      * @return True if the operation was successful.
      */
-    function removeMinter(address minter)
-        external
-        override
-        onlyMasterMinter
-        returns (bool)
-    {
+    function removeMinter(address minter) external override onlyMasterMinter returns (bool) {
         _minters[minter] = false;
         _mintersAllowance[minter] = 0;
         emit MinterRemoved(minter);
@@ -147,10 +121,7 @@ contract SubstrateBRLCTokenV2Upgradeable is
         require(amount > 0, "MintAndBurn: mint amount not greater than 0");
 
         uint256 mintAllowance = _mintersAllowance[_msgSender()];
-        require(
-            amount <= mintAllowance,
-            "MintAndBurn: mint amount exceeds mintAllowance"
-        );
+        require(amount <= mintAllowance, "MintAndBurn: mint amount exceeds mintAllowance");
 
         _mint(to, amount);
         _mintersAllowance[_msgSender()] = mintAllowance - amount;
@@ -163,13 +134,7 @@ contract SubstrateBRLCTokenV2Upgradeable is
      * @param amount The amount of tokens to be burned. Must be less
      * than or equal to the token balance of the caller.
      */
-    function burn(uint256 amount)
-        external
-        override
-        whenNotPaused
-        onlyMinters
-        notBlacklisted(_msgSender())
-    {
+    function burn(uint256 amount) external override whenNotPaused onlyMinters notBlacklisted(_msgSender()) {
         require(amount > 0, "MintAndBurn: burn amount not greater than 0");
 
         uint256 balance = balanceOf(_msgSender());

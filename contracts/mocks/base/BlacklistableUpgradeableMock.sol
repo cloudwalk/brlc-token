@@ -2,14 +2,13 @@
 
 pragma solidity 0.8.16;
 
-import {BlacklistableUpgradeable} from "../../base/BlacklistableUpgradeable.sol";
+import { BlacklistableUpgradeable } from "../../base/BlacklistableUpgradeable.sol";
 
 /**
  * @title BlacklistableUpgradeableMock contract
  * @dev An implementation of the {BlacklistableUpgradeable} contract for test purposes.
  */
 contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
-
     event TestNotBlacklistedModifierSucceeded();
 
     /**

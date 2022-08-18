@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
  * @title BlacklistableUpgradeable base contract
@@ -29,10 +29,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * @dev Throws if called by any account other than the blacklister.
      */
     modifier onlyBlacklister() {
-        require(
-            getBlacklister() == _msgSender(),
-            "Blacklistable: caller is not the blacklister"
-        );
+        require(getBlacklister() == _msgSender(), "Blacklistable: caller is not the blacklister");
         _;
     }
 
@@ -41,10 +38,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * @param account An address to check.
      */
     modifier notBlacklisted(address account) {
-        require(
-            !_blacklisted[account],
-            "Blacklistable: account is blacklisted"
-        );
+        require(!_blacklisted[account], "Blacklistable: account is blacklisted");
         _;
     }
 
@@ -93,10 +87,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * @param newBlacklister The address of a new blacklister.
      */
     function setBlacklister(address newBlacklister) external onlyOwner {
-        require(
-            newBlacklister != address(0),
-            "Blacklistable: new blacklister is the zero address"
-        );
+        require(newBlacklister != address(0), "Blacklistable: new blacklister is the zero address");
         _blacklister = newBlacklister;
         emit BlacklisterChanged(_blacklister);
     }

@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.16;
 
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
  * @title Rescuable base contract
@@ -28,10 +28,7 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
      * @dev Revert if called by any account other than the rescuer.
      */
     modifier onlyRescuer() {
-        require(
-            getRescuer() == _msgSender(),
-            "Rescuable: caller is not the rescuer"
-        );
+        require(getRescuer() == _msgSender(), "Rescuable: caller is not the rescuer");
         _;
     }
 
