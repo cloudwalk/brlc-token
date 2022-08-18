@@ -54,25 +54,25 @@ describe("Contract 'RescuableUpgradeable'", async () => {
 
   describe("Function 'rescueERC20()'", async () => {
     const tokenBalance: number = 123;
-    let brlcMock: Contract;
+    let testTokenMock: Contract;
 
     beforeEach(async () => {
-      const BRLCMock: ContractFactory = await ethers.getContractFactory("ERC20UpgradeableMock");
-      brlcMock = await upgrades.deployProxy(BRLCMock, ["BRL Coin", "BRLC"]);
-      await brlcMock.deployed();
+      const ERC20Mock: ContractFactory = await ethers.getContractFactory("ERC20UpgradeableMock");
+      testTokenMock = await upgrades.deployProxy(ERC20Mock, ["Test Token", "TEST"]);
+      await testTokenMock.deployed();
 
-      await proveTx(brlcMock.mint(rescuableMock.address, tokenBalance));
+      await proveTx(testTokenMock.mint(rescuableMock.address, tokenBalance));
       await proveTx(rescuableMock.setRescuer(user.address));
     });
 
     it("Is reverted if is called not by the rescuer", async () => {
-      await expect(rescuableMock.rescueERC20(brlcMock.address, user.address, tokenBalance))
+      await expect(rescuableMock.rescueERC20(testTokenMock.address, user.address, tokenBalance))
         .to.be.revertedWith(REVERT_MESSAGE_IF_CALLER_IS_NOT_RESCUER);
     });
 
     it("Transfers the correct amount of tokens", async () => {
-      await expect(rescuableMock.connect(user).rescueERC20(brlcMock.address, deployer.address, tokenBalance))
-        .to.changeTokenBalances(brlcMock, [rescuableMock, deployer], [-tokenBalance, tokenBalance]);
+      await expect(rescuableMock.connect(user).rescueERC20(testTokenMock.address, deployer.address, tokenBalance))
+        .to.changeTokenBalances(testTokenMock, [rescuableMock, deployer], [-tokenBalance, tokenBalance]);
     });
   });
 });
