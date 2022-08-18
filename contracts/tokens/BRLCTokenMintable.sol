@@ -34,7 +34,7 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
      * @dev Throws if called by any account other than the masterMinter.
      */
     modifier onlyMasterMinter() {
-        require(_msgSender() == masterMinter(), "MintAndBurn: caller is not the masterMinter");
+        require(_msgSender() == masterMinter(), "ERC20Mintable: caller is not the masterMinter");
         _;
     }
 
@@ -42,7 +42,7 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
      * @dev Throws if called by any account other than a minter.
      */
     modifier onlyMinters() {
-        require(_minters[_msgSender()], "MintAndBurn: caller is not a minter");
+        require(_minters[_msgSender()], "ERC20Mintable: caller is not a minter");
         _;
     }
 
@@ -125,11 +125,11 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
         notBlacklisted(to)
         returns (bool)
     {
-        require(to != address(0), "MintAndBurn: mint to the zero address");
-        require(amount > 0, "MintAndBurn: mint amount not greater than 0");
+        require(to != address(0), "ERC20Mintable: mint to the zero address");
+        require(amount > 0, "ERC20Mintable: mint amount not greater than 0");
 
         uint256 mintAllowance = _mintersAllowance[_msgSender()];
-        require(amount <= mintAllowance, "MintAndBurn: mint amount exceeds mintAllowance");
+        require(amount <= mintAllowance, "ERC20Mintable: mint amount exceeds mintAllowance");
 
         _mint(to, amount);
         _mintersAllowance[_msgSender()] = mintAllowance - amount;
@@ -143,10 +143,10 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
      * than or equal to the token balance of the caller.
      */
     function burn(uint256 amount) external override whenNotPaused onlyMinters notBlacklisted(_msgSender()) {
-        require(amount > 0, "MintAndBurn: burn amount not greater than 0");
+        require(amount > 0, "ERC20Mintable: burn amount not greater than 0");
 
         uint256 balance = balanceOf(_msgSender());
-        require(balance >= amount, "MintAndBurn: burn amount exceeds balance");
+        require(balance >= amount, "ERC20Mintable: burn amount exceeds balance");
 
         _burn(_msgSender(), amount);
         emit Burn(_msgSender(), amount);
