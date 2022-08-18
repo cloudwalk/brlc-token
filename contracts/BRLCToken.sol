@@ -3,9 +3,9 @@
 pragma solidity 0.8.16;
 
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import { RescuableUpgradeable } from "../base/RescuableUpgradeable.sol";
-import { PausableExUpgradeable } from "../base/PausableExUpgradeable.sol";
-import { BlacklistableUpgradeable } from "../base/BlacklistableUpgradeable.sol";
+import { RescuableUpgradeable } from "./base/RescuableUpgradeable.sol";
+import { PausableExUpgradeable } from "./base/PausableExUpgradeable.sol";
+import { BlacklistableUpgradeable } from "./base/BlacklistableUpgradeable.sol";
 
 /**
  * @title BRLCToken base contract

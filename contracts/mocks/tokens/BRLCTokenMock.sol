@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import { BRLCToken } from "../../tokens/BRLCToken.sol";
+import { BRLCToken } from "../../BRLCToken.sol";
 
 /**
  * @title BRLCTokenMock contract

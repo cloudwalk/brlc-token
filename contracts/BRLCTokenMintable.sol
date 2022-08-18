@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import { IERC20Mintable } from "../base/interfaces/IERC20Mintable.sol";
+import { IERC20Mintable } from "./base/interfaces/IERC20Mintable.sol";
 import { BRLCToken } from "./BRLCToken.sol";
 
 /**
