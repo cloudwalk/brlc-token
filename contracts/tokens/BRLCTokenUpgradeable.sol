@@ -35,6 +35,13 @@ abstract contract BRLCTokenUpgradeable is
     }
 
     /**
+     * @dev ERC20 `decimals` function.
+     */
+    function decimals() public view override returns (uint8) {
+        return 6;
+    }
+
+    /**
      * @dev ERC20 `transfer` function.
      */
     function transfer(address recipient, uint256 amount)
@@ -114,5 +121,13 @@ abstract contract BRLCTokenUpgradeable is
     ) internal virtual override {
         super._beforeTokenTransfer(from, to, amount);
         require(!paused(), "ERC20Pausable: token transfer while paused");
+    }
+
+    /**
+     * @dev @dev Prepare contract storage for the update to Solidity 0.8
+     */
+    function _resetDecimalsStorageVariable() external onlyOwner {
+        _setupDecimals(0);
+        require(decimals() == 6, "decimals != 6");
     }
 }
