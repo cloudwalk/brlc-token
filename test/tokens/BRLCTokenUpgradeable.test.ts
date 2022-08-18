@@ -7,7 +7,6 @@ import { proveTx } from "../../test-utils/eth";
 describe("Contract 'BRLCTokenUpgradeable'", async () => {
   const TOKEN_NAME = "BRL Coin";
   const TOKEN_SYMBOL = "BRLC";
-  const TOKEN_DECIMALS = 6;
 
   const REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED = 'Initializable: contract is already initialized';
   const REVERT_MESSAGE_IF_CONTRACT_IS_PAUSED = "Pausable: paused";
@@ -22,7 +21,7 @@ describe("Contract 'BRLCTokenUpgradeable'", async () => {
   beforeEach(async () => {
     // Deploy the contract under test
     const BrlcToken: ContractFactory = await ethers.getContractFactory("BRLCTokenUpgradeableMock");
-    brlcToken = await upgrades.deployProxy(BrlcToken, [TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS]);
+    brlcToken = await upgrades.deployProxy(BrlcToken, [TOKEN_NAME, TOKEN_SYMBOL]);
     await brlcToken.deployed();
 
     // Get user accounts
@@ -30,12 +29,12 @@ describe("Contract 'BRLCTokenUpgradeable'", async () => {
   });
 
   it("The initialize function can't be called more than once", async () => {
-    await expect(brlcToken.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS))
+    await expect(brlcToken.initialize(TOKEN_NAME, TOKEN_SYMBOL))
       .to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
   });
 
   it("The initialize unchained function can't be called more than once", async () => {
-    await expect(brlcToken.initialize_unchained(TOKEN_DECIMALS))
+    await expect(brlcToken.initialize_unchained())
       .to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
   });
 
@@ -66,13 +65,8 @@ describe("Contract 'BRLCTokenUpgradeable'", async () => {
     });
 
     it("Updates the token balances correctly", async () => {
-      await expect(async () => {
-        await proveTx(brlcToken.connect(user1).transfer(user2.address, tokenAmount));
-      }).to.changeTokenBalances(
-        brlcToken,
-        [user1, user2],
-        [-tokenAmount, tokenAmount]
-      );
+      await expect(brlcToken.connect(user1).transfer(user2.address, tokenAmount))
+        .to.changeTokenBalances(brlcToken, [user1, user2], [-tokenAmount, tokenAmount]);
     });
 
     it("Emits the correct event", async () => {
@@ -146,13 +140,8 @@ describe("Contract 'BRLCTokenUpgradeable'", async () => {
     });
 
     it("Updates the token balances correctly", async () => {
-      await expect(async () => {
-        await proveTx(brlcToken.connect(user1).transferFrom(deployer.address, user2.address, tokenAmount));
-      }).to.changeTokenBalances(
-        brlcToken,
-        [deployer, user2],
-        [-tokenAmount, tokenAmount]
-      );
+      await expect(brlcToken.connect(user1).transferFrom(deployer.address, user2.address, tokenAmount))
+        .to.changeTokenBalances(brlcToken, [deployer, user2], [-tokenAmount, tokenAmount]);
     });
 
     it("Emits the correct event", async () => {

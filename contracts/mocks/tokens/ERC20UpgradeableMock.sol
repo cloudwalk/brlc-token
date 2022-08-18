@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.8.0;
+
+pragma solidity 0.8.16;
 
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
@@ -13,15 +14,12 @@ contract ERC20UpgradeableMock is ERC20Upgradeable {
      * @dev The initialize function of the upgradable contract.
      * @param name_ The name of the token to set for this ERC20-comparable contract.
      * @param symbol_ The symbol of the token to set for this ERC20-comparable contract.
-     * @param decimals_ The decimals of the token to set for this ERC20-comparable contract.
      */
     function initialize(
         string memory name_,
-        string memory symbol_,
-        uint8 decimals_
+        string memory symbol_
     ) public initializer {
         __ERC20_init(name_, symbol_);
-        _setupDecimals(decimals_);
     }
 
     /**

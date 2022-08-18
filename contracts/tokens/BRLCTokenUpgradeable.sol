@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.8.0;
+
+pragma solidity 0.8.16;
 
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {RescuableUpgradeable} from "../base/RescuableUpgradeable.sol";
@@ -17,8 +18,7 @@ abstract contract BRLCTokenUpgradeable is
 {
     function __BRLCToken_init(
         string memory name_,
-        string memory symbol_,
-        uint8 decimals_
+        string memory symbol_
     ) internal initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
@@ -27,12 +27,10 @@ abstract contract BRLCTokenUpgradeable is
         __PausableEx_init_unchained();
         __Blacklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
-        __BRLCToken_init_unchained(decimals_);
+        __BRLCToken_init_unchained();
     }
 
-    function __BRLCToken_init_unchained(uint8 decimals_) internal initializer {
-        _setupDecimals(decimals_);
-    }
+    function __BRLCToken_init_unchained() internal initializer {}
 
     /**
      * @dev ERC20 `decimals` function.
@@ -121,13 +119,5 @@ abstract contract BRLCTokenUpgradeable is
     ) internal virtual override {
         super._beforeTokenTransfer(from, to, amount);
         require(!paused(), "ERC20Pausable: token transfer while paused");
-    }
-
-    /**
-     * @dev @dev Prepare contract storage for the update to Solidity 0.8
-     */
-    function _resetDecimalsStorageVariable() external onlyOwner {
-        _setupDecimals(0);
-        require(decimals() == 6, "decimals != 6");
     }
 }

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.8.0;
+
+pragma solidity 0.8.16;
 
 import {BRLCTokenUpgradeable} from "./BRLCTokenUpgradeable.sol";
 
@@ -9,16 +10,14 @@ import {BRLCTokenUpgradeable} from "./BRLCTokenUpgradeable.sol";
 contract SubstrateBRLCTokenUpgradeable is BRLCTokenUpgradeable {
     function initialize(
         string memory name_,
-        string memory symbol_,
-        uint8 decimals_
+        string memory symbol_
     ) public virtual initializer {
-        __SubstrateBRLCTokenUpgradeable_init(name_, symbol_, decimals_);
+        __SubstrateBRLCTokenUpgradeable_init(name_, symbol_);
     }
 
     function __SubstrateBRLCTokenUpgradeable_init(
         string memory name_,
-        string memory symbol_,
-        uint8 decimals_
+        string memory symbol_
     ) internal initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
@@ -26,7 +25,7 @@ contract SubstrateBRLCTokenUpgradeable is BRLCTokenUpgradeable {
         __PausableEx_init_unchained();
         __Blacklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
-        __BRLCToken_init_unchained(decimals_);
+        __BRLCToken_init_unchained();
         __SubstrateBRLCTokenUpgradeable_init_unchained();
     }
 

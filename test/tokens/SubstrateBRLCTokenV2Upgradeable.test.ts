@@ -7,7 +7,6 @@ import { proveTx } from "../../test-utils/eth";
 describe("Contract 'SubstrateBRLCTokenV2Upgradeable'", async () => {
   const TOKEN_NAME = "BRL Coin";
   const TOKEN_SYMBOL = "BRLC";
-  const TOKEN_DECIMALS = 6;
 
   const REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED = 'Initializable: contract is already initialized';
   const REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER = "Ownable: caller is not the owner";
@@ -29,7 +28,7 @@ describe("Contract 'SubstrateBRLCTokenV2Upgradeable'", async () => {
   beforeEach(async () => {
     // Deploy the contract under test
     const BrlcToken: ContractFactory = await ethers.getContractFactory("SubstrateBRLCTokenV2Upgradeable");
-    brlcToken = await upgrades.deployProxy(BrlcToken, [TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS]);
+    brlcToken = await upgrades.deployProxy(BrlcToken, [TOKEN_NAME, TOKEN_SYMBOL]);
     await brlcToken.deployed();
 
     // Get user accounts
@@ -37,7 +36,7 @@ describe("Contract 'SubstrateBRLCTokenV2Upgradeable'", async () => {
   });
 
   it("The initialize function can't be called more than once", async () => {
-    await expect(brlcToken.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS))
+    await expect(brlcToken.initialize(TOKEN_NAME, TOKEN_SYMBOL))
       .to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
   });
 
@@ -170,13 +169,8 @@ describe("Contract 'SubstrateBRLCTokenV2Upgradeable'", async () => {
 
     it("Updates the token balance and the mint allowance correctly", async () => {
       const oldMintAllowance: BigNumber = await brlcToken.minterAllowance(deployer.address);
-      await expect(async () => {
-        await proveTx(brlcToken.mint(user1.address, mintAmount));
-      }).to.changeTokenBalances(
-        brlcToken,
-        [user1],
-        [mintAmount]
-      );
+      await expect(brlcToken.mint(user1.address, mintAmount))
+        .to.changeTokenBalances(brlcToken, [user1], [mintAmount]);
       const newMintAllowance: BigNumber = await brlcToken.minterAllowance(deployer.address);
       expect(newMintAllowance).to.equal(oldMintAllowance.sub(BigNumber.from(mintAmount)));
     });
@@ -229,13 +223,8 @@ describe("Contract 'SubstrateBRLCTokenV2Upgradeable'", async () => {
     });
 
     it("Updates the token balance correctly", async () => {
-      await expect(async () => {
-        await proveTx(brlcToken.burn(burnAmount));
-      }).to.changeTokenBalances(
-        brlcToken,
-        [deployer],
-        [-burnAmount]
-      );
+      await expect(brlcToken.burn(burnAmount))
+        .to.changeTokenBalances(brlcToken, [deployer], [-burnAmount]);
     });
 
     it("Emits the correct events", async () => {

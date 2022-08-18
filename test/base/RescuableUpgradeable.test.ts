@@ -58,7 +58,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
 
     beforeEach(async () => {
       const BRLCMock: ContractFactory = await ethers.getContractFactory("ERC20UpgradeableMock");
-      brlcMock = await upgrades.deployProxy(BRLCMock, ["BRL Coin", "BRLC", 6]);
+      brlcMock = await upgrades.deployProxy(BRLCMock, ["BRL Coin", "BRLC"]);
       await brlcMock.deployed();
 
       await proveTx(brlcMock.mint(rescuableMock.address, tokenBalance));
@@ -71,13 +71,8 @@ describe("Contract 'RescuableUpgradeable'", async () => {
     });
 
     it("Transfers the correct amount of tokens", async () => {
-      await expect(async () => {
-        await proveTx(rescuableMock.connect(user).rescueERC20(brlcMock.address, deployer.address, tokenBalance));
-      }).to.changeTokenBalances(
-        brlcMock,
-        [rescuableMock, deployer],
-        [-tokenBalance, tokenBalance]
-      );
+      await expect(rescuableMock.connect(user).rescueERC20(brlcMock.address, deployer.address, tokenBalance))
+        .to.changeTokenBalances(brlcMock, [rescuableMock, deployer], [-tokenBalance, tokenBalance]);
     });
   });
 });

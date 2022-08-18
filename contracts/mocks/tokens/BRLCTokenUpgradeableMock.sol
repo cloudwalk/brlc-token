@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity 0.8.16;
 
 import {BRLCTokenUpgradeable} from "../../tokens/BRLCTokenUpgradeable.sol";
 
@@ -17,25 +17,20 @@ contract BRLCTokenUpgradeableMock is BRLCTokenUpgradeable {
      * but without modifier {initializer} to test that the ancestor contract has it.
      * @param name_ The name of the token to set for this ERC20-comparable contract.
      * @param symbol_ The symbol of the token to set for this ERC20-comparable contract.
-     * @param decimals_ The decimals of the token to set for this ERC20-comparable contract.
      */
     function initialize(
         string memory name_,
-        string memory symbol_,
-        uint8 decimals_
+        string memory symbol_
     ) public {
-        __BRLCToken_init(name_, symbol_, decimals_);
+        __BRLCToken_init(name_, symbol_);
     }
 
     /**
      * @dev The unchained initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
-     * @param decimals_ The decimals of the token to set for this ERC20-comparable contract.
      */
-    function initialize_unchained(
-        uint8 decimals_
-    ) public {
-        __BRLCToken_init_unchained(decimals_);
+    function initialize_unchained() public {
+        __BRLCToken_init_unchained();
     }
 
     /**

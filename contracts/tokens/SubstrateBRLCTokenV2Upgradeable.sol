@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.8.0;
 
-import {SafeMathUpgradeable} from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+pragma solidity 0.8.16;
+
 import {IERC20Mintable} from "../base/interfaces/IERC20Mintable.sol";
 import {SubstrateBRLCTokenUpgradeable} from "./SubstrateBRLCTokenUpgradeable.sol";
 
@@ -14,18 +14,15 @@ contract SubstrateBRLCTokenV2Upgradeable is
     SubstrateBRLCTokenUpgradeable,
     IERC20Mintable
 {
-    using SafeMathUpgradeable for uint256;
-
     address private _masterMinter;
     mapping(address => bool) private _minters;
     mapping(address => uint256) private _mintersAllowance;
 
     function initialize(
         string memory name_,
-        string memory symbol_,
-        uint8 decimals_
+        string memory symbol_
     ) public override initializer {
-        __SubstrateBRLCTokenUpgradeable_init(name_, symbol_, decimals_);
+        __SubstrateBRLCTokenUpgradeable_init(name_, symbol_);
         __SubstrateBRLCTokenV2Upgradeable_init_unchained();
     }
 
@@ -156,7 +153,7 @@ contract SubstrateBRLCTokenV2Upgradeable is
         );
 
         _mint(to, amount);
-        _mintersAllowance[_msgSender()] = mintAllowance.sub(amount);
+        _mintersAllowance[_msgSender()] = mintAllowance - amount;
         emit Mint(_msgSender(), to, amount);
         return true;
     }
