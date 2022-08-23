@@ -12,7 +12,7 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/securit
  * This contract is used through inheritance. By default, the pauser will be set to the zero address.
  * This can later be changed by the contract owner with the {setPauser} function.
  */
-abstract contract PausableExUpgradeable is OwnableUpgradeable, PausableUpgradeable {
+abstract contract PausableExtUpgradeable is OwnableUpgradeable, PausableUpgradeable {
     /// @dev The address of the pauser.
     address private _pauser;
 
@@ -22,14 +22,14 @@ abstract contract PausableExUpgradeable is OwnableUpgradeable, PausableUpgradeab
     /// @dev The transaction sender is not a pauser.
     error UnauthorizedPauser(address account);
 
-    function __PausableEx_init() internal onlyInitializing {
+    function __PausableExt_init() internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
-        __PausableEx_init_unchained();
+        __PausableExt_init_unchained();
     }
 
-    function __PausableEx_init_unchained() internal onlyInitializing {}
+    function __PausableExt_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev Throws if called by any account other than the pauser.

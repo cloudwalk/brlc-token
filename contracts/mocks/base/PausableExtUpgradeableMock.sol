@@ -2,19 +2,19 @@
 
 pragma solidity 0.8.16;
 
-import { PausableExUpgradeable } from "../../base/PausableExUpgradeable.sol";
+import { PausableExtUpgradeable } from "../../base/PausableExtUpgradeable.sol";
 
 /**
- * @title PausableExUpgradeableMock contract
- * @dev An implementation of the {PausableExUpgradeable} contract for test purposes.
+ * @title PausableExtUpgradeableMock contract
+ * @dev An implementation of the {PausableExtUpgradeable} contract for test purposes.
  */
-contract PausableExUpgradeableMock is PausableExUpgradeable {
+contract PausableExtUpgradeableMock is PausableExtUpgradeable {
     /**
      * @dev The initialize function of the upgradable contract
      * but without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize() public {
-        __PausableEx_init();
+        __PausableExt_init();
     }
 
     /**
@@ -22,6 +22,6 @@ contract PausableExUpgradeableMock is PausableExUpgradeable {
      * but without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize_unchained() public {
-        __PausableEx_init_unchained();
+        __PausableExt_init_unchained();
     }
 }

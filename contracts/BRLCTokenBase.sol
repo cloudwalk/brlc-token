@@ -5,33 +5,33 @@ pragma solidity 0.8.16;
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { RescuableUpgradeable } from "./base/RescuableUpgradeable.sol";
-import { PausableExUpgradeable } from "./base/PausableExUpgradeable.sol";
+import { PausableExtUpgradeable } from "./base/PausableExtUpgradeable.sol";
 import { BlacklistableUpgradeable } from "./base/BlacklistableUpgradeable.sol";
 
 /**
- * @title BRLCToken base contract
+ * @title BRLCTokenBase contract
  * @dev This contract is base implementation of the BRLC token with inherited Rescuable,
  * Pausable, and Blacklistable functionality.
  */
-abstract contract BRLCToken is
+abstract contract BRLCTokenBase is
     OwnableUpgradeable,
     RescuableUpgradeable,
-    PausableExUpgradeable,
+    PausableExtUpgradeable,
     BlacklistableUpgradeable,
     ERC20Upgradeable
 {
-    function __BRLCToken_init(string memory name_, string memory symbol_) internal onlyInitializing {
+    function __BRLCTokenBase_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Rescuable_init_unchained();
         __Pausable_init_unchained();
-        __PausableEx_init_unchained();
+        __PausableExt_init_unchained();
         __Blacklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
-        __BRLCToken_init_unchained();
+        __BRLCTokenBase_init_unchained();
     }
 
-    function __BRLCToken_init_unchained() internal onlyInitializing {}
+    function __BRLCTokenBase_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev See {ERC20Upgradeable-decimals}.

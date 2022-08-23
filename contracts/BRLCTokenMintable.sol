@@ -3,13 +3,13 @@
 pragma solidity 0.8.16;
 
 import { IERC20Mintable } from "./base/interfaces/IERC20Mintable.sol";
-import { BRLCToken } from "./BRLCToken.sol";
+import { BRLCTokenBase } from "./BRLCTokenBase.sol";
 
 /**
  * @title BRLCTokenMintable contract
  * @dev BRLC token implementation that supports mint and burn operations.
  */
-contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
+contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable {
     /// @dev The address of the master minter.
     address private _masterMinter;
 
@@ -42,10 +42,10 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
-        __PausableEx_init_unchained();
+        __PausableExt_init_unchained();
         __Blacklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
-        __BRLCToken_init_unchained();
+        __BRLCTokenBase_init_unchained();
         __BRLCTokenMintable_init_unchained();
     }
 

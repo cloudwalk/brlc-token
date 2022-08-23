@@ -2,13 +2,13 @@
 
 pragma solidity 0.8.16;
 
-import { BRLCToken } from "../../BRLCToken.sol";
+import { BRLCTokenBase } from "../../BRLCTokenBase.sol";
 
 /**
- * @title BRLCTokenMock contract
- * @dev An implementation of the {BRLCToken} contract for test purposes.
+ * @title BRLCTokenBaseMock contract
+ * @dev An implementation of the {BRLCTokenBase} contract for test purposes.
  */
-contract BRLCTokenMock is BRLCToken {
+contract BRLCTokenBaseMock is BRLCTokenBase {
     event TestBeforeTokenTransferSucceeded();
 
     /**
@@ -18,7 +18,7 @@ contract BRLCTokenMock is BRLCToken {
      * @param symbol_ The symbol of the token to set for this ERC20-comparable contract.
      */
     function initialize(string memory name_, string memory symbol_) public {
-        __BRLCToken_init(name_, symbol_);
+        __BRLCTokenBase_init(name_, symbol_);
     }
 
     /**
@@ -26,7 +26,7 @@ contract BRLCTokenMock is BRLCToken {
      * but without modifier {initializer} to test that the ancestor contract has it.
      */
     function initialize_unchained() public {
-        __BRLCToken_init_unchained();
+        __BRLCTokenBase_init_unchained();
     }
 
     /**
