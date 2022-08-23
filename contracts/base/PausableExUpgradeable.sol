@@ -6,14 +6,20 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 /**
- * @title PausableExUpgradeable base contract
- * @dev Extends OpenZeppelin's PausableUpgradeable contract.
+ * @dev Extends {PausableUpgradeable} contract by adding the `pauser` role.
+ * The address with assigned `pauser` role has exclusive access to the {pause} and {unpause} functions.
+ *
+ * This contract is used through inheritance. By default, the pauser will be set to the zero address.
+ * This can later be changed by the contract owner with the {setPauser} function.
  */
 abstract contract PausableExUpgradeable is OwnableUpgradeable, PausableUpgradeable {
+    /// @dev The address of the pauser.
     address private _pauser;
 
+    /// @dev Emitted when the pauser is changed.
     event PauserChanged(address indexed pauser);
 
+    /// @dev The transaction sender is not a pauser.
     error UnauthorizedPauser(address account);
 
     function __PausableEx_init() internal onlyInitializing {
@@ -44,8 +50,12 @@ abstract contract PausableExUpgradeable is OwnableUpgradeable, PausableUpgradeab
 
     /**
      * @dev Updates the pauser address.
-     * Can only be called by the contract owner.
+     *
+     * Requirements:
+     * - Can only be called by the contract owner.
+     *
      * Emits a {PauserChanged} event.
+     *
      * @param newPauser The address of a new pauser.
      */
     function setPauser(address newPauser) external onlyOwner {
@@ -59,20 +69,22 @@ abstract contract PausableExUpgradeable is OwnableUpgradeable, PausableUpgradeab
     }
 
     /**
-     * @dev Triggers the paused state.
-     * Can only be called by the pauser account.
+     * @dev See {PausableUpgradeable-pause}.
+     *
      * Requirements:
-     * - The contract must not be paused.
+     *
+     * - Can only be called by the contract pauser.
      */
     function pause() external onlyPauser {
         _pause();
     }
 
     /**
-     * @dev Triggers the unpaused state.
-     * Can only be called by the pauser account.
+     * @dev See {PausableUpgradeable-unpause}.
+     *
      * Requirements:
-     * - The contract must be paused.
+     *
+     * - Can only be called by the contract pauser.
      */
     function unpause() external onlyPauser {
         _unpause();

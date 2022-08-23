@@ -10,6 +10,8 @@ import { BlacklistableUpgradeable } from "./base/BlacklistableUpgradeable.sol";
 
 /**
  * @title BRLCToken base contract
+ * @dev This contract is base implementation of the BRLC token with inherited Rescuable,
+ * Pausable, and Blacklistable functionality.
  */
 abstract contract BRLCToken is
     OwnableUpgradeable,
@@ -32,14 +34,20 @@ abstract contract BRLCToken is
     function __BRLCToken_init_unchained() internal onlyInitializing {}
 
     /**
-     * @dev ERC20 `decimals` function.
+     * @dev See {ERC20Upgradeable-decimals}.
      */
     function decimals() public pure override returns (uint8) {
         return 6;
     }
 
     /**
-     * @dev ERC20 `transfer` function.
+     * @dev See {ERC20Upgradeable-transfer}.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     * - The `_msgSender()` address must not be blacklisted.
+     * - The `recipient` address must not be blacklisted.
      */
     function transfer(address recipient, uint256 amount)
         public
@@ -54,7 +62,13 @@ abstract contract BRLCToken is
     }
 
     /**
-     * @dev ERC20 `approve` function.
+     * @dev See {ERC20Upgradeable-approve}.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     * - The `_msgSender()` address must not be blacklisted.
+     * - The `spender` address must not be blacklisted.
      */
     function approve(address spender, uint256 amount)
         public
@@ -69,7 +83,13 @@ abstract contract BRLCToken is
     }
 
     /**
-     * @dev ERC20 `transferFrom` function.
+     * @dev See {ERC20Upgradeable-transferFrom}.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     * - The `sender` address must not be blacklisted.
+     * - The `recipient` address must not be blacklisted.
      */
     function transferFrom(
         address sender,
@@ -79,6 +99,15 @@ abstract contract BRLCToken is
         return super.transferFrom(sender, recipient, amount);
     }
 
+    /**
+     * @dev See {ERC20Upgradeable-increaseAllowance}.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     * - The `_msgSender()` address must not be blacklisted.
+     * - The `spender` address must not be blacklisted.
+     */
     function increaseAllowance(address spender, uint256 addedValue)
         public
         virtual
@@ -91,6 +120,15 @@ abstract contract BRLCToken is
         return super.increaseAllowance(spender, addedValue);
     }
 
+    /**
+     * @dev See {ERC20Upgradeable-decreaseAllowance}.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     * - The `_msgSender()` address must not be blacklisted.
+     * - The `spender` address must not be blacklisted.
+     */
     function decreaseAllowance(address spender, uint256 subtractedValue)
         public
         virtual
@@ -103,6 +141,13 @@ abstract contract BRLCToken is
         return super.decreaseAllowance(spender, subtractedValue);
     }
 
+    /**
+     * @dev See {ERC20Upgradeable-_beforeTokenTransfer}.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     */
     function _beforeTokenTransfer(
         address from,
         address to,

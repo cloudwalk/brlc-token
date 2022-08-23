@@ -7,15 +7,22 @@ import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
- * @title Rescuable base contract
+ * @dev Allows to rescue ERC20 tokens locked up in the contract using a `rescuer` role.
+ * The address with assigned `rescuer` role has exclusive access to the {rescueERC20} function.
+ *
+ * This contract is used through inheritance. By default, the rescuer will be set to the zero address.
+ * This can later be changed by the contract owner with the {setRescuer} function.
  */
 abstract contract RescuableUpgradeable is OwnableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    /// @dev The address of the rescuer.
     address private _rescuer;
 
+    /// @dev Emitted when the rescuer is changed.
     event RescuerChanged(address indexed newRescuer);
 
+    /// @dev The transaction sender is not a rescuer.
     error UnauthorizedRescuer(address account);
 
     function __Rescuable_init() internal onlyInitializing {
@@ -37,18 +44,22 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Returns the current rescuer.
-     * @return Rescuer's address.
+     * @dev Returns the rescuer address.
      */
     function rescuer() public view virtual returns (address) {
         return _rescuer;
     }
 
     /**
-     * @dev Assign the rescuer role to a given address.
-     * Can only be called by the contract owner.
+     * @dev Updates the rescuer address.
+     *
+     * Requirements:
+     *
+     * - Can only be called by the contract owner.
+     *
      * Emits a {RescuerChanged} event.
-     * @param newRescuer A new rescuer's address.
+     *
+     * @param newRescuer The address of a new rescuer.
      */
     function setRescuer(address newRescuer) external onlyOwner {
         if (_rescuer == newRescuer) {
@@ -61,11 +72,15 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Rescue ERC20 tokens locked up in this contract.
-     * Can only be called by the rescuer.
-     * @param tokenContract The ERC20 token contract address.
-     * @param to The recipient address.
-     * @param amount The amount to withdraw.
+     * @dev Rescues ERC20 tokens locked up in this contract.
+     *
+     * Requirements:
+     *
+     * - Can only be called by the rescuer.
+     *
+     * @param token The address of the ERC20 token.
+     * @param to The address of a recipient of the tokens.
+     * @param amount The amount of the tokens to rescue/transfer.
      */
     function rescueERC20(
         address token,
