@@ -24,7 +24,7 @@ interface IERC20Mintable {
 
     function removeMinter(address minter) external returns (bool);
 
-    function mint(address to, uint256 amount) external returns (bool);
+    function mint(address account, uint256 amount) external returns (bool);
 
     function burn(uint256 amount) external;
 }

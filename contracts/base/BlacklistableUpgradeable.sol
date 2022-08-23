@@ -17,19 +17,24 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     event SelfBlacklisted(address indexed account);
     event BlacklisterChanged(address indexed newBlacklister);
 
-    function __Blacklistable_init() internal initializer {
+    error UnauthorizedBlacklister(address account);
+    error BlacklistedAccount(address account);
+
+    function __Blacklistable_init() internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Blacklistable_init_unchained();
     }
 
-    function __Blacklistable_init_unchained() internal initializer {}
+    function __Blacklistable_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev Throws if called by any account other than the blacklister.
      */
     modifier onlyBlacklister() {
-        require(getBlacklister() == _msgSender(), "Blacklistable: caller is not the blacklister");
+        if (_msgSender() != _blacklister) {
+            revert UnauthorizedBlacklister(_msgSender());
+        }
         _;
     }
 
@@ -38,14 +43,16 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * @param account An address to check.
      */
     modifier notBlacklisted(address account) {
-        require(!_blacklisted[account], "Blacklistable: account is blacklisted");
+        if (_blacklisted[account]) {
+            revert BlacklistedAccount(account);
+        }
         _;
     }
 
     /**
      * @dev Returns the blacklister address.
      */
-    function getBlacklister() public view virtual returns (address) {
+    function blacklister() public view virtual returns (address) {
         return _blacklister;
     }
 
@@ -65,7 +72,12 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * @param account An address to blacklist.
      */
     function blacklist(address account) external onlyBlacklister {
+        if (_blacklisted[account]) {
+            return;
+        }
+
         _blacklisted[account] = true;
+
         emit Blacklisted(account);
     }
 
@@ -76,7 +88,12 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * @param account An address to remove from the blacklist.
      */
     function unBlacklist(address account) external onlyBlacklister {
+        if (!_blacklisted[account]) {
+            return;
+        }
+
         _blacklisted[account] = false;
+
         emit UnBlacklisted(account);
     }
 
@@ -87,8 +104,12 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * @param newBlacklister The address of a new blacklister.
      */
     function setBlacklister(address newBlacklister) external onlyOwner {
-        require(newBlacklister != address(0), "Blacklistable: new blacklister is the zero address");
+        if (_blacklister == newBlacklister) {
+            return;
+        }
+
         _blacklister = newBlacklister;
+
         emit BlacklisterChanged(_blacklister);
     }
 
@@ -98,7 +119,12 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * Emits a {Blacklisted} event.
      */
     function selfBlacklist() external {
+        if (_blacklisted[_msgSender()]) {
+            return;
+        }
+
         _blacklisted[_msgSender()] = true;
+
         emit SelfBlacklisted(_msgSender());
         emit Blacklisted(_msgSender());
     }

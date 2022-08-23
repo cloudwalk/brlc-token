@@ -14,27 +14,31 @@ abstract contract PausableExUpgradeable is OwnableUpgradeable, PausableUpgradeab
 
     event PauserChanged(address indexed pauser);
 
-    function __PausableEx_init() internal initializer {
+    error UnauthorizedPauser(address account);
+
+    function __PausableEx_init() internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
         __PausableEx_init_unchained();
     }
 
-    function __PausableEx_init_unchained() internal initializer {}
+    function __PausableEx_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev Throws if called by any account other than the pauser.
      */
     modifier onlyPauser() {
-        require(getPauser() == _msgSender(), "PausableEx: caller is not the pauser");
+        if (_msgSender() != _pauser) {
+            revert UnauthorizedPauser(_msgSender());
+        }
         _;
     }
 
     /**
      * @dev Returns the pauser address.
      */
-    function getPauser() public view virtual returns (address) {
+    function pauser() public view virtual returns (address) {
         return _pauser;
     }
 
@@ -45,7 +49,12 @@ abstract contract PausableExUpgradeable is OwnableUpgradeable, PausableUpgradeab
      * @param newPauser The address of a new pauser.
      */
     function setPauser(address newPauser) external onlyOwner {
+        if (_pauser == newPauser) {
+            return;
+        }
+
         _pauser = newPauser;
+
         emit PauserChanged(_pauser);
     }
 

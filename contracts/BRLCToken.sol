@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.16;
 
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { RescuableUpgradeable } from "./base/RescuableUpgradeable.sol";
 import { PausableExUpgradeable } from "./base/PausableExUpgradeable.sol";
@@ -11,12 +12,13 @@ import { BlacklistableUpgradeable } from "./base/BlacklistableUpgradeable.sol";
  * @title BRLCToken base contract
  */
 abstract contract BRLCToken is
+    OwnableUpgradeable,
     RescuableUpgradeable,
     PausableExUpgradeable,
     BlacklistableUpgradeable,
     ERC20Upgradeable
 {
-    function __BRLCToken_init(string memory name_, string memory symbol_) internal initializer {
+    function __BRLCToken_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Rescuable_init_unchained();
@@ -27,12 +29,12 @@ abstract contract BRLCToken is
         __BRLCToken_init_unchained();
     }
 
-    function __BRLCToken_init_unchained() internal initializer {}
+    function __BRLCToken_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev ERC20 `decimals` function.
      */
-    function decimals() public view override returns (uint8) {
+    function decimals() public pure override returns (uint8) {
         return 6;
     }
 

@@ -16,19 +16,23 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
 
     event RescuerChanged(address indexed newRescuer);
 
-    function __Rescuable_init() internal initializer {
+    error UnauthorizedRescuer(address account);
+
+    function __Rescuable_init() internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Rescuable_init_unchained();
     }
 
-    function __Rescuable_init_unchained() internal initializer {}
+    function __Rescuable_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev Revert if called by any account other than the rescuer.
      */
     modifier onlyRescuer() {
-        require(getRescuer() == _msgSender(), "Rescuable: caller is not the rescuer");
+        if (_msgSender() != _rescuer) {
+            revert UnauthorizedRescuer(_msgSender());
+        }
         _;
     }
 
@@ -36,7 +40,7 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
      * @dev Returns the current rescuer.
      * @return Rescuer's address.
      */
-    function getRescuer() public view virtual returns (address) {
+    function rescuer() public view virtual returns (address) {
         return _rescuer;
     }
 
@@ -47,7 +51,12 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
      * @param newRescuer A new rescuer's address.
      */
     function setRescuer(address newRescuer) external onlyOwner {
+        if (_rescuer == newRescuer) {
+            return;
+        }
+
         _rescuer = newRescuer;
+
         emit RescuerChanged(newRescuer);
     }
 
@@ -59,10 +68,10 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
      * @param amount The amount to withdraw.
      */
     function rescueERC20(
-        IERC20Upgradeable tokenContract,
+        address token,
         address to,
         uint256 amount
     ) external onlyRescuer {
-        tokenContract.safeTransfer(to, amount);
+        IERC20Upgradeable(token).safeTransfer(to, amount);
     }
 }

@@ -13,11 +13,17 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
     mapping(address => bool) private _minters;
     mapping(address => uint256) private _mintersAllowance;
 
+    error UnauthorizedMasterMinter(address account);
+    error UnauthorizedMinter(address account);
+    error ExceededMintAllowance();
+    error ZeroMintAmount();
+    error ZeroBurnAmount();
+
     function initialize(string memory name_, string memory symbol_) public virtual initializer {
         __BRLCTokenMintable_init(name_, symbol_);
     }
 
-    function __BRLCTokenMintable_init(string memory name_, string memory symbol_) internal initializer {
+    function __BRLCTokenMintable_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
@@ -28,28 +34,32 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
         __BRLCTokenMintable_init_unchained();
     }
 
-    function __BRLCTokenMintable_init_unchained() internal initializer {}
+    function __BRLCTokenMintable_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev Throws if called by any account other than the masterMinter.
      */
     modifier onlyMasterMinter() {
-        require(_msgSender() == masterMinter(), "ERC20Mintable: caller is not the masterMinter");
+        if (_msgSender() != _masterMinter) {
+            revert UnauthorizedMasterMinter(_msgSender());
+        }
         _;
     }
 
     /**
      * @dev Throws if called by any account other than a minter.
      */
-    modifier onlyMinters() {
-        require(_minters[_msgSender()], "ERC20Mintable: caller is not a minter");
+    modifier onlyMinter() {
+        if (!_minters[_msgSender()]) {
+            revert UnauthorizedMinter(_msgSender());
+        }
         _;
     }
 
     /**
      * @dev Returns masterMinter address.
      */
-    function masterMinter() public view override returns (address) {
+    function masterMinter() public view returns (address) {
         return _masterMinter;
     }
 
@@ -57,7 +67,7 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
      * @dev Checks if account is a minter.
      * @param account An address to check.
      */
-    function isMinter(address account) external view override returns (bool) {
+    function isMinter(address account) external view returns (bool) {
         return _minters[account];
     }
 
@@ -65,7 +75,7 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
      * @dev Returns the minter allowance for an account.
      * @param minter The address of a minter.
      */
-    function minterAllowance(address minter) external view override returns (uint256) {
+    function minterAllowance(address minter) external view returns (uint256) {
         return _mintersAllowance[minter];
     }
 
@@ -73,8 +83,13 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
      * @dev Updates the master minter address.
      * @param newMasterMinter The address of a new master minter.
      */
-    function updateMasterMinter(address newMasterMinter) external override onlyOwner {
+    function updateMasterMinter(address newMasterMinter) external onlyOwner {
+        if (_masterMinter == newMasterMinter) {
+            return;
+        }
+
         _masterMinter = newMasterMinter;
+
         emit MasterMinterChanged(_masterMinter);
     }
 
@@ -93,7 +108,9 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
     {
         _minters[minter] = true;
         _mintersAllowance[minter] = mintAllowance;
+
         emit MinterConfigured(minter, mintAllowance);
+
         return true;
     }
 
@@ -102,10 +119,16 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
      * @param minter The address of a minter to remove.
      * @return True if the operation was successful.
      */
-    function removeMinter(address minter) external override onlyMasterMinter returns (bool) {
+    function removeMinter(address minter) external onlyMasterMinter returns (bool) {
+        if (!_minters[minter]) {
+            return true;
+        }
+
         _minters[minter] = false;
         _mintersAllowance[minter] = 0;
+
         emit MinterRemoved(minter);
+
         return true;
     }
 
@@ -116,24 +139,28 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
      * than or equal to the mint allowance of the caller.
      * @return True if the operation was successful.
      */
-    function mint(address to, uint256 amount)
+    function mint(address account, uint256 amount)
         external
-        override
         whenNotPaused
-        onlyMinters
+        onlyMinter
         notBlacklisted(_msgSender())
-        notBlacklisted(to)
+        notBlacklisted(account)
         returns (bool)
     {
-        require(to != address(0), "ERC20Mintable: mint to the zero address");
-        require(amount > 0, "ERC20Mintable: mint amount not greater than 0");
+        if (amount == 0) {
+            revert ZeroMintAmount();
+        }
 
         uint256 mintAllowance = _mintersAllowance[_msgSender()];
-        require(amount <= mintAllowance, "ERC20Mintable: mint amount exceeds mintAllowance");
+        if (amount > mintAllowance) {
+            revert ExceededMintAllowance();
+        }
 
-        _mint(to, amount);
+        _mint(account, amount);
+
         _mintersAllowance[_msgSender()] = mintAllowance - amount;
-        emit Mint(_msgSender(), to, amount);
+        emit Mint(_msgSender(), account, amount);
+
         return true;
     }
 
@@ -142,13 +169,13 @@ contract BRLCTokenMintable is BRLCToken, IERC20Mintable {
      * @param amount The amount of tokens to be burned. Must be less
      * than or equal to the token balance of the caller.
      */
-    function burn(uint256 amount) external override whenNotPaused onlyMinters notBlacklisted(_msgSender()) {
-        require(amount > 0, "ERC20Mintable: burn amount not greater than 0");
-
-        uint256 balance = balanceOf(_msgSender());
-        require(balance >= amount, "ERC20Mintable: burn amount exceeds balance");
+    function burn(uint256 amount) external whenNotPaused onlyMinter notBlacklisted(_msgSender()) {
+        if (amount == 0) {
+            revert ZeroBurnAmount();
+        }
 
         _burn(_msgSender(), amount);
+
         emit Burn(_msgSender(), amount);
     }
 }
