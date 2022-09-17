@@ -95,7 +95,15 @@ abstract contract BRLCTokenBase is
         address sender,
         address recipient,
         uint256 amount
-    ) public virtual override whenNotPaused notBlacklisted(sender) notBlacklisted(recipient) returns (bool) {
+    )
+        public
+        virtual
+        override
+        whenNotPaused
+        notBlacklisted(sender)
+        notBlacklisted(recipient)
+        returns (bool)
+    {
         return super.transferFrom(sender, recipient, amount);
     }
 

@@ -7,7 +7,7 @@ import { BRLCTokenBase } from "./BRLCTokenBase.sol";
 
 /**
  * @title BRLCTokenMintable contract
- * @dev BRLC token implementation that supports mint and burn operations.
+ * @dev The BRLC token implementation that supports mint and burn operations.
  */
 contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable {
     /// @dev The address of the master minter.
@@ -18,6 +18,8 @@ contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable {
 
     /// @dev The mapping of the configured mint allowances.
     mapping(address => uint256) private _mintersAllowance;
+
+    // -------------------- Errors -----------------------------------
 
     /// @dev The transaction sender is not a master minter.
     error UnauthorizedMasterMinter(address account);
@@ -34,22 +36,7 @@ contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable {
     /// @dev The zero amount of tokens is passed during the burn opration.
     error ZeroBurnAmount();
 
-    function initialize(string memory name_, string memory symbol_) public virtual initializer {
-        __BRLCTokenMintable_init(name_, symbol_);
-    }
-
-    function __BRLCTokenMintable_init(string memory name_, string memory symbol_) internal onlyInitializing {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
-        __Pausable_init_unchained();
-        __PausableExt_init_unchained();
-        __Blacklistable_init_unchained();
-        __ERC20_init_unchained(name_, symbol_);
-        __BRLCTokenBase_init_unchained();
-        __BRLCTokenMintable_init_unchained();
-    }
-
-    function __BRLCTokenMintable_init_unchained() internal onlyInitializing {}
+     // -------------------- Modifiers -----------------------------------
 
     /**
      * @dev Throws if called by any account other than the master minter.
@@ -71,26 +58,24 @@ contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable {
         _;
     }
 
-    /**
-     * @dev See {IERC20Mintable-masterMinter}.
-     */
-    function masterMinter() public view returns (address) {
-        return _masterMinter;
+    // -------------------- Functions -----------------------------------
+
+    function initialize(string memory name_, string memory symbol_) external virtual initializer {
+        __BRLCTokenMintable_init(name_, symbol_);
     }
 
-    /**
-     * @dev See {IERC20Mintable-isMinter}.
-     */
-    function isMinter(address account) external view returns (bool) {
-        return _minters[account];
+    function __BRLCTokenMintable_init(string memory name_, string memory symbol_) internal onlyInitializing {
+        __Context_init_unchained();
+        __Ownable_init_unchained();
+        __Pausable_init_unchained();
+        __PausableExt_init_unchained();
+        __Blacklistable_init_unchained();
+        __ERC20_init_unchained(name_, symbol_);
+        __BRLCTokenBase_init_unchained();
+        __BRLCTokenMintable_init_unchained();
     }
 
-    /**
-     * @dev See {IERC20Mintable-minterAllowance}.
-     */
-    function minterAllowance(address minter) external view returns (uint256) {
-        return _mintersAllowance[minter];
-    }
+    function __BRLCTokenMintable_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev See {IERC20Mintable-updateMasterMinter}.
@@ -158,10 +143,10 @@ contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable {
      * Requirements:
      *
      * - The contract must not be paused.
-     * - Can only be called by the minter account.
+     * - Can only be called by a minter account.
      * - The `_msgSender()` address must not be blacklisted.
      * - The `account` address must not be blacklisted.
-     * - The `amount` must be greater than zero and
+     * - The `amount` value must be greater than zero and
      *   not greater than the mint allowance of the minter.
      */
     function mint(address account, uint256 amount)
@@ -195,9 +180,9 @@ contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable {
      * Requirements:
      *
      * - The contract must not be paused.
-     * - Can only be called by the minter account.
+     * - Can only be called by a minter account.
      * - The `_msgSender()` address must not be blacklisted.
-     * - The `amount` must be greater than zero.
+     * - The `amount` value must be greater than zero.
      */
     function burn(uint256 amount) external whenNotPaused onlyMinter notBlacklisted(_msgSender()) {
         if (amount == 0) {
@@ -207,5 +192,26 @@ contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable {
         _burn(_msgSender(), amount);
 
         emit Burn(_msgSender(), amount);
+    }
+
+    /**
+     * @dev See {IERC20Mintable-masterMinter}.
+     */
+    function masterMinter() external view returns (address) {
+        return _masterMinter;
+    }
+
+    /**
+     * @dev See {IERC20Mintable-isMinter}.
+     */
+    function isMinter(address account) external view returns (bool) {
+        return _minters[account];
+    }
+
+    /**
+     * @dev See {IERC20Mintable-minterAllowance}.
+     */
+    function minterAllowance(address minter) external view returns (uint256) {
+        return _mintersAllowance[minter];
     }
 }

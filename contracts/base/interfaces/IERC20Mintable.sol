@@ -35,7 +35,7 @@ interface IERC20Mintable {
     function isMinter(address account) external view returns (bool);
 
     /**
-     * @dev Returns a mint allowance of the minter.
+     * @dev Returns the mint allowance of a minter.
      * @param minter The minter to check.
      * @return The mint allowance of the minter.
      */
@@ -51,7 +51,7 @@ interface IERC20Mintable {
     function updateMasterMinter(address newMasterMinter) external;
 
     /**
-     * @dev Configures the minter.
+     * @dev Configures a minter.
      *
      * Emits a {MinterConfigured} event.
      *
@@ -62,7 +62,7 @@ interface IERC20Mintable {
     function configureMinter(address minter, uint256 mintAllowance) external returns (bool);
 
     /**
-     * @dev Removes the minter.
+     * @dev Removes a minter.
      *
      * Emits a {MinterRemoved} event.
      *
@@ -76,7 +76,7 @@ interface IERC20Mintable {
      *
      * Emits a {Mint} event.
      *
-     * @param account The address of tokens recipient.
+     * @param account The address of a tokens recipient.
      * @param amount The amount of tokens to mint.
      * @return True if the operation was successful.
      */

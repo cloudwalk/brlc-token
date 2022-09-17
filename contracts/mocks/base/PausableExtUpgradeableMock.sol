@@ -10,18 +10,27 @@ import { PausableExtUpgradeable } from "../../base/PausableExtUpgradeable.sol";
  */
 contract PausableExtUpgradeableMock is PausableExtUpgradeable {
     /**
-     * @dev The initialize function of the upgradable contract
-     * but without modifier {initializer} to test that the ancestor contract has it.
+     * @dev The initialize function of the upgradable contract.
+     *
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
      */
-    function initialize() public {
+    function initialize() public initializer {
         __PausableExt_init();
     }
 
     /**
-     * @dev The unchained initialize function of the upgradable contract
-     * but without modifier {initializer} to test that the ancestor contract has it.
+     * @dev Needed to check that the initialize function of the ancestor contract
+     * has the 'onlyInitializing' modifier.
      */
-    function initialize_unchained() public {
+    function call_parent_initialize() public {
+        __PausableExt_init();
+    }
+
+    /**
+     * @dev Needed to check that the unchained initialize function of the ancestor contract
+     * has the 'onlyInitializing' modifier.
+     */
+    function call_parent_initialize_unchained() public {
         __PausableExt_init_unchained();
     }
 }

@@ -9,21 +9,31 @@ import { BlacklistableUpgradeable } from "../../base/BlacklistableUpgradeable.so
  * @dev An implementation of the {BlacklistableUpgradeable} contract for test purposes.
  */
 contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
+    /// @dev Emitted when a test function of the `notBlacklisted` modifier executes successfully.
     event TestNotBlacklistedModifierSucceeded();
 
     /**
-     * @dev The initialize function of the upgradable contract
-     * but without modifier {initializer} to test that the ancestor contract has it.
+     * @dev The initialize function of the upgradable contract.
+     *
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
      */
-    function initialize() public {
+    function initialize() public initializer {
         __Blacklistable_init();
     }
 
     /**
-     * @dev The unchained initialize function of the upgradable contract
-     * but without modifier {initializer} to test that the ancestor contract has it.
+     * @dev Needed to check that the initialize function of the ancestor contract
+     * has the 'onlyInitializing' modifier.
      */
-    function initialize_unchained() public {
+    function call_parent_initialize() public {
+        __Blacklistable_init();
+    }
+
+    /**
+     * @dev Needed to check that the unchained initialize function of the ancestor contract
+     * has the 'onlyInitializing' modifier.
+     */
+    function call_parent_initialize_unchained() public {
         __Blacklistable_init_unchained();
     }
 

@@ -15,6 +15,7 @@ interface IERC20Bridgeable {
 
     /**
      * @dev Mints tokens as part of a bridge operation.
+     *
      * It is expected that this function can be called only by a bridge contract.
      *
      * Emits a {MintForBridging} event.
@@ -27,6 +28,7 @@ interface IERC20Bridgeable {
 
     /**
      * @dev Burns tokens as part of a bridge operation.
+     *
      * It is expected that this function can be called only by a bridge contract.
      *
      * Emits a {BurnForBridging} event.

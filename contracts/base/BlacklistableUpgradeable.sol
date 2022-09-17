@@ -5,19 +5,25 @@ pragma solidity 0.8.16;
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
+ * @title BlacklistableUpgradeable base contract
  * @dev Allows to blacklist/unblacklist accounts using the `blacklister` role.
  *
- * This contract is used through inheritance. It will make available the modifier `notBlacklisted`,
+ * This contract is used through inheritance. It makes available the modifier `notBlacklisted`,
  * which can be applied to functions to restrict their usage to not blacklisted accounts only.
- * By default, the blacklister will be set to the zero address. This can later be changed
+ *
+ * By default, the blacklister is set to the zero address. This can later be changed
  * by the contract owner with the {setBlacklister} function.
+ *
+ * There is also a possibility to any account to blacklist itself.
  */
 abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     /// @dev The address of the blacklister.
     address private _blacklister;
 
-    /// @dev Mapping of blacklisted addresses.
+    /// @dev Mapping of presence in the blacklist for a given address.
     mapping(address => bool) private _blacklisted;
+
+    // -------------------- Events -----------------------------------
 
     /// @dev Emitted when an account is blacklisted.
     event Blacklisted(address indexed account);
@@ -31,15 +37,20 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     /// @dev Emitted when the blacklister is changed.
     event BlacklisterChanged(address indexed newBlacklister);
 
+    // -------------------- Errors -----------------------------------
+
     /// @dev The transaction sender is not a blacklister.
     error UnauthorizedBlacklister(address account);
 
     /// @dev The transaction sender is blacklisted.
     error BlacklistedAccount(address account);
 
+    // -------------------- Functions --------------------------------
+
     function __Blacklistable_init() internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
+
         __Blacklistable_init_unchained();
     }
 
@@ -83,9 +94,10 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Adds the account to the blacklist.
+     * @dev Adds an account to the blacklist.
      *
      * Requirements:
+     *
      * - Can only be called by the blacklister.
      *
      * Emits a {Blacklisted} event.
@@ -103,12 +115,13 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Removes the account from the blacklist.
+     * @dev Removes an account from the blacklist.
      *
      * Requirements:
+     *
      * - Can only be called by the blacklister.
      *
-     * Emits a {Blacklisted} event.
+     * Emits a {UnBlacklisted} event.
      *
      * @param account The address to remove from the blacklist.
      */
@@ -120,26 +133,6 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
         _blacklisted[account] = false;
 
         emit UnBlacklisted(account);
-    }
-
-    /**
-     * @dev Updates the blacklister address.
-     *
-     * Requirements:
-     * - Can only be called by the contract owner.
-     *
-     * Emits a {BlacklisterChanged} event.
-     *
-     * @param newBlacklister The address of a new blacklister.
-     */
-    function setBlacklister(address newBlacklister) external onlyOwner {
-        if (_blacklister == newBlacklister) {
-            return;
-        }
-
-        _blacklister = newBlacklister;
-
-        emit BlacklisterChanged(_blacklister);
     }
 
     /**
@@ -157,5 +150,26 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
 
         emit SelfBlacklisted(_msgSender());
         emit Blacklisted(_msgSender());
+    }
+
+    /**
+     * @dev Updates the blacklister address.
+     *
+     * Requirements:
+     *
+     * - Can only be called by the contract owner.
+     *
+     * Emits a {BlacklisterChanged} event.
+     *
+     * @param newBlacklister The address of a new blacklister.
+     */
+    function setBlacklister(address newBlacklister) external onlyOwner {
+        if (_blacklister == newBlacklister) {
+            return;
+        }
+
+        _blacklister = newBlacklister;
+
+        emit BlacklisterChanged(_blacklister);
     }
 }
