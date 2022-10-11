@@ -1,0 +1,22 @@
+[
+    {
+        "name": "BRLCToken",
+        "chainId": 2009,
+        "address": "0xA9a55a81a4C085EC0C31585Aed4cFB09D78dfD53"
+    },
+    {
+        "name": "BRLCToken",
+        "chainId": 2008,
+        "address": "0xC6d1eFd908ef6B69dA0749600F553923C465c812"
+    },
+    {
+        "name": "BRLCToken",
+        "chainId": 1,
+        "address": "0xAC176d9e75384F7d71275bb9D5265281CC0Dd284"
+    },
+    {
+        "name": "BRLCToken",
+        "chainId": 5,
+        "address": "0x764161d20B701dd9176f77053fA764838C4229c8"
+    }
+]
