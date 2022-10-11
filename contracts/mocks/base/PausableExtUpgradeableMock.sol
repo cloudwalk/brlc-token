@@ -2,20 +2,20 @@
 
 pragma solidity 0.8.16;
 
-import { RescuableUpgradeable } from "../../base/RescuableUpgradeable.sol";
+import { PausableExtUpgradeable } from "../../base/PausableExtUpgradeable.sol";
 
 /**
- * @title RescuableUpgradeableMock contract
- * @dev An implementation of the {RescuableUpgradeable} contract for test purposes.
+ * @title PausableExtUpgradeableMock contract
+ * @dev An implementation of the {PausableExtUpgradeable} contract for test purposes.
  */
-contract RescuableUpgradeableMock is RescuableUpgradeable {
+contract PausableExtUpgradeableMock is PausableExtUpgradeable {
     /**
      * @dev The initialize function of the upgradable contract.
      *
      * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
      */
     function initialize() public initializer {
-        __Rescuable_init();
+        __PausableExt_init();
     }
 
     /**
@@ -23,7 +23,7 @@ contract RescuableUpgradeableMock is RescuableUpgradeable {
      * has the 'onlyInitializing' modifier.
      */
     function call_parent_initialize() public {
-        __Rescuable_init();
+        __PausableExt_init();
     }
 
     /**
@@ -31,6 +31,6 @@ contract RescuableUpgradeableMock is RescuableUpgradeable {
      * has the 'onlyInitializing' modifier.
      */
     function call_parent_initialize_unchained() public {
-        __Rescuable_init_unchained();
+        __PausableExt_init_unchained();
     }
 }

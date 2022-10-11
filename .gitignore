@@ -3,10 +3,14 @@ node_modules
 coverage
 coverage.json
 typechain
+typechain-types
 
 #Hardhat files
 cache
 artifacts
 
-#IDE files
-/.idea/
+#IDE-specific files
+.idea
+
+#Version manager files
+.tool-versions
