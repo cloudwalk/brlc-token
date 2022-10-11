@@ -18,5 +18,15 @@
         "name": "BRLCToken",
         "chainId": 5,
         "address": "0x764161d20B701dd9176f77053fA764838C4229c8"
+    },
+    {
+        "name": "InfinitePointsToken",
+        "chainId": 2009,
+        "address": "0x25c6C9b7d02A128234A82AEd3d3D5c5a09958167"
+    },
+    {
+        "name": "InfinitePointsToken",
+        "chainId": 2008,
+        "address": "0x28dC034BE1834F012e294d7093f5700Af1CFC97D"
     }
 ]
