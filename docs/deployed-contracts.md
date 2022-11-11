@@ -49,3 +49,19 @@
 | 1 | ProxyAdmin | Proxy admin | [0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A](https://explorer.testnet.cloudwalk.io/address/0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A) |
 | 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0x28dC034BE1834F012e294d7093f5700Af1CFC97D](https://explorer.testnet.cloudwalk.io/address/0x28dC034BE1834F012e294d7093f5700Af1CFC97D) |
 | 3 | InfinitePointsToken | Proxy implementation | [0x756f5e842085A4Ab8A5e52a219B2684f09f4Dbf5](https://explorer.testnet.cloudwalk.io/address/0x756f5e842085A4Ab8A5e52a219B2684f09f4Dbf5) |
+
+# LightningBitcoin Token
+
+### CloudWalk (Mainnet)
+| # | Name | Description | Address |
+| --- | --- | --- | --- |
+| 1 | ProxyAdmin | Proxy admin | [0xAD81F2257593B6B06930D549db588a92e483395a](https://explorer.mainnet.cloudwalk.io/address/0xAD81F2257593B6B06930D549db588a92e483395a) |
+| 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0xeD3369f946570ae00A34Ff982b6c5Ead3F22ea3f](https://explorer.mainnet.cloudwalk.io/address/0xeD3369f946570ae00A34Ff982b6c5Ead3F22ea3f) |
+| 3 | LightningBitcoin | Proxy implementation | [0x380D42c5c93a9b8984932F81eFBF9122baB8922F](https://explorer.mainnet.cloudwalk.io/address/0x380D42c5c93a9b8984932F81eFBF9122baB8922F) |
+
+### CloudWalk (Testnet)
+| # | Name | Description | Address |
+| --- | --- | --- | --- |
+| 1 | ProxyAdmin | Proxy admin | [0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A](https://explorer.testnet.cloudwalk.io/address/0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A) |
+| 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0x25a506b9De655Ee80E893102D5CF27F0f2097Fed](https://explorer.testnet.cloudwalk.io/address/0x25a506b9De655Ee80E893102D5CF27F0f2097Fed) |
+| 3 | LightningBitcoin | Proxy implementation | [0xcA6e6ea97E1433F52A13be43da72C24E6F6809Dd](https://explorer.testnet.cloudwalk.io/address/0xcA6e6ea97E1433F52A13be43da72C24E6F6809Dd) |

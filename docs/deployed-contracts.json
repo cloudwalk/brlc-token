@@ -28,5 +28,15 @@
         "name": "InfinitePointsToken",
         "chainId": 2008,
         "address": "0x28dC034BE1834F012e294d7093f5700Af1CFC97D"
+    },
+    {
+        "name": "LightningBitcoin",
+        "chainId": 2009,
+        "address": "0xeD3369f946570ae00A34Ff982b6c5Ead3F22ea3f"
+    },
+    {
+        "name": "LightningBitcoin",
+        "chainId": 2008,
+        "address": "0x25a506b9De655Ee80E893102D5CF27F0f2097Fed"
     }
 ]
