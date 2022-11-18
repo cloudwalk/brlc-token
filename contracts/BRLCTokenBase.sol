@@ -36,7 +36,7 @@ abstract contract BRLCTokenBase is
     /**
      * @dev See {ERC20Upgradeable-decimals}.
      */
-    function decimals() public pure override returns (uint8) {
+    function decimals() public pure virtual override returns (uint8) {
         return 6;
     }
 
