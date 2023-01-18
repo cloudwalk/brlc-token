@@ -28,6 +28,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
   const REVERT_ERROR_IF_ACCOUNT_IS_BLACKLISTED = "BlacklistedAccount";
 
   let blacklistableMockFactory: ContractFactory;
+
   let deployer: SignerWithAddress;
   let blacklister: SignerWithAddress;
   let user: SignerWithAddress;
@@ -37,44 +38,50 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
     blacklistableMockFactory = await ethers.getContractFactory("BlacklistableUpgradeableMock");
   });
 
-  async function deployContractUnderTest(): Promise<{ blacklistableMock: Contract }> {
+  async function deployBlacklistableMock(): Promise<{ blacklistableMock: Contract }> {
     const blacklistableMock: Contract = await upgrades.deployProxy(blacklistableMockFactory);
     await blacklistableMock.deployed();
     return { blacklistableMock };
   }
 
+  async function deployAndConfigureBlacklistableMock(): Promise<{ blacklistableMock: Contract }> {
+    const { blacklistableMock } = await deployBlacklistableMock();
+    await proveTx(blacklistableMock.setBlacklister(blacklister.address));
+    return { blacklistableMock };
+  }
+
   describe("Initializers", async () => {
     it("The external initializer configures the contract as expected", async () => {
-      const { blacklistableMock } = await setUpFixture(deployContractUnderTest);
+      const { blacklistableMock } = await setUpFixture(deployBlacklistableMock);
       expect(await blacklistableMock.owner()).to.equal(deployer.address);
       expect(await blacklistableMock.blacklister()).to.equal(ethers.constants.AddressZero);
     });
 
     it("The external initializer is reverted if it is called a second time", async () => {
-      const { blacklistableMock } = await setUpFixture(deployContractUnderTest);
+      const { blacklistableMock } = await setUpFixture(deployBlacklistableMock);
       await expect(
         blacklistableMock.initialize()
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("The internal initializer is reverted if it is called outside the init process", async () => {
-      const { blacklistableMock } = await setUpFixture(deployContractUnderTest);
+      const { blacklistableMock } = await setUpFixture(deployBlacklistableMock);
       await expect(
-        blacklistableMock.call_parent_init()
+        blacklistableMock.call_parent_initialize()
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("The internal unchained initializer is reverted if it is called outside the init process", async () => {
-      const { blacklistableMock } = await setUpFixture(deployContractUnderTest);
+      const { blacklistableMock } = await setUpFixture(deployBlacklistableMock);
       await expect(
-        blacklistableMock.call_parent_init_unchained()
+        blacklistableMock.call_parent_initialize_unchained()
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
   describe("Function 'setBlacklister()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
-      const { blacklistableMock } = await setUpFixture(deployContractUnderTest);
+      const { blacklistableMock } = await setUpFixture(deployBlacklistableMock);
 
       await expect(
         blacklistableMock.setBlacklister(blacklister.address)
@@ -91,7 +98,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
     });
 
     it("Is reverted if it is called not by the owner", async () => {
-      const { blacklistableMock } = await setUpFixture(deployContractUnderTest);
+      const { blacklistableMock } = await setUpFixture(deployBlacklistableMock);
       await expect(
         blacklistableMock.connect(blacklister).setBlacklister(blacklister.address)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER);
@@ -100,8 +107,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
 
   describe("Function 'blacklist()'", async () => {
     it("Executes as expected and emits the correct event if it is called by the blacklister", async () => {
-      const { blacklistableMock } = await setUpFixture(deployContractUnderTest);
-      await proveTx(blacklistableMock.setBlacklister(blacklister.address));
+      const { blacklistableMock } = await setUpFixture(deployAndConfigureBlacklistableMock);
       expect(await blacklistableMock.isBlacklisted(user.address)).to.equal(false);
 
       await expect(
@@ -119,7 +125,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
     });
 
     it("Is reverted if it is called not by the blacklister", async () => {
-      const { blacklistableMock } = await setUpFixture(deployContractUnderTest);
+      const { blacklistableMock } = await setUpFixture(deployAndConfigureBlacklistableMock);
       await expect(
         blacklistableMock.blacklist(user.address)
       ).to.be.revertedWithCustomError(blacklistableMock, REVERT_ERROR_IF_CALLER_IS_NOT_BLACKLISTER);
@@ -128,8 +134,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
 
   describe("Function 'unBlacklist()'", async () => {
     it("Executes as expected and emits the correct event if it is called by the blacklister", async () => {
-      const { blacklistableMock } = await setUpFixture(deployContractUnderTest);
-      await proveTx(blacklistableMock.setBlacklister(blacklister.address));
+      const { blacklistableMock } = await setUpFixture(deployAndConfigureBlacklistableMock);
       await proveTx(blacklistableMock.connect(blacklister).blacklist(user.address));
       expect(await blacklistableMock.isBlacklisted(user.address)).to.equal(true);
 
@@ -148,7 +153,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
     });
 
     it("Is reverted if it is called not by the blacklister", async () => {
-      const { blacklistableMock } = await setUpFixture(deployContractUnderTest);
+      const { blacklistableMock } = await setUpFixture(deployAndConfigureBlacklistableMock);
       await expect(
         blacklistableMock.unBlacklist(user.address)
       ).to.be.revertedWithCustomError(blacklistableMock, REVERT_ERROR_IF_CALLER_IS_NOT_BLACKLISTER);
@@ -157,7 +162,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
 
   describe("Function 'selfBlacklist()'", async () => {
     it("Executes as expected and emits the correct events if it is called by any account", async () => {
-      const { blacklistableMock } = await setUpFixture(deployContractUnderTest);
+      const { blacklistableMock } = await setUpFixture(deployAndConfigureBlacklistableMock);
       expect(await blacklistableMock.isBlacklisted(user.address)).to.equal(false);
 
       await expect(
@@ -168,7 +173,8 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
       ).withArgs(
         user.address
       ).and.to.emit(
-        blacklistableMock, EVENT_NAME_SELFBLACKLISTED
+        blacklistableMock,
+        EVENT_NAME_SELFBLACKLISTED
       ).withArgs(
         user.address
       );
@@ -184,8 +190,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
 
   describe("Modifier 'notBlacklisted'", async () => {
     it("Reverts the target function if the caller is blacklisted", async () => {
-      const { blacklistableMock } = await setUpFixture(deployContractUnderTest);
-      await proveTx(blacklistableMock.setBlacklister(blacklister.address));
+      const { blacklistableMock } = await setUpFixture(deployAndConfigureBlacklistableMock);
       await proveTx(blacklistableMock.connect(blacklister).blacklist(deployer.address));
 
       await expect(
@@ -194,7 +199,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
     });
 
     it("Does not revert the target function if the caller is not blacklisted", async () => {
-      const { blacklistableMock } = await setUpFixture(deployContractUnderTest);
+      const { blacklistableMock } = await setUpFixture(deployAndConfigureBlacklistableMock);
       await expect(
         blacklistableMock.connect(user).testNotBlacklistedModifier()
       ).to.emit(blacklistableMock, EVENT_NAME_TEST_NOT_BLACKLISTED_MODIFIER_SUCCEEDED);

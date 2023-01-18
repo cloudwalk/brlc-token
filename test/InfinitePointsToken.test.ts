@@ -28,7 +28,7 @@ describe("Contract 'InfinitePointsToken'", async () => {
     infinitePointsTokenFactory = await ethers.getContractFactory("InfinitePointsToken");
   });
 
-  async function deployContractUnderTest(): Promise<{ infinitePointsToken: Contract }> {
+  async function deployInfinitePointsToken(): Promise<{ infinitePointsToken: Contract }> {
     const infinitePointsToken: Contract = await upgrades.deployProxy(
       infinitePointsTokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY]
@@ -39,7 +39,7 @@ describe("Contract 'InfinitePointsToken'", async () => {
 
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
-      const { infinitePointsToken } = await setUpFixture(deployContractUnderTest);
+      const { infinitePointsToken } = await setUpFixture(deployInfinitePointsToken);
 
       expect(await infinitePointsToken.owner()).to.equal(deployer.address);
       expect(await infinitePointsToken.pauser()).to.equal(ethers.constants.AddressZero);
@@ -51,7 +51,7 @@ describe("Contract 'InfinitePointsToken'", async () => {
     });
 
     it("Is reverted if it is called a second time", async () => {
-      const { infinitePointsToken } = await setUpFixture(deployContractUnderTest);
+      const { infinitePointsToken } = await setUpFixture(deployInfinitePointsToken);
       await expect(
         infinitePointsToken.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);

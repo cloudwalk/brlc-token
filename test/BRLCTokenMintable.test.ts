@@ -52,7 +52,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     brlcTokenFactory = await ethers.getContractFactory("BRLCTokenMintable");
   });
 
-  async function deployContractUnderTest(): Promise<{ brlcToken: Contract }> {
+  async function deployBrlcToken(): Promise<{ brlcToken: Contract }> {
     const brlcToken: Contract = await upgrades.deployProxy(
       brlcTokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL]
@@ -61,8 +61,8 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     return { brlcToken };
   }
 
-  async function deployAndConfigureContractUnderTest(): Promise<{ brlcToken: Contract }> {
-    const { brlcToken } = await deployContractUnderTest();
+  async function deployAndConfigureBrlcToken(): Promise<{ brlcToken: Contract }> {
+    const { brlcToken } = await deployBrlcToken();
     await proveTx(brlcToken.updateMasterMinter(masterMinter.address));
     await proveTx(brlcToken.connect(masterMinter).configureMinter(minter.address, MINT_ALLOWANCE));
     return { brlcToken };
@@ -70,7 +70,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
 
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       expect(await brlcToken.owner()).to.equal(deployer.address);
       expect(await brlcToken.pauser()).to.equal(ethers.constants.AddressZero);
       expect(await brlcToken.rescuer()).to.equal(ethers.constants.AddressZero);
@@ -80,7 +80,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     });
 
     it("Is reverted if it is called a second time", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.initialize(TOKEN_NAME, TOKEN_SYMBOL)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
@@ -98,7 +98,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
 
   describe("Function 'updateMasterMinter()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.updateMasterMinter(masterMinter.address)
       ).to.emit(
@@ -114,7 +114,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     });
 
     it("Is reverted if it is called not by the owner", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.connect(masterMinter).updateMasterMinter(masterMinter.address)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER);
@@ -123,7 +123,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
 
   describe("Function 'configureMinter()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.updateMasterMinter(masterMinter.address));
       expect(await brlcToken.isMinter(minter.address)).to.equal(false);
       expect(await brlcToken.minterAllowance(minter.address)).to.equal(0);
@@ -140,7 +140,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     });
 
     it("Is reverted if the contract is paused", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.setPauser(deployer.address));
       await proveTx(brlcToken.pause());
 
@@ -150,7 +150,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     });
 
     it("Is reverted if it is called not by the master minter", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.configureMinter(minter.address, MINT_ALLOWANCE)
       ).to.be.revertedWithCustomError(brlcToken, REVERT_ERROR_IF_CALLER_IS_NOT_MASTER_MINTER);
@@ -159,7 +159,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
 
   describe("Function 'removeMinter()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       expect(await brlcToken.isMinter(minter.address)).to.equal(true);
       expect(await brlcToken.minterAllowance(minter.address)).to.equal(MINT_ALLOWANCE);
 
@@ -180,7 +180,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     });
 
     it("Is reverted if it is called not by the master minter", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await expect(
         brlcToken.removeMinter(minter.address)
       ).to.be.revertedWithCustomError(brlcToken, REVERT_ERROR_IF_CALLER_IS_NOT_MASTER_MINTER);
@@ -189,7 +189,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
 
   describe("Function 'mint()", async () => {
     it("Executes as expected and emits the correct events", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       const oldMintAllowance: BigNumber = await brlcToken.minterAllowance(minter.address);
       const newExpectedMintAllowance: BigNumber = oldMintAllowance.sub(BigNumber.from(MINT_AMOUNT));
 
@@ -208,7 +208,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     });
 
     it("Is reverted if the contract is paused", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await proveTx(brlcToken.setPauser(deployer.address));
       await proveTx(brlcToken.pause());
       await expect(
@@ -217,14 +217,14 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     });
 
     it("Is reverted if the caller is not a minter", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await expect(
         brlcToken.mint(deployer.address, MINT_AMOUNT)
       ).to.be.revertedWithCustomError(brlcToken, REVERT_ERROR_IF_CALLER_IS_NOT_MINTER);
     });
 
     it("Is reverted if the caller is blacklisted", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await proveTx(brlcToken.connect(minter).selfBlacklist());
       await expect(
         brlcToken.connect(minter).mint(deployer.address, MINT_AMOUNT)
@@ -232,7 +232,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     });
 
     it("Is reverted if the destination address is blacklisted", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await proveTx(brlcToken.connect(deployer).selfBlacklist());
       await expect(
         brlcToken.connect(minter).mint(deployer.address, MINT_AMOUNT)
@@ -240,21 +240,21 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     });
 
     it("Is reverted if the destination address is zero", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await expect(
         brlcToken.connect(minter).mint(ethers.constants.AddressZero, MINT_AMOUNT)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_MINT_TO_ZERO_ACCOUNT);
     });
 
     it("Is reverted if the mint amount is zero", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await expect(
         brlcToken.connect(minter).mint(deployer.address, 0)
       ).to.be.revertedWithCustomError(brlcToken, REVERT_ERROR_IF_MINT_AMOUNT_IS_ZERO);
     });
 
     it("Is reverted if the mint amount exceeds the mint allowance", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await expect(
         brlcToken.connect(minter).mint(deployer.address, MINT_ALLOWANCE + 1)
       ).to.be.revertedWithCustomError(brlcToken, REVERT_ERROR_IF_MINT_AMOUNT_EXCEEDS_ALLOWANCE);
@@ -263,7 +263,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
 
   describe("Function 'burn()", async () => {
     it("Executes as expected and emits the correct events", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await proveTx(brlcToken.connect(minter).mint(minter.address, BURN_AMOUNT));
 
       const tx: TransactionResponse = await brlcToken.connect(minter).burn(BURN_AMOUNT);
@@ -280,7 +280,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     });
 
     it("Is reverted if the contract is paused", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await proveTx(brlcToken.setPauser(deployer.address));
       await proveTx(brlcToken.pause());
 
@@ -290,14 +290,14 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     });
 
     it("Is reverted if the caller is not a minter", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await expect(
         brlcToken.burn(BURN_AMOUNT)
       ).to.be.revertedWithCustomError(brlcToken, REVERT_ERROR_IF_CALLER_IS_NOT_MINTER);
     });
 
     it("Is reverted if the caller is blacklisted", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await proveTx(brlcToken.connect(minter).selfBlacklist());
       await expect(
         brlcToken.connect(minter).burn(BURN_AMOUNT)
@@ -305,14 +305,14 @@ describe("Contract 'BRLCTokenMintable'", async () => {
     });
 
     it("Is reverted if the burn amount is zero", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await expect(
         brlcToken.connect(minter).burn(0)
       ).to.be.revertedWithCustomError(brlcToken, REVERT_ERROR_IF_BURN_AMOUNT_IS_ZERO);
     });
 
     it("Is reverted if the burn amount exceeds the caller token balance", async () => {
-      const { brlcToken } = await setUpFixture(deployAndConfigureContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployAndConfigureBrlcToken);
       await expect(brlcToken.connect(minter).burn(BURN_AMOUNT + 1))
         .to.be.revertedWith(REVERT_MESSAGE_IF_BURN_AMOUNT_EXCEEDS_BALANCE);
     });

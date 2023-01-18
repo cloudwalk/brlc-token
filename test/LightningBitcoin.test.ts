@@ -52,7 +52,7 @@ describe("Contract 'LightningBitcoin'", async () => {
     lnBtcTokenFactory = await ethers.getContractFactory("LightningBitcoin");
   });
 
-  async function deployContractUnderTest(): Promise<{ lnBtcToken: Contract }> {
+  async function deployLnBtcToken(): Promise<{ lnBtcToken: Contract }> {
     const lnBtcToken: Contract = await upgrades.deployProxy(
       lnBtcTokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL]
@@ -62,7 +62,7 @@ describe("Contract 'LightningBitcoin'", async () => {
   }
 
   async function deployAndConfigureContractUnderTest(): Promise<{ lnBtcToken: Contract }> {
-    const { lnBtcToken } = await deployContractUnderTest();
+    const { lnBtcToken } = await deployLnBtcToken();
     await proveTx(lnBtcToken.updateMasterMinter(masterMinter.address));
     await proveTx(lnBtcToken.connect(masterMinter).configureMinter(minter.address, MINT_ALLOWANCE));
     return { lnBtcToken };
@@ -70,7 +70,7 @@ describe("Contract 'LightningBitcoin'", async () => {
 
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
-      const { lnBtcToken } = await setUpFixture(deployContractUnderTest);
+      const { lnBtcToken } = await setUpFixture(deployLnBtcToken);
       expect(await lnBtcToken.owner()).to.equal(deployer.address);
       expect(await lnBtcToken.pauser()).to.equal(ethers.constants.AddressZero);
       expect(await lnBtcToken.rescuer()).to.equal(ethers.constants.AddressZero);
@@ -80,7 +80,7 @@ describe("Contract 'LightningBitcoin'", async () => {
     });
 
     it("Is reverted if it is called a second time", async () => {
-      const { lnBtcToken } = await setUpFixture(deployContractUnderTest);
+      const { lnBtcToken } = await setUpFixture(deployLnBtcToken);
       await expect(
         lnBtcToken.initialize(TOKEN_NAME, TOKEN_SYMBOL)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
@@ -98,7 +98,7 @@ describe("Contract 'LightningBitcoin'", async () => {
 
   describe("Function 'updateMasterMinter()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
-      const { lnBtcToken } = await setUpFixture(deployContractUnderTest);
+      const { lnBtcToken } = await setUpFixture(deployLnBtcToken);
       await expect(
         lnBtcToken.updateMasterMinter(masterMinter.address)
       ).to.emit(
@@ -114,7 +114,7 @@ describe("Contract 'LightningBitcoin'", async () => {
     });
 
     it("Is reverted if it is called not by the owner", async () => {
-      const { lnBtcToken } = await setUpFixture(deployContractUnderTest);
+      const { lnBtcToken } = await setUpFixture(deployLnBtcToken);
       await expect(
         lnBtcToken.connect(masterMinter).updateMasterMinter(masterMinter.address)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER);
@@ -123,7 +123,7 @@ describe("Contract 'LightningBitcoin'", async () => {
 
   describe("Function 'configureMinter()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
-      const { lnBtcToken } = await setUpFixture(deployContractUnderTest);
+      const { lnBtcToken } = await setUpFixture(deployLnBtcToken);
       await proveTx(lnBtcToken.updateMasterMinter(masterMinter.address));
       expect(await lnBtcToken.isMinter(minter.address)).to.equal(false);
       expect(await lnBtcToken.minterAllowance(minter.address)).to.equal(0);
@@ -140,7 +140,7 @@ describe("Contract 'LightningBitcoin'", async () => {
     });
 
     it("Is reverted if the contract is paused", async () => {
-      const { lnBtcToken } = await setUpFixture(deployContractUnderTest);
+      const { lnBtcToken } = await setUpFixture(deployLnBtcToken);
       await proveTx(lnBtcToken.setPauser(deployer.address));
       await proveTx(lnBtcToken.pause());
 
@@ -150,7 +150,7 @@ describe("Contract 'LightningBitcoin'", async () => {
     });
 
     it("Is reverted if it is called not by the master minter", async () => {
-      const { lnBtcToken } = await setUpFixture(deployContractUnderTest);
+      const { lnBtcToken } = await setUpFixture(deployLnBtcToken);
       await expect(
         lnBtcToken.configureMinter(minter.address, MINT_ALLOWANCE)
       ).to.be.revertedWithCustomError(lnBtcToken, REVERT_ERROR_IF_CALLER_IS_NOT_MASTER_MINTER);

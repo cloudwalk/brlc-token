@@ -41,7 +41,7 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
     brlcTokenFactory = await ethers.getContractFactory("BRLCTokenBridgeable");
   });
 
-  async function deployContractUnderTest(): Promise<{ brlcToken: Contract }> {
+  async function deployBrlcToken(): Promise<{ brlcToken: Contract }> {
     const brlcToken: Contract = await upgrades.deployProxy(
       brlcTokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL, bridge.address]
@@ -52,7 +52,7 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
 
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       expect(await brlcToken.owner()).to.equal(deployer.address);
       expect(await brlcToken.pauser()).to.equal(ethers.constants.AddressZero);
       expect(await brlcToken.rescuer()).to.equal(ethers.constants.AddressZero);
@@ -64,7 +64,7 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
     });
 
     it("Is reverted if it is called a second time", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge.address)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
@@ -88,7 +88,7 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
 
   describe("Function 'mintForBridging()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.connect(bridge).mintForBridging(user.address, TOKEN_AMOUNT)
       ).to.changeTokenBalances(
@@ -105,21 +105,21 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
     });
 
     it("Is reverted if it is called not by the bridge", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.mintForBridging(user.address, TOKEN_AMOUNT)
       ).to.be.revertedWithCustomError(brlcToken, REVERT_ERROR_IF_CALLER_IS_NOT_BRIDGE);
     });
 
     it("Is reverted if it is called to mint for the zero address", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.connect(bridge).mintForBridging(ethers.constants.AddressZero, TOKEN_AMOUNT)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_MINTING_FOR_ZERO_ADDRESS);
     });
 
     it("Is reverted if the token minting amount is zero", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.connect(bridge).mintForBridging(user.address, 0)
       ).to.be.revertedWithCustomError(brlcToken, REVERT_ERROR_IF_MINT_FOR_BRIDGING_AMOUNT_IS_ZERO);
@@ -128,7 +128,7 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
 
   describe("Function 'burnForBridging()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.connect(bridge).mintForBridging(user.address, TOKEN_AMOUNT));
 
       await expect(
@@ -147,28 +147,28 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
     });
 
     it("Is reverted if it is called not by the bridge", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.burnForBridging(user.address, TOKEN_AMOUNT)
       ).to.be.revertedWithCustomError(brlcToken, REVERT_ERROR_IF_CALLER_IS_NOT_BRIDGE);
     });
 
     it("Is reverted if it is called to burn from the zero address", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.connect(bridge).burnForBridging(ethers.constants.AddressZero, TOKEN_AMOUNT)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_BURNING_FROM_ZERO_ADDRESS);
     });
 
     it("Is reverted if it is called to burn more tokens than the bridge balance", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.connect(bridge).burnForBridging(user.address, TOKEN_AMOUNT + 1)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_BURNING_AMOUNT_EXCEEDS_THE_BRIDGE_BALANCE);
     });
 
     it("Is reverted if the token burning amount is zero", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.connect(bridge).burnForBridging(user.address, 0)
       ).to.be.revertedWithCustomError(brlcToken, REVERT_ERROR_IF_BURN_FOR_BRIDGING_AMOUNT_IS_ZERO);

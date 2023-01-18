@@ -8,16 +8,13 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/securit
 /**
  * @title PausableExtUpgradeable base contract
  * @author CloudWalk Inc.
- * @dev Extends the {PausableUpgradeable} contract by adding the `pauser` role.
+ * @dev Extends the OpenZeppelin's {PausableUpgradeable} contract by adding the `pauser` account.
  *
- * This contract is used through inheritance. It introduces the `pauser` role that is allowed
- * to trigger paused/unpaused state of the contract that is inherited from this one.
- *
- * By default, the pauser is to the zero address. This can later be changed
- * by the contract owner with the {setPauser} function.
+ * This contract is used through inheritance. It introduces the `pauser` role that is allowed to
+ * trigger the paused or unpaused state of the contract that is inherited from this one.
  */
 abstract contract PausableExtUpgradeable is OwnableUpgradeable, PausableUpgradeable {
-    /// @dev The address of the pauser.
+    /// @dev The address of the pauser that is allowed to trigger the paused or unpaused state of the contract.
     address private _pauser;
 
     // -------------------- Events -----------------------------------
@@ -27,30 +24,10 @@ abstract contract PausableExtUpgradeable is OwnableUpgradeable, PausableUpgradea
 
     // -------------------- Errors -----------------------------------
 
-    /// @dev The transaction sender is not a pauser.
+    /// @dev The message sender is not a pauser.
     error UnauthorizedPauser(address account);
 
-    // -------------------- Functions --------------------------------
-
-    /**
-     * @dev The internal initializer of the upgradable contract.
-     *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
-     */
-    function __PausableExt_init() internal onlyInitializing {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
-        __Pausable_init_unchained();
-
-        __PausableExt_init_unchained();
-    }
-
-    /**
-     * @dev The internal unchained initializer of the upgradable contract.
-     *
-     * See {PausableExtUpgradeable-__PausableExt_init}.
-     */
-    function __PausableExt_init_unchained() internal onlyInitializing {}
+    // -------------------- Modifiers --------------------------------
 
     /**
      * @dev Throws if called by any account other than the pauser.
@@ -62,11 +39,48 @@ abstract contract PausableExtUpgradeable is OwnableUpgradeable, PausableUpgradea
         _;
     }
 
+    // -------------------- Functions --------------------------------
+
     /**
-     * @dev Returns the pauser address.
+     * @dev The internal initializer of the upgradable contract.
+     *
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable.
      */
-    function pauser() public view virtual returns (address) {
-        return _pauser;
+    function __PausableExt_init() internal onlyInitializing {
+        __Context_init_unchained();
+        __Ownable_init_unchained();
+        __Pausable_init_unchained();
+
+        __PausableExt_init_unchained();
+    }
+
+    /**
+     * @dev The unchained internal initializer of the upgradable contract.
+     *
+     * See {PausableExtUpgradeable-__PausableExt_init}.
+     */
+    function __PausableExt_init_unchained() internal onlyInitializing {}
+
+    /**
+     * @dev Triggers the paused state of the contract.
+     *
+     * Requirements:
+     *
+     * - Can only be called by the contract pauser.
+     */
+    function pause() external onlyPauser {
+        _pause();
+    }
+
+    /**
+     * @dev Triggers the unpaused state of the contract.
+     *
+     * Requirements:
+     *
+     * - Can only be called by the contract pauser.
+     */
+    function unpause() external onlyPauser {
+        _unpause();
     }
 
     /**
@@ -87,28 +101,13 @@ abstract contract PausableExtUpgradeable is OwnableUpgradeable, PausableUpgradea
 
         _pauser = newPauser;
 
-        emit PauserChanged(_pauser);
+        emit PauserChanged(newPauser);
     }
 
     /**
-     * @dev See {PausableUpgradeable-pause}.
-     *
-     * Requirements:
-     *
-     * - Can only be called by the contract pauser.
+     * @dev Returns the pauser address.
      */
-    function pause() external onlyPauser {
-        _pause();
-    }
-
-    /**
-     * @dev See {PausableUpgradeable-unpause}.
-     *
-     * Requirements:
-     *
-     * - Can only be called by the contract pauser.
-     */
-    function unpause() external onlyPauser {
-        _unpause();
+    function pauser() public view virtual returns (address) {
+        return _pauser;
     }
 }

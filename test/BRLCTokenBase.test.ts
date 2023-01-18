@@ -41,7 +41,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     brlcTokenFactory = await ethers.getContractFactory("BRLCTokenBaseMock");
   });
 
-  async function deployContractUnderTest(): Promise<{ brlcToken: Contract }> {
+  async function deployBrlcToken(): Promise<{ brlcToken: Contract }> {
     const brlcToken: Contract = await upgrades.deployProxy(brlcTokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
     await brlcToken.deployed();
     return { brlcToken };
@@ -49,7 +49,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
 
   describe("Initializers", async () => {
     it("The external initializer configures the contract as expected", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       expect(await brlcToken.owner()).to.equal(deployer.address);
       expect(await brlcToken.pauser()).to.equal(ethers.constants.AddressZero);
       expect(await brlcToken.rescuer()).to.equal(ethers.constants.AddressZero);
@@ -58,30 +58,30 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("The external initializer is reverted if it is called a second time", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
         brlcToken.initialize(TOKEN_NAME, TOKEN_SYMBOL)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("The internal initializer is reverted if it is called outside the init process", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
-        brlcToken.call_parent_init(TOKEN_NAME, TOKEN_SYMBOL)
+        brlcToken.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("The internal unchained initializer is reverted if it is called outside the init process", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await expect(
-        brlcToken.call_parent_init_unchained()
+        brlcToken.call_parent_initialize_unchained()
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
   describe("Function 'transfer()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.mint(user1.address, TOKEN_AMOUNT));
 
       await expect(
@@ -101,7 +101,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the contract is paused", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.setPauser(deployer.address));
       await proveTx(brlcToken.pause());
 
@@ -111,7 +111,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the caller is blacklisted", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.connect(user1).selfBlacklist());
 
       await expect(
@@ -120,7 +120,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the recipient is blacklisted", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.connect(user2).selfBlacklist());
 
       await expect(
@@ -131,7 +131,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
 
   describe("Function 'approve()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       const oldAllowance: BigNumber = await brlcToken.allowance(deployer.address, user1.address);
       const newExpectedAllowance: BigNumber = oldAllowance.add(BigNumber.from(TOKEN_ALLOWANCE));
 
@@ -146,7 +146,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the contract is paused", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.setPauser(deployer.address));
       await proveTx(brlcToken.pause());
 
@@ -156,7 +156,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the caller is blacklisted", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.selfBlacklist());
 
       await expect(
@@ -165,7 +165,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the spender is blacklisted", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.connect(user1).selfBlacklist());
 
       await expect(
@@ -176,7 +176,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
 
   describe("Function 'transferFrom()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.approve(user1.address, TOKEN_AMOUNT));
       await proveTx(brlcToken.mint(deployer.address, TOKEN_AMOUNT));
 
@@ -197,7 +197,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the contract is paused", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.setPauser(deployer.address));
       await proveTx(brlcToken.pause());
 
@@ -207,7 +207,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the sender is blacklisted", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.selfBlacklist());
 
       await expect(
@@ -216,7 +216,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the recipient is blacklisted", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.connect(user2).selfBlacklist());
 
       await expect(
@@ -230,7 +230,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     const allowanceAddedValue: number = 456;
 
     it("Executes as expected and emits the correct event", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.approve(user1.address, initialAllowance));
       const oldAllowance: BigNumber = await brlcToken.allowance(deployer.address, user1.address);
       const newExpectedAllowance: BigNumber = oldAllowance.add(BigNumber.from(allowanceAddedValue));
@@ -251,7 +251,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the contract is paused", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.setPauser(deployer.address));
       await proveTx(brlcToken.pause());
 
@@ -261,7 +261,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the caller is blacklisted", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.selfBlacklist());
 
       await expect(
@@ -270,7 +270,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the spender is blacklisted", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.connect(user1).selfBlacklist());
 
       await expect(
@@ -284,7 +284,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     const allowanceSubtractedValue: number = 123;
 
     it("Executes as expected and emits the correct event", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.approve(user1.address, initialAllowance));
       const oldAllowance: BigNumber = await brlcToken.allowance(deployer.address, user1.address);
       const newExpectedAllowance: BigNumber = oldAllowance.sub(BigNumber.from(allowanceSubtractedValue));
@@ -305,7 +305,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the contract is paused", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.setPauser(deployer.address));
       await proveTx(brlcToken.pause());
 
@@ -315,7 +315,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the caller is blacklisted", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.selfBlacklist());
 
       await expect(
@@ -324,7 +324,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the spender is blacklisted", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.connect(user1).selfBlacklist());
 
       await expect(
@@ -335,7 +335,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
 
   describe("Function '_beforeTokenTransfer()'", async () => {
     it("Executes as expected if the contract is not paused", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
 
       await expect(
         brlcToken.testBeforeTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT)
@@ -343,7 +343,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
     });
 
     it("Is reverted if the contract is paused", async () => {
-      const { brlcToken } = await setUpFixture(deployContractUnderTest);
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
       await proveTx(brlcToken.setPauser(deployer.address));
       await proveTx(brlcToken.pause());
 

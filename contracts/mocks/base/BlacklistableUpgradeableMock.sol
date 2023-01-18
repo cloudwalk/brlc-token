@@ -14,27 +14,27 @@ contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
     event TestNotBlacklistedModifierSucceeded();
 
     /**
-     * @dev The initializer of the upgradable contract.
+     * @dev The initialize function of the upgradable contract.
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable.
      */
     function initialize() public initializer {
         __Blacklistable_init();
     }
 
     /**
-     * @dev Needed to check that the internal initializer of the ancestor contract
+     * @dev Needed to check that the initialize function of the ancestor contract
      * has the 'onlyInitializing' modifier.
      */
-    function call_parent_init() public {
+    function call_parent_initialize() public {
         __Blacklistable_init();
     }
 
     /**
-     * @dev Needed to check that the internal unchained initializer of the ancestor contract
+     * @dev Needed to check that the unchained initialize function of the ancestor contract
      * has the 'onlyInitializing' modifier.
      */
-    function call_parent_init_unchained() public {
+    function call_parent_initialize_unchained() public {
         __Blacklistable_init_unchained();
     }
 

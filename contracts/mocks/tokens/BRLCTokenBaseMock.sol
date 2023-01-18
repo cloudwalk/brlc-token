@@ -14,9 +14,9 @@ contract BRLCTokenBaseMock is BRLCTokenBase {
     event TestBeforeTokenTransferSucceeded();
 
     /**
-     * @dev The initializer of the upgradable contract.
+     * @dev The initialize function of the upgradable contract.
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable.
      *
      * @param name_ The name of the token.
      * @param symbol_ The symbol of the token.
@@ -26,21 +26,21 @@ contract BRLCTokenBaseMock is BRLCTokenBase {
     }
 
     /**
-     * @dev Needed to check that the internal initializer of the ancestor contract
+     * @dev Needed to check that the initialize function of the ancestor contract
      * has the 'onlyInitializing' modifier.
      *
      * @param name_ The name of the token.
      * @param symbol_ The symbol of the token.
      */
-    function call_parent_init(string memory name_, string memory symbol_) public {
+    function call_parent_initialize(string memory name_, string memory symbol_) public {
         __BRLCTokenBase_init(name_, symbol_);
     }
 
     /**
-     * @dev Needed to check that the internal unchained initializer of the ancestor contract
+     * @dev Needed to check that the unchained initialize function of the ancestor contract
      * has the 'onlyInitializing' modifier.
      */
-    function call_parent_init_unchained() public {
+    function call_parent_initialize_unchained() public {
         __BRLCTokenBase_init_unchained();
     }
 
