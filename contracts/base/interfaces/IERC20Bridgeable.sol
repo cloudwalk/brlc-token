@@ -4,6 +4,7 @@ pragma solidity 0.8.16;
 
 /**
  * @title IERC20Bridgeable interface
+ * @author CloudWalk Inc.
  * @dev The interface of a token that supports the bridge operations.
  */
 interface IERC20Bridgeable {

@@ -10,6 +10,7 @@ import { BlacklistableUpgradeable } from "./base/BlacklistableUpgradeable.sol";
 
 /**
  * @title BRLCTokenBase contract
+ * @author CloudWalk Inc.
  * @dev This contract is base implementation of the BRLC token with inherited Rescuable,
  * Pausable, and Blacklistable functionality.
  */
@@ -20,6 +21,14 @@ abstract contract BRLCTokenBase is
     BlacklistableUpgradeable,
     ERC20Upgradeable
 {
+    /**
+     * @dev The internal initializer of the upgradable contract.
+     *
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     *
+     * @param name_ The name of the token.
+     * @param symbol_ The symbol of the token.
+     */
     function __BRLCTokenBase_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
@@ -31,6 +40,11 @@ abstract contract BRLCTokenBase is
         __BRLCTokenBase_init_unchained();
     }
 
+    /**
+     * @dev The internal unchained initializer of the upgradable contract.
+     *
+     * See {BRLCTokenBase-__BRLCTokenBase_init}.
+     */
     function __BRLCTokenBase_init_unchained() internal onlyInitializing {}
 
     /**

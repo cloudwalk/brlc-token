@@ -7,6 +7,7 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/securit
 
 /**
  * @title PausableExtUpgradeable base contract
+ * @author CloudWalk Inc.
  * @dev Extends the {PausableUpgradeable} contract by adding the `pauser` role.
  *
  * This contract is used through inheritance. It introduces the `pauser` role that is allowed
@@ -31,6 +32,11 @@ abstract contract PausableExtUpgradeable is OwnableUpgradeable, PausableUpgradea
 
     // -------------------- Functions --------------------------------
 
+    /**
+     * @dev The internal initializer of the upgradable contract.
+     *
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     */
     function __PausableExt_init() internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
@@ -39,6 +45,11 @@ abstract contract PausableExtUpgradeable is OwnableUpgradeable, PausableUpgradea
         __PausableExt_init_unchained();
     }
 
+    /**
+     * @dev The internal unchained initializer of the upgradable contract.
+     *
+     * See {PausableExtUpgradeable-__PausableExt_init}.
+     */
     function __PausableExt_init_unchained() internal onlyInitializing {}
 
     /**

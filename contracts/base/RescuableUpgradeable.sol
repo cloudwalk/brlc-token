@@ -8,6 +8,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 
 /**
  * @title RescuableUpgradeable base contract
+ * @author CloudWalk Inc.
  * @dev Allows to rescue ERC20 tokens locked up in the contract using the `rescuer` role.
  *
  * This contract is used through inheritance. It introduces the `rescuer` role that is allowed to
@@ -34,6 +35,11 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
 
     // -------------------- Functions --------------------------------
 
+    /**
+     * @dev The internal initializer of the upgradable contract.
+     *
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     */
     function __Rescuable_init() internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
@@ -41,6 +47,11 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
         __Rescuable_init_unchained();
     }
 
+    /**
+     * @dev The internal unchained initializer of the upgradable contract.
+     *
+     * See {RescuableUpgradeable-__Rescuable_init}.
+     */
     function __Rescuable_init_unchained() internal onlyInitializing {}
 
     /**

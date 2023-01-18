@@ -6,6 +6,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 
 /**
  * @title BlacklistableUpgradeable base contract
+ * @author CloudWalk Inc.
  * @dev Allows to blacklist/unblacklist accounts using the `blacklister` role.
  *
  * This contract is used through inheritance. It makes available the modifier `notBlacklisted`,
@@ -47,6 +48,11 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
 
     // -------------------- Functions --------------------------------
 
+    /**
+     * @dev The internal initializer of the upgradable contract.
+     *
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     */
     function __Blacklistable_init() internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
@@ -54,6 +60,11 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
         __Blacklistable_init_unchained();
     }
 
+    /**
+     * @dev The internal unchained initializer of the upgradable contract.
+     *
+     * See {BlacklistableUpgradeable-__Blacklistable_init}.
+     */
     function __Blacklistable_init_unchained() internal onlyInitializing {}
 
     /**
