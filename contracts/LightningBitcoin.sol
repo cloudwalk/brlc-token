@@ -7,6 +7,7 @@ import { BRLCTokenBase } from "./BRLCTokenBase.sol";
 
 /**
  * @title LightningBitcoin contract
+ * @author CloudWalk Inc.
  * @dev The Lightning Bitcoin token implementation.
  */
 contract LightningBitcoin is BRLCTokenBase, IERC20Mintable {
@@ -36,7 +37,7 @@ contract LightningBitcoin is BRLCTokenBase, IERC20Mintable {
     /// @dev The zero amount of tokens is passed during the burn operation.
     error ZeroBurnAmount();
 
-     // -------------------- Modifiers -----------------------------------
+    // -------------------- Modifiers --------------------------------
 
     /**
      * @dev Throws if called by any account other than the master minter.
@@ -58,12 +59,37 @@ contract LightningBitcoin is BRLCTokenBase, IERC20Mintable {
         _;
     }
 
-    // -------------------- Functions -----------------------------------
+    // -------------------- Functions --------------------------------
 
+    /**
+     * @dev Constructor that prohibits the initialization of the implementation of the upgradable contract.
+     *
+     * See details
+     * https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializing_the_implementation_contract
+     *
+     * @custom:oz-upgrades-unsafe-allow constructor
+     */
+    constructor() {
+        _disableInitializers();
+    }
+
+    /**
+     * @dev The initializer of the upgradable contract.
+     *
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     *
+     * @param name_ The name of the token.
+     * @param symbol_ The symbol of the token.
+     */
     function initialize(string memory name_, string memory symbol_) external virtual initializer {
         __LightningBitcoin_init(name_, symbol_);
     }
 
+    /**
+     * @dev The internal initializer of the upgradable contract.
+     *
+     * See {LightningBitcoin-initialize}.
+     */
     function __LightningBitcoin_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
@@ -75,6 +101,11 @@ contract LightningBitcoin is BRLCTokenBase, IERC20Mintable {
         __LightningBitcoin_init_unchained();
     }
 
+    /**
+     * @dev The internal unchained initializer of the upgradable contract.
+     *
+     * See {LightningBitcoin-initialize}.
+     */
     function __LightningBitcoin_init_unchained() internal onlyInitializing {}
 
     /**

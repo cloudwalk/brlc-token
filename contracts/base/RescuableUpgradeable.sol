@@ -8,18 +8,16 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 
 /**
  * @title RescuableUpgradeable base contract
- * @dev Allows to rescue ERC20 tokens locked up in the contract using the `rescuer` role.
+ * @author CloudWalk Inc.
+ * @dev Allows to rescue ERC20 tokens locked up in the contract using the `rescuer` account.
  *
  * This contract is used through inheritance. It introduces the `rescuer` role that is allowed to
  * rescue tokens locked up in the contract that is inherited from this one.
- *
- * By default, the rescuer is to the zero address. This can later be changed
- * by the contract owner with the {setRescuer} function.
  */
 abstract contract RescuableUpgradeable is OwnableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    /// @dev The address of the rescuer.
+    /// @dev The address of the rescuer that is allowed to rescue tokens locked up in the contract.
     address private _rescuer;
 
     // -------------------- Events -----------------------------------
@@ -29,22 +27,13 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
 
     // -------------------- Errors -----------------------------------
 
-    /// @dev The transaction sender is not a rescuer.
+    /// @dev The message sender is not a rescuer.
     error UnauthorizedRescuer(address account);
 
-    // -------------------- Functions --------------------------------
-
-    function __Rescuable_init() internal onlyInitializing {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
-
-        __Rescuable_init_unchained();
-    }
-
-    function __Rescuable_init_unchained() internal onlyInitializing {}
+    // -------------------- Modifiers --------------------------------
 
     /**
-     * @dev Reverts if called by any account other than the rescuer.
+     * @dev Throws if called by any account other than the rescuer.
      */
     modifier onlyRescuer() {
         if (_msgSender() != _rescuer) {
@@ -53,11 +42,44 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
         _;
     }
 
+    // -------------------- Functions --------------------------------
+
     /**
-     * @dev Returns the rescuer address.
+     * @dev The internal initializer of the upgradable contract.
+     *
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable.
      */
-    function rescuer() public view virtual returns (address) {
-        return _rescuer;
+    function __Rescuable_init() internal onlyInitializing {
+        __Context_init_unchained();
+        __Ownable_init_unchained();
+
+        __Rescuable_init_unchained();
+    }
+
+    /**
+     * @dev The unchained internal initializer of the upgradable contract.
+     *
+     * See {RescuableUpgradeable-__Rescuable_init}.
+     */
+    function __Rescuable_init_unchained() internal onlyInitializing {}
+
+    /**
+     * @dev Withdraws ERC20 tokens locked up in the contract.
+     *
+     * Requirements:
+     *
+     * - Can only be called by the rescuer account.
+     *
+     * @param token The address of the ERC20 token contract.
+     * @param to The address of the recipient of tokens.
+     * @param amount The amount of tokens to withdraw.
+     */
+    function rescueERC20(
+        address token,
+        address to,
+        uint256 amount
+    ) external onlyRescuer {
+        IERC20Upgradeable(token).safeTransfer(to, amount);
     }
 
     /**
@@ -82,21 +104,9 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Rescues ERC20 tokens locked up in this contract.
-     *
-     * Requirements:
-     *
-     * - Can only be called by the rescuer.
-     *
-     * @param token The address of the ERC20 token.
-     * @param to The address of the tokens recipient.
-     * @param amount The amount of tokens to transfer.
+     * @dev Returns the rescuer address.
      */
-    function rescueERC20(
-        address token,
-        address to,
-        uint256 amount
-    ) external onlyRescuer {
-        IERC20Upgradeable(token).safeTransfer(to, amount);
+    function rescuer() public view virtual returns (address) {
+        return _rescuer;
     }
 }

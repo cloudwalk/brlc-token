@@ -6,6 +6,7 @@ import { BRLCTokenBase } from "../../BRLCTokenBase.sol";
 
 /**
  * @title BRLCTokenBaseMock contract
+ * @author CloudWalk Inc.
  * @dev An implementation of the {BRLCTokenBase} contract for test purposes.
  */
 contract BRLCTokenBaseMock is BRLCTokenBase {
@@ -15,7 +16,7 @@ contract BRLCTokenBaseMock is BRLCTokenBase {
     /**
      * @dev The initialize function of the upgradable contract.
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable.
      *
      * @param name_ The name of the token.
      * @param symbol_ The symbol of the token.

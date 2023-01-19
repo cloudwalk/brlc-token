@@ -7,6 +7,7 @@ import { BRLCTokenBase } from "./BRLCTokenBase.sol";
 
 /**
  * @title BRLCTokenBridgeable contract
+ * @author CloudWalk Inc.
  * @dev The BRLC token implementation that supports the bridge operations.
  */
 contract BRLCTokenBridgeable is BRLCTokenBase, IERC20Bridgeable {
@@ -24,7 +25,7 @@ contract BRLCTokenBridgeable is BRLCTokenBase, IERC20Bridgeable {
     /// @dev The zero amount of tokens is passed during the burn operation.
     error ZeroBurnForBridgingAmount();
 
-    // -------------------- Modifiers -----------------------------------
+    // -------------------- Modifiers --------------------------------
 
     /// @dev Throws if called by any account other than the bridge.
     modifier onlyBridge() {
@@ -34,10 +35,22 @@ contract BRLCTokenBridgeable is BRLCTokenBase, IERC20Bridgeable {
         _;
     }
 
-    // -------------------- Functions -----------------------------------
+    // -------------------- Functions --------------------------------
 
     /**
-     * @dev The initialize function of the upgradable contract.
+     * @dev Constructor that prohibits the initialization of the implementation of the upgradable contract.
+     *
+     * See details
+     * https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializing_the_implementation_contract
+     *
+     * @custom:oz-upgrades-unsafe-allow constructor
+     */
+    constructor() {
+        _disableInitializers();
+    }
+
+    /**
+     * @dev The initializer of the upgradable contract.
      *
      * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
      *
@@ -57,6 +70,11 @@ contract BRLCTokenBridgeable is BRLCTokenBase, IERC20Bridgeable {
         __BRLCTokenBridgeable_init(name_, symbol_, bridge_);
     }
 
+    /**
+     * @dev The internal initializer of the upgradable contract.
+     *
+     * See {BRLCTokenBridgeable-initialize}.
+     */
     function __BRLCTokenBridgeable_init(
         string memory name_,
         string memory symbol_,
@@ -72,6 +90,11 @@ contract BRLCTokenBridgeable is BRLCTokenBase, IERC20Bridgeable {
         __BRLCTokenBridgeable_init_unchained(bridge_);
     }
 
+    /**
+     * @dev The internal unchained initializer of the upgradable contract.
+     *
+     * See {BRLCTokenBridgeable-initialize}.
+     */
     function __BRLCTokenBridgeable_init_unchained(address bridge_) internal onlyInitializing {
         require(bridge_ != address(0));
         _bridge = bridge_;

@@ -6,18 +6,14 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 
 /**
  * @title BlacklistableUpgradeable base contract
- * @dev Allows to blacklist/unblacklist accounts using the `blacklister` role.
+ * @author CloudWalk Inc.
+ * @dev Allows to blacklist and unblacklist accounts using the `blacklister` account.
  *
  * This contract is used through inheritance. It makes available the modifier `notBlacklisted`,
  * which can be applied to functions to restrict their usage to not blacklisted accounts only.
- *
- * By default, the blacklister is set to the zero address. This can later be changed
- * by the contract owner with the {setBlacklister} function.
- *
- * There is also a possibility to any account to blacklist itself.
  */
 abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
-    /// @dev The address of the blacklister.
+    /// @dev The address of the blacklister that is allowed to blacklist and unblacklist accounts.
     address private _blacklister;
 
     /// @dev Mapping of presence in the blacklist for a given address.
@@ -39,22 +35,13 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
 
     // -------------------- Errors -----------------------------------
 
-    /// @dev The transaction sender is not a blacklister.
+    /// @dev The message sender is not a blacklister.
     error UnauthorizedBlacklister(address account);
 
-    /// @dev The transaction sender is blacklisted.
+    /// @dev The account is blacklisted.
     error BlacklistedAccount(address account);
 
-    // -------------------- Functions --------------------------------
-
-    function __Blacklistable_init() internal onlyInitializing {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
-
-        __Blacklistable_init_unchained();
-    }
-
-    function __Blacklistable_init_unchained() internal onlyInitializing {}
+    // -------------------- Modifiers --------------------------------
 
     /**
      * @dev Throws if called by any account other than the blacklister.
@@ -77,28 +64,33 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
         _;
     }
 
+    // -------------------- Functions --------------------------------
+
     /**
-     * @dev Returns the blacklister address.
+     * @dev The internal initializer of the upgradable contract.
+     *
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable.
      */
-    function blacklister() public view virtual returns (address) {
-        return _blacklister;
+    function __Blacklistable_init() internal onlyInitializing {
+        __Context_init_unchained();
+        __Ownable_init_unchained();
+
+        __Blacklistable_init_unchained();
     }
 
     /**
-     * @dev Checks if the account is blacklisted.
-     * @param account The address to check for presence in the blacklist.
-     * @return True if the account is present in the blacklist.
+     * @dev The unchained internal initializer of the upgradable contract.
+     *
+     * See {BlacklistableUpgradeable-__Blacklistable_init}.
      */
-    function isBlacklisted(address account) public view returns (bool) {
-        return _blacklisted[account];
-    }
+    function __Blacklistable_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev Adds an account to the blacklist.
      *
      * Requirements:
      *
-     * - Can only be called by the blacklister.
+     * - Can only be called by the blacklister account.
      *
      * Emits a {Blacklisted} event.
      *
@@ -119,9 +111,9 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      *
      * Requirements:
      *
-     * - Can only be called by the blacklister.
+     * - Can only be called by the blacklister account.
      *
-     * Emits a {UnBlacklisted} event.
+     * Emits an {UnBlacklisted} event.
      *
      * @param account The address to remove from the blacklist.
      */
@@ -136,20 +128,22 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Adds the transaction sender to the blacklist.
+     * @dev Adds the message sender to the blacklist.
      *
      * Emits a {SelfBlacklisted} event.
      * Emits a {Blacklisted} event.
      */
     function selfBlacklist() external {
-        if (_blacklisted[_msgSender()]) {
+        address sender = _msgSender();
+
+        if (_blacklisted[sender]) {
             return;
         }
 
-        _blacklisted[_msgSender()] = true;
+        _blacklisted[sender] = true;
 
-        emit SelfBlacklisted(_msgSender());
-        emit Blacklisted(_msgSender());
+        emit SelfBlacklisted(sender);
+        emit Blacklisted(sender);
     }
 
     /**
@@ -171,5 +165,21 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
         _blacklister = newBlacklister;
 
         emit BlacklisterChanged(_blacklister);
+    }
+
+    /**
+     * @dev Returns the blacklister address.
+     */
+    function blacklister() public view virtual returns (address) {
+        return _blacklister;
+    }
+
+    /**
+     * @dev Checks if an account is blacklisted.
+     * @param account The address to check for presence in the blacklist.
+     * @return True if the account is present in the blacklist.
+     */
+    function isBlacklisted(address account) public view returns (bool) {
+        return _blacklisted[account];
     }
 }

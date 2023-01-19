@@ -6,13 +6,14 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 
 /**
  * @title ERC20UpgradeableMock contract
+ * @author CloudWalk Inc.
  * @dev An implementation of the {ERC20Upgradeable} contract for test purposes.
  */
 contract ERC20UpgradeableMock is ERC20Upgradeable {
     /**
      * @dev The initialize function of the upgradable contract.
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable.
      *
      * @param name_ The name of the token to set for this ERC20-comparable contract.
      * @param symbol_ The symbol of the token to set for this ERC20-comparable contract.

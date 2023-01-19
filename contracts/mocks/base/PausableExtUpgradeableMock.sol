@@ -6,13 +6,14 @@ import { PausableExtUpgradeable } from "../../base/PausableExtUpgradeable.sol";
 
 /**
  * @title PausableExtUpgradeableMock contract
+ * @author CloudWalk Inc.
  * @dev An implementation of the {PausableExtUpgradeable} contract for test purposes.
  */
 contract PausableExtUpgradeableMock is PausableExtUpgradeable {
     /**
      * @dev The initialize function of the upgradable contract.
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable.
      */
     function initialize() public initializer {
         __PausableExt_init();

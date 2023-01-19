@@ -6,6 +6,7 @@ import { BlacklistableUpgradeable } from "../../base/BlacklistableUpgradeable.so
 
 /**
  * @title BlacklistableUpgradeableMock contract
+ * @author CloudWalk Inc.
  * @dev An implementation of the {BlacklistableUpgradeable} contract for test purposes.
  */
 contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
@@ -15,7 +16,7 @@ contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
     /**
      * @dev The initialize function of the upgradable contract.
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable.
      */
     function initialize() public initializer {
         __Blacklistable_init();

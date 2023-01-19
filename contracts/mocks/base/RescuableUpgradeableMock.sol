@@ -6,13 +6,14 @@ import { RescuableUpgradeable } from "../../base/RescuableUpgradeable.sol";
 
 /**
  * @title RescuableUpgradeableMock contract
+ * @author CloudWalk Inc.
  * @dev An implementation of the {RescuableUpgradeable} contract for test purposes.
  */
 contract RescuableUpgradeableMock is RescuableUpgradeable {
     /**
      * @dev The initialize function of the upgradable contract.
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable.
      */
     function initialize() public initializer {
         __Rescuable_init();
