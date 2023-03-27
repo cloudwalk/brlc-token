@@ -96,8 +96,15 @@ contract BRLCTokenBridgeable is BRLCTokenBase, IERC20Bridgeable {
      * See {BRLCTokenBridgeable-initialize}.
      */
     function __BRLCTokenBridgeable_init_unchained(address bridge_) internal onlyInitializing {
-        require(bridge_ != address(0));
         _bridge = bridge_;
+    }
+
+    /**
+     * @dev See {IERC20Bridgeable-setBridge}.
+     */
+    function setBridge(address newBridge) external onlyOwner {
+        _bridge = newBridge;
+        emit SetBridge(newBridge);
     }
 
     /**
