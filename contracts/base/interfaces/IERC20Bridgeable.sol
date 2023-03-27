@@ -15,7 +15,7 @@ interface IERC20Bridgeable {
     event BurnForBridging(address indexed account, uint256 amount);
 
     /// @dev Emitted when a bridge contract is configured.
-    event SetBridge(address newBridge);
+    event SetBridge(address newBridge, address oldBridge);
 
     /**
      * @dev Sets the address of the new bridge contract.

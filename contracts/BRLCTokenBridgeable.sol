@@ -96,15 +96,14 @@ contract BRLCTokenBridgeable is BRLCTokenBase, IERC20Bridgeable {
      * See {BRLCTokenBridgeable-initialize}.
      */
     function __BRLCTokenBridgeable_init_unchained(address bridge_) internal onlyInitializing {
-        _bridge = bridge_;
+        _setBridge(bridge_);
     }
 
     /**
      * @dev See {IERC20Bridgeable-setBridge}.
      */
     function setBridge(address newBridge) external onlyOwner {
-        _bridge = newBridge;
-        emit SetBridge(newBridge);
+        _setBridge(newBridge);
     }
 
     /**
@@ -162,5 +161,10 @@ contract BRLCTokenBridgeable is BRLCTokenBase, IERC20Bridgeable {
      */
     function isIERC20Bridgeable() external pure returns (bool) {
         return true;
+    }
+
+    function _setBridge(address newBridge) private {
+        emit SetBridge(newBridge, _bridge);
+        _bridge = newBridge;
     }
 }
