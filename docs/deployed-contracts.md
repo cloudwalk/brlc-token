@@ -27,7 +27,8 @@
 | --- | --- | --- | --- |
 | 1 | ProxyAdmin | Proxy admin | [0xcc8Fa3F500f79597E0a44f1AE98537ba20064aeA](https://etherscan.io/address/0xcc8Fa3F500f79597E0a44f1AE98537ba20064aeA) |
 | 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0xAC176d9e75384F7d71275bb9D5265281CC0Dd284](https://etherscan.io/address/0xAC176d9e75384F7d71275bb9D5265281CC0Dd284) |
-| 3 | BRLCTokenMintable | Proxy implementation | [0x493a1D529b7EE59A395B3c8d1CC8b667ea5Db185](https://etherscan.io/address/0x493a1D529b7EE59A395B3c8d1CC8b667ea5Db185) |
+| 3 | BRLCTokenBridgeable | Proxy implementation | [0x366ab0376ff3712bF00bd4c2EFf8097738CcA82e](https://etherscan.io/address/0x366ab0376ff3712bF00bd4c2EFf8097738CcA82e) |
+|||| <strike>[0x493a1D529b7EE59A395B3c8d1CC8b667ea5Db185](https://etherscan.io/address/0x493a1D529b7EE59A395B3c8d1CC8b667ea5Db185)</strike> |
 |||| <strike>[0x37f2713fEBDED40741F689C22EB021961971283d](https://etherscan.io/address/0x37f2713fEBDED40741F689C22EB021961971283d)</strike> |
 
 ### Görli (Testnet)
@@ -35,7 +36,8 @@
 | --- | --- | --- | --- |
 | 1 | ProxyAdmin | Proxy admin | [0x466E08730141AA96d089ACF04a4f87f8E40FEddC](https://goerli.etherscan.io/address/0x466E08730141AA96d089ACF04a4f87f8E40FEddC) |
 | 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0x764161d20B701dd9176f77053fA764838C4229c8](https://goerli.etherscan.io/address/0x764161d20B701dd9176f77053fA764838C4229c8) |
-| 3 | BRLCTokenMintable | Proxy implementation | [0xc6039D462F0d4649597E1201C8409fa2c5970f52](https://goerli.etherscan.io/address/0xc6039D462F0d4649597E1201C8409fa2c5970f52) |
+| 3 | BRLCTokenBridgeable | Proxy implementation | [0xe78A790855cAE99736B9735CC81Da4D98e79812C](https://goerli.etherscan.io/address/0xe78A790855cAE99736B9735CC81Da4D98e79812C) |
+|||| <strike>[0xc6039D462F0d4649597E1201C8409fa2c5970f52](https://goerli.etherscan.io/address/0xc6039D462F0d4649597E1201C8409fa2c5970f52)</strike> |
 |||| <strike>[0xfe6Ce8d2b2b4e6C0EC7464bCc54C6cb4fB146e23](https://goerli.etherscan.io/address/0xfe6Ce8d2b2b4e6C0EC7464bCc54C6cb4fB146e23)</strike> |
 
 # InfinitePoints Token
