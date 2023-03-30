@@ -21,6 +21,7 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
 
   const EVENT_NAME_BURN_FOR_BRIDGING = "BurnForBridging";
   const EVENT_NAME_MINT_FOR_BRIDGING = "MintForBridging";
+  const EVENT_NAME_SET_BRIDGE = "SetBridge";
 
   const REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
   const REVERT_MESSAGE_IF_BURNING_AMOUNT_EXCEEDS_THE_BRIDGE_BALANCE = "ERC20: burn amount exceeds balance";
@@ -31,13 +32,16 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
   const REVERT_ERROR_IF_CALLER_IS_NOT_BRIDGE = "UnauthorizedBridge";
   const REVERT_ERROR_IF_MINT_FOR_BRIDGING_AMOUNT_IS_ZERO = "ZeroMintForBridgingAmount";
 
+  const REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER = "Ownable: caller is not the owner";
+
   let brlcTokenFactory: ContractFactory;
   let deployer: SignerWithAddress;
-  let bridge: SignerWithAddress;
   let user: SignerWithAddress;
+  let bridge: SignerWithAddress;
+  let newBridge: SignerWithAddress;
 
   before(async () => {
-    [deployer, bridge, user] = await ethers.getSigners();
+    [deployer, user, bridge, newBridge] = await ethers.getSigners();
     brlcTokenFactory = await ethers.getContractFactory("BRLCTokenBridgeable");
   });
 
@@ -68,12 +72,6 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
       await expect(
         brlcToken.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge.address)
       ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
-    });
-
-    it("Is reverted if it is called with the zero bridge address", async () => {
-      await expect(
-        upgrades.deployProxy(brlcTokenFactory, [TOKEN_NAME, TOKEN_SYMBOL, ethers.constants.AddressZero])
-      ).to.be.reverted;
     });
 
     it("Is reverted for the contract implementation if it is called even for the first time", async () => {
@@ -174,4 +172,25 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
       ).to.be.revertedWithCustomError(brlcToken, REVERT_ERROR_IF_BURN_FOR_BRIDGING_AMOUNT_IS_ZERO);
     });
   });
+
+  describe("Function 'setBridge()'", async () => {
+    it("Executes as expected and emits the correct event", async () => {
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
+      expect(await brlcToken.bridge()).to.eq(bridge.address);
+
+      await expect(brlcToken.setBridge(newBridge.address))
+        .to.emit(brlcToken, EVENT_NAME_SET_BRIDGE)
+        .withArgs(newBridge.address, bridge.address);
+
+      expect(await brlcToken.bridge()).to.eq(newBridge.address);
+    });
+
+    it("Is reverted if it is called not by the owner", async () => {
+      const { brlcToken } = await setUpFixture(deployBrlcToken);
+      expect(await brlcToken.bridge()).to.eq(bridge.address);
+
+      await expect(brlcToken.connect(user).setBridge(newBridge.address))
+        .to.be.revertedWith(REVERT_MESSAGE_IF_CALLER_IS_NOT_OWNER);
+    });
+  })
 });
