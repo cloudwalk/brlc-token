@@ -14,6 +14,19 @@ interface IERC20Bridgeable {
     /// @dev Emitted when a burning is performed as part of a bridge operation.
     event BurnForBridging(address indexed account, uint256 amount);
 
+    /// @dev Emitted when a bridge contract is configured.
+    event SetBridge(address newBridge, address oldBridge);
+
+    /**
+     * @dev Sets the address of the new bridge contract.
+     * @param newBridge Address of the new bridge contract.
+     *
+     * It is expected that this function can be called only by a contract owner.
+     *
+     * Emits a {SetBridge} event.
+     */
+    function setBridge(address newBridge) external;
+
     /**
      * @dev Mints tokens as part of a bridge operation.
      *
