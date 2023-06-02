@@ -3,6 +3,7 @@
 pragma solidity 0.8.16;
 
 import { IERC20Mintable } from "./base/interfaces/IERC20Mintable.sol";
+import { IERC20Freezable } from "./base/interfaces/IERC20Freezable.sol";
 import { BRLCTokenBase } from "./BRLCTokenBase.sol";
 
 /**
@@ -10,7 +11,7 @@ import { BRLCTokenBase } from "./BRLCTokenBase.sol";
  * @author CloudWalk Inc.
  * @dev The BRLC token implementation that supports mint and burn operations.
  */
-contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable {
+contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable, IERC20Freezable {
     /// @dev The address of the master minter.
     address private _masterMinter;
 
@@ -19,6 +20,12 @@ contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable {
 
     /// @dev The mapping of the configured mint allowances.
     mapping(address => uint256) private _mintersAllowance;
+
+    /// @dev The mapping of the freeze approvals.
+    mapping(address => bool) private _freezeApprovals;
+
+    /// @dev The mapping of the frozen balances.
+    mapping(address => uint256) private _frozenBalances;
 
     // -------------------- Errors -----------------------------------
 
@@ -36,6 +43,18 @@ contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable {
 
     /// @dev The zero amount of tokens is passed during the burn operation.
     error ZeroBurnAmount();
+
+    /// @dev The token freezing operation is not approved by the account.
+    error FreezingNotApproved();
+
+    /// @dev The token freezing is already approved by the account.
+    error FreezingAlreadyApproved();
+
+    /// @dev The frozen balance is exceeded during the operation.
+    error LackOfFrozenBalance();
+
+    /// @dev The transfer amount exceeded the frozen amount.
+    error TransferExceededFrozenAmount();
 
     // -------------------- Modifiers --------------------------------
 
@@ -226,6 +245,68 @@ contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable {
     }
 
     /**
+     * @dev See {IERC20Freezable-approveFreezing}.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     */
+    function approveFreezing() whenNotPaused external {
+        if (_freezeApprovals[_msgSender()]) {
+            revert FreezingAlreadyApproved();
+        }
+
+        _freezeApprovals[_msgSender()] = true;
+
+        emit FreezeApproval(_msgSender());
+    }
+
+    /**
+     * @dev See {IERC20Freezable-freeze}.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     * - Can only be called by the blacklister account.
+     * - The token freezing must be approved by the `account`.
+     */
+    function freeze(address account, uint256 amount) external whenNotPaused onlyBlacklister {
+        if(!_freezeApprovals[account]) {
+            revert FreezingNotApproved();
+        }
+
+        emit Freeze(account, amount, _frozenBalances[account]);
+
+        _frozenBalances[account] = amount;
+    }
+
+    /**
+     * @dev See {IERC20Freezable-transferFrozen}.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     * - Can only be called by the blacklister account.
+     * - The frozen balance must be greater than the `amount`.
+     */
+    function transferFrozen(address from, address to, uint256 amount) public virtual whenNotPaused onlyBlacklister {
+        uint256 balance = _frozenBalances[from];
+
+        if(amount > balance) {
+            revert LackOfFrozenBalance();
+        }
+
+        unchecked {
+            _frozenBalances[from] -= amount;
+        }
+
+        emit FreezeTransfer(from, amount);
+        emit Freeze(from, _frozenBalances[from], balance);
+
+        _transfer(from, to, amount);
+    }
+
+    /**
      * @dev See {IERC20Mintable-masterMinter}.
      */
     function masterMinter() external view returns (address) {
@@ -244,5 +325,29 @@ contract BRLCTokenMintable is BRLCTokenBase, IERC20Mintable {
      */
     function minterAllowance(address minter) external view returns (uint256) {
         return _mintersAllowance[minter];
+    }
+
+    /**
+     * @dev See {IERC20Freezable-freezeApproval}.
+     */
+    function freezeApproval(address account) external view returns (bool) {
+        return _freezeApprovals[account];
+    }
+
+    /**
+     * @dev See {IERC20Freezable-frozenBalance}.
+     */
+    function frozenBalance(address account) external view returns (uint256) {
+        return _frozenBalances[account];
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
+        super._beforeTokenTransfer(from, to, amount);
+        uint256 frozen = _frozenBalances[from];
+        if (frozen != 0) {
+            if(balanceOf(from) < frozen + amount) {
+                revert TransferExceededFrozenAmount();
+            }
+        }
     }
 }
