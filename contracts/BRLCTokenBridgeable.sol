@@ -165,6 +165,10 @@ contract BRLCTokenBridgeable is BRLCTokenBase, IERC20Bridgeable, IERC20Freezable
 
     /**
      * @dev See {IERC20Freezable-approveFreezing}.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
      */
     function approveFreezing() whenNotPaused external {
         if (_freezeApprovals[_msgSender()]) {
@@ -178,6 +182,12 @@ contract BRLCTokenBridgeable is BRLCTokenBase, IERC20Bridgeable, IERC20Freezable
 
     /**
      * @dev See {IERC20Freezable-freeze}.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     * - Can only be called by the blacklister account.
+     * - The token freezing must be approved by the `account`.
      */
     function freeze(address account, uint256 amount) external whenNotPaused onlyBlacklister {
         if(!_freezeApprovals[account]) {
@@ -191,6 +201,12 @@ contract BRLCTokenBridgeable is BRLCTokenBase, IERC20Bridgeable, IERC20Freezable
 
     /**
      * @dev See {IERC20Freezable-transferFrozen}.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     * - Can only be called by the blacklister account.
+     * - The frozen balance must be greater than the `amount`.
      */
     function transferFrozen(address from, address to, uint256 amount) public virtual whenNotPaused onlyBlacklister {
         uint256 balance = _frozenBalances[from];
