@@ -40,6 +40,22 @@
 |||| <strike>[0xc6039D462F0d4649597E1201C8409fa2c5970f52](https://goerli.etherscan.io/address/0xc6039D462F0d4649597E1201C8409fa2c5970f52)</strike> |
 |||| <strike>[0xfe6Ce8d2b2b4e6C0EC7464bCc54C6cb4fB146e23](https://goerli.etherscan.io/address/0xfe6Ce8d2b2b4e6C0EC7464bCc54C6cb4fB146e23)</strike> |
 
+# USJim Token
+
+### CloudWalk (Mainnet)
+| # | Name | Description | Address |
+| --- | --- | --- | --- |
+| 1 | ProxyAdmin | Proxy admin | [0xAD81F2257593B6B06930D549db588a92e483395a](https://explorer.mainnet.cloudwalk.io/address/0xAD81F2257593B6B06930D549db588a92e483395a) |
+| 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0x7907A11948226348beDE63887e27c3F3a00AA6A9](https://explorer.mainnet.cloudwalk.io/address/0x7907A11948226348beDE63887e27c3F3a00AA6A9) |
+| 3 | BRLCTokenMintable | Proxy implementation | [0xCf7F87e9B5919B6CC3b8A77cfC0Ce58d3dDF38AD](https://explorer.mainnet.cloudwalk.io/address/0xCf7F87e9B5919B6CC3b8A77cfC0Ce58d3dDF38AD) |
+
+### CloudWalk (Testnet)
+| # | Name | Description | Address |
+| --- | --- | --- | --- |
+| 1 | ProxyAdmin | Proxy admin | [0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A](https://explorer.testnet.cloudwalk.io/address/0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A) |
+| 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0x6d8Da3C039D1D78622F27D4739e1E00B324aFAAa](https://explorer.testnet.cloudwalk.io/address/0x6d8Da3C039D1D78622F27D4739e1E00B324aFAAa) |
+| 3 | BRLCTokenMintable | Proxy implementation | [0x9ba104aaF21469F3477310ea4a66f55c8afeD1da](https://explorer.testnet.cloudwalk.io/address/0x9ba104aaF21469F3477310ea4a66f55c8afeD1da) |
+
 # InfinitePoints Token
 
 ### CloudWalk (Mainnet)
