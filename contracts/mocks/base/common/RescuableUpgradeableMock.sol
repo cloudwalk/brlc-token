@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import { RescuableUpgradeable } from "../../base/RescuableUpgradeable.sol";
+import { RescuableUpgradeable } from "../../../base/common/RescuableUpgradeable.sol";
 
 /**
  * @title RescuableUpgradeableMock contract

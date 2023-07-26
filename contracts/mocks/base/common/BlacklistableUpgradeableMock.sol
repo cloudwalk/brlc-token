@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import { BlacklistableUpgradeable } from "../../base/BlacklistableUpgradeable.sol";
+import { BlacklistableUpgradeable } from "../../../base/common/BlacklistableUpgradeable.sol";
 
 /**
  * @title BlacklistableUpgradeableMock contract

@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { BigNumber, Contract, ContractFactory } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx } from "../test-utils/eth";
+import { proveTx } from "../../test-utils/eth";
 
 async function setUpFixture(func: any) {
   if (network.name === "hardhat") {

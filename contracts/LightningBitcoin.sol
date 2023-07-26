@@ -3,7 +3,7 @@
 pragma solidity 0.8.16;
 
 import { IERC20Mintable } from "./base/interfaces/IERC20Mintable.sol";
-import { BRLCTokenBase } from "./BRLCTokenBase.sol";
+import { BRLCTokenBase } from "./base/BRLCTokenBase.sol";
 
 /**
  * @title LightningBitcoin contract

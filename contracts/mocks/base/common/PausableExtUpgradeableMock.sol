@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.16;
 
-import { PausableExtUpgradeable } from "../../base/PausableExtUpgradeable.sol";
+import { PausableExtUpgradeable } from "../../../base/common/PausableExtUpgradeable.sol";
 
 /**
  * @title PausableExtUpgradeableMock contract
