@@ -20,6 +20,16 @@
     "address": "0x764161d20B701dd9176f77053fA764838C4229c8"
   },
   {
+    "name": "USJimToken",
+    "chainId": 2009,
+    "address": "0x7907A11948226348beDE63887e27c3F3a00AA6A9"
+  },
+  {
+    "name": "USJimToken",
+    "chainId": 2008,
+    "address": "0x6d8Da3C039D1D78622F27D4739e1E00B324aFAAa"
+  },
+  {
     "name": "InfinitePointsToken",
     "chainId": 2009,
     "address": "0x25c6C9b7d02A128234A82AEd3d3D5c5a09958167"
