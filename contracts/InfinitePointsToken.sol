@@ -7,7 +7,7 @@ import { ERC20Base } from "./base/ERC20Base.sol";
 /**
  * @title InfinitePointsToken contract
  * @author CloudWalk Inc.
- * @dev The Infinite Points token implementation.
+ * @dev The InfinitePoints token implementation.
  */
 contract InfinitePointsToken is ERC20Base {
     /**
@@ -31,11 +31,7 @@ contract InfinitePointsToken is ERC20Base {
      * @param symbol_ The symbol of the token.
      * @param totalSupply_ The total supply of the token.
      */
-    function initialize(
-        string memory name_,
-        string memory symbol_,
-        uint256 totalSupply_
-    ) external virtual initializer {
+    function initialize(string memory name_, string memory symbol_, uint256 totalSupply_) external virtual initializer {
         __InfinitePointsToken_init(name_, symbol_, totalSupply_);
     }
 
@@ -67,5 +63,12 @@ contract InfinitePointsToken is ERC20Base {
      */
     function __InfinitePointsToken_init_unchained(uint256 totalSupply_) internal onlyInitializing {
         _mint(owner(), totalSupply_);
+    }
+
+    /**
+     * @dev Returns true if token is InfinitePoints token implementation.
+     */
+    function isInfinitePoints() external pure returns (bool) {
+        return true;
     }
 }

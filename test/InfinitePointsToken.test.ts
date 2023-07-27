@@ -18,52 +18,56 @@ describe("Contract 'InfinitePointsToken'", async () => {
   const TOKEN_DECIMALS = 6;
   const TOTAL_SUPPLY = 1E9 * 1E6;
 
-  const REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
+  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
 
-  let infinitePointsTokenFactory: ContractFactory;
+  let tokenFactory: ContractFactory;
   let deployer: SignerWithAddress;
 
   before(async () => {
     [deployer] = await ethers.getSigners();
-    infinitePointsTokenFactory = await ethers.getContractFactory("InfinitePointsToken");
+    tokenFactory = await ethers.getContractFactory("InfinitePointsToken");
   });
 
-  async function deployInfinitePointsToken(): Promise<{ infinitePointsToken: Contract }> {
-    const infinitePointsToken: Contract = await upgrades.deployProxy(
-      infinitePointsTokenFactory,
+  async function deployToken(): Promise<{ token: Contract }> {
+    const token: Contract = await upgrades.deployProxy(
+      tokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY]
     );
-    await infinitePointsToken.deployed();
-    return { infinitePointsToken };
+    await token.deployed();
+    return { token };
   }
 
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
-      const { infinitePointsToken } = await setUpFixture(deployInfinitePointsToken);
-
-      expect(await infinitePointsToken.owner()).to.equal(deployer.address);
-      expect(await infinitePointsToken.pauser()).to.equal(ethers.constants.AddressZero);
-      expect(await infinitePointsToken.rescuer()).to.equal(ethers.constants.AddressZero);
-      expect(await infinitePointsToken.blacklister()).to.equal(ethers.constants.AddressZero);
-      expect(await infinitePointsToken.decimals()).to.equal(TOKEN_DECIMALS);
-
-      expect(await infinitePointsToken.balanceOf(deployer.address)).to.equal(BigNumber.from(TOTAL_SUPPLY));
+      const { token } = await setUpFixture(deployToken);
+      expect(await token.owner()).to.equal(deployer.address);
+      expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
+      expect(await token.rescuer()).to.equal(ethers.constants.AddressZero);
+      expect(await token.blacklister()).to.equal(ethers.constants.AddressZero);
+      expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
+      expect(await token.balanceOf(deployer.address)).to.equal(BigNumber.from(TOTAL_SUPPLY));
     });
 
-    it("Is reverted if it is called a second time", async () => {
-      const { infinitePointsToken } = await setUpFixture(deployInfinitePointsToken);
+    it("Is reverted if called for the second time", async () => {
+      const { token } = await setUpFixture(deployToken);
       await expect(
-        infinitePointsToken.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY)
-      ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
+        token.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
-    it("Is reverted for the contract implementation if it is called even for the first time", async () => {
-      const infinitePointsImplementation: Contract = await infinitePointsTokenFactory.deploy();
+    it("Is reverted if the contract implementation is called even for the first time", async () => {
+      const infinitePointsImplementation: Contract = await tokenFactory.deploy();
       await infinitePointsImplementation.deployed();
-
       await expect(
         infinitePointsImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY)
-      ).to.be.revertedWith(REVERT_MESSAGE_IF_CONTRACT_IS_ALREADY_INITIALIZED);
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
+    });
+  });
+
+  describe("Function 'isInfinitePoints()'", async () => {
+    it("Returns true", async () => {
+      const { token } = await setUpFixture(deployToken);
+      expect(await token.isInfinitePoints()).to.eq(true);
     });
   });
 });
