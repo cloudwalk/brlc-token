@@ -2,14 +2,14 @@
 
 pragma solidity 0.8.16;
 
-import { BRLCTokenBase } from "./base/BRLCTokenBase.sol";
+import { ERC20Base } from "./base/ERC20Base.sol";
 
 /**
  * @title InfinitePointsToken contract
  * @author CloudWalk Inc.
  * @dev The Infinite Points token implementation.
  */
-contract InfinitePointsToken is BRLCTokenBase {
+contract InfinitePointsToken is ERC20Base {
     /**
      * @dev Constructor that prohibits the initialization of the implementation of the upgradable contract.
      *
@@ -55,7 +55,7 @@ contract InfinitePointsToken is BRLCTokenBase {
         __PausableExt_init_unchained();
         __Blacklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
-        __BRLCTokenBase_init_unchained();
+        __ERC20Base_init_unchained();
 
         __InfinitePointsToken_init_unchained(totalSupply_);
     }

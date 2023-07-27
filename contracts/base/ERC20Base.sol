@@ -9,12 +9,12 @@ import { PausableExtUpgradeable } from "./common/PausableExtUpgradeable.sol";
 import { BlacklistableUpgradeable } from "./common/BlacklistableUpgradeable.sol";
 
 /**
- * @title BRLCTokenBase contract
+ * @title ERC20Base contract
  * @author CloudWalk Inc.
  * @dev This contract is base implementation of the BRLC token with inherited Rescuable,
  * Pausable, and Blacklistable functionality.
  */
-abstract contract BRLCTokenBase is
+abstract contract ERC20Base is
     OwnableUpgradeable,
     RescuableUpgradeable,
     PausableExtUpgradeable,
@@ -29,7 +29,7 @@ abstract contract BRLCTokenBase is
      * @param name_ The name of the token.
      * @param symbol_ The symbol of the token.
      */
-    function __BRLCTokenBase_init(string memory name_, string memory symbol_) internal onlyInitializing {
+    function __ERC20Base_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Rescuable_init_unchained();
@@ -37,15 +37,15 @@ abstract contract BRLCTokenBase is
         __PausableExt_init_unchained();
         __Blacklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
-        __BRLCTokenBase_init_unchained();
+        __ERC20Base_init_unchained();
     }
 
     /**
      * @dev The internal unchained initializer of the upgradable contract.
      *
-     * See {BRLCTokenBase-__BRLCTokenBase_init}.
+     * See {ERC20Base-__ERC20Base_init}.
      */
-    function __BRLCTokenBase_init_unchained() internal onlyInitializing {}
+    function __ERC20Base_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev See {ERC20Upgradeable-decimals}.

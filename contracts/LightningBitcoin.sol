@@ -3,14 +3,14 @@
 pragma solidity 0.8.16;
 
 import { IERC20Mintable } from "./base/interfaces/IERC20Mintable.sol";
-import { BRLCTokenBase } from "./base/BRLCTokenBase.sol";
+import { ERC20Base } from "./base/ERC20Base.sol";
 
 /**
  * @title LightningBitcoin contract
  * @author CloudWalk Inc.
  * @dev The Lightning Bitcoin token implementation.
  */
-contract LightningBitcoin is BRLCTokenBase, IERC20Mintable {
+contract LightningBitcoin is ERC20Base, IERC20Mintable {
     /// @dev The address of the master minter.
     address private _masterMinter;
 
@@ -97,7 +97,7 @@ contract LightningBitcoin is BRLCTokenBase, IERC20Mintable {
         __PausableExt_init_unchained();
         __Blacklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
-        __BRLCTokenBase_init_unchained();
+        __ERC20Base_init_unchained();
         __LightningBitcoin_init_unchained();
     }
 

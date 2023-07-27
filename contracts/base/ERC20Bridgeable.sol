@@ -4,14 +4,14 @@ pragma solidity 0.8.16;
 
 import { IERC20Bridgeable } from "./interfaces/IERC20Bridgeable.sol";
 import { IERC20Freezable } from "./interfaces/IERC20Freezable.sol";
-import { BRLCTokenBase } from "./BRLCTokenBase.sol";
+import { ERC20Base } from "./ERC20Base.sol";
 
 /**
  * @title ERC20Bridgeable contract
  * @author CloudWalk Inc.
  * @dev The ERC20 token implementation that supports the bridge operations.
  */
-contract ERC20Bridgeable is BRLCTokenBase, IERC20Bridgeable {
+contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
     /// @dev The address of the bridge.
     address private _bridge;
 
@@ -52,7 +52,7 @@ contract ERC20Bridgeable is BRLCTokenBase, IERC20Bridgeable {
         __PausableExt_init_unchained();
         __Blacklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
-        __BRLCTokenBase_init_unchained();
+        __ERC20Base_init_unchained();
         __ERC20Bridgeable_init_unchained(bridge_);
     }
 

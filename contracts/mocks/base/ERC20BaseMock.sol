@@ -2,14 +2,14 @@
 
 pragma solidity 0.8.16;
 
-import { BRLCTokenBase } from "../../base/BRLCTokenBase.sol";
+import { ERC20Base } from "../../base/ERC20Base.sol";
 
 /**
- * @title BRLCTokenBaseMock contract
+ * @title ERC20BaseMock contract
  * @author CloudWalk Inc.
- * @dev An implementation of the {BRLCTokenBase} contract for test purposes.
+ * @dev An implementation of the {ERC20Base} contract for test purposes.
  */
-contract BRLCTokenBaseMock is BRLCTokenBase {
+contract ERC20BaseMock is ERC20Base {
     /// @dev Emitted when the `testBeforeTokenTransfer` function executes successfully.
     event TestBeforeTokenTransferSucceeded();
 
@@ -22,7 +22,7 @@ contract BRLCTokenBaseMock is BRLCTokenBase {
      * @param symbol_ The symbol of the token.
      */
     function initialize(string memory name_, string memory symbol_) public initializer {
-        __BRLCTokenBase_init(name_, symbol_);
+        __ERC20Base_init(name_, symbol_);
     }
 
     /**
@@ -33,7 +33,7 @@ contract BRLCTokenBaseMock is BRLCTokenBase {
      * @param symbol_ The symbol of the token.
      */
     function call_parent_initialize(string memory name_, string memory symbol_) public {
-        __BRLCTokenBase_init(name_, symbol_);
+        __ERC20Base_init(name_, symbol_);
     }
 
     /**
@@ -41,7 +41,7 @@ contract BRLCTokenBaseMock is BRLCTokenBase {
      * has the 'onlyInitializing' modifier.
      */
     function call_parent_initialize_unchained() public {
-        __BRLCTokenBase_init_unchained();
+        __ERC20Base_init_unchained();
     }
 
     /**

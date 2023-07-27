@@ -3,14 +3,14 @@
 pragma solidity 0.8.16;
 
 import { IERC20Freezable } from "./interfaces/IERC20Freezable.sol";
-import { BRLCTokenBase } from "./BRLCTokenBase.sol";
+import { ERC20Base } from "./ERC20Base.sol";
 
 /**
  * @title ERC20Freezable contract
  * @author CloudWalk Inc.
  * @dev The ERC20 token implementation that supports the freezing operations.
  */
-abstract contract ERC20Freezable is BRLCTokenBase, IERC20Freezable {
+abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /// @dev The mapping of the freeze approvals.
     mapping(address => bool) private _freezeApprovals;
 
@@ -43,7 +43,7 @@ abstract contract ERC20Freezable is BRLCTokenBase, IERC20Freezable {
         __PausableExt_init_unchained();
         __Blacklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
-        __BRLCTokenBase_init_unchained();
+        __ERC20Base_init_unchained();
         __ERC20Freezable_init_unchained();
     }
 

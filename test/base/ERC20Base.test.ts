@@ -13,7 +13,7 @@ async function setUpFixture(func: any) {
   }
 }
 
-describe("Contract 'BRLCTokenBase'", async () => {
+describe("Contract 'ERC20Base'", async () => {
   const TOKEN_NAME = "BRL Coin";
   const TOKEN_SYMBOL = "BRLC";
   const TOKEN_DECIMALS = 6;
@@ -38,7 +38,7 @@ describe("Contract 'BRLCTokenBase'", async () => {
 
   before(async () => {
     [deployer, user1, user2] = await ethers.getSigners();
-    brlcTokenFactory = await ethers.getContractFactory("BRLCTokenBaseMock");
+    brlcTokenFactory = await ethers.getContractFactory("ERC20BaseMock");
   });
 
   async function deployBrlcToken(): Promise<{ brlcToken: Contract }> {
