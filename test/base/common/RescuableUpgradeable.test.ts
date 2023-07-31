@@ -34,7 +34,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
 
   before(async () => {
     rescuableFactory = await ethers.getContractFactory("RescuableUpgradeableMock");
-    tokenFactory = await ethers.getContractFactory("ERC20UpgradeableMock");
+    tokenFactory = await ethers.getContractFactory("ERC20TestMock");
     [deployer, rescuer, user] = await ethers.getSigners();
   });
 
@@ -53,7 +53,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
   async function deployAndConfigure(): Promise<{ rescuable: Contract, token: Contract }> {
     const { rescuable } = await deployRescuable();
     const { token } = await deployToken();
-    await proveTx(token.mint(rescuable.address, TOKEN_AMOUNT));
+    await proveTx(token.testMint(rescuable.address, TOKEN_AMOUNT));
     await proveTx(rescuable.setRescuer(rescuer.address));
     return { rescuable, token };
   }
