@@ -33,4 +33,23 @@ contract ERC20MintableMock is ERC20Mintable {
     function initialize(string memory name_, string memory symbol_) public initializer {
         __ERC20Mintable_init(name_, symbol_);
     }
+
+    /**
+     * @dev Needed to check that the initialize function of the ancestor contract
+     * has the 'onlyInitializing' modifier.
+     *
+     * @param name_ The name of the token to set for this ERC20-comparable contract.
+     * @param symbol_ The symbol of the token to set for this ERC20-comparable contract.
+     */
+    function call_parent_initialize(string memory name_, string memory symbol_) public {
+        __ERC20Mintable_init(name_, symbol_);
+    }
+
+    /**
+     * @dev Needed to check that the unchained initialize function of the ancestor contract
+     * has the 'onlyInitializing' modifier.
+     */
+    function call_parent_initialize_unchained() public {
+        __ERC20Mintable_init_unchained();
+    }
 }
