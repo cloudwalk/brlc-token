@@ -14,6 +14,18 @@ contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
     event TestNotBlacklistedModifierSucceeded();
 
     /**
+     * @dev Constructor that prohibits the initialization of the implementation of the upgradable contract.
+     *
+     * See details
+     * https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializing_the_implementation_contract
+     *
+     * @custom:oz-upgrades-unsafe-allow constructor
+     */
+    constructor() {
+        _disableInitializers();
+    }
+
+    /**
      * @dev The initialize function of the upgradable contract.
      *
      * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable.
