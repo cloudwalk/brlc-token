@@ -55,112 +55,37 @@ abstract contract ERC20Base is
     }
 
     /**
-     * @dev See {ERC20Upgradeable-transfer}.
+     * @dev See {ERC20Upgradeable-_approve}.
      *
      * Requirements:
      *
      * - The contract must not be paused.
-     * - The `_msgSender()` address must not be blacklisted.
-     * - The `recipient` address must not be blacklisted.
-     */
-    function transfer(address recipient, uint256 amount)
-        public
-        virtual
-        override
-        whenNotPaused
-        notBlacklisted(_msgSender())
-        notBlacklisted(recipient)
-        returns (bool)
-    {
-        return super.transfer(recipient, amount);
-    }
-
-    /**
-     * @dev See {ERC20Upgradeable-approve}.
-     *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     * - The `_msgSender()` address must not be blacklisted.
+     * - The `owner` address must not be blacklisted.
      * - The `spender` address must not be blacklisted.
      */
-    function approve(address spender, uint256 amount)
-        public
-        virtual
-        override
-        whenNotPaused
-        notBlacklisted(_msgSender())
-        notBlacklisted(spender)
-        returns (bool)
-    {
-        return super.approve(spender, amount);
-    }
-
-    /**
-     * @dev See {ERC20Upgradeable-transferFrom}.
-     *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     * - The `sender` address must not be blacklisted.
-     * - The `recipient` address must not be blacklisted.
-     */
-    function transferFrom(
-        address sender,
-        address recipient,
+    function _approve(
+        address owner,
+        address spender,
         uint256 amount
-    )
-        public
-        virtual
-        override
-        whenNotPaused
-        notBlacklisted(sender)
-        notBlacklisted(recipient)
-        returns (bool)
-    {
-        return super.transferFrom(sender, recipient, amount);
+    ) internal virtual override whenNotPaused notBlacklisted(owner) notBlacklisted(spender) {
+        super._approve(owner, spender, amount);
     }
 
     /**
-     * @dev See {ERC20Upgradeable-increaseAllowance}.
+     * @dev See {ERC20Upgradeable-_spendAllowance}.
      *
      * Requirements:
      *
      * - The contract must not be paused.
-     * - The `_msgSender()` address must not be blacklisted.
+     * - The `owner` address must not be blacklisted.
      * - The `spender` address must not be blacklisted.
      */
-    function increaseAllowance(address spender, uint256 addedValue)
-        public
-        virtual
-        override
-        whenNotPaused
-        notBlacklisted(_msgSender())
-        notBlacklisted(spender)
-        returns (bool)
-    {
-        return super.increaseAllowance(spender, addedValue);
-    }
-
-    /**
-     * @dev See {ERC20Upgradeable-decreaseAllowance}.
-     *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     * - The `_msgSender()` address must not be blacklisted.
-     * - The `spender` address must not be blacklisted.
-     */
-    function decreaseAllowance(address spender, uint256 subtractedValue)
-        public
-        virtual
-        override
-        whenNotPaused
-        notBlacklisted(_msgSender())
-        notBlacklisted(spender)
-        returns (bool)
-    {
-        return super.decreaseAllowance(spender, subtractedValue);
+    function _spendAllowance(
+        address owner,
+        address spender,
+        uint256 amount
+    ) internal virtual override whenNotPaused notBlacklisted(owner) notBlacklisted(spender) {
+        super._spendAllowance(owner, spender, amount);
     }
 
     /**
@@ -169,13 +94,14 @@ abstract contract ERC20Base is
      * Requirements:
      *
      * - The contract must not be paused.
+     * - The `from` address must not be blacklisted.
+     * - The `to` address must not be blacklisted.
      */
     function _beforeTokenTransfer(
         address from,
         address to,
         uint256 amount
-    ) internal virtual override {
+    ) internal virtual override whenNotPaused notBlacklisted(from) notBlacklisted(to) {
         super._beforeTokenTransfer(from, to, amount);
-        require(!paused(), "ERC20Pausable: token transfer while paused");
     }
 }

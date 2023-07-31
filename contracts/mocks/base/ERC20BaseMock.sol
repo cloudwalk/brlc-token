@@ -10,8 +10,17 @@ import { ERC20Base } from "../../base/ERC20Base.sol";
  * @dev An implementation of the {ERC20Base} contract for test purposes.
  */
 contract ERC20BaseMock is ERC20Base {
-    /// @dev Emitted when the `testBeforeTokenTransfer` function executes successfully.
-    event TestBeforeTokenTransferSucceeded();
+    /**
+     * @dev Constructor that prohibits the initialization of the implementation of the upgradable contract.
+     *
+     * See details
+     * https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializing_the_implementation_contract
+     *
+     * @custom:oz-upgrades-unsafe-allow constructor
+     */
+    constructor() {
+        _disableInitializers();
+    }
 
     /**
      * @dev The initialize function of the upgradable contract.
@@ -50,26 +59,8 @@ contract ERC20BaseMock is ERC20Base {
      * @param account The address of an account to mint for.
      * @param amount The amount of tokens to mint.
      */
-    function mint(address account, uint256 amount) external returns (bool) {
+    function testMint(address account, uint256 amount) external returns (bool) {
         _mint(account, amount);
         return true;
-    }
-
-    /**
-     * @dev Calls the appropriate internal function.
-     *
-     * If that function executed without reverting emits an event {TestBeforeTokenTransferSucceeded}.
-     *
-     * @param from The address of an account to transfer tokens from.
-     * @param to The address of an account to transfer tokens to.
-     * @param amount The amount of tokens to transfer.
-     */
-    function testBeforeTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) external {
-        _beforeTokenTransfer(from, to, amount);
-        emit TestBeforeTokenTransferSucceeded();
     }
 }
