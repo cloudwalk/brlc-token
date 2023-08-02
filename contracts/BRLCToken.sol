@@ -7,11 +7,11 @@ import { ERC20Mintable } from "./base/ERC20Mintable.sol";
 import { ERC20Freezable } from "./base/ERC20Freezable.sol";
 
 /**
- * @title BRLCTokenMintable contract
+ * @title BRLCToken contract
  * @author CloudWalk Inc.
  * @notice The BRLC token implementation that supports minting, burning and freezing operations
  */
-contract BRLCTokenMintable is ERC20Base, ERC20Mintable, ERC20Freezable {
+contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable {
     /**
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *
@@ -33,15 +33,15 @@ contract BRLCTokenMintable is ERC20Base, ERC20Mintable, ERC20Freezable {
      * @param symbol_ The symbol of the token
      */
     function initialize(string memory name_, string memory symbol_) external virtual initializer {
-        __BRLCTokenMintable_init(name_, symbol_);
+        __BRLCToken_init(name_, symbol_);
     }
 
     /**
      * @notice The internal initializer of the upgradable contract
      *
-     * See {BRLCTokenMintable-initialize}
+     * See {BRLCToken-initialize}
      */
-    function __BRLCTokenMintable_init(string memory name_, string memory symbol_) internal onlyInitializing {
+    function __BRLCToken_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
@@ -51,15 +51,15 @@ contract BRLCTokenMintable is ERC20Base, ERC20Mintable, ERC20Freezable {
         __ERC20Base_init_unchained();
         __ERC20Mintable_init_unchained();
         __ERC20Freezable_init_unchained();
-        __BRLCTokenMintable_init_unchained();
+        __BRLCToken_init_unchained();
     }
 
     /**
      * @notice The internal unchained initializer of the upgradable contract
      *
-     * See {BRLCTokenMintable-initialize}
+     * See {BRLCToken-initialize}
      */
-    function __BRLCTokenMintable_init_unchained() internal onlyInitializing {}
+    function __BRLCToken_init_unchained() internal onlyInitializing {}
 
     /**
      * @notice Returns true if token is BRLCoin implementation

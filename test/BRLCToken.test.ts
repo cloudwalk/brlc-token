@@ -12,7 +12,7 @@ async function setUpFixture(func: any) {
     }
 }
 
-describe("Contract 'BRLCTokenMintable'", async () => {
+describe("Contract 'BRLCToken'", async () => {
     const TOKEN_NAME = "BRL Coin";
     const TOKEN_SYMBOL = "BRLC";
     const TOKEN_DECIMALS = 6;
@@ -25,7 +25,7 @@ describe("Contract 'BRLCTokenMintable'", async () => {
 
     before(async () => {
         [deployer] = await ethers.getSigners();
-        tokenFactory = await ethers.getContractFactory("BRLCTokenMintable");
+        tokenFactory = await ethers.getContractFactory("BRLCToken");
     });
 
     async function deployToken(): Promise<{ token: Contract }> {
