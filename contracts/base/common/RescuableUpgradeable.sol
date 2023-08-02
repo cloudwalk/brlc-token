@@ -80,11 +80,7 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
      * @param to The address of the recipient of tokens
      * @param amount The amount of tokens to withdraw
      */
-    function rescueERC20(
-        address token,
-        address to,
-        uint256 amount
-    ) external onlyRescuer {
+    function rescueERC20(address token, address to, uint256 amount) external onlyRescuer {
         IERC20Upgradeable(token).safeTransfer(to, amount);
     }
 

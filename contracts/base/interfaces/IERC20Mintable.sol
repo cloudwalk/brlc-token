@@ -8,7 +8,6 @@ pragma solidity 0.8.16;
  * @notice The interface of a token that supports mint and burn operations
  */
 interface IERC20Mintable {
-
     /**
      * @notice Emitted when the master minter is changed
      *
