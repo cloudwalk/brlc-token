@@ -12,7 +12,7 @@ async function setUpFixture(func: any) {
     }
 }
 
-describe("Contract 'USJimMintable'", async () => {
+describe("Contract 'USJimToken'", async () => {
     const TOKEN_NAME = "USJim Coin";
     const TOKEN_SYMBOL = "USJIM";
     const TOKEN_DECIMALS = 6;
@@ -25,7 +25,7 @@ describe("Contract 'USJimMintable'", async () => {
 
     before(async () => {
         [deployer] = await ethers.getSigners();
-        tokenFactory = await ethers.getContractFactory("USJimMintable");
+        tokenFactory = await ethers.getContractFactory("USJimToken");
     });
 
     async function deployToken(): Promise<{ token: Contract }> {
