@@ -39,12 +39,14 @@ describe("Contract 'BRLCTokenMintable'", async () => {
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
+      expect(await token.name()).to.equal(TOKEN_NAME);
+      expect(await token.symbol()).to.equal(TOKEN_SYMBOL);
+      expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
       expect(await token.owner()).to.equal(deployer.address);
       expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
       expect(await token.rescuer()).to.equal(ethers.constants.AddressZero);
       expect(await token.blacklister()).to.equal(ethers.constants.AddressZero);
       expect(await token.masterMinter()).to.equal(ethers.constants.AddressZero);
-      expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
     });
 
     it("Is reverted if called for the second time", async () => {

@@ -3,7 +3,6 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx } from "../test-utils/eth";
 
 async function setUpFixture(func: any) {
   if (network.name === "hardhat") {
@@ -41,14 +40,16 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
+      expect(await token.name()).to.equal(TOKEN_NAME);
+      expect(await token.symbol()).to.equal(TOKEN_SYMBOL);
+      expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
       expect(await token.owner()).to.equal(deployer.address);
       expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
       expect(await token.rescuer()).to.equal(ethers.constants.AddressZero);
       expect(await token.blacklister()).to.equal(ethers.constants.AddressZero);
-      expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
-      expect(await token.bridge()).to.equal(bridge.address);
-      expect(await token.isIERC20Bridgeable()).to.equal(true);
       expect(await token.isBridgeSupported(bridge.address)).to.equal(true);
+      expect(await token.isIERC20Bridgeable()).to.equal(true);
+      expect(await token.bridge()).to.equal(bridge.address);
     });
 
     it("Is reverted if called for the second time", async () => {
