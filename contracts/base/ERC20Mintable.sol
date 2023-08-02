@@ -8,39 +8,39 @@ import { ERC20Base } from "./ERC20Base.sol";
 /**
  * @title ERC20Mintable contract
  * @author CloudWalk Inc.
- * @dev The ERC20 token implementation that supports the mint and burn operations.
+ * @notice The ERC20 token implementation that supports the mint and burn operations
  */
 abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
-    /// @dev The address of the master minter.
+    /// @notice The address of the master minter
     address private _masterMinter;
 
-    /// @dev The mapping of the configured minters.
+    /// @notice The mapping of the configured minters
     mapping(address => bool) private _minters;
 
-    /// @dev The mapping of the configured mint allowances.
+    /// @notice The mapping of the configured mint allowances
     mapping(address => uint256) private _mintersAllowance;
 
     // -------------------- Errors -----------------------------------
 
-    /// @dev The transaction sender is not a master minter.
+    /// @notice The transaction sender is not a master minter
     error UnauthorizedMasterMinter(address account);
 
-    /// @dev The transaction sender is not a minter.
+    /// @notice The transaction sender is not a minter
     error UnauthorizedMinter(address account);
 
-    /// @dev The mint allowance is exceeded during the mint operation.
+    /// @notice The mint allowance is exceeded during the mint operation
     error ExceededMintAllowance();
 
-    /// @dev The zero amount of tokens is passed during the mint operation.
+    /// @notice The zero amount of tokens is passed during the mint operation
     error ZeroMintAmount();
 
-    /// @dev The zero amount of tokens is passed during the burn operation.
+    /// @notice The zero amount of tokens is passed during the burn operation
     error ZeroBurnAmount();
 
     // -------------------- Modifiers --------------------------------
 
     /**
-     * @dev Throws if called by any account other than the master minter.
+     * @notice Throws if called by any account other than the master minter
      */
     modifier onlyMasterMinter() {
         if (_msgSender() != _masterMinter) {
@@ -50,7 +50,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @dev Throws if called by any account other than the minter.
+     * @notice Throws if called by any account other than the minter
      */
     modifier onlyMinter() {
         if (!_minters[_msgSender()]) {
@@ -62,7 +62,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     // -------------------- Functions --------------------------------
 
     /**
-     * @dev The internal initializer of the upgradable contract.
+     * @notice The internal initializer of the upgradable contract
      */
     function __ERC20Mintable_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
@@ -76,16 +76,14 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @dev The internal unchained initializer of the upgradable contract.
+     * @notice The internal unchained initializer of the upgradable contract
      */
     function __ERC20Mintable_init_unchained() internal onlyInitializing {}
 
     /**
-     * @dev See {IERC20Mintable-updateMasterMinter}.
+     * @inheritdoc IERC20Mintable
      *
-     * Requirements:
-     *
-     * - Can only be called by the contract owner.
+     * @notice Can only be called by the contract owner
      */
     function updateMasterMinter(address newMasterMinter) external onlyOwner {
         if (_masterMinter == newMasterMinter) {
@@ -98,12 +96,10 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @dev See {IERC20Mintable-configureMinter}.
+     * @inheritdoc IERC20Mintable
      *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     * - Can only be called by the master minter.
+     * @notice The contract must not be paused
+     * @notice Can only be called by the master minter
      */
     function configureMinter(
         address minter,
@@ -118,11 +114,9 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @dev See {IERC20Mintable-removeMinter}.
+     * @inheritdoc IERC20Mintable
      *
-     * Requirements:
-     *
-     * - Can only be called by the master minter.
+     * @notice Can only be called by the master minter
      */
     function removeMinter(address minter) external onlyMasterMinter returns (bool) {
         if (!_minters[minter]) {
@@ -138,16 +132,14 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @dev See {IERC20Mintable-mint}.
+     * @inheritdoc IERC20Mintable
      *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     * - Can only be called by a minter account.
-     * - The `_msgSender()` address must not be blacklisted.
-     * - The `account` address must not be blacklisted.
-     * - The `amount` value must be greater than zero and
-     *   not greater than the mint allowance of the minter.
+     * @notice The contract must not be paused
+     * @notice Can only be called by a minter account
+     * @notice The message sender must not be blacklisted
+     * @notice The `account` address must not be blacklisted
+     * @notice The `amount` value must be greater than zero and not
+     * greater than the mint allowance of the minter
      */
     function mint(
         address account,
@@ -171,14 +163,12 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @dev See {IERC20Mintable-burn}.
+     * @inheritdoc IERC20Mintable
      *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     * - Can only be called by a minter account.
-     * - The `_msgSender()` address must not be blacklisted.
-     * - The `amount` value must be greater than zero.
+     * @notice The contract must not be paused
+     * @notice Can only be called by a minter account
+     * @notice The message sender must not be blacklisted
+     * @notice The `amount` value must be greater than zero
      */
     function burn(uint256 amount) external whenNotPaused onlyMinter notBlacklisted(_msgSender()) {
         if (amount == 0) {
@@ -191,21 +181,21 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @dev See {IERC20Mintable-masterMinter}.
+     * @inheritdoc IERC20Mintable
      */
     function masterMinter() external view returns (address) {
         return _masterMinter;
     }
 
     /**
-     * @dev See {IERC20Mintable-isMinter}.
+     * @inheritdoc IERC20Mintable
      */
     function isMinter(address account) external view returns (bool) {
         return _minters[account];
     }
 
     /**
-     * @dev See {IERC20Mintable-minterAllowance}.
+     * @inheritdoc IERC20Mintable
      */
     function minterAllowance(address minter) external view returns (uint256) {
         return _mintersAllowance[minter];

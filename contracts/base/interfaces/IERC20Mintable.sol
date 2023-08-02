@@ -5,90 +5,117 @@ pragma solidity 0.8.16;
 /**
  * @title IERC20Mintable interface
  * @author CloudWalk Inc.
- * @dev The interface of a token that supports mint and burn operations.
+ * @notice The interface of a token that supports mint and burn operations
  */
 interface IERC20Mintable {
-    /// @dev Emitted when the master minter is changed.
+
+    /**
+     * @notice Emitted when the master minter is changed
+     *
+     * @param newMasterMinter The address of a new master minter
+     */
     event MasterMinterChanged(address indexed newMasterMinter);
 
-    /// @dev Emitted when a minter account is configured.
+    /**
+     * @notice Emitted when a minter account is configured
+     *
+     * @param minter The address of the minter to configure
+     * @param mintAllowance The mint allowance
+     */
     event MinterConfigured(address indexed minter, uint256 mintAllowance);
 
-    /// @dev Emitted when a minter account is removed.
+    /**
+     * @notice Emitted when a minter account is removed
+     *
+     * @param oldMinter The address of the minter to remove
+     */
     event MinterRemoved(address indexed oldMinter);
 
-    /// @dev Emitted when tokens are minted.
+    /**
+     * @notice Emitted when tokens are minted
+     *
+     * @param minter The address of the minter
+     * @param to The address of the tokens recipient
+     * @param amount The amount of tokens being minted
+     */
     event Mint(address indexed minter, address indexed to, uint256 amount);
 
-    /// @dev Emitted when tokens are burned.
+    /**
+     * @notice Emitted when tokens are burned
+     *
+     * @param burner The address of the tokens burner
+     * @param amount The amount of tokens being burned
+     */
     event Burn(address indexed burner, uint256 amount);
 
     /**
-     * @dev Returns the master minter address.
+     * @notice Returns the master minter address
      */
     function masterMinter() external view returns (address);
 
     /**
-     * @dev Checks if the account is configured as a minter.
-     * @param account The address to check.
-     * @return True if the account is a minter.
+     * @notice Checks if the account is configured as a minter
+     *
+     * @param account The address to check
+     * @return True if the account is a minter
      */
     function isMinter(address account) external view returns (bool);
 
     /**
-     * @dev Returns the mint allowance of a minter.
-     * @param minter The minter to check.
-     * @return The mint allowance of the minter.
+     * @notice Returns the mint allowance of a minter
+     *
+     * @param minter The minter to check
+     * @return The mint allowance of the minter
      */
     function minterAllowance(address minter) external view returns (uint256);
 
     /**
-     * @dev Updates the master minter address.
+     * @notice Updates the master minter address
      *
-     * Emits a {MasterMinterChanged} event.
+     * Emits a {MasterMinterChanged} event
      *
-     * @param newMasterMinter The address of a new master minter.
+     * @param newMasterMinter The address of a new master minter
      */
     function updateMasterMinter(address newMasterMinter) external;
 
     /**
-     * @dev Configures a minter.
+     * @notice Configures a minter
      *
-     * Emits a {MinterConfigured} event.
+     * Emits a {MinterConfigured} event
      *
-     * @param minter The address of the minter to configure.
-     * @param mintAllowance The mint allowance.
-     * @return True if the operation was successful.
+     * @param minter The address of the minter to configure
+     * @param mintAllowance The mint allowance
+     * @return True if the operation was successful
      */
     function configureMinter(address minter, uint256 mintAllowance) external returns (bool);
 
     /**
-     * @dev Removes a minter.
+     * @notice Removes a minter
      *
-     * Emits a {MinterRemoved} event.
+     * Emits a {MinterRemoved} event
      *
-     * @param minter The address of the minter to remove.
-     * @return True if the operation was successful.
+     * @param minter The address of the minter to remove
+     * @return True if the operation was successful
      */
     function removeMinter(address minter) external returns (bool);
 
     /**
-     * @dev Mints tokens.
+     * @notice Mints tokens
      *
-     * Emits a {Mint} event.
+     * Emits a {Mint} event
      *
-     * @param account The address of a tokens recipient.
-     * @param amount The amount of tokens to mint.
-     * @return True if the operation was successful.
+     * @param account The address of a tokens recipient
+     * @param amount The amount of tokens to mint
+     * @return True if the operation was successful
      */
     function mint(address account, uint256 amount) external returns (bool);
 
     /**
-     * @dev Burns tokens.
+     * @notice Burns tokens
      *
-     * Emits a {Burn} event.
+     * Emits a {Burn} event
      *
-     * @param amount The amount of tokens to burn.
+     * @param amount The amount of tokens to burn
      */
     function burn(uint256 amount) external;
 }

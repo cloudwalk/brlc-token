@@ -9,26 +9,30 @@ import { ERC20Base } from "./ERC20Base.sol";
 /**
  * @title ERC20Bridgeable contract
  * @author CloudWalk Inc.
- * @dev The ERC20 token implementation that supports the bridge operations.
+ * @notice The ERC20 token implementation that supports bridging operations
  */
 contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
-    /// @dev The address of the bridge.
+    /// @notice The address of the bridge
     address private _bridge;
 
     // -------------------- Errors -----------------------------------
 
-    /// @dev The transaction sender is not a bridge.
+    /**
+     * @notice The transaction sender is not a bridge
+     *
+     * @param account The address of the transaction sender
+     */
     error UnauthorizedBridge(address account);
 
-    /// @dev The zero amount of tokens is passed during the mint operation.
+    /// @notice The zero amount of tokens is passed during the mint operation
     error ZeroMintForBridgingAmount();
 
-    /// @dev The zero amount of tokens is passed during the burn operation.
+    /// @notice The zero amount of tokens is passed during the burn operation
     error ZeroBurnForBridgingAmount();
 
     // -------------------- Modifiers --------------------------------
 
-    /// @dev Throws if called by any account other than the bridge.
+    /// @notice Throws if called by any account other than the bridge
     modifier onlyBridge() {
         if (_msgSender() != _bridge) {
             revert UnauthorizedBridge(_msgSender());
@@ -39,7 +43,11 @@ contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
     // -------------------- Functions --------------------------------
 
     /**
-     * @dev The internal initializer of the upgradable contract.
+     * @notice The internal initializer of the upgradable contract
+     *
+     * @param name_ The name of the token
+     * @param symbol_ The symbol of the token
+     * @param bridge_ The address of the bridge contract
      */
     function __ERC20Bridgeable_init(
         string memory name_,
@@ -57,26 +65,26 @@ contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
     }
 
     /**
-     * @dev The internal unchained initializer of the upgradable contract.
+     * @notice The internal unchained initializer of the upgradable contract
+     *
+     * @param bridge_ The address of the bridge contract
      */
     function __ERC20Bridgeable_init_unchained(address bridge_) internal onlyInitializing {
         _setBridge(bridge_);
     }
 
     /**
-     * @dev See {IERC20Bridgeable-setBridge}.
+     * @inheritdoc IERC20Bridgeable
      */
     function setBridge(address newBridge) external onlyOwner {
         _setBridge(newBridge);
     }
 
     /**
-     * @dev See {IERC20Bridgeable-mintForBridging}.
+     * @inheritdoc IERC20Bridgeable
      *
-     * Requirements:
-     *
-     * - Can only be called by the bridge.
-     * - The `amount` value must be greater than zero.
+     * @notice Can only be called by the bridge
+     * @notice The `amount` value must be greater than zero
      */
     function mintForBridging(address account, uint256 amount) external onlyBridge returns (bool) {
         if (amount == 0) {
@@ -90,12 +98,10 @@ contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
     }
 
     /**
-     * @dev See {IERC20Bridgeable-burnForBridging}.
+     * @inheritdoc IERC20Bridgeable
      *
-     * Requirements:
-     *
-     * - Can only be called by the bridge.
-     * - The `amount` value must be greater than zero.
+     * @notice Can only be called by the bridge
+     * @notice The `amount` value must be greater than zero
      */
     function burnForBridging(address account, uint256 amount) external onlyBridge returns (bool) {
         if (amount == 0) {
@@ -109,24 +115,31 @@ contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
     }
 
     /**
-     * @dev See {IERC20Bridgeable-isBridgeSupported}.
+     * @inheritdoc IERC20Bridgeable
      */
     function isBridgeSupported(address bridge_) external view returns (bool) {
         return _bridge == bridge_;
     }
 
-    /// @dev Returns the bridge address.
-    function bridge() external view virtual returns (address) {
-        return _bridge;
-    }
-
     /**
-     * @dev See {IERC20Bridgeable-isIERC20Bridgeable}.
+     * @inheritdoc IERC20Bridgeable
      */
     function isIERC20Bridgeable() external pure returns (bool) {
         return true;
     }
 
+    /**
+     * @notice Returns the address of the bridge contract
+     */
+    function bridge() external view virtual returns (address) {
+        return _bridge;
+    }
+
+    /**
+     * @notice Sets the new bridge contract
+     *
+     * @param newBridge The address of the new bridge contract
+     */
     function _setBridge(address newBridge) internal {
         emit SetBridge(newBridge, _bridge);
         _bridge = newBridge;

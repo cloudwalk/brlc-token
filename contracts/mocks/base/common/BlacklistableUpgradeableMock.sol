@@ -7,14 +7,14 @@ import { BlacklistableUpgradeable } from "../../../base/common/BlacklistableUpgr
 /**
  * @title BlacklistableUpgradeableMock contract
  * @author CloudWalk Inc.
- * @dev An implementation of the {BlacklistableUpgradeable} contract for test purposes.
+ * @notice An implementation of the {BlacklistableUpgradeable} contract for testing purposes
  */
 contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
-    /// @dev Emitted when a test function of the `notBlacklisted` modifier executes successfully.
+    /// @notice Emitted when a test function of the `notBlacklisted` modifier executes successfully
     event TestNotBlacklistedModifierSucceeded();
 
     /**
-     * @dev Constructor that prohibits the initialization of the implementation of the upgradable contract.
+     * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *
      * See details
      * https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializing_the_implementation_contract
@@ -26,33 +26,33 @@ contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
     }
 
     /**
-     * @dev The initialize function of the upgradable contract.
+     * @notice The initialize function of the upgradable contract
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable.
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
      */
     function initialize() public initializer {
         __Blacklistable_init();
     }
 
     /**
-     * @dev Needed to check that the initialize function of the ancestor contract
-     * has the 'onlyInitializing' modifier.
+     * @notice Needed to check that the initialize function of the ancestor contract
+     * has the 'onlyInitializing' modifier
      */
     function call_parent_initialize() public {
         __Blacklistable_init();
     }
 
     /**
-     * @dev Needed to check that the unchained initialize function of the ancestor contract
-     * has the 'onlyInitializing' modifier.
+     * @notice Needed to check that the unchained initialize function of the ancestor contract
+     * has the 'onlyInitializing' modifier
      */
     function call_parent_initialize_unchained() public {
         __Blacklistable_init_unchained();
     }
 
     /**
-     * @dev Checks the execution of the {notBlacklisted} modifier.
-     * If that modifier executed without reverting emits an event {TestNotBlacklistedModifierSucceeded}.
+     * @notice Checks the execution of the {notBlacklisted} modifier
+     * Emits an event {TestNotBlacklistedModifierSucceeded} if modifier is not reverted
      */
     function testNotBlacklistedModifier() external notBlacklisted(_msgSender()) {
         emit TestNotBlacklistedModifierSucceeded();

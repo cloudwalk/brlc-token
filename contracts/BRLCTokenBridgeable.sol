@@ -9,11 +9,11 @@ import { ERC20Freezable } from "./base/ERC20Freezable.sol";
 /**
  * @title BRLCTokenBridgeable contract
  * @author CloudWalk Inc.
- * @dev The BRLC token implementation that supports the bridge operations.
+ * @notice The BRLC token implementation that supports bridging operations
  */
 contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
     /**
-     * @dev Constructor that prohibits the initialization of the implementation of the upgradable contract.
+     * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *
      * See details
      * https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializing_the_implementation_contract
@@ -25,26 +25,26 @@ contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
     }
 
     /**
-     * @dev The initializer of the upgradable contract.
+     * @notice The initializer of the upgradable contract
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
      *
      * Requirements:
      *
-     * - The passed bridge address must not be zero.
+     * - The passed bridge address must not be zero
      *
-     * @param name_ The name of the token.
-     * @param symbol_ The symbol of the token.
-     * @param bridge_ The address of a bridge contract to support by this contract.
+     * @param name_ The name of the token
+     * @param symbol_ The symbol of the token
+     * @param bridge_ The address of the bridge contract
      */
     function initialize(string memory name_, string memory symbol_, address bridge_) external virtual initializer {
         __BRLCTokenBridgeable_init(name_, symbol_, bridge_);
     }
 
     /**
-     * @dev The internal initializer of the upgradable contract.
+     * @notice The internal initializer of the upgradable contract
      *
-     * See {BRLCTokenBridgeable-initialize}.
+     * See {BRLCTokenBridgeable-initialize}
      */
     function __BRLCTokenBridgeable_init(
         string memory name_,
@@ -64,21 +64,22 @@ contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
     }
 
     /**
-     * @dev The internal unchained initializer of the upgradable contract.
+     * @notice The internal unchained initializer of the upgradable contract
      *
-     * See {BRLCTokenBridgeable-initialize}.
+     * See {BRLCTokenBridgeable-initialize}
      */
     function __BRLCTokenBridgeable_init_unchained() internal onlyInitializing {}
 
     /**
-     * @dev Returns true if token is BRLCoin implementation.
+     * @notice Returns true if token is BRLCoin implementation
      */
     function isBRLCoin() external pure returns (bool) {
         return true;
     }
 
     /**
-     * @dev See {ERC20Upgradeable-_beforeTokenTransfer}.
+     * @dev See {ERC20Base-_beforeTokenTransfer}
+     * @dev See {ERC20Freezable-_beforeTokenTransfer}
      */
     function _beforeTokenTransfer(
         address from,

@@ -7,11 +7,11 @@ import { ERC20Base } from "./base/ERC20Base.sol";
 /**
  * @title InfinitePointsToken contract
  * @author CloudWalk Inc.
- * @dev The InfinitePoints token implementation.
+ * @notice The InfinitePoints token implementation
  */
 contract InfinitePointsToken is ERC20Base {
     /**
-     * @dev Constructor that prohibits the initialization of the implementation of the upgradable contract.
+     * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *
      * See details
      * https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializing_the_implementation_contract
@@ -23,22 +23,22 @@ contract InfinitePointsToken is ERC20Base {
     }
 
     /**
-     * @dev The initializer of the upgradable contract.
+     * @notice The initializer of the upgradable contract
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
      *
-     * @param name_ The name of the token.
-     * @param symbol_ The symbol of the token.
-     * @param totalSupply_ The total supply of the token.
+     * @param name_ The name of the token
+     * @param symbol_ The symbol of the token
+     * @param totalSupply_ The total supply of the token
      */
     function initialize(string memory name_, string memory symbol_, uint256 totalSupply_) external virtual initializer {
         __InfinitePointsToken_init(name_, symbol_, totalSupply_);
     }
 
     /**
-     * @dev The internal initializer of the upgradable contract.
+     * @notice The internal initializer of the upgradable contract
      *
-     * See {InfinitePointsToken-initialize}.
+     * See {InfinitePointsToken-initialize}
      */
     function __InfinitePointsToken_init(
         string memory name_,
@@ -57,16 +57,16 @@ contract InfinitePointsToken is ERC20Base {
     }
 
     /**
-     * @dev The internal unchained initializer of the upgradable contract.
+     * @notice The internal unchained initializer of the upgradable contract
      *
-     * See {InfinitePointsToken-initialize}.
+     * See {InfinitePointsToken-initialize}
      */
     function __InfinitePointsToken_init_unchained(uint256 totalSupply_) internal onlyInitializing {
         _mint(owner(), totalSupply_);
     }
 
     /**
-     * @dev Returns true if token is InfinitePoints token implementation.
+     * @notice Returns true if token is InfinitePoints token implementation
      */
     function isInfinitePoints() external pure returns (bool) {
         return true;

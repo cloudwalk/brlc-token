@@ -9,11 +9,11 @@ import { ERC20Freezable } from "./base/ERC20Freezable.sol";
 /**
  * @title BRLCTokenMintable contract
  * @author CloudWalk Inc.
- * @dev The BRLC token implementation that supports mint and burn operations.
+ * @notice The BRLC token implementation that supports minting, burning and freezing operations
  */
 contract BRLCTokenMintable is ERC20Base, ERC20Mintable, ERC20Freezable {
     /**
-     * @dev Constructor that prohibits the initialization of the implementation of the upgradable contract.
+     * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *
      * See details
      * https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializing_the_implementation_contract
@@ -25,21 +25,21 @@ contract BRLCTokenMintable is ERC20Base, ERC20Mintable, ERC20Freezable {
     }
 
     /**
-     * @dev The initializer of the upgradable contract.
+     * @notice The initializer of the upgradable contract
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
      *
-     * @param name_ The name of the token.
-     * @param symbol_ The symbol of the token.
+     * @param name_ The name of the token
+     * @param symbol_ The symbol of the token
      */
     function initialize(string memory name_, string memory symbol_) external virtual initializer {
         __BRLCTokenMintable_init(name_, symbol_);
     }
 
     /**
-     * @dev The internal initializer of the upgradable contract.
+     * @notice The internal initializer of the upgradable contract
      *
-     * See {BRLCTokenMintable-initialize}.
+     * See {BRLCTokenMintable-initialize}
      */
     function __BRLCTokenMintable_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
@@ -55,21 +55,22 @@ contract BRLCTokenMintable is ERC20Base, ERC20Mintable, ERC20Freezable {
     }
 
     /**
-     * @dev The internal unchained initializer of the upgradable contract.
+     * @notice The internal unchained initializer of the upgradable contract
      *
-     * See {BRLCTokenMintable-initialize}.
+     * See {BRLCTokenMintable-initialize}
      */
     function __BRLCTokenMintable_init_unchained() internal onlyInitializing {}
 
     /**
-     * @dev Returns true if token is BRLCoin implementation.
+     * @notice Returns true if token is BRLCoin implementation
      */
     function isBRLCoin() external pure returns (bool) {
         return true;
     }
 
     /**
-     * @dev See {ERC20Upgradeable-_beforeTokenTransfer}.
+     * @dev See {ERC20Base-_beforeTokenTransfer}
+     * @dev See {ERC20Freezable-_beforeTokenTransfer}
      */
     function _beforeTokenTransfer(
         address from,

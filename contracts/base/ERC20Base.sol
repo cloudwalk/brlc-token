@@ -11,7 +11,7 @@ import { BlacklistableUpgradeable } from "./common/BlacklistableUpgradeable.sol"
 /**
  * @title ERC20Base contract
  * @author CloudWalk Inc.
- * @dev This contract is base implementation of the BRLC token with inherited Rescuable,
+ * @notice This contract is base implementation of the BRLC token with inherited Rescuable,
  * Pausable, and Blacklistable functionality.
  */
 abstract contract ERC20Base is
@@ -22,12 +22,12 @@ abstract contract ERC20Base is
     ERC20Upgradeable
 {
     /**
-     * @dev The internal initializer of the upgradable contract.
+     * @notice The internal initializer of the upgradable contract
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable .
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
      *
-     * @param name_ The name of the token.
-     * @param symbol_ The symbol of the token.
+     * @param name_ The name of the token
+     * @param symbol_ The symbol of the token
      */
     function __ERC20Base_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
@@ -41,27 +41,25 @@ abstract contract ERC20Base is
     }
 
     /**
-     * @dev The internal unchained initializer of the upgradable contract.
+     * @notice The internal unchained initializer of the upgradable contract
      *
-     * See {ERC20Base-__ERC20Base_init}.
+     * See {ERC20Base-__ERC20Base_init}
      */
     function __ERC20Base_init_unchained() internal onlyInitializing {}
 
     /**
-     * @dev See {ERC20Upgradeable-decimals}.
+     * @inheritdoc ERC20Upgradeable
      */
     function decimals() public pure virtual override returns (uint8) {
         return 6;
     }
 
     /**
-     * @dev See {ERC20Upgradeable-_approve}.
+     * @inheritdoc ERC20Upgradeable
      *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     * - The `owner` address must not be blacklisted.
-     * - The `spender` address must not be blacklisted.
+     * @notice The contract must not be paused
+     * @notice The `owner` address must not be blacklisted
+     * @notice The `spender` address must not be blacklisted
      */
     function _approve(
         address owner,
@@ -72,13 +70,11 @@ abstract contract ERC20Base is
     }
 
     /**
-     * @dev See {ERC20Upgradeable-_spendAllowance}.
+     * @inheritdoc ERC20Upgradeable
      *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     * - The `owner` address must not be blacklisted.
-     * - The `spender` address must not be blacklisted.
+     * @notice The contract must not be paused
+     * @notice The `owner` address must not be blacklisted
+     * @notice The `spender` address must not be blacklisted
      */
     function _spendAllowance(
         address owner,
@@ -89,13 +85,11 @@ abstract contract ERC20Base is
     }
 
     /**
-     * @dev See {ERC20Upgradeable-_beforeTokenTransfer}.
+     * @inheritdoc ERC20Upgradeable
      *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     * - The `from` address must not be blacklisted.
-     * - The `to` address must not be blacklisted.
+     * @notice The contract must not be paused
+     * @notice The `from` address must not be blacklisted
+     * @notice The `to` address must not be blacklisted
      */
     function _beforeTokenTransfer(
         address from,

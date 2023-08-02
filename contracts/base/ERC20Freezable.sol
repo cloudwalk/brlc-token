@@ -8,33 +8,33 @@ import { ERC20Base } from "./ERC20Base.sol";
 /**
  * @title ERC20Freezable contract
  * @author CloudWalk Inc.
- * @dev The ERC20 token implementation that supports the freezing operations.
+ * @notice The ERC20 token implementation that supports the freezing operations
  */
 abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
-    /// @dev The mapping of the freeze approvals.
+    /// @notice The mapping of the freeze approvals
     mapping(address => bool) private _freezeApprovals;
 
-    /// @dev The mapping of the frozen balances.
+    /// @notice The mapping of the frozen balances
     mapping(address => uint256) private _frozenBalances;
 
     // -------------------- Errors -----------------------------------
 
-    /// @dev The token freezing operation is not approved by the account.
+    /// @notice The token freezing operation is not approved by the account
     error FreezingNotApproved();
 
-    /// @dev The token freezing is already approved by the account.
+    /// @notice The token freezing is already approved by the account
     error FreezingAlreadyApproved();
 
-    /// @dev The frozen balance is exceeded during the operation.
+    /// @notice The frozen balance is exceeded during the operation
     error LackOfFrozenBalance();
 
-    /// @dev The transfer amount exceeded the frozen amount.
+    /// @notice The transfer amount exceeded the frozen amount
     error TransferExceededFrozenAmount();
 
     // -------------------- Functions --------------------------------
 
     /**
-     * @dev The internal initializer of the upgradable contract.
+     * @notice The internal initializer of the upgradable contract
      */
     function __ERC20Freezable_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
@@ -48,16 +48,14 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
-     * @dev The internal unchained initializer of the upgradable contract.
+     * @notice The internal unchained initializer of the upgradable contract
      */
     function __ERC20Freezable_init_unchained() internal onlyInitializing {}
 
     /**
-     * @dev See {IERC20Freezable-approveFreezing}.
+     * @inheritdoc IERC20Freezable
      *
-     * Requirements:
-     *
-     * - The contract must not be paused.
+     * @notice The contract must not be paused
      */
     function approveFreezing() external whenNotPaused {
         if (_freezeApprovals[_msgSender()]) {
@@ -70,13 +68,11 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
-     * @dev See {IERC20Freezable-freeze}.
+     * @inheritdoc IERC20Freezable
      *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     * - Can only be called by the blacklister account.
-     * - The token freezing must be approved by the `account`.
+     * @notice The contract must not be paused
+     * @notice Can only be called by the blacklister account
+     * @notice The token freezing must be approved by the `account`
      */
     function freeze(address account, uint256 amount) external whenNotPaused onlyBlacklister {
         if (!_freezeApprovals[account]) {
@@ -89,13 +85,11 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
-     * @dev See {IERC20Freezable-transferFrozen}.
+     * @inheritdoc IERC20Freezable
      *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     * - Can only be called by the blacklister account.
-     * - The frozen balance must be greater than the `amount`.
+     * @notice The contract must not be paused
+     * @notice Can only be called by the blacklister account
+     * @notice The frozen balance must be greater than the `amount`
      */
     function transferFrozen(address from, address to, uint256 amount) public virtual whenNotPaused onlyBlacklister {
         uint256 balance = _frozenBalances[from];
@@ -115,21 +109,21 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
-     * @dev See {IERC20Freezable-freezeApproval}.
+     * @inheritdoc IERC20Freezable
      */
     function freezeApproval(address account) external view returns (bool) {
         return _freezeApprovals[account];
     }
 
     /**
-     * @dev See {IERC20Freezable-frozenBalance}.
+     * @inheritdoc IERC20Freezable
      */
     function frozenBalance(address account) external view returns (uint256) {
         return _frozenBalances[account];
     }
 
     /**
-     * @dev See {ERC20Upgradeable-_beforeTokenTransfer}.
+     * @inheritdoc ERC20Base
      */
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._beforeTokenTransfer(from, to, amount);
