@@ -22,10 +22,18 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
     // -------------------- Errors -----------------------------------
 
-    /// @notice The transaction sender is not a master minter
+    /**
+     * @notice The transaction sender is not a master minter
+     *
+     * @param account The address of the transaction sender
+     */
     error UnauthorizedMasterMinter(address account);
 
-    /// @notice The transaction sender is not a minter
+    /**
+     * @notice The transaction sender is not a minter
+     *
+     * @param account The address of the transaction sender
+     */
     error UnauthorizedMinter(address account);
 
     /// @notice The mint allowance is exceeded during the mint operation
@@ -154,10 +162,10 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             revert ExceededMintAllowance();
         }
 
-        _mint(account, amount);
-
         _mintersAllowance[_msgSender()] = mintAllowance - amount;
         emit Mint(_msgSender(), account, amount);
+
+        _mint(account, amount);
 
         return true;
     }

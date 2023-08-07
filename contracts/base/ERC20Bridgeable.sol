@@ -11,7 +11,7 @@ import { ERC20Base } from "./ERC20Base.sol";
  * @author CloudWalk Inc.
  * @notice The ERC20 token implementation that supports bridging operations
  */
-contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
+abstract contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
     /// @notice The address of the bridge
     address private _bridge;
 

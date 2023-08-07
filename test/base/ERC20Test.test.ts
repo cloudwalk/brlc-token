@@ -87,11 +87,11 @@ describe("Contract 'ERC20Test'", async () => {
         });
     });
 
-    describe("Function 'testMint()", async () => {
+    describe("Function 'mintForTest()", async () => {
         it("Executes as expected and emits the correct events", async () => {
             const { token } = await setUpFixture(deployToken);
             expect(await token.balanceOf(user.address)).to.equal(0);
-            await proveTx(token.connect(user).testMint(user.address, MINT_AMOUNT));
+            await proveTx(token.connect(user).mintForTest(user.address, MINT_AMOUNT));
             expect(await token.balanceOf(user.address)).to.equal(MINT_AMOUNT);
         });
     });

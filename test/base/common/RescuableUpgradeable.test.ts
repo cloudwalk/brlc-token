@@ -62,7 +62,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
     }> {
         const { rescuable } = await deployRescuable();
         const { token } = await deployToken();
-        await proveTx(token.testMint(rescuable.address, TOKEN_AMOUNT));
+        await proveTx(token.mintForTest(rescuable.address, TOKEN_AMOUNT));
         await proveTx(rescuable.setRescuer(rescuer.address));
         return { rescuable, token };
     }

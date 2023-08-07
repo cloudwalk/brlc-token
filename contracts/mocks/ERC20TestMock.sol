@@ -59,7 +59,7 @@ contract ERC20TestMock is ERC20Upgradeable {
      * @param account The address of an account to mint for
      * @param amount The amount of tokens to mint
      */
-    function testMint(address account, uint256 amount) external returns (bool) {
+    function mintForTest(address account, uint256 amount) external returns (bool) {
         _mint(account, amount);
         return true;
     }

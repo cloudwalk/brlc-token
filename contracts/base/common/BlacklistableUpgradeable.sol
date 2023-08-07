@@ -198,7 +198,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @notice Checks if the account is present in the blacklist
+     * @notice Checks if an account is present in the blacklist
      *
      * @param account The address to check for presence in the blacklist
      * @return True if the account is present in the blacklist, false otherwise

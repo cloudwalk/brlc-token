@@ -41,6 +41,7 @@ contract LightningBitcoin is ERC20Base, ERC20Mintable {
      * See {LightningBitcoin-initialize}
      */
     function __LightningBitcoin_init(string memory name_, string memory symbol_) internal onlyInitializing {
+        __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
