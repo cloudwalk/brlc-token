@@ -107,7 +107,9 @@ describe("Contract 'ERC20Base'", async () => {
     describe("Function 'transfer()'", async () => {
         it("Executes as expected and emits the correct event", async () => {
             const { token } = await setUpFixture(deployToken);
-            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
+            await proveTx(
+                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
+            );
             await expect(token.connect(user1).transfer(user2.address, TOKEN_AMOUNT))
                 .to.changeTokenBalances(
                     token,
@@ -120,7 +122,9 @@ describe("Contract 'ERC20Base'", async () => {
 
         it("Is reverted if the contract is paused", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
-            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
+            await proveTx(
+                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
+            );
             await proveTx(token.connect(pauser).pause());
             await expect(
                 token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)
@@ -129,7 +133,9 @@ describe("Contract 'ERC20Base'", async () => {
 
         it("Is reverted if the caller is blacklisted", async () => {
             const { token } = await setUpFixture(deployToken);
-            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
+            await proveTx(
+                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
+            );
             await proveTx(token.connect(user1).selfBlacklist());
             await expect(
                 token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)
@@ -138,7 +144,9 @@ describe("Contract 'ERC20Base'", async () => {
 
         it("Is reverted if the recipient is blacklisted", async () => {
             const { token } = await setUpFixture(deployToken);
-            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
+            await proveTx(
+                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
+            );
             await proveTx(token.connect(user2).selfBlacklist());
             await expect(
                 token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)
@@ -194,7 +202,9 @@ describe("Contract 'ERC20Base'", async () => {
     describe("Function 'transferFrom()'", async () => {
         it("Executes as expected and emits the correct event", async () => {
             const { token } = await setUpFixture(deployToken);
-            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
+            await proveTx(
+                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
+            );
             await proveTx(token.connect(user1).approve(user2.address, TOKEN_AMOUNT));
             await expect(
                 token
@@ -213,7 +223,9 @@ describe("Contract 'ERC20Base'", async () => {
         it("Is reverted if the contract is paused", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             await proveTx(token.connect(user1).approve(user2.address, TOKEN_AMOUNT));
-            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
+            await proveTx(
+                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
+            );
             await proveTx(token.connect(pauser).pause());
             await expect(
                 token
@@ -224,7 +236,9 @@ describe("Contract 'ERC20Base'", async () => {
 
         it("Is reverted if the sender is blacklisted", async () => {
             const { token } = await setUpFixture(deployToken);
-            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
+            await proveTx(
+                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
+            );
             await proveTx(token.connect(user1).approve(user2.address, TOKEN_AMOUNT));
             await proveTx(token.connect(user2).selfBlacklist());
             await expect(
@@ -236,7 +250,9 @@ describe("Contract 'ERC20Base'", async () => {
 
         it("Is reverted if the recipient is blacklisted", async () => {
             const { token } = await setUpFixture(deployToken);
-            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
+            await proveTx(
+                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
+            );
             await proveTx(token.connect(user1).approve(user2.address, TOKEN_AMOUNT));
             await proveTx(token.connect(user1).selfBlacklist());
             await expect(
