@@ -5,64 +5,83 @@ pragma solidity 0.8.16;
 /**
  * @title IERC20Bridgeable interface
  * @author CloudWalk Inc.
- * @dev The interface of a token that supports the bridge operations.
+ * @notice The interface of a token that supports bridging operations
  */
 interface IERC20Bridgeable {
-    /// @dev Emitted when a minting is performed as part of a bridge operation.
+    /**
+     * @notice Emitted when a minting is performed as part of a bridge operation
+     *
+     * @param account The owner of the tokens passing through the bridge
+     * @param amount The amount of tokens passing through the bridge
+     */
     event MintForBridging(address indexed account, uint256 amount);
 
-    /// @dev Emitted when a burning is performed as part of a bridge operation.
+    /**
+     * @notice Emitted when a burning is performed as part of a bridge operation
+     *
+     * @param account The owner of the tokens passing through the bridge
+     * @param amount The amount of tokens passing through the bridge
+     */
     event BurnForBridging(address indexed account, uint256 amount);
 
-    /// @dev Emitted when a bridge contract is configured.
+    /**
+     * @notice Emitted when the bridge contract is configured
+     *
+     * @param newBridge The address of the new bridge contract
+     * @param oldBridge The address of the old bridge contract
+     */
     event SetBridge(address newBridge, address oldBridge);
 
     /**
-     * @dev Sets the address of the new bridge contract.
-     * @param newBridge Address of the new bridge contract.
+     * @notice Sets the new bridge contract
      *
-     * It is expected that this function can be called only by a contract owner.
+     * @param newBridge The address of the new bridge contract
      *
-     * Emits a {SetBridge} event.
+     * It is expected that this function can be called only by a contract owner
+     *
+     * Emits a {SetBridge} event
      */
     function setBridge(address newBridge) external;
 
     /**
-     * @dev Mints tokens as part of a bridge operation.
+     * @notice Mints tokens as part of a bridge operation
      *
-     * It is expected that this function can be called only by a bridge contract.
+     * It is expected that this function can be called only by a bridge contract
      *
-     * Emits a {MintForBridging} event.
+     * Emits a {MintForBridging} event
      *
-     * @param account The owner of the tokens passing through the bridge.
-     * @param amount The amount of tokens passing through the bridge.
-     * @return True if the operation was successful.
+     * @param account The owner of the tokens passing through the bridge
+     * @param amount The amount of tokens passing through the bridge
+     * @return True if the operation was successful
      */
     function mintForBridging(address account, uint256 amount) external returns (bool);
 
     /**
-     * @dev Burns tokens as part of a bridge operation.
+     * @notice Burns tokens as part of a bridge operation
      *
-     * It is expected that this function can be called only by a bridge contract.
+     * It is expected that this function can be called only by a bridge contract
      *
-     * Emits a {BurnForBridging} event.
+     * Emits a {BurnForBridging} event
      *
-     * @param account The owner of the tokens passing through the bridge.
-     * @param amount The amount of tokens passing through the bridge.
-     * @return True if the operation was successful.
+     * @param account The owner of the tokens passing through the bridge
+     * @param amount The amount of tokens passing through the bridge
+     * @return True if the operation was successful
      */
     function burnForBridging(address account, uint256 amount) external returns (bool);
 
     /**
-     * @dev Checks whether a bridge is supported by the token or not.
-     * @param bridge The address of the bridge to check.
-     * @return True if the bridge is supported by the token.
+     * @notice Checks whether a bridge is supported by the token or not
+     *
+     * @param bridge The address of the bridge to check
+     * @return True if the bridge is supported by the token
      */
     function isBridgeSupported(address bridge) external view returns (bool);
 
     /**
-     * @dev Checks whether the token supports the bridge operations by implementing this interface.
-     * @return True in any case.
+     * @notice Checks whether the token supports bridging operations
+     * by implementing IERC20Bridgeable interface
+     *
+     * @return True in any case
      */
     function isIERC20Bridgeable() external view returns (bool);
 }

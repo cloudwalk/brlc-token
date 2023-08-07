@@ -3,6 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { proveTx } from "../../test-utils/eth";
 
 async function setUpFixture(func: any) {
     if (network.name === "hardhat") {
@@ -12,20 +13,25 @@ async function setUpFixture(func: any) {
     }
 }
 
-describe("Contract 'LightningBitcoin'", async () => {
-    const TOKEN_NAME = "Lightning Bitcoin";
-    const TOKEN_SYMBOL = "lnBTC";
-    const TOKEN_DECIMALS = 8;
+describe("Contract 'ERC20Test'", async () => {
+    const TOKEN_NAME = "ERC20 Test";
+    const TOKEN_SYMBOL = "TEST";
+    const TOKEN_DECIMALS = 18;
+
+    const MINT_AMOUNT = 100;
 
     const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED =
         "Initializable: contract is already initialized";
+    const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING =
+        "Initializable: contract is not initializing";
 
     let tokenFactory: ContractFactory;
     let deployer: SignerWithAddress;
+    let user: SignerWithAddress;
 
     before(async () => {
-        [deployer] = await ethers.getSigners();
-        tokenFactory = await ethers.getContractFactory("LightningBitcoin");
+        [deployer, user] = await ethers.getSigners();
+        tokenFactory = await ethers.getContractFactory("ERC20TestMock");
     });
 
     async function deployToken(): Promise<{ token: Contract }> {
@@ -43,11 +49,6 @@ describe("Contract 'LightningBitcoin'", async () => {
             expect(await token.name()).to.equal(TOKEN_NAME);
             expect(await token.symbol()).to.equal(TOKEN_SYMBOL);
             expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
-            expect(await token.owner()).to.equal(deployer.address);
-            expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
-            expect(await token.rescuer()).to.equal(ethers.constants.AddressZero);
-            expect(await token.blacklister()).to.equal(ethers.constants.AddressZero);
-            expect(await token.masterMinter()).to.equal(ethers.constants.AddressZero);
         });
 
         it("Is reverted if called for the second time", async () => {
@@ -57,7 +58,7 @@ describe("Contract 'LightningBitcoin'", async () => {
             );
         });
 
-        it("Is reverted if the contract implementation is called even for the first time", async () => {
+        it("Is reverted if the implementation contract is called even for the first time", async () => {
             const tokenImplementation: Contract = await tokenFactory.deploy();
             await tokenImplementation.deployed();
             await expect(
@@ -66,12 +67,32 @@ describe("Contract 'LightningBitcoin'", async () => {
                 REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
             );
         });
+
+        it("Is reverted if the internal initializer is called outside of the init process", async () => {
+            const { token } = await setUpFixture(deployToken);
+            await expect(
+                token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)
+            ).to.be.revertedWith(
+                REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
+            );
+        });
+
+        it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
+            const { token } = await setUpFixture(deployToken);
+            await expect(
+                token.call_parent_initialize_unchained(TOKEN_NAME, TOKEN_SYMBOL)
+            ).to.be.revertedWith(
+                REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
+            );
+        });
     });
 
-    describe("Function 'isLightningBitcoin()'", async () => {
-        it("Returns true", async () => {
+    describe("Function 'mintForTest()", async () => {
+        it("Executes as expected and emits the correct events", async () => {
             const { token } = await setUpFixture(deployToken);
-            expect(await token.isLightningBitcoin()).to.eq(true);
+            expect(await token.balanceOf(user.address)).to.equal(0);
+            await proveTx(token.connect(user).mintForTest(user.address, MINT_AMOUNT));
+            expect(await token.balanceOf(user.address)).to.equal(MINT_AMOUNT);
         });
     });
 });

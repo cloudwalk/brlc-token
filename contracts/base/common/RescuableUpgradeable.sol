@@ -9,31 +9,38 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 /**
  * @title RescuableUpgradeable base contract
  * @author CloudWalk Inc.
- * @dev Allows to rescue ERC20 tokens locked up in the contract using the `rescuer` account.
- *
- * This contract is used through inheritance. It introduces the `rescuer` role that is allowed to
- * rescue tokens locked up in the contract that is inherited from this one.
+ * @notice Allows to rescue ERC20 tokens locked up in the contract using the `rescuer` account
+ * @dev This contract is used through inheritance. It introduces the `rescuer` role that is allowed
+ * to rescue tokens locked up in the contract that is inherited from this one.
  */
 abstract contract RescuableUpgradeable is OwnableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    /// @dev The address of the rescuer that is allowed to rescue tokens locked up in the contract.
+    /// @notice The address of the rescuer that is allowed to rescue tokens locked up in the contract
     address private _rescuer;
 
     // -------------------- Events -----------------------------------
 
-    /// @dev Emitted when the rescuer is changed.
+    /**
+     * @notice Emitted when the rescuer is changed
+     *
+     * @param newRescuer The address of the new rescuer
+     */
     event RescuerChanged(address indexed newRescuer);
 
     // -------------------- Errors -----------------------------------
 
-    /// @dev The message sender is not a rescuer.
+    /**
+     * @notice The transaction sender is not a rescuer
+     *
+     * @param account The address of the transaction sender
+     */
     error UnauthorizedRescuer(address account);
 
     // -------------------- Modifiers --------------------------------
 
     /**
-     * @dev Throws if called by any account other than the rescuer.
+     * @notice Throws if called by any account other than the rescuer
      */
     modifier onlyRescuer() {
         if (_msgSender() != _rescuer) {
@@ -45,53 +52,48 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
     // -------------------- Functions --------------------------------
 
     /**
-     * @dev The internal initializer of the upgradable contract.
+     * @notice The internal initializer of the upgradable contract
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable.
+     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
      */
     function __Rescuable_init() internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
-
         __Rescuable_init_unchained();
     }
 
     /**
-     * @dev The unchained internal initializer of the upgradable contract.
+     * @notice The unchained internal initializer of the upgradable contract
      *
-     * See {RescuableUpgradeable-__Rescuable_init}.
+     * See {RescuableUpgradeable-__Rescuable_init}
      */
     function __Rescuable_init_unchained() internal onlyInitializing {}
 
     /**
-     * @dev Withdraws ERC20 tokens locked up in the contract.
+     * @notice Withdraws ERC20 tokens locked up in the contract
      *
      * Requirements:
      *
-     * - Can only be called by the rescuer account.
+     * - Can only be called by the rescuer account
      *
-     * @param token The address of the ERC20 token contract.
-     * @param to The address of the recipient of tokens.
-     * @param amount The amount of tokens to withdraw.
+     * @param token The address of the ERC20 token contract
+     * @param to The address of the recipient of tokens
+     * @param amount The amount of tokens to withdraw
      */
-    function rescueERC20(
-        address token,
-        address to,
-        uint256 amount
-    ) external onlyRescuer {
+    function rescueERC20(address token, address to, uint256 amount) external onlyRescuer {
         IERC20Upgradeable(token).safeTransfer(to, amount);
     }
 
     /**
-     * @dev Updates the rescuer address.
+     * @notice Updates the rescuer address
      *
      * Requirements:
      *
-     * - Can only be called by the contract owner.
+     * - Can only be called by the contract owner
      *
-     * Emits a {RescuerChanged} event.
+     * Emits a {RescuerChanged} event
      *
-     * @param newRescuer The address of a new rescuer.
+     * @param newRescuer The address of a new rescuer
      */
     function setRescuer(address newRescuer) external onlyOwner {
         if (_rescuer == newRescuer) {
@@ -104,7 +106,7 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
     }
 
     /**
-     * @dev Returns the rescuer address.
+     * @notice Returns the rescuer address
      */
     function rescuer() public view virtual returns (address) {
         return _rescuer;

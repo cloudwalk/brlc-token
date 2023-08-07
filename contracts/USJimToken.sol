@@ -3,15 +3,15 @@
 pragma solidity 0.8.16;
 
 import { ERC20Base } from "./base/ERC20Base.sol";
-import { ERC20Bridgeable } from "./base/ERC20Bridgeable.sol";
+import { ERC20Mintable } from "./base/ERC20Mintable.sol";
 import { ERC20Freezable } from "./base/ERC20Freezable.sol";
 
 /**
- * @title BRLCTokenBridgeable contract
+ * @title USJimToken contract
  * @author CloudWalk Inc.
- * @notice The BRLC token implementation that supports bridging operations
+ * @notice The USJim token implementation that supports minting, burning and freezing operations
  */
-contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
+contract USJimToken is ERC20Base, ERC20Mintable, ERC20Freezable {
     /**
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *
@@ -29,28 +29,19 @@ contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
      *
      * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
      *
-     * Requirements:
-     *
-     * - The passed bridge address must not be zero
-     *
      * @param name_ The name of the token
      * @param symbol_ The symbol of the token
-     * @param bridge_ The address of the bridge contract
      */
-    function initialize(string memory name_, string memory symbol_, address bridge_) external virtual initializer {
-        __BRLCTokenBridgeable_init(name_, symbol_, bridge_);
+    function initialize(string memory name_, string memory symbol_) external virtual initializer {
+        __USJimToken_init(name_, symbol_);
     }
 
     /**
      * @notice The internal initializer of the upgradable contract
      *
-     * See {BRLCTokenBridgeable-initialize}
+     * See {USJimToken-initialize}
      */
-    function __BRLCTokenBridgeable_init(
-        string memory name_,
-        string memory symbol_,
-        address bridge_
-    ) internal onlyInitializing {
+    function __USJimToken_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
@@ -58,22 +49,22 @@ contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
         __Blacklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
         __ERC20Base_init_unchained();
-        __ERC20Bridgeable_init_unchained(bridge_);
+        __ERC20Mintable_init_unchained();
         __ERC20Freezable_init_unchained();
-        __BRLCTokenBridgeable_init_unchained();
+        __USJimToken_init_unchained();
     }
 
     /**
      * @notice The internal unchained initializer of the upgradable contract
      *
-     * See {BRLCTokenBridgeable-initialize}
+     * See {USJimToken-initialize}
      */
-    function __BRLCTokenBridgeable_init_unchained() internal onlyInitializing {}
+    function __USJimToken_init_unchained() internal onlyInitializing {}
 
     /**
-     * @notice Returns true if token is BRLCoin implementation
+     * @notice Returns true if token is USJim implementation
      */
-    function isBRLCoin() external pure returns (bool) {
+    function isUSJim() external pure returns (bool) {
         return true;
     }
 
