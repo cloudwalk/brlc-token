@@ -2,24 +2,24 @@
 
 pragma solidity 0.8.16;
 
-import { IHook } from "./../base/interfaces/IHook.sol";
+import { IERC20Hooked } from "./../base/interfaces/IERC20Hooked.sol";
 
 /**
- * @title HookTestMock contract
+ * @title ERC20HookedMock contract
  * @author CloudWalk Inc.
- * @notice An implementation of the {IHook} contract for testing purposes
+ * @notice An implementation of the {IERC20Hooked} contract for testing purposes
  */
-contract HookTestMock is IHook {
+contract ERC20HookedMock is IERC20Hooked {
     /// @notice Emitted when the `beforeTokenTransfer` hook function is successfully executed
     event TestBeforeTokenTransferHookEvent();
 
     /// @notice Emitted when the `afterTokenTransfer` hook function is successfully executed
     event TestAfterTokenTransferHookEvent();
 
-    /// @notice Custome error to be reverted with from the `beforeTokenTransfer` hook function
+    /// @notice Custom error to be reverted with from the `beforeTokenTransfer` hook function
     error TestBeforeTokenTransferHookError();
 
-    /// @notice Custome error to be reverted with from the `afterTokenTransfer` hook function
+    /// @notice Custom error to be reverted with from the `afterTokenTransfer` hook function
     error TestAfterTokenTransferHookError();
 
     /// @notice Flag indicating whether hook functions should revert with panic
@@ -59,7 +59,7 @@ contract HookTestMock is IHook {
     }
 
     /**
-     * @inheritdoc IHook
+     * @inheritdoc IERC20Hooked
      */
     function beforeTokenTransfer(address from, address to, uint256 amount) external {
         amount;
@@ -88,7 +88,7 @@ contract HookTestMock is IHook {
     }
 
     /**
-     * @inheritdoc IHook
+     * @inheritdoc IERC20Hooked
      */
     function afterTokenTransfer(address from, address to, uint256 amount) external {
         amount;

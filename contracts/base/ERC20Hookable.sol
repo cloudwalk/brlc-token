@@ -3,7 +3,7 @@
 pragma solidity 0.8.16;
 
 import { IERC20Hookable } from "./interfaces/IERC20Hookable.sol";
-import { IHook } from "./interfaces/IHook.sol";
+import { IERC20Hooked } from "./interfaces/IERC20Hooked.sol";
 import { ERC20Base } from "./ERC20Base.sol";
 
 /**
@@ -116,10 +116,10 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
         super._beforeTokenTransfer(from, to, amount);
         for (uint256 i = 0; i < _beforeTokenTransferHooks.length; i++) {
             if (_beforeTokenTransferHooks[i].policy == ErrorHandlingPolicy.Revert) {
-                IHook(_beforeTokenTransferHooks[i].account).beforeTokenTransfer(from, to, amount);
+                IERC20Hooked(_beforeTokenTransferHooks[i].account).beforeTokenTransfer(from, to, amount);
             } else {
                 // ErrorHandlingPolicy.Event
-                try IHook(_beforeTokenTransferHooks[i].account).beforeTokenTransfer(from, to, amount) {
+                try IERC20Hooked(_beforeTokenTransferHooks[i].account).beforeTokenTransfer(from, to, amount) {
                     // Do nothing
                 } catch Error(string memory reason) {
                     emit BeforeTokenTransferHookFailure(_beforeTokenTransferHooks[i].account, reason, 0, "");
@@ -139,10 +139,10 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
         super._afterTokenTransfer(from, to, amount);
         for (uint256 i = 0; i < _afterTokenTransferHooks.length; i++) {
             if (_afterTokenTransferHooks[i].policy == ErrorHandlingPolicy.Revert) {
-                IHook(_afterTokenTransferHooks[i].account).afterTokenTransfer(from, to, amount);
+                IERC20Hooked(_afterTokenTransferHooks[i].account).afterTokenTransfer(from, to, amount);
             } else {
                 // ErrorHandlingPolicy.Event
-                try IHook(_afterTokenTransferHooks[i].account).afterTokenTransfer(from, to, amount) {
+                try IERC20Hooked(_afterTokenTransferHooks[i].account).afterTokenTransfer(from, to, amount) {
                     // Do nothing
                 } catch Error(string memory reason) {
                     emit AfterTokenTransferHookFailure(_afterTokenTransferHooks[i].account, reason, 0, "");
