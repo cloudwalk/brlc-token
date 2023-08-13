@@ -8,6 +8,12 @@ pragma solidity 0.8.16;
  * @notice The interface of a token that supports hooking operations
  */
 interface IERC20Hookable {
+    /// @notice An enum describing the error handling policy
+    enum ErrorHandlingPolicy {
+        Revert,
+        Event
+    }
+
     /// @notice A structure describing a hook
     struct Hook {
         /// @notice The address of the hook contract
@@ -16,23 +22,17 @@ interface IERC20Hookable {
         ErrorHandlingPolicy policy;
     }
 
-    /// @notice An enumeration describing the error handling policy of a hook
-    enum ErrorHandlingPolicy {
-        Revert,
-        Event
-    }
-
     /**
      * @notice Updates the `beforeTokenTransfer` hooks attached to the token
      * @param hooks The hooks to be attached
      */
-    function updateBeforeTokenTransferHooks(Hook[] memory hooks) external;
+    function setBeforeTokenTransferHooks(Hook[] calldata hooks) external;
 
     /**
      * @notice Updates the `afterTokenTransfer` hooks attached to the token
      * @param hooks The hooks to be attached
      */
-    function updateAfterTokenTransferHooks(Hook[] memory hooks) external;
+    function setAfterTokenTransferHooks(Hook[] calldata hooks) external;
 
     /**
      * @notice Returns the array of `beforeTokenTransfer` hooks attached to the token

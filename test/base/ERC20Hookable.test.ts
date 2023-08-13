@@ -49,12 +49,12 @@ describe("Contract 'ERC20Hookable'", async () => {
     const ZERO_REVERT_REASON_MESSAGE = "";
 
     const EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOKS_UPDATED =
-        "BeforeTokenTransferHooksUpdated";
+        "BeforeTokenTransferHooksSet";
     const EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOK_FAILURE =
         "BeforeTokenTransferHookFailure";
     const EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK = "TestBeforeTokenTransferHookEvent";
     const EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOKS_UPDATED =
-        "AfterTokenTransferHooksUpdated";
+        "AfterTokenTransferHooksSet";
     const EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOK_FAILURE = "AfterTokenTransferHookFailure";
     const EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK = "TestAfterTokenTransferHookEvent";
 
@@ -144,7 +144,7 @@ describe("Contract 'ERC20Hookable'", async () => {
         });
     });
 
-    describe("Function 'updateBeforeTokenTransferHooks()'", async () => {
+    describe("Function 'setBeforeTokenTransferHooks()'", async () => {
         it("Executes as expected and emits the correct event", async () => {
             const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
             const hooks: HookConfig[] = [
@@ -159,7 +159,7 @@ describe("Contract 'ERC20Hookable'", async () => {
             ];
             expect(await token.getBeforeTokenTransferHooks()).to.deep.equal([]);
             await expect(
-                token.connect(deployer).updateBeforeTokenTransferHooks(hooks)
+                token.connect(deployer).setBeforeTokenTransferHooks(hooks)
             ).to.emit(token, EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOKS_UPDATED);
             checkHookConfigsEquality(await token.getBeforeTokenTransferHooks(), hooks);
         });
@@ -177,12 +177,12 @@ describe("Contract 'ERC20Hookable'", async () => {
                 },
             ];
             await expect(
-                token.connect(user).updateBeforeTokenTransferHooks(hooks)
+                token.connect(user).setBeforeTokenTransferHooks(hooks)
             ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
         });
     });
 
-    describe("Function 'updateAfterTokenTransferHooks()'", async () => {
+    describe("Function 'setAfterTokenTransferHooks()'", async () => {
         it("Executes as expected and emits the correct event", async () => {
             const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
             const hooks: HookConfig[] = [
@@ -197,7 +197,7 @@ describe("Contract 'ERC20Hookable'", async () => {
             ];
             expect(await token.getAfterTokenTransferHooks()).to.deep.equal([]);
             await expect(
-                token.connect(deployer).updateAfterTokenTransferHooks(hooks)
+                token.connect(deployer).setAfterTokenTransferHooks(hooks)
             ).to.emit(token, EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOKS_UPDATED);
             checkHookConfigsEquality(await token.getAfterTokenTransferHooks(), hooks);
         });
@@ -215,7 +215,7 @@ describe("Contract 'ERC20Hookable'", async () => {
                 },
             ];
             await expect(
-                token.connect(user).updateAfterTokenTransferHooks(hooks)
+                token.connect(user).setAfterTokenTransferHooks(hooks)
             ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
         });
     });
@@ -233,7 +233,7 @@ describe("Contract 'ERC20Hookable'", async () => {
                     policy: ErrorHandlingPolicy.Revert,
                 },
             ];
-            await proveTx(token.connect(deployer).updateBeforeTokenTransferHooks(hooks));
+            await proveTx(token.connect(deployer).setBeforeTokenTransferHooks(hooks));
             await expect(token.connect(user).transfer(user.address, 0))
                 .to.emit(hook1, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
                 .to.emit(hook2, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
@@ -256,7 +256,7 @@ describe("Contract 'ERC20Hookable'", async () => {
                     policy: ErrorHandlingPolicy.Revert,
                 },
             ];
-            await proveTx(token.connect(deployer).updateBeforeTokenTransferHooks(hooks));
+            await proveTx(token.connect(deployer).setBeforeTokenTransferHooks(hooks));
             await expect(token.connect(user).transfer(user.address, 0))
                 .to.emit(hook1, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
                 .to.emit(hook2, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
@@ -279,7 +279,7 @@ describe("Contract 'ERC20Hookable'", async () => {
                     policy: ErrorHandlingPolicy.Revert,
                 },
             ];
-            await proveTx(token.connect(deployer).updateBeforeTokenTransferHooks(hooks));
+            await proveTx(token.connect(deployer).setBeforeTokenTransferHooks(hooks));
             await expect(token.connect(user).transfer(user.address, 0))
                 .to.emit(hook1, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
                 .to.emit(hook2, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
@@ -305,7 +305,7 @@ describe("Contract 'ERC20Hookable'", async () => {
                     policy: ErrorHandlingPolicy.Event,
                 },
             ];
-            await proveTx(token.connect(deployer).updateBeforeTokenTransferHooks(hooks));
+            await proveTx(token.connect(deployer).setBeforeTokenTransferHooks(hooks));
             await expect(token.connect(user).transfer(user.address, 0))
                 .to.emit(hook1, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
                 .to.emit(hook2, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
@@ -367,7 +367,7 @@ describe("Contract 'ERC20Hookable'", async () => {
                     policy: ErrorHandlingPolicy.Event,
                 },
             ];
-            await proveTx(token.connect(deployer).updateBeforeTokenTransferHooks(hooks));
+            await proveTx(token.connect(deployer).setBeforeTokenTransferHooks(hooks));
             await expect(token.connect(user).transfer(user.address, 0))
                 .to.emit(hook1, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
                 .to.emit(hook2, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
@@ -429,7 +429,7 @@ describe("Contract 'ERC20Hookable'", async () => {
                     policy: ErrorHandlingPolicy.Event,
                 },
             ];
-            await proveTx(token.connect(deployer).updateBeforeTokenTransferHooks(hooks));
+            await proveTx(token.connect(deployer).setBeforeTokenTransferHooks(hooks));
             await expect(token.connect(user).transfer(user.address, 0))
                 .to.emit(hook1, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
                 .to.emit(hook2, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
@@ -469,7 +469,7 @@ describe("Contract 'ERC20Hookable'", async () => {
                     policy: ErrorHandlingPolicy.Revert,
                 },
             ];
-            await proveTx(token.connect(deployer).updateAfterTokenTransferHooks(hooks));
+            await proveTx(token.connect(deployer).setAfterTokenTransferHooks(hooks));
             await expect(token.connect(user).transfer(user.address, 0))
                 .to.emit(hook1, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
                 .to.emit(hook2, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
@@ -492,7 +492,7 @@ describe("Contract 'ERC20Hookable'", async () => {
                     policy: ErrorHandlingPolicy.Revert,
                 },
             ];
-            await proveTx(token.connect(deployer).updateAfterTokenTransferHooks(hooks));
+            await proveTx(token.connect(deployer).setAfterTokenTransferHooks(hooks));
             await expect(token.connect(user).transfer(user.address, 0))
                 .to.emit(hook1, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
                 .to.emit(hook2, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
@@ -515,7 +515,7 @@ describe("Contract 'ERC20Hookable'", async () => {
                     policy: ErrorHandlingPolicy.Revert,
                 },
             ];
-            await proveTx(token.connect(deployer).updateAfterTokenTransferHooks(hooks));
+            await proveTx(token.connect(deployer).setAfterTokenTransferHooks(hooks));
             await expect(token.connect(user).transfer(user.address, 0))
                 .to.emit(hook1, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
                 .to.emit(hook2, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
@@ -541,7 +541,7 @@ describe("Contract 'ERC20Hookable'", async () => {
                     policy: ErrorHandlingPolicy.Event,
                 },
             ];
-            await proveTx(token.connect(deployer).updateAfterTokenTransferHooks(hooks));
+            await proveTx(token.connect(deployer).setAfterTokenTransferHooks(hooks));
             await expect(token.connect(user).transfer(user.address, 0))
                 .to.emit(hook1, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
                 .to.emit(hook2, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
@@ -603,7 +603,7 @@ describe("Contract 'ERC20Hookable'", async () => {
                     policy: ErrorHandlingPolicy.Event,
                 },
             ];
-            await proveTx(token.connect(deployer).updateAfterTokenTransferHooks(hooks));
+            await proveTx(token.connect(deployer).setAfterTokenTransferHooks(hooks));
             await expect(token.connect(user).transfer(user.address, 0))
                 .to.emit(hook1, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
                 .to.emit(hook2, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
@@ -665,7 +665,7 @@ describe("Contract 'ERC20Hookable'", async () => {
                     policy: ErrorHandlingPolicy.Event,
                 },
             ];
-            await proveTx(token.connect(deployer).updateAfterTokenTransferHooks(hooks));
+            await proveTx(token.connect(deployer).setAfterTokenTransferHooks(hooks));
             await expect(token.connect(user).transfer(user.address, 0))
                 .to.emit(hook1, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
                 .to.emit(hook2, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)

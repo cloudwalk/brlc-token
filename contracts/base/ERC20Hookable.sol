@@ -23,17 +23,17 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
      *
      * @param hooks The array of the updated hooks
      */
-    event BeforeTokenTransferHooksUpdated(Hook[] hooks);
+    event BeforeTokenTransferHooksSet(Hook[] hooks);
 
     /**
      * @notice Emitted when the `afterTokenTransfer` hooks are updated
      *
      * @param hooks The array of the updated hooks
      */
-    event AfterTokenTransferHooksUpdated(Hook[] hooks);
+    event AfterTokenTransferHooksSet(Hook[] hooks);
 
     /**
-     * @notice Emitted when the call to the `beforeTokenTransfer` hook failed
+     * @notice Emitted when a call of the `beforeTokenTransfer` hook failed
      *
      * @param hook The address of the hook contract that was called
      * @param reason The reason message of the hook failure
@@ -43,7 +43,7 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
     event BeforeTokenTransferHookFailure(address indexed hook, string reason, uint256 code, bytes data);
 
     /**
-     * @notice Emitted when the call to the `afterTokenTransfer` hook failed
+     * @notice Emitted when a call of the `afterTokenTransfer` hook failed
      *
      * @param hook The address of the hook contract that was called
      * @param reason The reason message of the hook failure
@@ -76,23 +76,23 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
     /**
      * @inheritdoc IERC20Hookable
      */
-    function updateBeforeTokenTransferHooks(Hook[] memory hooks) external onlyOwner {
+    function setBeforeTokenTransferHooks(Hook[] calldata hooks) external onlyOwner {
         delete _beforeTokenTransferHooks;
-        for (uint i = 0; i < hooks.length; i++) {
+        for (uint i = 0; i < hooks.length; ++i) {
             _beforeTokenTransferHooks.push(hooks[i]);
         }
-        emit BeforeTokenTransferHooksUpdated(hooks);
+        emit BeforeTokenTransferHooksSet(hooks);
     }
 
     /**
      * @inheritdoc IERC20Hookable
      */
-    function updateAfterTokenTransferHooks(Hook[] memory hooks) external onlyOwner {
+    function setAfterTokenTransferHooks(Hook[] calldata hooks) external onlyOwner {
         delete _afterTokenTransferHooks;
-        for (uint i = 0; i < hooks.length; i++) {
+        for (uint i = 0; i < hooks.length; ++i) {
             _afterTokenTransferHooks.push(hooks[i]);
         }
-        emit AfterTokenTransferHooksUpdated(hooks);
+        emit AfterTokenTransferHooksSet(hooks);
     }
 
     /**
