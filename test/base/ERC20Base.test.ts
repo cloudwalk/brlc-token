@@ -26,8 +26,7 @@ describe("Contract 'ERC20Base'", async () => {
 
     const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED =
         "Initializable: contract is already initialized";
-    const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING =
-        "Initializable: contract is not initializing";
+    const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
     const REVERT_MESSAGE_PAUSABLE_PAUSED = "Pausable: paused";
 
     const REVERT_ERROR_BLACKLISTED_ACCOUNT = "BlacklistedAccount";
@@ -44,10 +43,7 @@ describe("Contract 'ERC20Base'", async () => {
     });
 
     async function deployToken(): Promise<{ token: Contract }> {
-        const token: Contract = await upgrades.deployProxy(tokenFactory, [
-            TOKEN_NAME,
-            TOKEN_SYMBOL,
-        ]);
+        const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
         await token.deployed();
         return { token };
     }
@@ -80,18 +76,14 @@ describe("Contract 'ERC20Base'", async () => {
         it("Is reverted if the implementation contract is called even for the first time", async () => {
             const tokenImplementation: Contract = await tokenFactory.deploy();
             await tokenImplementation.deployed();
-            await expect(
-                tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-            ).to.be.revertedWith(
+            await expect(tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
                 REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
             );
         });
 
         it("Is reverted if the internal initializer is called outside of the init process", async () => {
             const { token } = await setUpFixture(deployToken);
-            await expect(
-                token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)
-            ).to.be.revertedWith(
+            await expect(token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
                 REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
             );
         });
@@ -107,115 +99,89 @@ describe("Contract 'ERC20Base'", async () => {
     describe("Function 'transfer()'", async () => {
         it("Executes as expected and emits the correct event", async () => {
             const { token } = await setUpFixture(deployToken);
-            await proveTx(
-                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
-            );
+            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
             await expect(token.connect(user1).transfer(user2.address, TOKEN_AMOUNT))
-                .to.changeTokenBalances(
-                    token,
-                    [user1, user2, token],
-                    [-TOKEN_AMOUNT, TOKEN_AMOUNT, 0]
-                )
+                .to.changeTokenBalances(token, [user1, user2, token], [-TOKEN_AMOUNT, TOKEN_AMOUNT, 0])
                 .and.to.emit(token, EVENT_NAME_TRANSFER)
                 .withArgs(user1.address, user2.address, TOKEN_AMOUNT);
         });
 
         it("Is reverted if the contract is paused", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
-            await proveTx(
-                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
-            );
+            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
             await proveTx(token.connect(pauser).pause());
-            await expect(
-                token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)
-            ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+            await expect(token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)).to.be.revertedWith(
+                REVERT_MESSAGE_PAUSABLE_PAUSED
+            );
         });
 
         it("Is reverted if the caller is blacklisted", async () => {
             const { token } = await setUpFixture(deployToken);
-            await proveTx(
-                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
-            );
+            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
             await proveTx(token.connect(user1).selfBlacklist());
-            await expect(
-                token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)
-            ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLACKLISTED_ACCOUNT);
+            await expect(token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
+                token,
+                REVERT_ERROR_BLACKLISTED_ACCOUNT
+            );
         });
 
         it("Is reverted if the recipient is blacklisted", async () => {
             const { token } = await setUpFixture(deployToken);
-            await proveTx(
-                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
-            );
+            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
             await proveTx(token.connect(user2).selfBlacklist());
-            await expect(
-                token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)
-            ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLACKLISTED_ACCOUNT);
+            await expect(token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
+                token,
+                REVERT_ERROR_BLACKLISTED_ACCOUNT
+            );
         });
     });
 
     describe("Function 'approve()'", async () => {
         it("Executes as expected and emits the correct event", async () => {
             const { token } = await setUpFixture(deployToken);
-            const oldAllowance: BigNumber = await token.allowance(
-                user1.address,
-                user2.address
-            );
-            const newExpectedAllowance: BigNumber = oldAllowance.add(
-                BigNumber.from(TOKEN_ALLOWANCE)
-            );
+            const oldAllowance: BigNumber = await token.allowance(user1.address, user2.address);
+            const newExpectedAllowance: BigNumber = oldAllowance.add(BigNumber.from(TOKEN_ALLOWANCE));
             await expect(token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE))
                 .to.emit(token, EVENT_NAME_APPROVAL)
                 .withArgs(user1.address, user2.address, TOKEN_ALLOWANCE);
-            const newActualAllowance: BigNumber = await token.allowance(
-                user1.address,
-                user2.address
-            );
+            const newActualAllowance: BigNumber = await token.allowance(user1.address, user2.address);
             expect(newActualAllowance).to.equal(newExpectedAllowance);
         });
 
         it("Is reverted if the contract is paused", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             await proveTx(token.connect(pauser).pause());
-            await expect(
-                token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)
-            ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+            await expect(token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)).to.be.revertedWith(
+                REVERT_MESSAGE_PAUSABLE_PAUSED
+            );
         });
 
         it("Is reverted if the caller is blacklisted", async () => {
             const { token } = await setUpFixture(deployToken);
             await proveTx(token.connect(user1).selfBlacklist());
-            await expect(
-                token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)
-            ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLACKLISTED_ACCOUNT);
+            await expect(token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)).to.be.revertedWithCustomError(
+                token,
+                REVERT_ERROR_BLACKLISTED_ACCOUNT
+            );
         });
 
         it("Is reverted if the spender is blacklisted", async () => {
             const { token } = await setUpFixture(deployToken);
             await proveTx(token.connect(user2).selfBlacklist());
-            await expect(
-                token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)
-            ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLACKLISTED_ACCOUNT);
+            await expect(token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)).to.be.revertedWithCustomError(
+                token,
+                REVERT_ERROR_BLACKLISTED_ACCOUNT
+            );
         });
     });
 
     describe("Function 'transferFrom()'", async () => {
         it("Executes as expected and emits the correct event", async () => {
             const { token } = await setUpFixture(deployToken);
-            await proveTx(
-                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
-            );
+            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
             await proveTx(token.connect(user1).approve(user2.address, TOKEN_AMOUNT));
-            await expect(
-                token
-                    .connect(user2)
-                    .transferFrom(user1.address, user2.address, TOKEN_AMOUNT)
-            )
-                .to.changeTokenBalances(
-                    token,
-                    [user1, user2],
-                    [-TOKEN_AMOUNT, TOKEN_AMOUNT]
-                )
+            await expect(token.connect(user2).transferFrom(user1.address, user2.address, TOKEN_AMOUNT))
+                .to.changeTokenBalances(token, [user1, user2], [-TOKEN_AMOUNT, TOKEN_AMOUNT])
                 .and.to.emit(token, EVENT_NAME_TRANSFER)
                 .withArgs(user1.address, user2.address, TOKEN_AMOUNT);
         });
@@ -223,42 +189,30 @@ describe("Contract 'ERC20Base'", async () => {
         it("Is reverted if the contract is paused", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             await proveTx(token.connect(user1).approve(user2.address, TOKEN_AMOUNT));
-            await proveTx(
-                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
-            );
+            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
             await proveTx(token.connect(pauser).pause());
             await expect(
-                token
-                    .connect(user2)
-                    .transferFrom(user1.address, user2.address, TOKEN_AMOUNT)
+                token.connect(user2).transferFrom(user1.address, user2.address, TOKEN_AMOUNT)
             ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
         });
 
         it("Is reverted if the sender is blacklisted", async () => {
             const { token } = await setUpFixture(deployToken);
-            await proveTx(
-                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
-            );
+            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
             await proveTx(token.connect(user1).approve(user2.address, TOKEN_AMOUNT));
             await proveTx(token.connect(user2).selfBlacklist());
             await expect(
-                token
-                    .connect(user2)
-                    .transferFrom(deployer.address, user2.address, TOKEN_AMOUNT)
+                token.connect(user2).transferFrom(deployer.address, user2.address, TOKEN_AMOUNT)
             ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLACKLISTED_ACCOUNT);
         });
 
         it("Is reverted if the recipient is blacklisted", async () => {
             const { token } = await setUpFixture(deployToken);
-            await proveTx(
-                token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT)
-            );
+            await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
             await proveTx(token.connect(user1).approve(user2.address, TOKEN_AMOUNT));
             await proveTx(token.connect(user1).selfBlacklist());
             await expect(
-                token
-                    .connect(user2)
-                    .transferFrom(user1.address, user2.address, TOKEN_AMOUNT)
+                token.connect(user2).transferFrom(user1.address, user2.address, TOKEN_AMOUNT)
             ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLACKLISTED_ACCOUNT);
         });
     });
@@ -270,35 +224,21 @@ describe("Contract 'ERC20Base'", async () => {
         it("Executes as expected and emits the correct event", async () => {
             const { token } = await setUpFixture(deployToken);
             await proveTx(token.connect(user1).approve(user2.address, initialAllowance));
-            const oldAllowance: BigNumber = await token.allowance(
-                user1.address,
-                user2.address
-            );
-            const newExpectedAllowance: BigNumber = oldAllowance.add(
-                BigNumber.from(allowanceAddedValue)
-            );
-            await expect(
-                token.connect(user1).increaseAllowance(user2.address, allowanceAddedValue)
-            )
+            const oldAllowance: BigNumber = await token.allowance(user1.address, user2.address);
+            const newExpectedAllowance: BigNumber = oldAllowance.add(BigNumber.from(allowanceAddedValue));
+            await expect(token.connect(user1).increaseAllowance(user2.address, allowanceAddedValue))
                 .to.emit(token, EVENT_NAME_APPROVAL)
-                .withArgs(
-                    user1.address,
-                    user2.address,
-                    initialAllowance + allowanceAddedValue
-                );
-            const newActualAllowance: BigNumber = await token.allowance(
-                user1.address,
-                user2.address
-            );
+                .withArgs(user1.address, user2.address, initialAllowance + allowanceAddedValue);
+            const newActualAllowance: BigNumber = await token.allowance(user1.address, user2.address);
             expect(newActualAllowance).to.equal(newExpectedAllowance);
         });
 
         it("Is reverted if the contract is paused", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             await proveTx(token.connect(pauser).pause());
-            await expect(
-                token.increaseAllowance(user1.address, allowanceAddedValue)
-            ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+            await expect(token.increaseAllowance(user1.address, allowanceAddedValue)).to.be.revertedWith(
+                REVERT_MESSAGE_PAUSABLE_PAUSED
+            );
         });
 
         it("Is reverted if the caller is blacklisted", async () => {
@@ -325,28 +265,12 @@ describe("Contract 'ERC20Base'", async () => {
         it("Executes as expected and emits the correct event", async () => {
             const { token } = await setUpFixture(deployToken);
             await proveTx(token.connect(user1).approve(user2.address, initialAllowance));
-            const oldAllowance: BigNumber = await token.allowance(
-                user1.address,
-                user2.address
-            );
-            const newExpectedAllowance: BigNumber = oldAllowance.sub(
-                BigNumber.from(allowanceSubtractedValue)
-            );
-            await expect(
-                token
-                    .connect(user1)
-                    .decreaseAllowance(user2.address, allowanceSubtractedValue)
-            )
+            const oldAllowance: BigNumber = await token.allowance(user1.address, user2.address);
+            const newExpectedAllowance: BigNumber = oldAllowance.sub(BigNumber.from(allowanceSubtractedValue));
+            await expect(token.connect(user1).decreaseAllowance(user2.address, allowanceSubtractedValue))
                 .to.emit(token, EVENT_NAME_APPROVAL)
-                .withArgs(
-                    user1.address,
-                    user2.address,
-                    initialAllowance - allowanceSubtractedValue
-                );
-            const newActualAllowance: BigNumber = await token.allowance(
-                user1.address,
-                user2.address
-            );
+                .withArgs(user1.address, user2.address, initialAllowance - allowanceSubtractedValue);
+            const newActualAllowance: BigNumber = await token.allowance(user1.address, user2.address);
             expect(newActualAllowance).to.equal(newExpectedAllowance);
         });
 
@@ -355,9 +279,7 @@ describe("Contract 'ERC20Base'", async () => {
             await proveTx(token.connect(user1).approve(user2.address, initialAllowance));
             await proveTx(token.connect(pauser).pause());
             await expect(
-                token
-                    .connect(user1)
-                    .decreaseAllowance(user2.address, allowanceSubtractedValue)
+                token.connect(user1).decreaseAllowance(user2.address, allowanceSubtractedValue)
             ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
         });
 
@@ -366,9 +288,7 @@ describe("Contract 'ERC20Base'", async () => {
             await proveTx(token.connect(user1).approve(user2.address, initialAllowance));
             await proveTx(token.connect(user1).selfBlacklist());
             await expect(
-                token
-                    .connect(user1)
-                    .decreaseAllowance(user2.address, allowanceSubtractedValue)
+                token.connect(user1).decreaseAllowance(user2.address, allowanceSubtractedValue)
             ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLACKLISTED_ACCOUNT);
         });
 
@@ -377,9 +297,7 @@ describe("Contract 'ERC20Base'", async () => {
             await proveTx(token.connect(user1).approve(user2.address, initialAllowance));
             await proveTx(token.connect(user1).selfBlacklist());
             await expect(
-                token
-                    .connect(user1)
-                    .decreaseAllowance(user2.address, allowanceSubtractedValue)
+                token.connect(user1).decreaseAllowance(user2.address, allowanceSubtractedValue)
             ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLACKLISTED_ACCOUNT);
         });
     });

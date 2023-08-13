@@ -22,8 +22,7 @@ describe("Contract 'ERC20Test'", async () => {
 
     const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED =
         "Initializable: contract is already initialized";
-    const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING =
-        "Initializable: contract is not initializing";
+    const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
 
     let tokenFactory: ContractFactory;
     let deployer: SignerWithAddress;
@@ -35,10 +34,7 @@ describe("Contract 'ERC20Test'", async () => {
     });
 
     async function deployToken(): Promise<{ token: Contract }> {
-        const token: Contract = await upgrades.deployProxy(tokenFactory, [
-            TOKEN_NAME,
-            TOKEN_SYMBOL,
-        ]);
+        const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
         await token.deployed();
         return { token };
     }
@@ -61,27 +57,21 @@ describe("Contract 'ERC20Test'", async () => {
         it("Is reverted if the implementation contract is called even for the first time", async () => {
             const tokenImplementation: Contract = await tokenFactory.deploy();
             await tokenImplementation.deployed();
-            await expect(
-                tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-            ).to.be.revertedWith(
+            await expect(tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
                 REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
             );
         });
 
         it("Is reverted if the internal initializer is called outside of the init process", async () => {
             const { token } = await setUpFixture(deployToken);
-            await expect(
-                token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)
-            ).to.be.revertedWith(
+            await expect(token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
                 REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
             );
         });
 
         it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
             const { token } = await setUpFixture(deployToken);
-            await expect(
-                token.call_parent_initialize_unchained(TOKEN_NAME, TOKEN_SYMBOL)
-            ).to.be.revertedWith(
+            await expect(token.call_parent_initialize_unchained(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
                 REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
             );
         });

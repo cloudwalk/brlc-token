@@ -21,10 +21,8 @@ describe("Contract 'RescuableUpgradeable'", async () => {
 
     const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED =
         "Initializable: contract is already initialized";
-    const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING =
-        "Initializable: contract is not initializing";
-    const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER =
-        "Ownable: caller is not the owner";
+    const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
+    const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
 
     const REVERT_ERROR_UNAUTHORIZED_RESCUER = "UnauthorizedRescuer";
 
@@ -42,10 +40,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
     });
 
     async function deployToken(): Promise<{ token: Contract }> {
-        const token: Contract = await upgrades.deployProxy(tokenFactory, [
-            "ERC20 Test",
-            "TEST",
-        ]);
+        const token: Contract = await upgrades.deployProxy(tokenFactory, ["ERC20 Test", "TEST"]);
         await token.deployed();
         return { token };
     }
@@ -111,32 +106,25 @@ describe("Contract 'RescuableUpgradeable'", async () => {
                 .to.emit(rescuable, EVENT_NAME_RESCUER_CHANGED)
                 .withArgs(rescuer.address);
             expect(await rescuable.rescuer()).to.equal(rescuer.address);
-            await expect(
-                rescuable.connect(deployer).setRescuer(rescuer.address)
-            ).not.to.emit(rescuable, EVENT_NAME_RESCUER_CHANGED);
+            await expect(rescuable.connect(deployer).setRescuer(rescuer.address)).not.to.emit(
+                rescuable,
+                EVENT_NAME_RESCUER_CHANGED
+            );
         });
 
         it("Is reverted if called not by the owner", async () => {
             const { rescuable } = await setUpFixture(deployRescuable);
-            await expect(
-                rescuable.connect(rescuer).setRescuer(rescuer.address)
-            ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+            await expect(rescuable.connect(rescuer).setRescuer(rescuer.address)).to.be.revertedWith(
+                REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER
+            );
         });
     });
 
     describe("Function 'rescueERC20()'", async () => {
         it("Executes as expected and emits the correct event", async () => {
             const { rescuable, token } = await setUpFixture(deployAndConfigure);
-            await expect(
-                rescuable
-                    .connect(rescuer)
-                    .rescueERC20(token.address, deployer.address, TOKEN_AMOUNT)
-            )
-                .to.changeTokenBalances(
-                    token,
-                    [rescuable, deployer, rescuer],
-                    [-TOKEN_AMOUNT, +TOKEN_AMOUNT, 0]
-                )
+            await expect(rescuable.connect(rescuer).rescueERC20(token.address, deployer.address, TOKEN_AMOUNT))
+                .to.changeTokenBalances(token, [rescuable, deployer, rescuer], [-TOKEN_AMOUNT, +TOKEN_AMOUNT, 0])
                 .and.to.emit(token, EVENT_NAME_TRANSFER)
                 .withArgs(rescuable.address, deployer.address, TOKEN_AMOUNT);
         });
@@ -144,9 +132,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
         it("Is reverted if called not by the rescuer", async () => {
             const { rescuable, token } = await setUpFixture(deployAndConfigure);
             await expect(
-                rescuable
-                    .connect(user)
-                    .rescueERC20(token.address, deployer.address, TOKEN_AMOUNT)
+                rescuable.connect(user).rescueERC20(token.address, deployer.address, TOKEN_AMOUNT)
             ).to.be.revertedWithCustomError(rescuable, REVERT_ERROR_UNAUTHORIZED_RESCUER);
         });
     });

@@ -29,10 +29,7 @@ describe("Contract 'USJimToken'", async () => {
     });
 
     async function deployToken(): Promise<{ token: Contract }> {
-        const token: Contract = await upgrades.deployProxy(tokenFactory, [
-            TOKEN_NAME,
-            TOKEN_SYMBOL,
-        ]);
+        const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
         await token.deployed();
         return { token };
     }
@@ -59,9 +56,7 @@ describe("Contract 'USJimToken'", async () => {
         it("Is reverted if the contract implementation is called even for the first time", async () => {
             const tokenImplementation: Contract = await tokenFactory.deploy();
             await tokenImplementation.deployed();
-            await expect(
-                tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-            ).to.be.revertedWith(
+            await expect(tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
                 REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
             );
         });
