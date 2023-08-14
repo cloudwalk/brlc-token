@@ -2,14 +2,14 @@
 
 pragma solidity 0.8.16;
 
-import { IERC20Hooked } from "./../base/interfaces/IERC20Hooked.sol";
+import { IERC20Hook } from "./../base/interfaces/IERC20Hook.sol";
 
 /**
  * @title ERC20HookedMock contract
  * @author CloudWalk Inc.
- * @notice An implementation of the {IERC20Hooked} contract for testing purposes
+ * @notice An implementation of the {IERC20Hook} contract for testing purposes
  */
-contract ERC20HookedMock is IERC20Hooked {
+contract ERC20HookedMock is IERC20Hook {
     /// @notice Emitted when the `beforeTokenTransfer` hook function is successfully executed
     event TestBeforeTokenTransferHookEvent();
 
@@ -59,7 +59,7 @@ contract ERC20HookedMock is IERC20Hooked {
     }
 
     /**
-     * @inheritdoc IERC20Hooked
+     * @inheritdoc IERC20Hook
      */
     function beforeTokenTransfer(address from, address to, uint256 amount) external {
         amount;
@@ -88,7 +88,7 @@ contract ERC20HookedMock is IERC20Hooked {
     }
 
     /**
-     * @inheritdoc IERC20Hooked
+     * @inheritdoc IERC20Hook
      */
     function afterTokenTransfer(address from, address to, uint256 amount) external {
         amount;

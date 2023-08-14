@@ -3,11 +3,11 @@
 pragma solidity 0.8.16;
 
 /**
- * @title IERC20Hooked interface
+ * @title IERC20Hook interface
  * @author CloudWalk Inc.
  * @notice The interface of a contract that supports hookable token operations
  */
-interface IERC20Hooked {
+interface IERC20Hook {
     /**
      * @notice Hook function that is called by a token contract before token transfer
      * @param from The address that tokens will be transferred from
