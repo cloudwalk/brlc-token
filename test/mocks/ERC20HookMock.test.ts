@@ -1,5 +1,6 @@
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
+import { Contract, ContractFactory } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { proveTx } from "../../test-utils/eth";
@@ -12,7 +13,7 @@ async function setUpFixture(func: any) {
     }
 }
 
-describe("Contract 'HookTest'", async () => {
+describe("Contract 'ERC20HookMock'", async () => {
     const TOKEN_AMOUNT = 100;
 
     const PANIC_ERROR_CODE = "0x1";
@@ -24,18 +25,18 @@ describe("Contract 'HookTest'", async () => {
     const REVERT_ERROR_TEST_BEFORE_TOKEN_TRANSFER_HOOK = "TestBeforeTokenTransferHookError";
     const REVERT_ERROR_TEST_AFTER_TOKEN_TRANSFER_HOOK = "TestAfterTokenTransferHookError";
 
-    let hookableFactory: ContractFactory;
+    let hookFactory: ContractFactory;
     let deployer: SignerWithAddress;
     let user1: SignerWithAddress;
     let user2: SignerWithAddress;
 
     before(async () => {
         [deployer, user1, user2] = await ethers.getSigners();
-        hookableFactory = await ethers.getContractFactory("ERC20HookedMock");
+        hookFactory = await ethers.getContractFactory("ERC20HookMock");
     });
 
     async function deployHookable(): Promise<{ hookable: Contract }> {
-        const hookable: Contract = await hookableFactory.deploy();
+        const hookable: Contract = await hookFactory.deploy();
         return { hookable };
     }
 

@@ -5,11 +5,11 @@ pragma solidity 0.8.16;
 import { IERC20Hook } from "./../base/interfaces/IERC20Hook.sol";
 
 /**
- * @title ERC20HookedMock contract
+ * @title ERC20HookMock contract
  * @author CloudWalk Inc.
  * @notice An implementation of the {IERC20Hook} contract for testing purposes
  */
-contract ERC20HookedMock is IERC20Hook {
+contract ERC20HookMock is IERC20Hook {
     /// @notice Emitted when the `beforeTokenTransfer` hook function is successfully executed
     event TestBeforeTokenTransferHookEvent();
 

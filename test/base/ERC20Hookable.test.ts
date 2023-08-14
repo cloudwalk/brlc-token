@@ -64,7 +64,7 @@ describe("Contract 'ERC20Hookable'", async () => {
     const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
 
     let tokenFactory: ContractFactory;
-    let hookedFactory: ContractFactory;
+    let hookFactory: ContractFactory;
     let deployer: SignerWithAddress;
     let pauser: SignerWithAddress;
     let user: SignerWithAddress;
@@ -72,7 +72,7 @@ describe("Contract 'ERC20Hookable'", async () => {
     before(async () => {
         [deployer, pauser, user] = await ethers.getSigners();
         tokenFactory = await ethers.getContractFactory("ERC20HookableMock");
-        hookedFactory = await ethers.getContractFactory("ERC20HookedMock");
+        hookFactory = await ethers.getContractFactory("ERC20HookMock");
     });
 
     async function deployToken(): Promise<{ token: Contract }> {
@@ -87,8 +87,8 @@ describe("Contract 'ERC20Hookable'", async () => {
         hook2: Contract;
     }> {
         const { token } = await deployToken();
-        const hook1: Contract = await hookedFactory.deploy();
-        const hook2: Contract = await hookedFactory.deploy();
+        const hook1: Contract = await hookFactory.deploy();
+        const hook2: Contract = await hookFactory.deploy();
         await proveTx(token.connect(deployer).setPauser(pauser.address));
         return { token, hook1, hook2 };
     }

@@ -13,7 +13,7 @@ async function setUpFixture(func: any) {
     }
 }
 
-describe("Contract 'ERC20Test'", async () => {
+describe("Contract 'ERC20TestMock'", async () => {
     const TOKEN_NAME = "ERC20 Test";
     const TOKEN_SYMBOL = "TEST";
     const TOKEN_DECIMALS = 18;

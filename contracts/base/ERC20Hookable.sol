@@ -114,7 +114,7 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
      */
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override(ERC20Base) {
         super._beforeTokenTransfer(from, to, amount);
-        for (uint256 i = 0; i < _beforeTokenTransferHooks.length; i++) {
+        for (uint256 i = 0; i < _beforeTokenTransferHooks.length; ++i) {
             if (_beforeTokenTransferHooks[i].policy == ErrorHandlingPolicy.Revert) {
                 IERC20Hook(_beforeTokenTransferHooks[i].account).beforeTokenTransfer(from, to, amount);
             } else {
@@ -137,7 +137,7 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
      */
     function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._afterTokenTransfer(from, to, amount);
-        for (uint256 i = 0; i < _afterTokenTransferHooks.length; i++) {
+        for (uint256 i = 0; i < _afterTokenTransferHooks.length; ++i) {
             if (_afterTokenTransferHooks[i].policy == ErrorHandlingPolicy.Revert) {
                 IERC20Hook(_afterTokenTransferHooks[i].account).afterTokenTransfer(from, to, amount);
             } else {
