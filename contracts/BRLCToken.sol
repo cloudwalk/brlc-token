@@ -5,13 +5,15 @@ pragma solidity 0.8.16;
 import { ERC20Base } from "./base/ERC20Base.sol";
 import { ERC20Mintable } from "./base/ERC20Mintable.sol";
 import { ERC20Freezable } from "./base/ERC20Freezable.sol";
+import { ERC20Restrictable } from "./base/ERC20Restrictable.sol";
+import { ERC20Hookable } from "./base/ERC20Hookable.sol";
 
 /**
  * @title BRLCToken contract
  * @author CloudWalk Inc.
  * @notice The BRLC token implementation that supports minting, burning and freezing operations
  */
-contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable {
+contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictable, ERC20Hookable {
     /**
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *
@@ -76,7 +78,19 @@ contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable {
         address from,
         address to,
         uint256 amount
-    ) internal virtual override(ERC20Base, ERC20Freezable) {
+    ) internal virtual override(ERC20Base, ERC20Freezable, ERC20Hookable) {
         super._beforeTokenTransfer(from, to, amount);
+    }
+
+    /**
+     * @dev See {ERC20Base-_afterTokenTransfer}
+     * @dev See {ERC20Hookable-_afterTokenTransfer}
+     */
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override(ERC20Base, ERC20Hookable) {
+        super._afterTokenTransfer(from, to, amount);
     }
 }
