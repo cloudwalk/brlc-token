@@ -54,8 +54,17 @@ contract BalanceTracker is OwnableUpgradeable, IERC20Hook {
 
     /**
      * @notice Thrown when the caller is not the token contract
+     * @param account The address of the caller
      */
     error UnauthorizedCaller(address account);
+
+    /**
+     * @notice Emitted when a new balance record is created
+     * @param account The address of the account
+     * @param day The index of the day
+     * @param balance The balance
+     */
+    event BalanceRecordCreated(address indexed account, uint16 day, uint240 balance);
 
     /**
      * @notice Throws if called by any account other than the token contract
@@ -125,9 +134,9 @@ contract BalanceTracker is OwnableUpgradeable, IERC20Hook {
             from != address(0) &&
             (_balanceRecords[from].length == 0 || _balanceRecords[from][_balanceRecords[from].length - 1].day < day)
         ) {
-            _balanceRecords[from].push(
-                Record({ day: day, value: toUint240(IERC20Upgradeable(TOKEN).balanceOf(from) + amount) })
-            );
+            uint240 balance = toUint240(IERC20Upgradeable(TOKEN).balanceOf(from) + amount);
+            _balanceRecords[from].push(Record({ day: day, value: balance }));
+            emit BalanceRecordCreated(from, day, balance);
         }
 
         // Update `to` balances and create a new record for the past period if needed
@@ -135,9 +144,9 @@ contract BalanceTracker is OwnableUpgradeable, IERC20Hook {
             to != address(0) &&
             (_balanceRecords[to].length == 0 || _balanceRecords[to][_balanceRecords[to].length - 1].day < day)
         ) {
-            _balanceRecords[to].push(
-                Record({ day: day, value: toUint240(IERC20Upgradeable(TOKEN).balanceOf(to) - amount) })
-            );
+            uint240 balance = toUint240(IERC20Upgradeable(TOKEN).balanceOf(to) - amount);
+            _balanceRecords[to].push(Record({ day: day, value: balance }));
+            emit BalanceRecordCreated(to, day, balance);
         }
     }
 
