@@ -91,7 +91,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @notice Can only be called by the contract owner
+     * @dev Can only be called by the contract owner
      */
     function updateMasterMinter(address newMasterMinter) external onlyOwner {
         if (_masterMinter == newMasterMinter) {
@@ -106,8 +106,8 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @notice The contract must not be paused
-     * @notice Can only be called by the master minter
+     * @dev The contract must not be paused
+     * @dev Can only be called by the master minter
      */
     function configureMinter(
         address minter,
@@ -124,7 +124,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @notice Can only be called by the master minter
+     * @dev Can only be called by the master minter
      */
     function removeMinter(address minter) external onlyMasterMinter returns (bool) {
         if (!_minters[minter]) {
@@ -142,11 +142,11 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @notice The contract must not be paused
-     * @notice Can only be called by a minter account
-     * @notice The message sender must not be blacklisted
-     * @notice The `account` address must not be blacklisted
-     * @notice The `amount` value must be greater than zero and not
+     * @dev The contract must not be paused
+     * @dev Can only be called by a minter account
+     * @dev The message sender must not be blacklisted
+     * @dev The `account` address must not be blacklisted
+     * @dev The `amount` value must be greater than zero and not
      * greater than the mint allowance of the minter
      */
     function mint(
@@ -173,10 +173,10 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @notice The contract must not be paused
-     * @notice Can only be called by a minter account
-     * @notice The message sender must not be blacklisted
-     * @notice The `amount` value must be greater than zero
+     * @dev The contract must not be paused
+     * @dev Can only be called by a minter account
+     * @dev The message sender must not be blacklisted
+     * @dev The `amount` value must be greater than zero
      */
     function burn(uint256 amount) external whenNotPaused onlyMinter notBlacklisted(_msgSender()) {
         if (amount == 0) {

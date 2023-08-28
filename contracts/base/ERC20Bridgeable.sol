@@ -83,8 +83,8 @@ abstract contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
     /**
      * @inheritdoc IERC20Bridgeable
      *
-     * @notice Can only be called by the bridge
-     * @notice The `amount` value must be greater than zero
+     * @dev Can only be called by the bridge
+     * @dev The `amount` value must be greater than zero
      */
     function mintForBridging(address account, uint256 amount) external onlyBridge returns (bool) {
         if (amount == 0) {
@@ -100,8 +100,8 @@ abstract contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
     /**
      * @inheritdoc IERC20Bridgeable
      *
-     * @notice Can only be called by the bridge
-     * @notice The `amount` value must be greater than zero
+     * @dev Can only be called by the bridge
+     * @dev The `amount` value must be greater than zero
      */
     function burnForBridging(address account, uint256 amount) external onlyBridge returns (bool) {
         if (amount == 0) {

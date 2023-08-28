@@ -70,9 +70,9 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @inheritdoc IERC20Freezable
      *
-     * @notice The contract must not be paused
-     * @notice Can only be called by the blacklister account
-     * @notice The token freezing must be approved by the `account`
+     * @dev The contract must not be paused
+     * @dev Can only be called by the blacklister account
+     * @dev The token freezing must be approved by the `account`
      */
     function freeze(address account, uint256 amount) external whenNotPaused onlyBlacklister {
         if (!_freezeApprovals[account]) {
@@ -87,9 +87,9 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @inheritdoc IERC20Freezable
      *
-     * @notice The contract must not be paused
-     * @notice Can only be called by the blacklister account
-     * @notice The frozen balance must be greater than the `amount`
+     * @dev The contract must not be paused
+     * @dev Can only be called by the blacklister account
+     * @dev The frozen balance must be greater than the `amount`
      */
     function transferFrozen(address from, address to, uint256 amount) public virtual whenNotPaused onlyBlacklister {
         uint256 balance = _frozenBalances[from];
@@ -137,7 +137,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
 
     /**
      * @dev This empty reserved space is put in place to allow future versions
-     * to add new variables without shifting down storage in the inheritance chain.
+     * to add new variables without shifting down storage in the inheritance chain
      */
     uint256[48] private __gap;
 }

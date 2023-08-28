@@ -10,6 +10,7 @@ pragma solidity 0.8.16;
 interface IERC20Hook {
     /**
      * @notice Hook function that is called by a token contract before token transfer
+     *
      * @param from The address that tokens will be transferred from
      * @param to The address that tokens will be transferred to
      * @param amount The amount of tokens to be transferred
@@ -18,6 +19,7 @@ interface IERC20Hook {
 
     /**
      * @notice Hook function that is called by a token contract after token transfer
+     *
      * @param from The address that tokens have been transferred from
      * @param to The address that tokens have been transferred to
      * @param amount The amount of tokens transferred
