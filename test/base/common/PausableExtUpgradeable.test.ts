@@ -20,10 +20,8 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
 
     const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED =
         "Initializable: contract is already initialized";
-    const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING =
-        "Initializable: contract is not initializing";
-    const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER =
-        "Ownable: caller is not the owner";
+    const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
+    const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
 
     const REVERT_ERROR_UNAUTHORIZED_PAUSER = "UnauthorizedPauser";
 
@@ -34,9 +32,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
 
     before(async () => {
         [deployer, pauser, user] = await ethers.getSigners();
-        pausableExtFactory = await ethers.getContractFactory(
-            "PausableExtUpgradeableMock"
-        );
+        pausableExtFactory = await ethers.getContractFactory("PausableExtUpgradeableMock");
     });
 
     async function deployPausableExt(): Promise<{ pausableExt: Contract }> {
@@ -83,9 +79,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
 
         it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
             const { pausableExt } = await setUpFixture(deployPausableExt);
-            await expect(
-                pausableExt.call_parent_initialize_unchained()
-            ).to.be.revertedWith(
+            await expect(pausableExt.call_parent_initialize_unchained()).to.be.revertedWith(
                 REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
             );
         });
@@ -98,16 +92,17 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
                 .to.emit(pausableExt, EVENT_NAME_PAUSER_CHANGED)
                 .withArgs(pauser.address);
             expect(await pausableExt.connect(deployer).pauser()).to.equal(pauser.address);
-            await expect(
-                pausableExt.connect(deployer).setPauser(pauser.address)
-            ).not.to.emit(pausableExt, EVENT_NAME_PAUSER_CHANGED);
+            await expect(pausableExt.connect(deployer).setPauser(pauser.address)).not.to.emit(
+                pausableExt,
+                EVENT_NAME_PAUSER_CHANGED
+            );
         });
 
         it("Is reverted if called not by the owner", async () => {
             const { pausableExt } = await setUpFixture(deployPausableExt);
-            await expect(
-                pausableExt.connect(user).setPauser(pauser.address)
-            ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+            await expect(pausableExt.connect(user).setPauser(pauser.address)).to.be.revertedWith(
+                REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER
+            );
         });
     });
 
@@ -141,9 +136,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
 
         it("Is reverted if called not by the pauser", async () => {
             const { pausableExt } = await setUpFixture(deployAndConfigurePausableExt);
-            await expect(
-                pausableExt.connect(user).unpause()
-            ).to.be.revertedWithCustomError(
+            await expect(pausableExt.connect(user).unpause()).to.be.revertedWithCustomError(
                 pausableExt,
                 REVERT_ERROR_UNAUTHORIZED_PAUSER
             );

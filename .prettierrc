@@ -1,16 +1,8 @@
 {
-  "printWidth": 90,
+  "printWidth": 120,
   "semi": true,
   "singleQuote": false,
   "bracketSpacing": true,
   "useTabs": false,
-  "tabWidth": 4,
-  "overrides": [
-    {
-      "files": "*.sol",
-      "options": {
-        "printWidth": 120
-      }
-    }
-  ]
+  "tabWidth": 4
 }

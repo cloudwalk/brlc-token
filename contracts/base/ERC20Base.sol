@@ -98,4 +98,12 @@ abstract contract ERC20Base is
     ) internal virtual override whenNotPaused notBlacklisted(from) notBlacklisted(to) {
         super._beforeTokenTransfer(from, to, amount);
     }
+
+    /**
+     * @inheritdoc ERC20Upgradeable
+
+     */
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
+        super._afterTokenTransfer(from, to, amount);
+    }
 }

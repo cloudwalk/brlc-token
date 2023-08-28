@@ -30,11 +30,7 @@ describe("Contract 'InfinitePointsToken'", async () => {
     });
 
     async function deployToken(): Promise<{ token: Contract }> {
-        const token: Contract = await upgrades.deployProxy(tokenFactory, [
-            TOKEN_NAME,
-            TOKEN_SYMBOL,
-            TOTAL_SUPPLY,
-        ]);
+        const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY]);
         await token.deployed();
         return { token };
     }
@@ -49,16 +45,12 @@ describe("Contract 'InfinitePointsToken'", async () => {
             expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
             expect(await token.rescuer()).to.equal(ethers.constants.AddressZero);
             expect(await token.blacklister()).to.equal(ethers.constants.AddressZero);
-            expect(await token.balanceOf(deployer.address)).to.equal(
-                BigNumber.from(TOTAL_SUPPLY)
-            );
+            expect(await token.balanceOf(deployer.address)).to.equal(BigNumber.from(TOTAL_SUPPLY));
         });
 
         it("Is reverted if called for the second time", async () => {
             const { token } = await setUpFixture(deployToken);
-            await expect(
-                token.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY)
-            ).to.be.revertedWith(
+            await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY)).to.be.revertedWith(
                 REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
             );
         });
@@ -67,14 +59,8 @@ describe("Contract 'InfinitePointsToken'", async () => {
             const infinitePointsImplementation: Contract = await tokenFactory.deploy();
             await infinitePointsImplementation.deployed();
             await expect(
-                infinitePointsImplementation.initialize(
-                    TOKEN_NAME,
-                    TOKEN_SYMBOL,
-                    TOTAL_SUPPLY
-                )
-            ).to.be.revertedWith(
-                REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-            );
+                infinitePointsImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY)
+            ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
         });
     });
 
