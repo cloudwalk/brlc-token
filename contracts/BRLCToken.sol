@@ -78,7 +78,7 @@ contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictabl
         address from,
         address to,
         uint256 amount
-    ) internal virtual override(ERC20Base, ERC20Freezable, ERC20Hookable) {
+    ) internal virtual override(ERC20Base, ERC20Freezable, ERC20Restrictable, ERC20Hookable) {
         super._beforeTokenTransfer(from, to, amount);
     }
 
