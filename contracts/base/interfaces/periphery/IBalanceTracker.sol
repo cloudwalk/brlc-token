@@ -9,13 +9,13 @@ pragma solidity 0.8.16;
  */
 interface IBalanceTracker {
     /**
-     * @notice Returns the daily account balances for the specified period range
+     * @notice Returns the daily balances for the specified account and period
      *
-     * @param account The account to get the balances for
-     * @param from The start day of the period range
-     * @param to The end day of the period range
+     * @param account The address of the account to get the balances for
+     * @param fromDay The index of the first day of the period
+     * @param toDay The index of the last day of the period
      */
-    function getDailyBalances(address account, uint256 from, uint256 to) external view returns (uint256[] memory);
+    function getDailyBalances(address account, uint256 fromDay, uint256 toDay) external view returns (uint256[] memory);
 
     /**
      * @notice Returns the balance tracker current day index and time

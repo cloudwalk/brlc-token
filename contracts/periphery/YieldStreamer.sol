@@ -13,7 +13,7 @@ import { BlacklistableUpgradeable } from "./../base/common/BlacklistableUpgradea
 /**
  * @title YieldStreamer contract
  * @author CloudWalk Inc.
- * @dev The contract that supports yield streaming base on a minimum balance over a period range
+ * @dev The contract that supports yield streaming based on a minimum balance over a period
  */
 contract YieldStreamer is
     OwnableUpgradeable,
@@ -22,25 +22,27 @@ contract YieldStreamer is
     IBalanceTracker,
     IYieldStreamer
 {
-    /// @notice The address of the token balance tracker contract
-    uint240 public constant RATE_BASE = 1000000;
+    /// @notice The factor that is used together yield rate values
+    /// @dev e.g. 0.1% rate should be represented as 0.001*RATE_FACTOR
+    uint240 public constant RATE_FACTOR = 1000000;
 
-    /**
-     * @notice The day-value pair
-     *
-     * @param day The index of the day
-     * @param value The value associated with the day
-     */
-    struct Record {
-        uint16 day;
-        uint240 value;
+    /// @notice The initial state of the next claim for an account
+    struct ClaimState {
+        uint16 day;    // The index of the day from which the yield will be calculated next time
+        uint240 debit; // The amount of yield that is already considered claimed for this day
     }
 
-    /// @notice The array of rate records
-    Record[] internal _rates;
+    /// @notice The parameters of a look-back period
+    struct LookBackPeriod {
+        uint16 effectiveDay; // The index of the day this look-back period come into use
+        uint16 length;       // The length of the look-back period in days
+    }
 
-    /// @notice The array of boundary records
-    Record[] internal _boundaries;
+    /// @notice The parameters of a yield rate
+    struct YieldRate {
+        uint16 effectiveDay; // The index of the day this yield rate come into use
+        uint240 value;       // The value of the yield rate
+    }
 
     /// @notice The address of the tax receiver
     address internal _taxReceiver;
@@ -48,21 +50,19 @@ contract YieldStreamer is
     /// @notice The address of the token balance tracker
     address internal _balanceTracker;
 
-    /// @notice The mapping of account to its claim record
-    mapping(address => Record) internal _claims;
+    /// @notice The array of yield rates in chronological order
+    YieldRate[] internal _yieldRates;
+
+    /// @notice The array of look-back periods in chronological order
+    LookBackPeriod[] internal _lookBackPeriods;
+
+    /// @notice The mapping of account to its next claim initial state
+    mapping(address => ClaimState) internal _claims;
 
     // -------------------- Events -----------------------------------
 
     /**
-     * @notice Emitted when the balance tracker contract is changed
-     *
-     * @param newTracker The address of the new balance tracker
-     * @param oldTracker The address of the old balance tracker
-     */
-    event BalanceTrackerChanged(address newTracker, address oldTracker);
-
-    /**
-     * @notice Emitted when the tax receiver address is changed
+     * @notice Emitted when the tax receiver is changed
      *
      * @param newReceiver The address of the new tax receiver
      * @param oldReceiver The address of the old tax receiver
@@ -70,20 +70,28 @@ contract YieldStreamer is
     event TaxReceiverChanged(address newReceiver, address oldReceiver);
 
     /**
-     * @notice Emitted when the actual boundary is changed
+     * @notice Emitted when the balance tracker is changed
      *
-     * @param day The day of the actual boundary
-     * @param value The value of the actual boundary
+     * @param newTracker The address of the new balance tracker
+     * @param oldTracker The address of the old balance tracker
      */
-    event BoundaryChanged(uint256 day, uint256 value);
+    event BalanceTrackerChanged(address newTracker, address oldTracker);
 
     /**
-     * @notice Emitted when the actual rate is changed
+     * @notice Emitted when a new look-back period is added to the chronological array
      *
-     * @param day The day of the actual rate
-     * @param value The value of the actual rate
+     * @param effectiveDay The index of the day the look-back period come into use
+     * @param length  The length of the new look-back period in days
      */
-    event RateChanged(uint256 day, uint256 value);
+    event LookBackPeriodConfigured(uint256 effectiveDay, uint256 length);
+
+    /**
+     * @notice Emitted when a new yield rate is added to the chronological array
+     *
+     * @param effectiveDay The index of the day the yield rate come into use
+     * @param value The value of the yield rate
+     */
+    event YieldRateConfigured(uint256 effectiveDay, uint256 value);
 
     // -------------------- Errors -----------------------------------
 
@@ -169,28 +177,6 @@ contract YieldStreamer is
     // -------------------- Admin Functions --------------------------
 
     /**
-     * @notice Sets the address of the token balance tracker
-     *
-     * Requirements:
-     *
-     * - Can only be called by the contract owner
-     * - The new balance tracker address must not be the same as the current one
-     *
-     * Emits an {BalanceTrackerChanged} event
-     *
-     * @param newBalanceTracker The address of the new balance tracker
-     */
-    function setBalanceTracker(address newBalanceTracker) external onlyOwner {
-        if (_balanceTracker == newBalanceTracker) {
-            revert AlreadyConfigured("The same balance tracker is already configured");
-        }
-
-        emit BalanceTrackerChanged(newBalanceTracker, _balanceTracker);
-
-        _balanceTracker = newBalanceTracker;
-    }
-
-    /**
      * @notice Sets the address of the tax receiver
      *
      * Requirements:
@@ -213,7 +199,29 @@ contract YieldStreamer is
     }
 
     /**
-     * @notice Sets the actual boundary
+     * @notice Sets the address of the token balance tracker
+     *
+     * Requirements:
+     *
+     * - Can only be called by the contract owner
+     * - The new balance tracker address must not be the same as the current one
+     *
+     * Emits an {BalanceTrackerChanged} event
+     *
+     * @param newBalanceTracker The address of the new balance tracker
+     */
+    function setBalanceTracker(address newBalanceTracker) external onlyOwner {
+        if (_balanceTracker == newBalanceTracker) {
+            revert AlreadyConfigured("The same balance tracker is already configured");
+        }
+
+        emit BalanceTrackerChanged(newBalanceTracker, _balanceTracker);
+
+        _balanceTracker = newBalanceTracker;
+    }
+
+    /**
+     * @notice Adds a new look-back period to the chronological array
      *
      * Requirements:
      *
@@ -221,57 +229,57 @@ contract YieldStreamer is
      * - The new day must be greater than the last day
      * - The new value must not be zero
      *
-     * Emits an {BoundaryChanged} event
+     * Emits an {LookBackPeriodConfigured} event
      *
-     * @param day The day of the actual boundary
-     * @param value The value of the actual boundary
+     * @param effectiveDay The index of the day the look-back period come into use
+     * @param length The length of the new look-back period in days
      */
-    function setBoundary(uint256 day, uint256 value) external onlyOwner {
-        if (_boundaries.length > 0 && _boundaries[_boundaries.length - 1].day >= day) {
-            revert InvalidDay("The new day must be greater than the last boundary day");
+    function configureLookBackPeriod(uint256 effectiveDay, uint256 length) external onlyOwner {
+        if (_lookBackPeriods.length > 0 && _lookBackPeriods[_lookBackPeriods.length - 1].effectiveDay >= effectiveDay) {
+            revert InvalidDay("The new day must be greater than the last look-back period day");
         }
-        if (_boundaries.length > 0 && _boundaries[_boundaries.length - 1].value == value) {
-            revert InvalidValue("The new value must be different than the last boundary value");
+        if (_lookBackPeriods.length > 0 && _lookBackPeriods[_lookBackPeriods.length - 1].length == length) {
+            revert InvalidValue("The new length must be different than the last look-back period length");
         }
-        if (value == 0) {
-            revert InvalidValue("The boundary value cannot be zero");
+        if (length == 0) {
+            revert InvalidValue("The look-back period length must not be zero");
         }
 
-        if (_boundaries.length > 0) {
+        if (_lookBackPeriods.length > 0) {
             // As temporary solution, prevent multiple configuration
-            // of the boundary as this will require a more complex logic
-            revert("The boundary is already configured");
+            // of the look-back period as this will require a more complex logic
+            revert("The look-back period is already configured");
         }
 
-        _boundaries.push(Record({ day: _toUint16(day), value: _toUint240(value) }));
+        _lookBackPeriods.push(LookBackPeriod({ effectiveDay: _toUint16(effectiveDay), length: _toUint16(length) }));
 
-        emit BoundaryChanged(day, value);
+        emit LookBackPeriodConfigured(effectiveDay, length);
     }
 
     /**
-     * @notice Sets the actual rate
+     * @notice Adds a new yield rate to the chronological array
      *
      * Requirements:
      *
      * - Can only be called by the contract owner
      * - The new day must be greater than the last day
      *
-     * Emits an {RateChanged} event
+     * Emits an {YieldRateConfigured} event
      *
-     * @param day The day of the actual rate
-     * @param value The value of the actual rate
+     * @param effectiveDay The index of the day the yield rate come into use
+     * @param value The value of the yield rate
      */
-    function setRate(uint256 day, uint256 value) external onlyOwner {
-        if (_rates.length > 0 && _rates[_rates.length - 1].day >= day) {
-            revert InvalidDay("The new day must be greater than the last rate day");
+    function configureYieldRate(uint256 effectiveDay, uint256 value) external onlyOwner {
+        if (_yieldRates.length > 0 && _yieldRates[_yieldRates.length - 1].effectiveDay >= effectiveDay) {
+            revert InvalidDay("The new day must be greater than the last yield rate day");
         }
-        if (_rates.length > 0 && _rates[_rates.length - 1].value == value) {
-            revert InvalidDay("The new value must be different than the last rate value");
+        if (_yieldRates.length > 0 && _yieldRates[_yieldRates.length - 1].value == value) {
+            revert InvalidDay("The new value must be different than the last yield rate value");
         }
 
-        _rates.push(Record({ day: _toUint16(day), value: _toUint240(value) }));
+        _yieldRates.push(YieldRate({ effectiveDay: _toUint16(effectiveDay), value: _toUint240(value) }));
 
-        emit RateChanged(day, value);
+        emit YieldRateConfigured(effectiveDay, value);
     }
 
     // -------------------- User Functions ---------------------------
@@ -286,7 +294,7 @@ contract YieldStreamer is
     /**
      * @inheritdoc IYieldStreamer
      */
-    function claimAmount(uint256 amount) external whenNotPaused notBlacklisted(_msgSender()) {
+    function claim(uint256 amount) external whenNotPaused notBlacklisted(_msgSender()) {
         _claim(_msgSender(), amount);
     }
 
@@ -295,8 +303,8 @@ contract YieldStreamer is
     /**
      * @inheritdoc IBalanceTracker
      */
-    function getDailyBalances(address account, uint256 from, uint256 to) public view returns (uint256[] memory) {
-        return IBalanceTracker(_balanceTracker).getDailyBalances(account, from, to);
+    function getDailyBalances(address account, uint256 fromDay, uint256 toDay) public view returns (uint256[] memory) {
+        return IBalanceTracker(_balanceTracker).getDailyBalances(account, fromDay, toDay);
     }
 
     /**
@@ -325,7 +333,7 @@ contract YieldStreamer is
     /**
      * @inheritdoc IYieldStreamer
      */
-    function claimAmountPreview(address account, uint256 amount) public view returns (ClaimResult memory) {
+    function claimPreview(address account, uint256 amount) public view returns (ClaimResult memory) {
         return _claimPreview(account, amount);
     }
 
@@ -334,115 +342,119 @@ contract YieldStreamer is
      *
      * @param account The address of an account to get the claim details for
      */
-    function getLastClaimDetails(address account) public view returns (Record memory) {
+    function getLastClaimDetails(address account) public view returns (ClaimState memory) {
         return _claims[account];
     }
 
     /**
-     * @notice Returns the daily earnings of an account for the specified period range
+     * @notice Calculates the daily yield of an account accrued for the specified period
      *
-     * @param account The account to get the earnings for
-     * @param from The start day of the period range
-     * @param to The end day of the period range
+     * @param account The address of an account to calculate the yield for
+     * @param fromDay The index of the first day of the period
+     * @param toDay The index of the last day of the period
      */
-    function getDailyEarnings(address account, uint256 from, uint256 to) public view returns (uint256[] memory) {
+    function calculateYieldByDays(
+        address account,
+        uint256 fromDay,
+        uint256 toDay
+    ) public view returns (uint256[] memory) {
         /**
-         * Fetch the current rate
+         * Fetch the current yield rate
          */
-        uint256 rateIndex = _rates.length;
-        while (_rates[--rateIndex].day > to) {}
-        Record memory rate = _rates[rateIndex];
+        uint256 rateIndex = _yieldRates.length;
+        while (_yieldRates[--rateIndex].effectiveDay > toDay) {}
+        YieldRate memory rate = _yieldRates[rateIndex];
 
         /**
-         * Fetch the current boundary size
+         * Fetch the look-back period length
          */
-        uint256 boundarySize = _boundaries[0].value;
+        uint256 periodLength = _lookBackPeriods[0].length;
 
         /**
-         * Calculate the daily earnings for the period range
+         * Calculate the daily yield for the period
          */
-        uint256[] memory dailyBalances = getDailyBalances(account, from + 1 - boundarySize, to);
-        uint256[] memory minBalances = _subMinimums(dailyBalances, boundarySize);
-        uint256[] memory earnings = new uint256[](minBalances.length);
+        uint256[] memory dailyBalances = getDailyBalances(account, fromDay + 1 - periodLength, toDay);
+        uint256[] memory minBalances = _subMinimums(dailyBalances, periodLength);
+        uint256[] memory yieldByDays = new uint256[](minBalances.length);
         uint256 i = minBalances.length;
 
         do {
             --i;
-            if (from + i < rate.day) {
-                rate = _rates[--rateIndex];
+            if (fromDay + i < rate.effectiveDay) {
+                rate = _yieldRates[--rateIndex];
             }
             /**
              * TBD: Use compound interest formula
              */
-            earnings[i] = (minBalances[i] * rate.value) / RATE_BASE;
+            yieldByDays[i] = (minBalances[i] * rate.value) / RATE_FACTOR;
         } while (i > 0);
 
-        return earnings;
+        return yieldByDays;
     }
 
     /**
-     * @notice Returns the minimum daily balances of an account for the specified period range
+     * @notice Returns the minimum daily balances of an account for the specified period
      *
-     * @param account The account to get the minimum balances for
-     * @param from The start day of the period range
-     * @param to The end day of the period range
+     * @param account The address of an account to get the balances for
+     * @param fromDay The index of the first day of the period
+     * @param toDay The index of the last day of the period
      */
-    function getMinBalances(address account, uint256 from, uint256 to) public view returns (uint256[] memory) {
-        uint256 boundarySize = _boundaries[0].value;
-        uint256[] memory dailyBalances = getDailyBalances(account, from + 1 - boundarySize, to);
-        return _subMinimums(dailyBalances, boundarySize);
+    function getMinBalances(address account, uint256 fromDay, uint256 toDay) public view returns (uint256[] memory) {
+        uint256 periodLength = _lookBackPeriods[0].effectiveDay;
+        uint256[] memory dailyBalances = getDailyBalances(account, fromDay + 1 - periodLength, toDay);
+        return _subMinimums(dailyBalances, periodLength);
     }
 
     /**
-     * @notice Reads the boundary record array
+     * @notice Reads the look-back period chronological array
      *
-     * @param index The index of the record to read
-     * @return The record at the specified index and the length of array
+     * @param index The index of the look-back period in the array
+     * @return The details of the look-back period and the length of the array
      */
-    function readBoundaryRecord(uint256 index) public view returns (Record memory, uint256) {
-        return (_boundaries[index], _boundaries.length);
+    function getLookBackPeriod(uint256 index) public view returns (LookBackPeriod memory, uint256) {
+        return (_lookBackPeriods[index], _lookBackPeriods.length);
     }
 
     /**
-     * @notice Reads the rate record array
+     * @notice Reads the yield rate chronological array
      *
-     * @param index The index of the record to read
-     * @return The record at the specified index and the length of array
+     * @param index The index of the yield rate in the array
+     * @return The details of the yield rate and the length of the array
      */
-    function readRateRecord(uint256 index) public view returns (Record memory, uint256) {
-        return (_rates[index], _rates.length);
+    function getYieldRate(uint256 index) public view returns (YieldRate memory, uint256) {
+        return (_yieldRates[index], _yieldRates.length);
     }
 
     /**
-     * @notice Calculates the stream income for the specified amount and time
+     * @notice Calculates the stream yield for the specified amount and time
      *
-     * @param amount The amount to calculate the stream income for
-     * @param time The time to calculate the stream income for
+     * @param amount The amount to calculate the stream yield for
+     * @param time The time to calculate the stream yield for
      */
     function calculateStream(uint256 amount, uint256 time) public pure returns (uint256) {
         return (amount * time) / 1 days;
     }
 
     /**
-     * @notice Calculates the tax for the specified value and day
+     * @notice Calculates the amount of yield tax
      *
-     * @param amount The amount to calculate the tax for
-     * @param day The day to calculate the tax for
+     * @param amount The yield amount to calculate the tax for
+     * @param passedDays The number of days passed since the yield was accrued
      */
-    function calculateTax(uint256 amount, uint256 day) public pure returns (uint256) {
-        if (day <= 180) {
-            return (amount * 225000) / RATE_BASE;
-        } else if (day <= 360) {
-            return (amount * 200000) / RATE_BASE;
-        } else if (day <= 720) {
-            return (amount * 175000) / RATE_BASE;
+    function calculateTax(uint256 amount, uint256 passedDays) public pure returns (uint256) {
+        if (passedDays <= 180) {
+            return (amount * 225000) / RATE_FACTOR;
+        } else if (passedDays <= 360) {
+            return (amount * 200000) / RATE_FACTOR;
+        } else if (passedDays <= 720) {
+            return (amount * 175000) / RATE_FACTOR;
         } else {
-            return (amount * 150000) / RATE_BASE;
+            return (amount * 150000) / RATE_FACTOR;
         }
     }
 
     /**
-     * @notice Returns the balance tracker contract address
+     * @notice Returns the balance tracker address
      */
     function balanceTracker() external view returns (address) {
         return _balanceTracker;
@@ -495,143 +507,141 @@ contract YieldStreamer is
     }
 
     /**
-     * @notice Returns the claim preview result for the specified account and amount
+     * @notice Returns the preview result of claiming the specified amount of yield
      *
-     * @param account The address of an account to preview the claim
-     * @param amount The amount of income to claim
+     * @param account The address of an account to preview the claim for
+     * @param amount The amount of yield to be claimed
      */
     function _claimPreview(address account, uint256 amount) internal view returns (ClaimResult memory) {
         (uint256 day, uint256 time) = dayAndTime();
-        Record memory claim = _claims[account];
+        ClaimState memory state = _claims[account];
         ClaimResult memory result;
 
-        if (claim.day != --day) {
+        if (state.day != --day) {
             /**
-             * The account has not made a withdraw today
-             * Therefore, calculate the income for the period range
+             * The account has not made a claim today yet
+             * Calculate the yield for the period since the last claim
              */
 
-            if (claim.day != 0) {
+            if (state.day != 0) {
                 /**
-                 * Account has claimed before, get the last claim day
+                 * Account has claimed before, so use the last claim day
                  */
-                result.day = claim.day;
+                result.nextClaimDay = state.day;
             } else {
                 /**
-                 * Account has never claimed before, get the first boundary day
+                 * Account has never claimed before, so use the first look-back period day
                  */
-                result.day = _boundaries[0].day;
+                result.nextClaimDay = _lookBackPeriods[0].effectiveDay;
             }
 
             /**
-             * Calculate the daily earnings since the last claim day until yesterday
+             * Calculate the yield by days since the last claim day until yesterday
              */
-            uint256[] memory earnings = getDailyEarnings(account, result.day, day);
-            uint256 length = earnings.length - 1;
+            uint256[] memory yieldByDays = calculateYieldByDays(account, result.nextClaimDay, day);
+            uint256 lastIndex = yieldByDays.length - 1;
 
             /**
-             * Calculate the stream earnings for today
+             * Calculate the amount of yield streamed for the current day
              */
-            result.streamIncome = calculateStream(earnings[length], time);
+            result.streamYield = calculateStream(yieldByDays[lastIndex], time);
 
             /**
-             * Subtract the last claim amount from the earnings
+             * Update the first day in the yield by days array
              */
-            earnings[0] -= claim.value;
+            yieldByDays[0] -= state.debit;
 
             /**
-             * Iterate over the daily earnings and calculate accrued income and total tax
-             * Exit the loop when the accrued income exceeds the claimed amount
+             * Calculate accrued yield and tax for the specified period
+             * Exit the loop when the accrued yield exceeds the claim amount
              */
             uint256 i = 0;
             do {
-                result.heldIncome += earnings[i];
-                result.tax += calculateTax(earnings[i], length - i);
-            } while (result.heldIncome < amount && ++i < length);
+                result.primaryYield += yieldByDays[i];
+                result.tax += calculateTax(yieldByDays[i], lastIndex - i);
+            } while (result.primaryYield < amount && ++i < lastIndex);
 
             if (i == 0) {
-                result.debt += claim.value;
+                result.nextClaimDebit += state.debit;
             }
 
-            if (result.heldIncome >= amount) {
+            if (result.primaryYield >= amount) {
                 /**
-                 * If the income is greater than the amount take a step back to
-                 * calculate the surplus and update the result values
+                 * If the yield exceeds the amount, take the surplus into account
                  */
-                uint256 surplus = result.heldIncome - amount;
+                uint256 surplus = result.primaryYield - amount;
 
-                result.day += i;
-                result.debt += earnings[i] - surplus;
-                result.tax -= calculateTax(surplus, length - i);
+                result.nextClaimDay += i;
+                result.nextClaimDebit += yieldByDays[i] - surplus;
+                result.tax -= calculateTax(surplus, lastIndex - i);
 
                 /**
-                 * Continue iterating over the daily earnings
-                 * to calculate the total income
+                 * Complete the calculation of the accrued yield and tax for the period
                  */
-                while (++i < length) {
-                    result.heldIncome += earnings[i];
+                while (++i < lastIndex) {
+                    result.primaryYield += yieldByDays[i];
                 }
             } else {
                 /**
-                 * If the income is not greater than the amount, calculate the income and tax for today
+                 * If the yield doesn't exceed the amount, calculate the yield and tax for today
                  */
-                result.day = day;
+                result.nextClaimDay = day;
 
                 if (amount != type(uint256).max) {
-                    result.debt = amount - result.heldIncome;
-                    if (result.debt > result.streamIncome) {
-                        result.shortfall = result.debt - result.streamIncome;
-                        result.debt = result.streamIncome;
+                    result.nextClaimDebit = amount - result.primaryYield;
+                    if (result.nextClaimDebit > result.streamYield) {
+                        result.shortfall = result.nextClaimDebit - result.streamYield;
+                        result.nextClaimDebit = result.streamYield;
                     }
                 } else {
-                    result.debt = result.streamIncome;
+                    result.nextClaimDebit = result.streamYield;
                 }
 
-                result.tax += calculateTax(result.debt, 0);
+                result.tax += calculateTax(result.nextClaimDebit, 0);
             }
         } else {
             /**
-             * The account has already made a withdraw today
-             * Therefore, calculate the income only for today
+             * The account has already made a claim today
+             * Therefore, recalculate the yield and tax only for today
              */
 
-            result.day = day;
-            result.debt = claim.value;
+            result.nextClaimDay = day;
+            result.nextClaimDebit = state.debit;
 
-            uint256[] memory earnings = getDailyEarnings(account, result.day, day);
-            result.streamIncome = calculateStream(earnings[0], time);
+            uint256[] memory yieldByDays = calculateYieldByDays(account, day, day);
+            result.streamYield = calculateStream(yieldByDays[0], time);
 
             if (amount != type(uint256).max) {
-                result.debt += amount;
-                if (result.debt > result.streamIncome) {
-                    result.shortfall = result.debt - result.streamIncome;
-                    result.debt = result.streamIncome;
+                result.nextClaimDebit += amount;
+                if (result.nextClaimDebit > result.streamYield) {
+                    result.shortfall = result.nextClaimDebit - result.streamYield;
+                    result.nextClaimDebit = result.streamYield;
                 }
             } else {
-                result.debt = result.streamIncome;
+                result.nextClaimDebit = result.streamYield;
             }
 
-            result.tax = calculateTax(result.debt - claim.value, 0);
+            result.tax = calculateTax(result.nextClaimDebit - state.debit, 0);
         }
 
         return result;
     }
 
     /**
-     * @notice Claims the specified amount of income for the specified account
+     * @notice Claims the specified amount of yield for an account
      *
-     * @param account The address of an account to claim the income for
-     * @param amount The amount of income to claim
+     * @param account The address of an account to claim the yield for
+     * @param amount The amount of yield to claim
      */
     function _claim(address account, uint256 amount) internal returns (ClaimResult memory) {
         ClaimResult memory preview = _claimPreview(account, amount);
 
         if (preview.shortfall > 0) {
-            revert InvalidClaimRequest("The claim amount is greater than the available income");
+            revert InvalidClaimRequest("The claim amount is greater than the available yield");
         }
 
-        _claims[account].day = _toUint16(preview.day);
-        _claims[account].value = _toUint240(preview.debt);
+        _claims[account].day = _toUint16(preview.nextClaimDay);
+        _claims[account].debit = _toUint240(preview.nextClaimDebit);
 
         IERC20Upgradeable(token()).transfer(_taxReceiver, preview.tax);
         IERC20Upgradeable(token()).transfer(account, amount - preview.tax);

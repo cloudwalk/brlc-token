@@ -9,59 +9,53 @@ pragma solidity 0.8.16;
  */
 interface IYieldStreamer {
     /**
-     * @notice Emitted when an account claims accrued income
+     * @notice Emitted when an account claims accrued yield
      * @param account The address of the account
-     * @param income The amount of income
-     * @param tax The income tax
+     * @param yield The amount of yield
+     * @param tax The yield tax
      */
-    event Claim(address indexed account, uint256 income, uint256 tax);
+    event Claim(address indexed account, uint256 yield, uint256 tax);
 
     /**
-     * @notice The struct of a claim result
-     * @param day The day of the claim applied for the account
-     * @param debt The amount of income consumed on the day of the claim
-     * @param shortfall The amount of income that is not enough to cover the claim
-     * @param heldIncome The amount of income held for the claim excluding stream income
-     * @param streamIncome The amount of income held for the claim as stream income
-     * @param tax The amount of income tax from the claim amount
+     * @notice A struct describing the details of the result of the claim operation
      */
     struct ClaimResult {
-        uint256 day;
-        uint256 debt;
-        uint256 shortfall;
-        uint256 heldIncome;
-        uint256 streamIncome;
-        uint256 tax;
+        uint256 nextClaimDay;   // The index of the day from which the subsequent yield will be calculated next time
+        uint256 nextClaimDebit; // The amount of yield that will already be considered claimed for the next claim day
+        uint256 primaryYield;   // The yield primary amount based on the number of whole days passed since the previous claim
+        uint256 streamYield;    // The yield stream amount based on the time passed since the beginning of the current day
+        uint256 shortfall;      // The amount of yield that is not enough to cover this claim
+        uint256 tax;            // The amount of tax for this claim
     }
 
     /**
-     * @notice Claims all accrued income
+     * @notice Claims all accrued yield
      *
      * Emits a {Claim} event
      */
     function claimAll() external;
 
     /**
-     * @notice Claims a portion of accrued income
+     * @notice Claims a portion of accrued yield
      *
-     * @param amount The portion of income to claim
+     * @param amount The portion of yield to claim
      *
      * Emits a {Claim} event
      */
-    function claimAmount(uint256 amount) external;
+    function claim(uint256 amount) external;
 
     /**
-     * @notice Returns the result of claiming all accrued income
+     * @notice Previews the result of claiming all accrued yield
      *
-     * @param account The address of the account to preview the claim
+     * @param account The address to preview the claim for
      */
     function claimAllPreview(address account) external view returns (ClaimResult memory);
 
     /**
-     * @notice Returns the result of claiming a portion of accrued income
+     * @notice Previews the result of claiming a portion of accrued yield
      *
-     * @param account The address of the account to preview the claim
-     * @param amount The portion of income to claim
+     * @param account The address to preview the claim for
+     * @param amount The portion of yield to be claimed
      */
-    function claimAmountPreview(address account, uint256 amount) external view returns (ClaimResult memory);
+    function claimPreview(address account, uint256 amount) external view returns (ClaimResult memory);
 }

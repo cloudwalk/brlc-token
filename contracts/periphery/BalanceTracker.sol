@@ -190,18 +190,22 @@ contract BalanceTracker is OwnableUpgradeable, IBalanceTracker, IERC20Hook {
     /**
      * @inheritdoc IBalanceTracker
      */
-    function getDailyBalances(address account, uint256 from, uint256 to) external view returns (uint256[] memory) {
-        if (from < INITIALIZATION_DAY) {
+    function getDailyBalances(
+        address account,
+        uint256 fromDay,
+        uint256 toDay
+    ) external view returns (uint256[] memory) {
+        if (fromDay < INITIALIZATION_DAY) {
             revert InvalidDay("The `from` day must be greater than or equal to the initialization day");
         }
-        if (from > to) {
+        if (fromDay > toDay) {
             revert InvalidDay("The `from` day must be less than or equal to the `to` day");
         }
 
         uint16 day = 0;
         uint256 balance = 0;
         uint256 recordIndex = _balanceRecords[account].length - 1;
-        if (to >= _balanceRecords[account][recordIndex].day) {
+        if (toDay >= _balanceRecords[account][recordIndex].day) {
             /**
              * The `to` day is ahead or equal to the last record day
              * Therefore get the actual balance of the account directly from
@@ -215,7 +219,7 @@ contract BalanceTracker is OwnableUpgradeable, IBalanceTracker, IERC20Hook {
              * Therefore find the record with a day that is ahead of the `to` day
              * and set the `balance` variable to the value of that record
              */
-            while (_balanceRecords[account][--recordIndex].day > to) {}
+            while (_balanceRecords[account][--recordIndex].day > toDay) {}
             balance = _balanceRecords[account][recordIndex + 1].value;
             day = _balanceRecords[account][recordIndex].day;
         }
@@ -224,8 +228,8 @@ contract BalanceTracker is OwnableUpgradeable, IBalanceTracker, IERC20Hook {
          * Iterate over the records from the `to` day to the `from` day
          * and fill the `balances` array with the daily balances
          */
-        uint256 i = to + 1 - from;
-        uint256 dayIndex = from + i;
+        uint256 i = toDay + 1 - fromDay;
+        uint256 dayIndex = fromDay + i;
         uint256[] memory balances = new uint256[](i);
         do {
             i--;
