@@ -359,14 +359,13 @@ contract YieldStreamer is
         uint256 toDay
     ) public view returns (uint256[] memory) {
         /**
-         * Fetch the current yield rate
+         * Fetch the yield rate
          */
         uint256 rateIndex = _yieldRates.length;
-        while (_yieldRates[--rateIndex].effectiveDay > toDay) {}
-        YieldRate memory rate = _yieldRates[rateIndex];
+        while (_yieldRates[--rateIndex].effectiveDay <= fromDay) {}
 
         /**
-         * Fetch the look-back period length
+         * Fetch the look-back period
          */
         uint256 periodLength = _lookBackPeriods[0].length;
 
@@ -376,18 +375,21 @@ contract YieldStreamer is
         uint256[] memory dailyBalances = getDailyBalances(account, fromDay + 1 - periodLength, toDay);
         uint256[] memory minBalances = _subMinimums(dailyBalances, periodLength);
         uint256[] memory yieldByDays = new uint256[](minBalances.length);
-        uint256 i = minBalances.length;
+        uint256 nextRateDay = fromDay;
+        uint256 rateValue = 0;
+        uint256 yield = 0;
+        uint256 i = 0;
 
         do {
-            --i;
-            if (fromDay + i < rate.effectiveDay) {
-                rate = _yieldRates[--rateIndex];
+            if (fromDay + i == nextRateDay) {
+                rateValue = _yieldRates[rateIndex].value;
+                if (rateIndex != _yieldRates.length - 1) {
+                    nextRateDay = _yieldRates[++rateIndex].effectiveDay;
+                }
             }
-            /**
-             * TBD: Use compound interest formula
-             */
-            yieldByDays[i] = (minBalances[i] * rate.value) / RATE_FACTOR;
-        } while (i > 0);
+            yield += ((minBalances[i] + yield) * rateValue) / RATE_FACTOR;
+            yieldByDays[i] = yield;
+        } while (++i < minBalances.length);
 
         return yieldByDays;
     }
@@ -549,7 +551,11 @@ contract YieldStreamer is
             /**
              * Update the first day in the yield by days array
              */
-            yieldByDays[0] -= state.debit;
+            if (yieldByDays[0] > state.debit) {
+                yieldByDays[0] -= state.debit;
+            } else {
+                yieldByDays[0] = 0;
+            }
 
             /**
              * Calculate accrued yield and tax for the specified period
