@@ -48,5 +48,15 @@
     "name": "LightningBitcoin",
     "chainId": 2008,
     "address": "0x25a506b9De655Ee80E893102D5CF27F0f2097Fed"
+  },
+  {
+    "name": "BalanceTracker",
+    "chainId": 2009,
+    "address": "0x61a0b4d1a0876BD3861F756198d79a81f01e9c8A"
+  },
+  {
+    "name": "BalanceTracker",
+    "chainId": 2008,
+    "address": "0xB1f571b3254C99A0A562124738f0193dE2B2b2A9"
   }
 ]
