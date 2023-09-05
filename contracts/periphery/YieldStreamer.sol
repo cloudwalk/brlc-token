@@ -9,6 +9,7 @@ import { IYieldStreamer } from "./../base/interfaces/periphery/IYieldStreamer.so
 import { IBalanceTracker } from "./../base/interfaces/periphery/IBalanceTracker.sol";
 import { PausableExtUpgradeable } from "./../base/common/PausableExtUpgradeable.sol";
 import { BlacklistableUpgradeable } from "./../base/common/BlacklistableUpgradeable.sol";
+import { RescuableUpgradeable } from "./../base/common/RescuableUpgradeable.sol";
 
 /**
  * @title YieldStreamer contract
@@ -19,6 +20,7 @@ contract YieldStreamer is
     OwnableUpgradeable,
     PausableExtUpgradeable,
     BlacklistableUpgradeable,
+    RescuableUpgradeable,
     IBalanceTracker,
     IYieldStreamer
 {
