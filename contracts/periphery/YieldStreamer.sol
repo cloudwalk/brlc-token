@@ -619,14 +619,20 @@ contract YieldStreamer is
             uint256[] memory yieldByDays = calculateYieldByDays(account, day, day);
             result.streamYield = calculateStream(yieldByDays[0], time);
 
+            if (state.debit > result.streamYield) {
+                result.streamYield = 0;
+            } else {
+                result.streamYield -= state.debit;
+            }
+
             if (amount != type(uint256).max) {
-                result.nextClaimDebit += amount;
-                if (result.nextClaimDebit > result.streamYield) {
-                    result.shortfall = result.nextClaimDebit - result.streamYield;
-                    result.nextClaimDebit = result.streamYield;
+                if (amount > result.streamYield) {
+                    result.shortfall = amount - result.streamYield;
+                } else {
+                    result.nextClaimDebit += amount;
                 }
             } else {
-                result.nextClaimDebit = result.streamYield;
+                result.nextClaimDebit += result.streamYield;
             }
 
             result.tax = calculateTax(result.nextClaimDebit - state.debit, 0);
