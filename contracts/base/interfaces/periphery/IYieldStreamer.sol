@@ -11,7 +11,7 @@ interface IYieldStreamer {
     /**
      * @notice Emitted when an account claims accrued yield
      * @param account The address of the account
-     * @param yield The amount of yield
+     * @param yield The amount of yield before tax
      * @param tax The yield tax
      */
     event Claim(address indexed account, uint256 yield, uint256 tax);

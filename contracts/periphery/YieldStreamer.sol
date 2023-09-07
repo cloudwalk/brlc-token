@@ -651,6 +651,9 @@ contract YieldStreamer is
         _claims[account].day = _toUint16(preview.nextClaimDay);
         _claims[account].debit = _toUint240(preview.nextClaimDebit);
 
+        if (amount == type(uint256).max) {
+            amount = preview.primaryYield + preview.streamYield;
+        }
         IERC20Upgradeable(token()).transfer(_taxReceiver, preview.tax);
         IERC20Upgradeable(token()).transfer(account, amount - preview.tax);
 
