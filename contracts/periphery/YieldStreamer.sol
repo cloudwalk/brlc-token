@@ -364,7 +364,7 @@ contract YieldStreamer is
          * Fetch the yield rate
          */
         uint256 rateIndex = _yieldRates.length;
-        while (_yieldRates[--rateIndex].effectiveDay <= fromDay) {}
+        while (_yieldRates[--rateIndex].effectiveDay <= fromDay && rateIndex > 0) {}
 
         /**
          * Fetch the look-back period
@@ -379,7 +379,7 @@ contract YieldStreamer is
         uint256[] memory yieldByDays = new uint256[](minBalances.length);
         uint256 nextRateDay = fromDay;
         uint256 rateValue = 0;
-        uint256 yield = 0;
+        uint256 sumYield = 0;
         uint256 i = 0;
 
         do {
@@ -389,8 +389,9 @@ contract YieldStreamer is
                     nextRateDay = _yieldRates[++rateIndex].effectiveDay;
                 }
             }
-            yield += ((minBalances[i] + yield) * rateValue) / RATE_FACTOR;
-            yieldByDays[i] = yield;
+            uint256 dayYield = ((minBalances[i] + sumYield) * rateValue) / RATE_FACTOR;
+            yieldByDays[i] = dayYield;
+            sumYield += dayYield;
         } while (++i < minBalances.length);
 
         return yieldByDays;
