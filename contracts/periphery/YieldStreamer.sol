@@ -247,6 +247,10 @@ contract YieldStreamer is
             revert InvalidValue("The look-back period length must not be zero");
         }
 
+        if (effectiveDay < length - 1) {
+            revert InvalidValue("The look-back period effective day is too early");
+        }
+
         if (_lookBackPeriods.length > 0) {
             // As temporary solution, prevent multiple configuration
             // of the look-back period as this will require a more complex logic
