@@ -184,7 +184,13 @@ contract BalanceTracker is OwnableUpgradeable, IBalanceTracker, IERC20Hook {
      * @return The record at the specified index and the length of array
      */
     function readBalanceRecord(address account, uint256 index) external view returns (Record memory, uint256) {
-        return (_balanceRecords[account][index], _balanceRecords[account].length);
+        uint256 len = _balanceRecords[account].length;
+        if (len > index) {
+            return (_balanceRecords[account][index], len);
+        } else {
+            Record memory emptyRecord;
+            return (emptyRecord, len);
+        }
     }
 
     /**
