@@ -12,6 +12,7 @@ import { BalanceTracker } from "../periphery/BalanceTracker.sol";
 contract BalanceTrackerHarness is BalanceTracker {
 
     uint256 public currentBlockTimestamp;
+    bool public usingRealBlockTimestamps;
 
     function setInitializationDay(uint16 day) external onlyOwner {
         INITIALIZATION_DAY = day;
@@ -25,11 +26,19 @@ contract BalanceTrackerHarness is BalanceTracker {
         currentBlockTimestamp = day * (24 * 60 * 60) + time;
     }
 
+    function setUsingRealBlockTimestamps(bool newValue) external onlyOwner {
+        usingRealBlockTimestamps = newValue;
+    }
+
     function deleteBalanceRecords(address account) external onlyOwner {
         delete _balanceRecords[account];
     }
 
     function _blockTimestamp() internal view virtual override returns (uint256) {
-        return currentBlockTimestamp;
+        if (usingRealBlockTimestamps) {
+            return super._blockTimestamp();
+        } else {
+            return currentBlockTimestamp - NEGATIVE_TIME_SHIFT;
+        }
     }
 }
