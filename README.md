@@ -13,7 +13,7 @@ This repository contains [BRLC](https://infinitepay.io/brlc) token smart contrac
 
 ## Build and test
 
-``` sh
+```sh
 # Install all dependencies
 npm install
 
@@ -23,6 +23,17 @@ npx hardhat compile
 # Run all tests
 npx hardhat test
 ```
+
+## Running helper scripts
+1. Add the needed network and mnemonic (or private keys) in the `networks` section of the Hardhat configuration file: [hardhat.config.ts](hardhat.config.ts).
+
+2. Configure the needed script by setting the values under the `Script input parameters` section inside it or by declaration an appropriate environment variables.
+
+3. Run one of the needed script like:
+   ```bash
+   npx hardhat --network ganache scripts/<script_name>.ts
+   ```
+   Use your network instead of `ganache`.
 
 ## Networks and deployments
 Information about deployments across all the networks can be found [here](./docs/deployed-contracts.md).
