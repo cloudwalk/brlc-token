@@ -525,6 +525,7 @@ contract YieldStreamer is
         (uint256 day, uint256 time) = dayAndTime();
         ClaimState memory state = _claims[account];
         ClaimResult memory result;
+        result.prevClaimDebit = state.debit;
 
         if (state.day != --day) {
             /**
@@ -543,6 +544,7 @@ contract YieldStreamer is
                  */
                 result.nextClaimDay = _lookBackPeriods[0].effectiveDay;
             }
+            result.firstYieldDay = result.nextClaimDay;
 
             /**
              * Calculate the yield by days since the last claim day until yesterday
@@ -553,7 +555,8 @@ contract YieldStreamer is
             /**
              * Calculate the amount of yield streamed for the current day
              */
-            result.streamYield = calculateStream(yieldByDays[lastIndex], time);
+            result.lastDayYield = yieldByDays[lastIndex];
+            result.streamYield = calculateStream(result.lastDayYield, time);
 
             /**
              * Update the first day in the yield by days array
@@ -619,10 +622,12 @@ contract YieldStreamer is
              */
 
             result.nextClaimDay = day;
+            result.firstYieldDay = day;
             result.nextClaimDebit = state.debit;
 
             uint256[] memory yieldByDays = calculateYieldByDays(account, day, day);
-            result.streamYield = calculateStream(yieldByDays[0], time);
+            result.lastDayYield = yieldByDays[0];
+            result.streamYield = calculateStream(result.lastDayYield, time);
 
             if (state.debit > result.streamYield) {
                 result.streamYield = 0;
