@@ -38,7 +38,12 @@ contract BalanceTrackerHarness is BalanceTracker {
         if (usingRealBlockTimestamps) {
             return super._blockTimestamp();
         } else {
-            return currentBlockTimestamp - NEGATIVE_TIME_SHIFT;
+            uint256 blockTimestamp = currentBlockTimestamp;
+            if (blockTimestamp < NEGATIVE_TIME_SHIFT) {
+                return 0;
+            } else {
+                return blockTimestamp - NEGATIVE_TIME_SHIFT;
+            }
         }
     }
 }
