@@ -65,11 +65,15 @@ async function main() {
   const yesterday: number = dayAndTime.dayIndex - 1;
 
   const zeroAmountClaimResult: ClaimResult = await yieldStreamer.claimPreview(accountAddress, 0);
-  const yieldByDays: BigNumber[] = await yieldStreamer.calculateYieldByDays(
+  const fistYieldDay: number = zeroAmountClaimResult.nextClaimDay.toNumber();
+  const prevClaimDebit: BigNumber = zeroAmountClaimResult.nextClaimDebit;
+  const yieldByDaysReadOnly: BigNumber[] = (await yieldStreamer.calculateYieldByDays(
     accountAddress,
-    zeroAmountClaimResult.nextClaimDay,
+    fistYieldDay,
     yesterday
-  );
+  ));
+  const yieldByDays: BigNumber[] = [...yieldByDaysReadOnly];
+  correctFirstDayYield(yieldByDays, prevClaimDebit);
 
   logger.log("✅ Done");
   logger.logEmptyLine();
@@ -85,7 +89,7 @@ async function main() {
     lastCalculationTimestamp = Date.now();
     const dayAndTime: DayAndTime = getCurrentDayAndTime();
     checkDayAndTime(dayAndTime);
-    const calcYield: CalcYield = calculateYield(yieldByDays, dayAndTime);
+    const calcYield: CalcYield = calculateYield(yieldByDays, dayAndTime, fistYieldDay, prevClaimDebit);
     const requestedClaimResult: ClaimResult = await yieldStreamer.claimAllPreview(accountAddress);
     const requestedDayAndTime: BigNumber[] = await yieldStreamer.dayAndTime();
     const result: Result = {
@@ -129,13 +133,29 @@ function checkDayAndTime(dayAndTime: DayAndTime) {
   }
 }
 
-function calculateYield(yieldByDays: BigNumber[], dayAndTime: DayAndTime): CalcYield {
+function correctFirstDayYield(yieldByDays: BigNumber[], prevClaimDebit: BigNumber) {
+  if (yieldByDays.length <= 1) {
+    return;
+  }
+  if (yieldByDays[0].lt(prevClaimDebit)) {
+    yieldByDays[0] = BigNumber.from(0);
+  } else {
+    yieldByDays[0] = yieldByDays[0].sub(prevClaimDebit);
+  }
+}
+
+function calculateYield(
+  yieldByDays: BigNumber[],
+  currentDayAndTime: DayAndTime,
+  firstYieldDay: number,
+  prevClaimDebit: BigNumber
+): CalcYield {
   const len = yieldByDays.length;
   const result: CalcYield = {
     primaryYield: 0,
     streamYield: 0,
   };
-  if (len < 1) {
+  if (len === 0) {
     return result;
   }
 
@@ -143,7 +163,14 @@ function calculateYield(yieldByDays: BigNumber[], dayAndTime: DayAndTime): CalcY
   for (let i = 0; i < (len - 1); ++i) {
     result.primaryYield += yieldByDays[i].toNumber();
   }
-  result.streamYield = Math.floor(lastDayYield * dayAndTime.dayTimeInSeconds / SECONDS_IN_DAY);
+  result.streamYield = Math.floor(lastDayYield * currentDayAndTime.dayTimeInSeconds / SECONDS_IN_DAY);
+
+  if (firstYieldDay == currentDayAndTime.dayIndex - 1) {
+    result.streamYield -= prevClaimDebit.toNumber();
+    if (result.streamYield < 0) {
+      result.streamYield = 0;
+    }
+  }
 
   return result;
 }
