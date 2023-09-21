@@ -9,6 +9,7 @@ const accountAddress: string = process.env.SP_ACCOUNT_ADDRESS ?? "0x0DA7D8663d3e
 const predictionPeriodInSeconds: number = parseInt(process.env.SP_PREDICTION_PERIOD_IN_SECONDS ?? "10");
 
 // Script constants
+const BIG_NUMBER_ZERO = ethers.constants.Zero;
 const SECONDS_IN_DAY = 24 * 3600;
 const TIME_SHIFT_IN_SECONDS = -3 * 3600;
 const PROHIBITED_DAY_PART_IN_SECONDS = 60;
@@ -31,15 +32,15 @@ interface DayAndTime {
 }
 
 interface CalcYield {
-  primaryYield: number;
-  streamYield: number;
+  primaryYield: BigNumber;
+  streamYield: BigNumber;
 }
 
 interface Result {
-  predictedPrimaryYield: number;
-  requestedPrimaryYield: number;
-  predictedStreamYield: number;
-  requestedStreamYield: number;
+  predictedPrimaryYield: string;
+  requestedPrimaryYield: string;
+  predictedStreamYield: string;
+  requestedStreamYield: string;
   predictedDayIndex: number;
   requestedDayIndex: number;
   predictedDayTimeInSeconds: number;
@@ -93,10 +94,10 @@ async function main() {
     const requestedClaimResult: ClaimResult = await yieldStreamer.claimAllPreview(accountAddress);
     const requestedDayAndTime: BigNumber[] = await yieldStreamer.dayAndTime();
     const result: Result = {
-      predictedPrimaryYield: calcYield.primaryYield,
-      requestedPrimaryYield: requestedClaimResult.primaryYield.toNumber(),
-      predictedStreamYield: calcYield.streamYield,
-      requestedStreamYield: requestedClaimResult.streamYield.toNumber(),
+      predictedPrimaryYield: calcYield.primaryYield.toString(),
+      requestedPrimaryYield: requestedClaimResult.primaryYield.toString(),
+      predictedStreamYield: calcYield.streamYield.toString(),
+      requestedStreamYield: requestedClaimResult.streamYield.toString(),
       predictedDayIndex: dayAndTime.dayIndex,
       requestedDayIndex: requestedDayAndTime[0].toNumber(),
       predictedDayTimeInSeconds: dayAndTime.dayTimeInSeconds,
@@ -152,23 +153,23 @@ function calculateYield(
 ): CalcYield {
   const len = yieldByDays.length;
   const result: CalcYield = {
-    primaryYield: 0,
-    streamYield: 0,
+    primaryYield: BIG_NUMBER_ZERO,
+    streamYield: BIG_NUMBER_ZERO,
   };
   if (len === 0) {
     return result;
   }
 
-  const lastDayYield: number = yieldByDays[len - 1].toNumber();
+  const lastDayYield: BigNumber = yieldByDays[len - 1];
   for (let i = 0; i < (len - 1); ++i) {
-    result.primaryYield += yieldByDays[i].toNumber();
+    result.primaryYield = result.primaryYield.add(yieldByDays[i]);
   }
-  result.streamYield = Math.floor(lastDayYield * currentDayAndTime.dayTimeInSeconds / SECONDS_IN_DAY);
+  result.streamYield = lastDayYield.mul( currentDayAndTime.dayTimeInSeconds).div(SECONDS_IN_DAY);
 
   if (firstYieldDay == currentDayAndTime.dayIndex - 1) {
-    result.streamYield -= prevClaimDebit.toNumber();
-    if (result.streamYield < 0) {
-      result.streamYield = 0;
+    result.streamYield = result.streamYield.sub(prevClaimDebit);
+    if (result.streamYield.lt(0)) {
+      result.streamYield = BIG_NUMBER_ZERO;
     }
   }
 
