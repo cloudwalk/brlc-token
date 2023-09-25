@@ -27,6 +27,9 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
 
     const REVERT_ERROR_UNAUTHORIZED_BLACKLISTER = "UnauthorizedBlacklister";
     const REVERT_ERROR_BLACKLISTED_ACCOUNT = "BlacklistedAccount";
+    const REVERT_ERROR_ZERO_ADDRESS_BLACKLISTED = "ZeroAddressBlacklisted";
+
+    const ZERO_ADDRESS = ethers.constants.AddressZero;
 
     let blacklistableFactory: ContractFactory;
 
@@ -131,6 +134,14 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
             await expect(blacklistable.connect(user).blacklist(user.address)).to.be.revertedWithCustomError(
                 blacklistable,
                 REVERT_ERROR_UNAUTHORIZED_BLACKLISTER
+            );
+        });
+
+        it("Is reverted if blacklisted address is zero", async () => {
+            const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
+            await expect(blacklistable.connect(blacklister).blacklist(ZERO_ADDRESS)).to.be.revertedWithCustomError(
+                blacklistable,
+                REVERT_ERROR_ZERO_ADDRESS_BLACKLISTED
             );
         });
     });
