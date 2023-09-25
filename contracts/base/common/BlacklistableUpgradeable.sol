@@ -67,7 +67,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     /**
      * @notice The address to blacklist is zero address
     */
-    error ZeroAddressBlacklisted();
+    error ZeroAddressToBlacklist();
 
     // -------------------- Modifiers --------------------------------
 
@@ -126,7 +126,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      */
     function blacklist(address account) external onlyBlacklister {
         if (account == address(0)) {
-            revert ZeroAddressBlacklisted();
+            revert ZeroAddressToBlacklist();
         }
         if (_blacklisted[account]) {
             return;

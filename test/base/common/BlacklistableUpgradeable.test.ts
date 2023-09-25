@@ -27,7 +27,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
 
     const REVERT_ERROR_UNAUTHORIZED_BLACKLISTER = "UnauthorizedBlacklister";
     const REVERT_ERROR_BLACKLISTED_ACCOUNT = "BlacklistedAccount";
-    const REVERT_ERROR_ZERO_ADDRESS_BLACKLISTED = "ZeroAddressBlacklisted";
+    const REVERT_ERROR_ZERO_ADDRESS_BLACKLISTED = "ZeroAddressToBlacklist";
 
     const ZERO_ADDRESS = ethers.constants.AddressZero;
 
