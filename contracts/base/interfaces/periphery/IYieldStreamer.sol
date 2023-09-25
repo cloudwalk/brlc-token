@@ -26,7 +26,7 @@ interface IYieldStreamer {
         uint256 prevClaimDebit; // The amount of yield that was already claimed previously for the first yield day
         uint256 primaryYield;   // The yield primary amount based on the number of whole days passed since the previous claim
         uint256 streamYield;    // The yield stream amount based on the time passed since the beginning of the current day
-        uint256 lastDayYield;   // The possible yield of the last whole day in the time range of this claim
+        uint256 lastDayYield;   // The whole-day yield for the last day in the time range of this claim
         uint256 shortfall;      // The amount of yield that is not enough to cover this claim
         uint256 tax;            // The amount of tax for this claim
     }
