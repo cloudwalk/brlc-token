@@ -20,6 +20,8 @@ const trackerInitializationDay: number = parseInt(process.env.SP_TRACKER_INITIAL
 const logSingleLevelIndent = "  ";
 const logger: Logger = new Logger(logSingleLevelIndent);
 
+const NEGATIVE_TIME_SHIFT = 3 * 60 * 60;
+
 interface BalanceRecord {
   day: number;
   value: BigNumber;
@@ -146,7 +148,7 @@ async function main() {
 
   // Let's consider the following day and time for claiming
   const claimDay1 = trackerInitializationDay + 6;
-  const claimTime1 = 12 * 60 * 60; // 12:00
+  const claimTime1 = 12 * 60 * 60 + NEGATIVE_TIME_SHIFT; // 12:00
   await configureCurrentBlockTimestamp(context, claimDay1, claimTime1);
 
   // Expected claim preview result 1 for the specified conditions
