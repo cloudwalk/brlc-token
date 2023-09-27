@@ -378,40 +378,28 @@ contract YieldStreamer is
         /**
          * Calculate the daily yield for the period
          */
-        uint256[] memory dailyBalances = getDailyBalances(account, fromDay + 1 - periodLength, toDay);
-        uint256[] memory minBalances = _subMinimums(dailyBalances, periodLength);
-        uint256[] memory yieldByDays = new uint256[](minBalances.length);
+        uint256 yieldRange = toDay - fromDay + 1;
+        uint256[] memory dailyBalances = getDailyBalances(account, fromDay + 1 - periodLength, toDay + 1);
+        uint256[] memory yieldByDays = new uint256[](yieldRange);
         uint256 nextRateDay = fromDay;
         uint256 rateValue = 0;
         uint256 sumYield = 0;
-        uint256 i = 0;
 
-        do {
+        for (uint256 i = 0; i < yieldRange; ++i) {
             if (fromDay + i == nextRateDay) {
                 rateValue = _yieldRates[rateIndex].value;
                 if (rateIndex != _yieldRates.length - 1) {
                     nextRateDay = _yieldRates[++rateIndex].effectiveDay;
                 }
             }
-            uint256 dayYield = ((minBalances[i] + sumYield) * rateValue) / RATE_FACTOR;
-            yieldByDays[i] = dayYield;
+            uint256 minBalance = getMinimumInRange(dailyBalances, i, i + periodLength);
+            uint256 dayYield = minBalance * rateValue / RATE_FACTOR;
             sumYield += dayYield;
-        } while (++i < minBalances.length);
+            dailyBalances[i + periodLength] += sumYield;
+            yieldByDays[i] = dayYield;
+        }
 
         return yieldByDays;
-    }
-
-    /**
-     * @notice Returns the minimum daily balances of an account for the specified period
-     *
-     * @param account The address of an account to get the balances for
-     * @param fromDay The index of the first day of the period
-     * @param toDay The index of the last day of the period
-     */
-    function getMinBalances(address account, uint256 fromDay, uint256 toDay) public view returns (uint256[] memory) {
-        uint256 periodLength = _lookBackPeriods[0].effectiveDay;
-        uint256[] memory dailyBalances = getDailyBalances(account, fromDay + 1 - periodLength, toDay);
-        return _subMinimums(dailyBalances, periodLength);
     }
 
     /**
@@ -477,42 +465,26 @@ contract YieldStreamer is
     }
 
     // -------------------- Internal Functions -----------------------
-
     /**
-     * @notice Returns an array of minimum values of each subarray of the specified size
+     * @notice Searches a minimum value in an array for the specified range of indexes
      *
-     * @dev The implementation is based on sliding window algorithm
-     *
-     * @param numbers The input array of numbers
-     * @param size The size of the subarray
+     * @param array The array to search in
+     * @param begIndex The index of the array from which the search begins, including that index
+     * @param endIndex The index of the array at which the search ends, excluding that index
      */
-    function _subMinimums(uint256[] memory numbers, uint256 size) internal pure returns (uint256[] memory) {
-        uint256 length = numbers.length;
-        uint256[] memory result = new uint256[](length + 1 - size);
-        uint256[] memory dq = new uint256[](length);
-        uint256 index = length;
-        uint256 head = 0;
-        uint256 tail = 0;
-
-        do {
-            --index;
-
-            if (head < tail && dq[head] - index >= size) {
-                ++head;
+    function getMinimumInRange(
+        uint256[] memory array,
+        uint256 begIndex,
+        uint256 endIndex
+    ) internal pure returns (uint256) {
+        uint256 min = array[begIndex];
+        for (uint256 i = begIndex + 1; i < endIndex; ++i) {
+            uint256 value = array[i];
+            if (value < min) {
+                min = value;
             }
-
-            while (head < tail && numbers[index] < numbers[dq[tail - 1]]) {
-                --tail;
-            }
-
-            dq[tail++] = index;
-
-            if (length - index >= size) {
-                result[index] = numbers[dq[head]];
-            }
-        } while (index > 0);
-
-        return result;
+        }
+        return min;
     }
 
     /**
