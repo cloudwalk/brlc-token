@@ -270,7 +270,7 @@ async function main() {
   logger.log(`✅ The state is correct`);
 
   logger.decreaseLogIndent();
-  logger.log(`✅ Case 1 has been finished successfully`);
+  logger.log(`✅ Case 2 has been finished successfully`);
   logger.logEmptyLine();
   logger.logEmptyLine();
 
@@ -296,11 +296,8 @@ async function showInputParameters(owner: SignerWithAddress, user: SignerWithAdd
 
 async function defineInitContext(owner: SignerWithAddress, user: SignerWithAddress): Promise<Context> {
   const yieldStreamerContract: Contract = await attachContract(yieldStreamerContractName, yieldStreamerContractAddress);
-  console.log("P1");
   const balanceTrackerAddress: string = await yieldStreamerContract.balanceTracker();
-  console.log("P2");
   const taxReceiverAddress: string = await yieldStreamerContract.taxReceiver();
-  console.log("P3");
   const balanceTrackerContract: Contract = await attachContract(balanceTrackerContractName, balanceTrackerAddress);
   const tokenAddress: string = await balanceTrackerContract.token();
   const tokenContract: Contract = await attachContract(tokenContractName, tokenAddress);
