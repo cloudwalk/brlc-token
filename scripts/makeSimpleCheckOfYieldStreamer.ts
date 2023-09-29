@@ -12,8 +12,8 @@ const yieldStreamerContractName: string = process.env.SP_YIELD_STREAMER_CONTRACT
 const yieldStreamerContractAddress: string = process.env.SP_YIELD_STREAMER_CONTRACT_ADDRESS ?? "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853";
 const yieldRateInPpm: number = parseInt(process.env.SP_YIELD_RATE_IN_PPM ?? "100"); // 0.01% per day
 const lookBackPeriodInDays: number = parseInt(process.env.SP_LOOK_BACK_PERIOD_IN_DAYS ?? "3");
-const userCurrentBalance: number = parseInt(process.env.SP_USER_CURRENT_BALANCE ?? "1000000000");
-const yieldStreamerStartBalance: number = parseInt(process.env.SP_YIELD_STREAMER_START_BALANCE ?? "1000000000");
+const userCurrentBalance: number = parseInt(process.env.SP_USER_CURRENT_BALANCE ?? "1000000000000");
+const yieldStreamerStartBalance: number = parseInt(process.env.SP_YIELD_STREAMER_START_BALANCE ?? "1000000000000");
 const trackerInitializationDay: number = parseInt(process.env.SP_TRACKER_INITIALIZATION_DAY ?? "100");
 
 // Script constants
@@ -127,11 +127,16 @@ async function main() {
   // Let's consider the following balance records
   const expectedBalanceRecords: BalanceRecord[] = [
     { day: trackerInitializationDay + 0, value: BigNumber.from(0) },
-    { day: trackerInitializationDay + 1, value: BigNumber.from(1000_000_000) },
-    { day: trackerInitializationDay + 2, value: BigNumber.from(2000_000_000) },
-    { day: trackerInitializationDay + 3, value: BigNumber.from(3000_000_000) },
-    { day: trackerInitializationDay + 4, value: BigNumber.from(4000_000_000) },
-    { day: trackerInitializationDay + 5, value: BigNumber.from(5000_000_000) },
+    { day: trackerInitializationDay + 1, value: BigNumber.from(8000_000_000_000) },
+    { day: trackerInitializationDay + 2, value: BigNumber.from(7000_000_000_000) },
+    { day: trackerInitializationDay + 3, value: BigNumber.from(6000_000_000_000) },
+    { day: trackerInitializationDay + 4, value: BigNumber.from(5000_000_000_000) },
+    { day: trackerInitializationDay + 5, value: BigNumber.from(1000_000_000_000) },
+    { day: trackerInitializationDay + 6, value: BigNumber.from(3000_000_000_000) },
+    { day: trackerInitializationDay + 7, value: BigNumber.from(2000_000_000_000) },
+    { day: trackerInitializationDay + 8, value: BigNumber.from(1000_000_000_000) },
+    { day: trackerInitializationDay + 9, value: BigNumber.from(1000_000_000_000) },
+    { day: trackerInitializationDay + 10, value: BigNumber.from(1000_000_000_000) },
   ];
 
   const actualBalanceRecords: BalanceRecord[] = await getBalanceRecords(context.balanceTrackerContract, user.address);
@@ -142,135 +147,71 @@ async function main() {
   /*****************************************************************************
    * Case 1
    ****************************************************************************/
-
-  logger.log(`🏁 Starting case 1 ...`);
-  logger.increaseLogIndent();
-
+  let caseNumber = 1;
   // Let's consider the following day and time for claiming
-  const claimDay1 = trackerInitializationDay + 6;
+  const claimDay1 = trackerInitializationDay + 9;
   const claimTime1 = 12 * 60 * 60 + NEGATIVE_TIME_SHIFT; // 12:00
-  await configureCurrentBlockTimestamp(context, claimDay1, claimTime1);
 
   // Expected claim preview result 1 for the specified conditions
   const expectedClaimPreviewResult1: ClaimResult = {
     nextClaimDay: BigNumber.from(claimDay1 - 1),
-    nextClaimDebit: BigNumber.from(150_015),
-    primaryYield: BigNumber.from(300_010),
-    streamYield: BigNumber.from(150_015),
+    nextClaimDebit: BigNumber.from(50_070_019),
+    primaryYield: BigNumber.from(1_400_390_018),
+    streamYield: BigNumber.from(50_070_019),
     shortfall: BigNumber.from(0),
-    tax: BigNumber.from(67_502 + 33_753)
-  };
-  const expectedYield1: BigNumber =
-    expectedClaimPreviewResult1.primaryYield.add(expectedClaimPreviewResult1.streamYield);
-  const expectedUserAmount1: BigNumber = expectedYield1.sub(expectedClaimPreviewResult1.tax);
-
-  // Expected claim state after the claim 1
-  const expectedClaimState1: ClaimState = {
-    day: claimDay1 - 1,
-    debit: BigNumber.from(expectedClaimPreviewResult1.nextClaimDebit)
+    tax: BigNumber.from(315_087_753 + 11_265_754)
   };
 
-  // Compare claim preview results 1
-  logger.log(`▶ Checking the 'claimAllPreview()' function result for case 1 ...`);
-  const actualClaimPreviewResult1 = await context.yieldStreamerContract.claimAllPreview(user.address);
-  checkClaimPreview(actualClaimPreviewResult1, expectedClaimPreviewResult1);
-  logger.log(`✅ The function executes as expected`);
+  await executeCase(context, expectedClaimPreviewResult1, claimDay1, claimTime1, caseNumber);
+  logger.logEmptyLine();
   logger.logEmptyLine();
 
-  // Execute claim 1 and check its consequences
-  logger.log(`▶ Executing the 'claimAll()' function for case 1 ...`);
-  const tx1 = context.yieldStreamerContract.connect(user).claimAll();
-  await expect(tx1).to.changeTokenBalances(
-    context.tokenContract,
-    [context.yieldStreamerContract.address, owner.address, user.address, context.taxReceiverAddress],
-    [-expectedYield1, 0, +expectedUserAmount1, +expectedClaimPreviewResult1.tax]
-  );
-  await expect(tx1).to.emit(
-    context.yieldStreamerContract,
-    "Claim"
-  ).withArgs(
-    user.address,
-    expectedYield1,
-    expectedClaimPreviewResult1.tax
-  );
-  logger.log(`✅ The function executes as expected`);
-  logger.logEmptyLine();
-
-  logger.log(`▶ Checking the claim state after the 'claimAll()' function for case 1 ...`);
-  const actualClaimState1 = await context.yieldStreamerContract.getLastClaimDetails(user.address);
-  checkClaimState(actualClaimState1, expectedClaimState1);
-  logger.log(`✅ The state is correct`);
-  logger.logEmptyLine();
-
-  logger.decreaseLogIndent();
-  logger.log(`✅ Case 1 has been finished successfully`);
-  logger.logEmptyLine();
-  logger.logEmptyLine();
 
   /*****************************************************************************
    * Case 2
    ****************************************************************************/
 
-  logger.log(`🏁 Starting case 2 ...`);
-  logger.increaseLogIndent();
+  caseNumber = 2;
 
   // Let's consider the following day and time for claiming
   const claimDay2 = claimDay1;
   const claimTime2 = claimTime1 + 6 * 60 * 60; // + 6 hours
-  await configureCurrentBlockTimestamp(context, claimDay2, claimTime2);
 
   // Expected claim preview result 2 for the specified conditions
   const expectedClaimPreviewResult2: ClaimResult = {
     nextClaimDay: BigNumber.from(claimDay2 - 1),
-    nextClaimDebit: BigNumber.from(225_000),
+    nextClaimDebit: BigNumber.from(75_000_000),
     primaryYield: BigNumber.from(0),
-    streamYield: BigNumber.from(74_985),
+    streamYield: BigNumber.from(24_929_981),
     shortfall: BigNumber.from(0),
-    tax: BigNumber.from(16_871)
-  };
-  const expectedYield2: BigNumber =
-    expectedClaimPreviewResult2.primaryYield.add(expectedClaimPreviewResult2.streamYield);
-  const expectedUserAmount2: BigNumber = expectedYield2.sub(expectedClaimPreviewResult2.tax);
-
-  // Expected claim state after the claim 2
-  const expectedClaimState2: ClaimState = {
-    day: claimDay2 - 1,
-    debit: BigNumber.from(expectedClaimPreviewResult2.nextClaimDebit)
+    tax: BigNumber.from(5_609_245)
   };
 
-  // Actual claim preview result 2
-  const actualClaimPreviewResult2 = await context.yieldStreamerContract.claimAllPreview(user.address);
+  await executeCase(context, expectedClaimPreviewResult2, claimDay2, claimTime2, caseNumber);
+  logger.logEmptyLine();
+  logger.logEmptyLine();
 
-  // Compare claim preview results 2
-  logger.log(`▶ Checking the 'claimAllPreview()' function result for case 2 ...`);
-  checkClaimPreview(actualClaimPreviewResult2, expectedClaimPreviewResult2);
-  logger.log(`✅ The function executes as expected`);
+  /*****************************************************************************
+   * Case 3
+   ****************************************************************************/
 
-  // Execute claim 2 and check its consequences
-  logger.log(`▶ Executing the 'claimAll()' function for case 2 ...`);
-  const tx2 = context.yieldStreamerContract.connect(user).claimAll();
-  await expect(tx2).to.changeTokenBalances(
-    context.tokenContract,
-    [context.yieldStreamerContract.address, owner.address, user.address, context.taxReceiverAddress],
-    [-expectedYield2, 0, +expectedUserAmount2, +expectedClaimPreviewResult2.tax]
-  );
-  await expect(tx2).to.emit(
-    context.yieldStreamerContract,
-    "Claim"
-  ).withArgs(
-    user.address,
-    expectedYield2,
-    expectedClaimPreviewResult2.tax
-  );
-  logger.log(`✅ The function executes as expected`);
+  caseNumber = 3;
 
-  logger.log(`▶ Checking the claim state after the 'claimAll()' function for case 1...`);
-  const actualClaimState2 = await context.yieldStreamerContract.getLastClaimDetails(user.address);
-  checkClaimState(actualClaimState2, expectedClaimState2);
-  logger.log(`✅ The state is correct`);
+  // Let's consider the following day and time for claiming
+  const claimDay3 = claimDay2 + 2;
+  const claimTime3 = claimTime2; // + 6 hours
 
-  logger.decreaseLogIndent();
-  logger.log(`✅ Case 2 has been finished successfully`);
+  // Expected claim preview result 2 for the specified conditions
+  const expectedClaimPreviewResult3: ClaimResult = {
+    nextClaimDay: BigNumber.from(claimDay3 - 1),
+    nextClaimDebit: BigNumber.from(75_000_000),
+    primaryYield: BigNumber.from(125_000_000),
+    streamYield: BigNumber.from(75_000_000),
+    shortfall: BigNumber.from(0),
+    tax: BigNumber.from(28_125_000 + 16_875_000)
+  };
+
+  await executeCase(context, expectedClaimPreviewResult3, claimDay3, claimTime3, caseNumber);
   logger.logEmptyLine();
   logger.logEmptyLine();
 
@@ -541,6 +482,67 @@ async function configureBalanceRecords(context: Context, newBalanceRecords: Bala
   logger.decreaseLogIndent();
   logger.log(`✅ The configuration is done`);
   logger.logEmptyLine();
+}
+
+async function executeCase(
+  context: Context,
+  expectedClaimPreviewResult: ClaimResult,
+  claimDay: number,
+  claimTime: number,
+  caseNumber: number
+) {
+  const { owner, user } = context;
+
+  logger.log(`🏁 Starting case ${caseNumber}...`);
+  logger.increaseLogIndent();
+  await configureCurrentBlockTimestamp(context, claimDay, claimTime);
+
+  const expectedYield: BigNumber =
+    expectedClaimPreviewResult.primaryYield.add(expectedClaimPreviewResult.streamYield);
+  const expectedUserAmount1: BigNumber = expectedYield.sub(expectedClaimPreviewResult.tax);
+
+  // Expected claim state after the claim 1
+  const expectedClaimState: ClaimState = {
+    day: claimDay - 1,
+    debit: BigNumber.from(expectedClaimPreviewResult.nextClaimDebit)
+  };
+
+  // Compare claim preview results 1
+  logger.log(`▶ Checking the 'claimAllPreview()' function result for case ${caseNumber} ...`);
+  const actualClaimPreviewResult1 = await context.yieldStreamerContract.claimAllPreview(user.address);
+  checkClaimPreview(actualClaimPreviewResult1, expectedClaimPreviewResult);
+  logger.log(
+    `✅ The function executes as expected. The 'nextClaimDebit' value:`,
+    actualClaimPreviewResult1.nextClaimDebit.toString()
+  );
+
+  // Execute claim 1 and check its consequences
+  logger.log(`▶ Executing the 'claimAll()' function for case ${caseNumber} ...`);
+  const tx1 = context.yieldStreamerContract.connect(user).claimAll();
+  await expect(tx1).to.changeTokenBalances(
+    context.tokenContract,
+    [context.yieldStreamerContract.address, owner.address, user.address, context.taxReceiverAddress],
+    [-expectedYield, 0, +expectedUserAmount1, +expectedClaimPreviewResult.tax]
+  );
+  await expect(tx1).to.emit(
+    context.yieldStreamerContract,
+    "Claim"
+  ).withArgs(
+    user.address,
+    expectedYield,
+    expectedClaimPreviewResult.tax
+  );
+  logger.log(`✅ The function executes as expected`);
+  logger.logEmptyLine();
+
+  logger.log(`▶ Checking the claim state after the 'claimAll()' function for case ${caseNumber} ...`);
+  const actualClaimState1 = await context.yieldStreamerContract.getLastClaimDetails(user.address);
+  checkClaimState(actualClaimState1, expectedClaimState);
+  logger.log(`✅ The state is correct`);
+  logger.logEmptyLine();
+
+  logger.decreaseLogIndent();
+  logger.log(`✅ Case ${caseNumber} has been finished successfully`);
 }
 
 async function configureCurrentBlockTimestamp(context: Context, newDay: number, newTime: number) {
