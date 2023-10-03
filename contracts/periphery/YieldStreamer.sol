@@ -451,7 +451,13 @@ contract YieldStreamer is
      * @return The details of the look-back period and the length of the array
      */
     function getLookBackPeriod(uint256 index) public view returns (LookBackPeriod memory, uint256) {
-        return (_lookBackPeriods[index], _lookBackPeriods.length);
+        uint256 len = _lookBackPeriods.length;
+        if (len > index) {
+            return (_lookBackPeriods[index], len);
+        } else {
+            LookBackPeriod memory emptyItem;
+            return (emptyItem, len);
+        }
     }
 
     /**
@@ -461,7 +467,13 @@ contract YieldStreamer is
      * @return The details of the yield rate and the length of the array
      */
     function getYieldRate(uint256 index) public view returns (YieldRate memory, uint256) {
-        return (_yieldRates[index], _yieldRates.length);
+        uint256 len = _yieldRates.length;
+        if (len > index) {
+            return (_yieldRates[index], len);
+        } else {
+            YieldRate memory emptyItem;
+            return (emptyItem, len);
+        }
     }
 
     /**
