@@ -24,7 +24,7 @@ contract YieldStreamer is
     IBalanceTracker,
     IYieldStreamer
 {
-    /// @notice The factor that is used together yield rate values
+    /// @notice The factor that is used together with yield rate values
     /// @dev e.g. 0.1% rate should be represented as 0.001*RATE_FACTOR
     uint240 public constant RATE_FACTOR = 1000000;
 
@@ -46,8 +46,8 @@ contract YieldStreamer is
         uint240 value;       // The value of the yield rate
     }
 
-    /// @notice The address of the tax receiver
-    address internal _taxReceiver;
+    /// @notice The address of the fee receiver
+    address internal _feeReceiver;
 
     /// @notice The address of the token balance tracker
     address internal _balanceTracker;
@@ -64,12 +64,12 @@ contract YieldStreamer is
     // -------------------- Events -----------------------------------
 
     /**
-     * @notice Emitted when the tax receiver is changed
+     * @notice Emitted when the fee receiver is changed
      *
-     * @param newReceiver The address of the new tax receiver
-     * @param oldReceiver The address of the old tax receiver
+     * @param newReceiver The address of the new fee receiver
+     * @param oldReceiver The address of the old fee receiver
      */
-    event TaxReceiverChanged(address newReceiver, address oldReceiver);
+    event FeeReceiverChanged(address newReceiver, address oldReceiver);
 
     /**
      * @notice Emitted when the balance tracker is changed
@@ -98,39 +98,64 @@ contract YieldStreamer is
     // -------------------- Errors -----------------------------------
 
     /**
-     * @notice Thrown when the specified day is invalid
-     *
-     * @param message The error message
+     * @notice Thrown when the specified effective day of a look-back period is not greater than the last configured one
      */
-    error InvalidDay(string message);
+    error LookBackPeriodInvalidEffectiveDay();
 
     /**
-     * @notice Thrown when the specified value is invalid
-     *
-     * @param message The error message
+     * @notice Thrown when the specified length of a look-back period is already configured
      */
-    error InvalidValue(string message);
+    error LookBackPeriodLengthAlreadyConfigured();
 
     /**
-     * @notice Thrown when the invalid claim request is made
-     *
-     * @param message The error message
+     * @notice Thrown when the specified length of a look-back period is zero
      */
-    error InvalidClaimRequest(string message);
+    error LookBackPeriodLengthZero();
 
     /**
-     * @notice Thrown when the same configuration is already applied
-     *
-     * @param message The error message
+     * @notice Thrown when the specified effective day of a look-back period is outside the earliest possible period
      */
-    error AlreadyConfigured(string message);
+    error LookBackPeriodInvalidParametersCombination();
 
     /**
-     * @notice Thrown when the value does not fit in the specified type
-     *
-     * @param message The error message
+     * @notice Thrown when the limit of count for already configured look-back periods has reached
      */
-    error SafeCastOverflow(string message);
+    error LookBackPeriodCountLimit();
+
+    /**
+     * @notice Thrown when the specified effective day of a yield rate is not greater than the last configured one
+     */
+    error YieldRateInvalidEffectiveDay();
+
+    /**
+     * @notice Thrown when the specified value of a yield rate is already configured
+     */
+    error YieldRateValueAlreadyConfigured();
+
+    /**
+     * @notice Thrown when the requested claim is rejected due to its amount is greater than the available yield
+     */
+    error ClaimRejectionDueToShortfall();
+
+    /**
+     * @notice Thrown when the same balance tracker contract is already configured
+     */
+    error BalanceTrackerAlreadyConfigured();
+
+    /**
+     * @notice Thrown when the same fee receiver is already configured
+     */
+    error FeeReceiverAlreadyConfigured();
+
+    /**
+     * @notice Thrown when the value does not fit in the type uint16
+     */
+    error SafeCastOverflowUint16();
+
+    /**
+     * @notice Thrown when the value does not fit in the type uint240
+     */
+    error SafeCastOverflowUint240();
 
     // -------------------- Initializers -----------------------------
 
@@ -179,25 +204,25 @@ contract YieldStreamer is
     // -------------------- Admin Functions --------------------------
 
     /**
-     * @notice Sets the address of the tax receiver
+     * @notice Sets the address of the fee receiver
      *
      * Requirements:
      *
      * - Can only be called by the contract owner
-     * - The new tax receiver address must not be the same as the current one
+     * - The new fee receiver address must not be the same as the current one
      *
-     * Emits an {TaxReceiverChanged} event
+     * Emits an {FeeReceiverChanged} event
      *
-     * @param newTaxReceiver The address of the new tax receiver
+     * @param newFeeReceiver The address of the new fee receiver
      */
-    function setTaxReceiver(address newTaxReceiver) external onlyOwner {
-        if (_taxReceiver == newTaxReceiver) {
-            revert AlreadyConfigured("The same tax receiver is already configured");
+    function setFeeReceiver(address newFeeReceiver) external onlyOwner {
+        if (_feeReceiver == newFeeReceiver) {
+            revert FeeReceiverAlreadyConfigured();
         }
 
-        emit TaxReceiverChanged(newTaxReceiver, _taxReceiver);
+        emit FeeReceiverChanged(newFeeReceiver, _feeReceiver);
 
-        _taxReceiver = newTaxReceiver;
+        _feeReceiver = newFeeReceiver;
     }
 
     /**
@@ -214,7 +239,7 @@ contract YieldStreamer is
      */
     function setBalanceTracker(address newBalanceTracker) external onlyOwner {
         if (_balanceTracker == newBalanceTracker) {
-            revert AlreadyConfigured("The same balance tracker is already configured");
+            revert BalanceTrackerAlreadyConfigured();
         }
 
         emit BalanceTrackerChanged(newBalanceTracker, _balanceTracker);
@@ -238,23 +263,23 @@ contract YieldStreamer is
      */
     function configureLookBackPeriod(uint256 effectiveDay, uint256 length) external onlyOwner {
         if (_lookBackPeriods.length > 0 && _lookBackPeriods[_lookBackPeriods.length - 1].effectiveDay >= effectiveDay) {
-            revert InvalidDay("The new day must be greater than the last look-back period day");
+            revert LookBackPeriodInvalidEffectiveDay();
         }
         if (_lookBackPeriods.length > 0 && _lookBackPeriods[_lookBackPeriods.length - 1].length == length) {
-            revert InvalidValue("The new length must be different than the last look-back period length");
+            revert LookBackPeriodLengthAlreadyConfigured();
         }
         if (length == 0) {
-            revert InvalidValue("The look-back period length must not be zero");
+            revert LookBackPeriodLengthZero();
         }
 
         if (effectiveDay < length - 1) {
-            revert InvalidValue("The look-back period effective day is too early");
+            revert LookBackPeriodInvalidParametersCombination();
         }
 
         if (_lookBackPeriods.length > 0) {
             // As temporary solution, prevent multiple configuration
             // of the look-back period as this will require a more complex logic
-            revert("The look-back period is already configured");
+            revert LookBackPeriodCountLimit();
         }
 
         _lookBackPeriods.push(LookBackPeriod({ effectiveDay: _toUint16(effectiveDay), length: _toUint16(length) }));
@@ -277,10 +302,10 @@ contract YieldStreamer is
      */
     function configureYieldRate(uint256 effectiveDay, uint256 value) external onlyOwner {
         if (_yieldRates.length > 0 && _yieldRates[_yieldRates.length - 1].effectiveDay >= effectiveDay) {
-            revert InvalidDay("The new day must be greater than the last yield rate day");
+            revert YieldRateInvalidEffectiveDay();
         }
         if (_yieldRates.length > 0 && _yieldRates[_yieldRates.length - 1].value == value) {
-            revert InvalidDay("The new value must be different than the last yield rate value");
+            revert YieldRateValueAlreadyConfigured();
         }
 
         _yieldRates.push(YieldRate({ effectiveDay: _toUint16(effectiveDay), value: _toUint240(value) }));
@@ -358,6 +383,7 @@ contract YieldStreamer is
      * @param account The address of an account to calculate the yield for
      * @param fromDay The index of the first day of the period
      * @param toDay The index of the last day of the period
+     * @param nextClaimDebit The amount of yield that is considered claimed for the first day of the period
      */
     function calculateYieldByDays(
         address account,
@@ -449,12 +475,12 @@ contract YieldStreamer is
     }
 
     /**
-     * @notice Calculates the amount of yield tax
+     * @notice Calculates the amount of yield fee
      *
-     * @param amount The yield amount to calculate the tax for
+     * @param amount The yield amount to calculate the fee for
      * @param passedDays The number of days passed since the yield was accrued
      */
-    function calculateTax(uint256 amount, uint256 passedDays) public pure returns (uint256) {
+    function calculateFee(uint256 amount, uint256 passedDays) public pure returns (uint256) {
         if (passedDays <= 180) {
             return (amount * 225000) / RATE_FACTOR;
         } else if (passedDays <= 360) {
@@ -474,10 +500,10 @@ contract YieldStreamer is
     }
 
     /**
-     * @notice Returns the tax receiver address
+     * @notice Returns the fee receiver address
      */
-    function taxReceiver() external view returns (address) {
-        return _taxReceiver;
+    function feeReceiver() external view returns (address) {
+        return _feeReceiver;
     }
 
     // -------------------- Internal Functions -----------------------
@@ -556,13 +582,13 @@ contract YieldStreamer is
             }
 
             /**
-             * Calculate accrued yield and tax for the specified period
+             * Calculate accrued yield and fee for the specified period
              * Exit the loop when the accrued yield exceeds the claim amount
              */
             uint256 i = 0;
             do {
                 result.primaryYield += yieldByDays[i];
-                result.tax += calculateTax(yieldByDays[i], lastIndex - i);
+                result.fee += calculateFee(yieldByDays[i], lastIndex - i);
             } while (result.primaryYield < amount && ++i < lastIndex);
 
             if (i == 0) {
@@ -577,17 +603,17 @@ contract YieldStreamer is
 
                 result.nextClaimDay += i;
                 result.nextClaimDebit += yieldByDays[i] - surplus;
-                result.tax -= calculateTax(surplus, lastIndex - i);
+                result.fee -= calculateFee(surplus, lastIndex - i);
 
                 /**
-                 * Complete the calculation of the accrued yield and tax for the period
+                 * Complete the calculation of the accrued yield and fee for the period
                  */
                 while (++i < lastIndex) {
                     result.primaryYield += yieldByDays[i];
                 }
             } else {
                 /**
-                 * If the yield doesn't exceed the amount, calculate the yield and tax for today
+                 * If the yield doesn't exceed the amount, calculate the yield and fee for today
                  */
                 result.nextClaimDay = day;
 
@@ -601,12 +627,12 @@ contract YieldStreamer is
                     result.nextClaimDebit = result.streamYield;
                 }
 
-                result.tax += calculateTax(result.nextClaimDebit, 0);
+                result.fee += calculateFee(result.nextClaimDebit, 0);
             }
         } else {
             /**
              * The account has already made a claim today
-             * Therefore, recalculate the yield and tax only for today
+             * Therefore, recalculate the yield and fee only for today
              */
 
             result.nextClaimDay = day;
@@ -633,7 +659,7 @@ contract YieldStreamer is
                 result.nextClaimDebit += result.streamYield;
             }
 
-            result.tax = calculateTax(result.nextClaimDebit - state.debit, 0);
+            result.fee = calculateFee(result.nextClaimDebit - state.debit, 0);
         }
 
         return result;
@@ -649,7 +675,7 @@ contract YieldStreamer is
         ClaimResult memory preview = _claimPreview(account, amount);
 
         if (preview.shortfall > 0) {
-            revert InvalidClaimRequest("The claim amount is greater than the available yield");
+            revert ClaimRejectionDueToShortfall();
         }
 
         _claims[account].day = _toUint16(preview.nextClaimDay);
@@ -658,10 +684,10 @@ contract YieldStreamer is
         if (amount == type(uint256).max) {
             amount = preview.primaryYield + preview.streamYield;
         }
-        IERC20Upgradeable(token()).transfer(_taxReceiver, preview.tax);
-        IERC20Upgradeable(token()).transfer(account, amount - preview.tax);
+        IERC20Upgradeable(token()).transfer(_feeReceiver, preview.fee);
+        IERC20Upgradeable(token()).transfer(account, amount - preview.fee);
 
-        emit Claim(account, amount, preview.tax);
+        emit Claim(account, amount, preview.fee);
 
         return preview;
     }
@@ -672,7 +698,7 @@ contract YieldStreamer is
      */
     function _toUint240(uint256 value) internal pure returns (uint240) {
         if (value > type(uint240).max) {
-            revert SafeCastOverflow("The value does not fit in uint240");
+            revert SafeCastOverflowUint240();
         }
 
         return uint240(value);
@@ -684,7 +710,7 @@ contract YieldStreamer is
      */
     function _toUint16(uint256 value) internal pure returns (uint16) {
         if (value > type(uint16).max) {
-            revert SafeCastOverflow("The value does not fit in uint16");
+            revert SafeCastOverflowUint16();
         }
 
         return uint16(value);

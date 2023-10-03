@@ -11,10 +11,10 @@ interface IYieldStreamer {
     /**
      * @notice Emitted when an account claims accrued yield
      * @param account The address of the account
-     * @param yield The amount of yield before tax
-     * @param tax The yield tax
+     * @param yield The amount of yield before fee
+     * @param fee The yield fee
      */
-    event Claim(address indexed account, uint256 yield, uint256 tax);
+    event Claim(address indexed account, uint256 yield, uint256 fee);
 
     /**
      * @notice A struct describing the details of the result of the claim operation
@@ -28,7 +28,7 @@ interface IYieldStreamer {
         uint256 streamYield;    // The yield stream amount based on the time passed since the beginning of the current day
         uint256 lastDayYield;   // The whole-day yield for the last day in the time range of this claim
         uint256 shortfall;      // The amount of yield that is not enough to cover this claim
-        uint256 tax;            // The amount of tax for this claim
+        uint256 fee;            // The amount of fee for this claim
     }
 
     /**
