@@ -358,9 +358,9 @@ describe("Contract 'BalanceTracker'", async () => {
     });
 
     it("Is reverted if the implementation contract is called even for the first time", async () => {
-      const tokenImplementation: Contract = await balanceTrackerFactory.deploy();
-      await tokenImplementation.deployed();
-      await expect(tokenImplementation.initialize()).to.be.revertedWith(
+      const balanceTrackerImplementation: Contract = await balanceTrackerFactory.deploy();
+      await balanceTrackerImplementation.deployed();
+      await expect(balanceTrackerImplementation.initialize()).to.be.revertedWith(
         REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
       );
     });
