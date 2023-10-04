@@ -22,4 +22,10 @@ contract YieldStreamerHarness is YieldStreamer {
     function resetClaimState(address account) external onlyOwner {
         delete _claims[account];
     }
+
+    function setClaimState(address account, uint16 day, uint240 debit) external onlyOwner {
+        ClaimState storage claim = _claims[account];
+        claim.day = day;
+        claim.debit = debit;
+    }
 }
