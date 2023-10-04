@@ -23,7 +23,7 @@ interface ClaimResult {
   primaryYield: BigNumber;
   streamYield: BigNumber;
   shortfall: BigNumber;
-  tax: BigNumber;
+  fee: BigNumber;
 }
 
 interface DayAndTime {
@@ -71,7 +71,8 @@ async function main() {
   const yieldByDaysReadOnly: BigNumber[] = (await yieldStreamer.calculateYieldByDays(
     accountAddress,
     fistYieldDay,
-    yesterday
+    yesterday,
+    0
   ));
   const yieldByDays: BigNumber[] = [...yieldByDaysReadOnly];
   correctFirstDayYield(yieldByDays, prevClaimDebit);

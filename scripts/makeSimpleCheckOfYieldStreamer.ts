@@ -48,7 +48,7 @@ interface ClaimResult {
   primaryYield: BigNumber;
   streamYield: BigNumber;
   shortfall: BigNumber;
-  tax: BigNumber;
+  fee: BigNumber;
 }
 
 
@@ -56,7 +56,7 @@ interface Context {
   yieldStreamerContract: Contract;
   balanceTrackerContract: Contract;
   tokenContract: Contract;
-  taxReceiverAddress: string;
+  feeReceiverAddress: string;
   initYieldRates: YieldRate[];
   initLookBackPeriods: LookBackPeriod[];
   initTokenTotalSupply: BigNumber;
@@ -159,7 +159,7 @@ async function main() {
     primaryYield: BigNumber.from(1_400_390_018),
     streamYield: BigNumber.from(50_070_019),
     shortfall: BigNumber.from(0),
-    tax: BigNumber.from(315_087_753 + 11_265_754)
+    fee: BigNumber.from(315_087_753 + 11_265_754)
   };
 
   await executeCase(context, expectedClaimPreviewResult1, claimDay1, claimTime1, caseNumber);
@@ -184,7 +184,7 @@ async function main() {
     primaryYield: BigNumber.from(0),
     streamYield: BigNumber.from(24_929_981),
     shortfall: BigNumber.from(0),
-    tax: BigNumber.from(5_609_245)
+    fee: BigNumber.from(5_609_245)
   };
 
   await executeCase(context, expectedClaimPreviewResult2, claimDay2, claimTime2, caseNumber);
@@ -208,7 +208,7 @@ async function main() {
     primaryYield: BigNumber.from(125_000_000),
     streamYield: BigNumber.from(75_000_000),
     shortfall: BigNumber.from(0),
-    tax: BigNumber.from(28_125_000 + 16_875_000)
+    fee: BigNumber.from(28_125_000 + 16_875_000)
   };
 
   await executeCase(context, expectedClaimPreviewResult3, claimDay3, claimTime3, caseNumber);
@@ -238,7 +238,7 @@ async function showInputParameters(owner: SignerWithAddress, user: SignerWithAdd
 async function defineInitContext(owner: SignerWithAddress, user: SignerWithAddress): Promise<Context> {
   const yieldStreamerContract: Contract = await attachContract(yieldStreamerContractName, yieldStreamerContractAddress);
   const balanceTrackerAddress: string = await yieldStreamerContract.balanceTracker();
-  const taxReceiverAddress: string = await yieldStreamerContract.taxReceiver();
+  const feeReceiverAddress: string = await yieldStreamerContract.feeReceiver();
   const balanceTrackerContract: Contract = await attachContract(balanceTrackerContractName, balanceTrackerAddress);
   const tokenAddress: string = await balanceTrackerContract.token();
   const tokenContract: Contract = await attachContract(tokenContractName, tokenAddress);
@@ -253,7 +253,7 @@ async function defineInitContext(owner: SignerWithAddress, user: SignerWithAddre
     yieldStreamerContract,
     balanceTrackerContract,
     tokenContract,
-    taxReceiverAddress,
+    feeReceiverAddress: feeReceiverAddress,
     initYieldRates,
     initLookBackPeriods,
     initTokenTotalSupply,
@@ -499,7 +499,7 @@ async function executeCase(
 
   const expectedYield: BigNumber =
     expectedClaimPreviewResult.primaryYield.add(expectedClaimPreviewResult.streamYield);
-  const expectedUserAmount1: BigNumber = expectedYield.sub(expectedClaimPreviewResult.tax);
+  const expectedUserAmount1: BigNumber = expectedYield.sub(expectedClaimPreviewResult.fee);
 
   // Expected claim state after the claim 1
   const expectedClaimState: ClaimState = {
@@ -521,8 +521,8 @@ async function executeCase(
   const tx1 = context.yieldStreamerContract.connect(user).claimAll();
   await expect(tx1).to.changeTokenBalances(
     context.tokenContract,
-    [context.yieldStreamerContract.address, owner.address, user.address, context.taxReceiverAddress],
-    [-expectedYield, 0, +expectedUserAmount1, +expectedClaimPreviewResult.tax]
+    [context.yieldStreamerContract.address, owner.address, user.address, context.feeReceiverAddress],
+    [-expectedYield, 0, +expectedUserAmount1, +expectedClaimPreviewResult.fee]
   );
   await expect(tx1).to.emit(
     context.yieldStreamerContract,
@@ -530,7 +530,7 @@ async function executeCase(
   ).withArgs(
     user.address,
     expectedYield,
-    expectedClaimPreviewResult.tax
+    expectedClaimPreviewResult.fee
   );
   logger.log(`✅ The function executes as expected`);
   logger.logEmptyLine();
@@ -584,9 +584,9 @@ function checkClaimPreview(actualClaimPreviewResult: any, expectedClaimPreviewRe
     "The 'shortfall' field is wrong"
   );
 
-  expect(actualClaimPreviewResult.tax.toString()).to.equal(
-    expectedClaimPreviewResult.tax.toString(),
-    "The 'tax' field is wrong"
+  expect(actualClaimPreviewResult.fee.toString()).to.equal(
+    expectedClaimPreviewResult.fee.toString(),
+    "The 'fee' field is wrong"
   );
 }
 

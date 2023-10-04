@@ -51,7 +51,7 @@ interface ClaimResult {
   streamYield: BigNumber;
   lastDayYield: BigNumber;
   shortfall: BigNumber;
-  tax: BigNumber;
+  fee: BigNumber;
 }
 
 
@@ -59,7 +59,7 @@ interface Context {
   yieldStreamerContract: Contract;
   balanceTrackerContract: Contract;
   tokenContract: Contract;
-  taxReceiverAddress: string;
+  feeReceiverAddress: string;
   initYieldRates: YieldRate[];
   initLookBackPeriods: LookBackPeriod[];
   initTokenTotalSupply: BigNumber;
@@ -194,7 +194,7 @@ async function showInputParameters(owner: SignerWithAddress, user: SignerWithAdd
 async function defineInitContext(owner: SignerWithAddress, user: SignerWithAddress): Promise<Context> {
   const yieldStreamerContract: Contract = await attachContract(yieldStreamerContractName, yieldStreamerContractAddress);
   const balanceTrackerAddress: string = await yieldStreamerContract.balanceTracker();
-  const taxReceiverAddress: string = await yieldStreamerContract.taxReceiver();
+  const feeReceiverAddress: string = await yieldStreamerContract.feeReceiver();
   const balanceTrackerContract: Contract = await attachContract(balanceTrackerContractName, balanceTrackerAddress);
   const tokenAddress: string = await balanceTrackerContract.token();
   const tokenContract: Contract = await attachContract(tokenContractName, tokenAddress);
@@ -210,7 +210,7 @@ async function defineInitContext(owner: SignerWithAddress, user: SignerWithAddre
     yieldStreamerContract,
     balanceTrackerContract,
     tokenContract,
-    taxReceiverAddress,
+    feeReceiverAddress,
     initYieldRates,
     initLookBackPeriods,
     initTokenTotalSupply,

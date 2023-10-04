@@ -7,7 +7,7 @@ import { Logger } from "../test-utils/logger";
 const tokenContractAddress: string = process.env.SP_TOKEN_CONTRACT_ADDRESS ?? "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
 const balanceTrackerContractName: string = process.env.SP_BALANCE_TRACKER_CONTRACT_NAME ?? "BalanceTrackerHarness";
 const yieldStreamerContractName: string = process.env.SP_YIELD_STREAMER_CONTRACT_NAME ?? "YieldStreamerHarness";
-const taxReceiverAddress: string = process.env.SP_TAX_RECEIVER_ADDRESS ?? "0xeeeaaa0000000000000000000000000000000001";
+const feeReceiverAddress: string = process.env.SP_FEE_RECEIVER_ADDRESS ?? "0xeeeaaa0000000000000000000000000000000001";
 const yieldRateInPpm: number = parseInt(process.env.SP_YIELD_RATE_IN_PPM ?? "101"); // 0.01% per day
 const lookBackPeriodInDays: number = parseInt(process.env.SP_LOOK_BACK_PERIOD_IN_DAYS ?? "4");
 
@@ -35,7 +35,7 @@ async function main() {
   logger.log("👉 The deployer (owner) address:", deployer.address);
   logger.log("👉 The balance tracker contract name:", balanceTrackerContractName);
   logger.log("👉 The yield streamer contract name:", yieldStreamerContractName);
-  logger.log("👉 The tax receiver address:", taxReceiverAddress);
+  logger.log("👉 The fee receiver address:", feeReceiverAddress);
   logger.log("👉 The yield rate in PPM:", yieldRateInPpm);
   logger.log("👉 The look-back period in days:", lookBackPeriodInDays);
   logger.logEmptyLine();
@@ -46,8 +46,8 @@ async function main() {
   logger.log(`🏁 Configuring the yield streamer contract ...`);
   logger.increaseLogIndent();
 
-  logger.log(`▶ Configuring the tax receiver ...`);
-  await proveTx(yieldStreamerContract.setTaxReceiver(taxReceiverAddress));
+  logger.log(`▶ Configuring the fee receiver ...`);
+  await proveTx(yieldStreamerContract.setFeeReceiver(feeReceiverAddress));
   logger.log(`✅ It has been configured successfully`);
   logger.logEmptyLine();
 

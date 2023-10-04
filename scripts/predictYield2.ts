@@ -26,7 +26,7 @@ interface ClaimResult {
   streamYield: BigNumber;
   lastDayYield: BigNumber;
   shortfall: BigNumber;
-  tax: BigNumber;
+  fee: BigNumber;
 }
 
 interface DayAndTime {
