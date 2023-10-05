@@ -134,8 +134,9 @@ contract YieldStreamer is
 
     /**
      * @notice Thrown when the requested claim is rejected due to its amount is greater than the available yield
+     * @param shortfall The shortfall value
      */
-    error ClaimRejectionDueToShortfall();
+    error ClaimRejectionDueToShortfall(uint256 shortfall);
 
     /**
      * @notice Thrown when the same balance tracker contract is already configured
@@ -395,7 +396,7 @@ contract YieldStreamer is
          * Fetch the yield rate
          */
         uint256 rateIndex = _yieldRates.length;
-        while (_yieldRates[--rateIndex].effectiveDay <= fromDay && rateIndex > 0) {}
+        while (_yieldRates[--rateIndex].effectiveDay > fromDay && rateIndex > 0) {}
 
         /**
          * Fetch the look-back period
@@ -664,6 +665,7 @@ contract YieldStreamer is
             if (amount != type(uint256).max) {
                 if (amount > result.streamYield) {
                     result.shortfall = amount - result.streamYield;
+                    result.nextClaimDebit += result.streamYield;
                 } else {
                     result.nextClaimDebit += amount;
                 }
@@ -687,7 +689,7 @@ contract YieldStreamer is
         ClaimResult memory preview = _claimPreview(account, amount);
 
         if (preview.shortfall > 0) {
-            revert ClaimRejectionDueToShortfall();
+            revert ClaimRejectionDueToShortfall(preview.shortfall);
         }
 
         _claims[account].day = _toUint16(preview.nextClaimDay);
