@@ -494,15 +494,8 @@ contract YieldStreamer is
      * @param passedDays The number of days passed since the yield was accrued
      */
     function calculateFee(uint256 amount, uint256 passedDays) public pure returns (uint256) {
-        if (passedDays <= 180) {
-            return (amount * 225000) / RATE_FACTOR;
-        } else if (passedDays <= 360) {
-            return (amount * 200000) / RATE_FACTOR;
-        } else if (passedDays <= 720) {
-            return (amount * 175000) / RATE_FACTOR;
-        } else {
-            return (amount * 150000) / RATE_FACTOR;
-        }
+        passedDays;
+        return (amount * 225000) / RATE_FACTOR;
     }
 
     /**
