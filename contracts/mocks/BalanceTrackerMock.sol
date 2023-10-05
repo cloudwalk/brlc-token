@@ -11,17 +11,7 @@ import { IBalanceTracker } from "./../base/interfaces/periphery/IBalanceTracker.
  */
 contract BalanceTrackerMock is IBalanceTracker {
 
-    enum BalanceStatus {
-        Nonexistent,
-        Configured
-    }
-
-    struct BalanceState {
-        BalanceStatus status;
-        uint248 value;
-    }
-
-    struct BalanceConfig {
+    struct BalanceRecord {
         uint16 day;
         uint240 value;
     }
@@ -29,29 +19,28 @@ contract BalanceTrackerMock is IBalanceTracker {
     address internal _token;
     uint256 internal _day;
     uint256 internal _time;
-    mapping(address => mapping(uint256 => BalanceState)) internal _balanceStates;
-
-    error BalanceNotConfigured(uint256 day);
+    mapping(address => BalanceRecord[]) public _balanceRecords;
+    mapping(address => uint256) public _currentBalances;
 
     constructor(address token_) {
         _token = token_;
     }
 
-    function setDailyBalances(address account, BalanceConfig[] calldata balanceConfigs) external {
-        uint256 len = balanceConfigs.length;
-        for (uint256 i = 0; i < len; ++i) {
-            BalanceConfig calldata balanceConfig = balanceConfigs[i];
-            BalanceState memory balanceState = BalanceState({
-                status: BalanceStatus.Configured,
-                value: balanceConfig.value
-            });
-            _balanceStates[account][balanceConfig.day] = balanceState;
-        }
-    }
-
     function setDayAndTime(uint256 day_, uint256 time_) external {
         _day = day_;
         _time = time_;
+    }
+
+    function setBalanceRecords(address account, BalanceRecord[] calldata records) external {
+        delete _balanceRecords[account];
+        uint256 len = records.length;
+        for (uint256 i = 0; i < len; ++i){
+            _balanceRecords[account].push(records[i]);
+        }
+    }
+
+    function setCurrentBalance(address account, uint256 value) external {
+        _currentBalances[account] = value;
     }
 
     /**
@@ -62,14 +51,36 @@ contract BalanceTrackerMock is IBalanceTracker {
         uint256 fromDay,
         uint256 toDay
     ) external view returns (uint256[] memory) {
-        uint256 len = toDay + 1 - fromDay;
-        uint256[] memory balances = new uint256[](len);
-        for (uint256 i = 0; i < len; ++i) {
-            BalanceState memory balanceState = _balanceStates[account][fromDay + i];
-            if (balanceState.status != BalanceStatus.Configured) {
-                revert BalanceNotConfigured(fromDay + i);
-            }
+        uint16 day;
+        uint256 balance;
+        uint256 recordIndex = _balanceRecords[account].length;
+        if (recordIndex == 0) {
+            balance = _currentBalances[account];
+            day = type(uint16).max;
+        } else if (toDay >= _balanceRecords[account][--recordIndex].day) {
+            balance = _currentBalances[account];
+            day = _balanceRecords[account][recordIndex].day;
+        } else {
+            while (_balanceRecords[account][--recordIndex].day > toDay) {}
+            balance = _balanceRecords[account][recordIndex + 1].value;
+            day = _balanceRecords[account][recordIndex].day;
         }
+
+        uint256 i = toDay + 1 - fromDay;
+        uint256 dayIndex = fromDay + i;
+        uint256[] memory balances = new uint256[](i);
+        do {
+            i--;
+            dayIndex--;
+            if (dayIndex == day) {
+                balance = _balanceRecords[account][recordIndex].value;
+                if (recordIndex != 0) {
+                    day = _balanceRecords[account][--recordIndex].day;
+                }
+            }
+            balances[i] = balance;
+        } while (i > 0);
+
         return balances;
     }
 
