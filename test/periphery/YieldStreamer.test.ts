@@ -354,7 +354,6 @@ async function checkLookBackPeriods(
       const actualRecordState = await yieldStreamer.getLookBackPeriod(i);
       const actualRecord = actualRecordState[0];
       const actualRecordArrayLength: number = actualRecordState[1].toNumber();
-      console.log(expectedRecord);
       expect(actualRecordArrayLength).to.equal(
         expectedRecordArrayLength,
         `Wrong look-back period array length`
