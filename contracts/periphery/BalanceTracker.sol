@@ -18,7 +18,7 @@ contract BalanceTracker is OwnableUpgradeable, IBalanceTracker, IERC20Hook {
     uint256 public constant NEGATIVE_TIME_SHIFT = 3 hours;
 
     /// @notice The address of the hooked token contract
-    address public constant TOKEN = address(0x0);
+    address public constant TOKEN = address(0x5FbDB2315678afecb367f032d93F642f64180aa3);
 
     /**
      * @notice The day-value pair
@@ -51,18 +51,24 @@ contract BalanceTracker is OwnableUpgradeable, IBalanceTracker, IERC20Hook {
     // -------------------- Errors -----------------------------------
 
     /**
-     * @notice Thrown when the specified day is invalid (or not tracked)
-     *
-     * @param message The error message
+     * @notice Thrown when the specified "from" day is prior the contract initialization day
      */
-    error InvalidDay(string message);
+    error FromDayPriorInitDay();
 
     /**
-     * @notice Thrown when the value does not fit in the specified type
-     *
-     * @param message The error message
+     * @notice Thrown when the specified "to" day is prior the specified "from" day
      */
-    error SafeCastOverflow(string message);
+    error ToDayPriorFromDay();
+
+    /**
+     * @notice Thrown when the value does not fit in the type uint16
+     */
+    error SafeCastOverflowUint16();
+
+    /**
+     * @notice Thrown when the value does not fit in the type uint240
+     */
+    error SafeCastOverflowUint240();
 
     /**
      * @notice Thrown when the caller is not the token contract
@@ -141,7 +147,7 @@ contract BalanceTracker is OwnableUpgradeable, IBalanceTracker, IERC20Hook {
         if (amount == 0) return;
 
         (uint256 day, ) = dayAndTime();
-        if (day-- == INITIALIZATION_DAY) {
+        if (day-- <= INITIALIZATION_DAY) {
             return;
         }
 
@@ -184,7 +190,13 @@ contract BalanceTracker is OwnableUpgradeable, IBalanceTracker, IERC20Hook {
      * @return The record at the specified index and the length of array
      */
     function readBalanceRecord(address account, uint256 index) external view returns (Record memory, uint256) {
-        return (_balanceRecords[account][index], _balanceRecords[account].length);
+        uint256 len = _balanceRecords[account].length;
+        if (len > index) {
+            return (_balanceRecords[account][index], len);
+        } else {
+            Record memory emptyRecord;
+            return (emptyRecord, len);
+        }
     }
 
     /**
@@ -196,16 +208,24 @@ contract BalanceTracker is OwnableUpgradeable, IBalanceTracker, IERC20Hook {
         uint256 toDay
     ) external view returns (uint256[] memory) {
         if (fromDay < INITIALIZATION_DAY) {
-            revert InvalidDay("The `from` day must be greater than or equal to the initialization day");
+            revert FromDayPriorInitDay();
         }
         if (fromDay > toDay) {
-            revert InvalidDay("The `from` day must be less than or equal to the `to` day");
+            revert ToDayPriorFromDay();
         }
 
-        uint16 day = 0;
-        uint256 balance = 0;
-        uint256 recordIndex = _balanceRecords[account].length - 1;
-        if (toDay >= _balanceRecords[account][recordIndex].day) {
+        uint16 day;
+        uint256 balance;
+        uint256 recordIndex = _balanceRecords[account].length;
+        if (recordIndex == 0) {
+            /**
+             * There is no records for an account.
+             * Therefore get the actual balance of the account directly from
+             * the token contract and set the `day` variable outside the requested range
+             */
+            balance = IERC20Upgradeable(TOKEN).balanceOf(account);
+            day = type(uint16).max;
+        } else if (toDay >= _balanceRecords[account][--recordIndex].day) {
             /**
              * The `to` day is ahead or equal to the last record day
              * Therefore get the actual balance of the account directly from
@@ -276,7 +296,7 @@ contract BalanceTracker is OwnableUpgradeable, IBalanceTracker, IERC20Hook {
      */
     function _toUint240(uint256 value) internal pure returns (uint240) {
         if (value > type(uint240).max) {
-            revert SafeCastOverflow("The value does not fit in uint240");
+            revert SafeCastOverflowUint240();
         }
 
         return uint240(value);
@@ -288,7 +308,7 @@ contract BalanceTracker is OwnableUpgradeable, IBalanceTracker, IERC20Hook {
      */
     function _toUint16(uint256 value) internal pure returns (uint16) {
         if (value > type(uint16).max) {
-            revert SafeCastOverflow("The value does not fit in uint16");
+            revert SafeCastOverflowUint16();
         }
 
         return uint16(value);
