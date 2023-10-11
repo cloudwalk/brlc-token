@@ -12,8 +12,16 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
  * which can be applied to functions to restrict their usage to not blacklisted accounts only.
  */
 abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
+    /// @notice The structure used to describe blacklisters mapping
+    struct MappingSlot {
+        mapping (address => bool) blacklisters;
+    }
+
+    /// @notice The memory slot used to store blacklisters mapping
+    bytes32 private constant _MAP_STORAGE_SLOT = 0xff11fdfa16fed3260ed0e7147f7cc6da11a60208b5b9406d12a635614ffd9141;
+
     /// @notice The address of the blacklister that is allowed to add and remove accounts from the blacklist
-    address private _blacklister;
+    address private _mainBlacklister;
 
     /// @notice Mapping of presence in the blacklist for a given address
     mapping(address => bool) private _blacklisted;
@@ -42,11 +50,19 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     event SelfBlacklisted(address indexed account);
 
     /**
-     * @notice Emitted when the blacklister is changed
+    * @notice Emitted when the main blacklister was changed
+    *
+    * @param newMainBlacklister The address of the new main blacklister
+    */
+    event MainBlackListerChanged(address indexed newMainBlacklister);
+
+    /**
+     * @notice Emitted when the blacklister configuration is updated
      *
-     * @param newBlacklister The address of the new blacklister
+     * @param blacklister The address of the blacklister
+     * @param status The new status of the blacklister
      */
-    event BlacklisterChanged(address indexed newBlacklister);
+    event BlacklisterConfigured(address indexed blacklister, bool status);
 
     // -------------------- Errors -----------------------------------
 
@@ -72,10 +88,20 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     // -------------------- Modifiers --------------------------------
 
     /**
-     * @notice Throws if called by any account other than the blacklister
+     * @notice Throws if called by any account other than the blacklister or main blacklister
      */
     modifier onlyBlacklister() {
-        if (_msgSender() != _blacklister) {
+        if (!isBlacklister(_msgSender()) && _msgSender() != _mainBlacklister) {
+            revert UnauthorizedBlacklister(_msgSender());
+        }
+        _;
+    }
+
+    /**
+     * @notice Throws if called by any account other than the blacklister
+     */
+    modifier onlyMainBlacklister() {
+        if (_msgSender() != _mainBlacklister) {
             revert UnauthorizedBlacklister(_msgSender());
         }
         _;
@@ -178,31 +204,46 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
+    * @notice Updates the main blacklister address
+    *
+    * Requirements:
+    *
+    * - Can only be called by the owner
+    *
+    * Emits a {MainBlackListerChanged} event
+    *
+    * @param mainBlacklister_ The address of the new main blacklister
+    */
+    function setMainBlacklister(address mainBlacklister_) external onlyOwner {
+        _mainBlacklister = mainBlacklister_;
+
+        emit MainBlackListerChanged(mainBlacklister_);
+    }
+
+    /**
      * @notice Updates the blacklister address
      *
      * Requirements:
      *
-     * - Can only be called by the contract owner
+     * - Can only be called by the main blacklister
      *
-     * Emits a {BlacklisterChanged} event
+     * Emits a {BlacklisterConfigured} event
      *
-     * @param newBlacklister The address of a new blacklister
+     * @param account The address of the blacklister to be configured
+     * @param status The new status of the blacklister
      */
-    function setBlacklister(address newBlacklister) external onlyOwner {
-        if (_blacklister == newBlacklister) {
-            return;
-        }
+    function configureBlacklister(address account, bool status) external onlyMainBlacklister {
+        mapping(address=>bool) storage map = _getMap(_MAP_STORAGE_SLOT);
+        map[account] = status;
 
-        _blacklister = newBlacklister;
-
-        emit BlacklisterChanged(_blacklister);
+        emit BlacklisterConfigured(account, status);
     }
 
     /**
      * @notice Returns the address of the blacklister
      */
-    function blacklister() public view virtual returns (address) {
-        return _blacklister;
+    function mainBlacklister() public view virtual returns (address) {
+        return _mainBlacklister;
     }
 
     /**
@@ -213,5 +254,25 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      */
     function isBlacklisted(address account) public view returns (bool) {
         return _blacklisted[account];
+    }
+
+    /**
+     * @notice Checks if the account is a blacklister
+     *
+     * @param account The address to check for blacklister configuration
+     * @return True if the account is a configured blacklister, False otherwise
+     */
+    function isBlacklister(address account) public view returns (bool) {
+        mapping(address=>bool) storage map = _getMap(_MAP_STORAGE_SLOT);
+        return map[account];
+    }
+
+    function _getMap(bytes32 slot) internal view returns (mapping(address=>bool) storage) {
+        MappingSlot storage r;
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+        return r.blacklisters;
     }
 }
