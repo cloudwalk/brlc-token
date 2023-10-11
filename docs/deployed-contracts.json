@@ -58,5 +58,15 @@
     "name": "BalanceTracker",
     "chainId": 2008,
     "address": "0xB1f571b3254C99A0A562124738f0193dE2B2b2A9"
+  },
+  {
+    "name": "YieldStreamer",
+    "chainId": 2009,
+    "address": "0x88EC3491f763f4cDCF2a8F9Edd4b752AE5B8C9Fb"
+  },
+  {
+    "name": "YieldStreamer",
+    "chainId": 2008,
+    "address": "0xe66681cD29F07c1C4c056B46B7d37007eF493486"
   }
 ]
