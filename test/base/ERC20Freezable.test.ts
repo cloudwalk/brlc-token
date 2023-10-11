@@ -56,7 +56,7 @@ describe("Contract 'ERC20Freezable'", async () => {
     async function deployAndConfigureToken(): Promise<{ token: Contract }> {
         const { token } = await deployToken();
         await proveTx(token.connect(deployer).setPauser(pauser.address));
-        await proveTx(token.connect(deployer).setBlacklister(blacklister.address));
+        await proveTx(token.connect(deployer).setMainBlacklister(blacklister.address));
         return { token };
     }
 
@@ -65,7 +65,7 @@ describe("Contract 'ERC20Freezable'", async () => {
             const { token } = await setUpFixture(deployToken);
             expect(await token.owner()).to.equal(deployer.address);
             expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
-            expect(await token.blacklister()).to.equal(ethers.constants.AddressZero);
+            expect(await token.mainBlacklister()).to.equal(ethers.constants.AddressZero);
         });
 
         it("Is reverted if called for the second time", async () => {
