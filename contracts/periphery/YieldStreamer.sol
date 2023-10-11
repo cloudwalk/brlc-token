@@ -26,7 +26,7 @@ contract YieldStreamer is
 {
     /// @notice The factor that is used together with yield rate values
     /// @dev e.g. 0.1% rate should be represented as 0.001*RATE_FACTOR
-    uint240 public constant RATE_FACTOR = 1000000;
+    uint240 public constant RATE_FACTOR = 1000000000000;
 
     /// @notice The initial state of the next claim for an account
     struct ClaimState {
