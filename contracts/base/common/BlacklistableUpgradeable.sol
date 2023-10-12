@@ -67,11 +67,11 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     // -------------------- Errors -----------------------------------
 
     /**
-     * @notice The transaction sender is not a blacklister
+     * @notice The transaction sender does not have permission to call the function
      *
      * @param account The address of the transaction sender
      */
-    error UnauthorizedBlacklister(address account);
+    error Unauthorized(address account);
 
     /**
      * @notice The account is blacklisted
@@ -92,7 +92,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      */
     modifier onlyBlacklister() {
         if (!isBlacklister(_msgSender()) && _msgSender() != _mainBlacklister) {
-            revert UnauthorizedBlacklister(_msgSender());
+            revert Unauthorized(_msgSender());
         }
         _;
     }
@@ -102,7 +102,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      */
     modifier onlyMainBlacklister() {
         if (_msgSender() != _mainBlacklister) {
-            revert UnauthorizedBlacklister(_msgSender());
+            revert Unauthorized(_msgSender());
         }
         _;
     }
@@ -212,12 +212,12 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     *
     * Emits a {MainBlackListerChanged} event
     *
-    * @param mainBlacklister_ The address of the new main blacklister
+    * @param newMainBlacklister The address of the new main blacklister
     */
-    function setMainBlacklister(address mainBlacklister_) external onlyOwner {
-        _mainBlacklister = mainBlacklister_;
+    function setMainBlacklister(address newMainBlacklister) external onlyOwner {
+        _mainBlacklister = newMainBlacklister;
 
-        emit MainBlackListerChanged(mainBlacklister_);
+        emit MainBlackListerChanged(newMainBlacklister);
     }
 
     /**
