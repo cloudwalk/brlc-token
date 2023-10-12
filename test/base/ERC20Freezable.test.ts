@@ -29,7 +29,7 @@ describe("Contract 'ERC20Freezable'", async () => {
     const REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
     const REVERT_MESSAGE_PAUSABLE_PAUSED = "Pausable: paused";
 
-    const REVERT_ERROR_UNAUTHORIZED_BLACKLISTER = "UnauthorizedBlacklister";
+    const REVERT_ERROR_UNAUTHORIZED = "Unauthorized";
     const REVERT_ERROR_FREEZING_ALREADY_APPROVED = "FreezingAlreadyApproved";
     const REVERT_ERROR_FREEZING_NOT_APPROVED = "FreezingNotApproved";
     const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
@@ -166,7 +166,7 @@ describe("Contract 'ERC20Freezable'", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             await expect(token.connect(user1).freeze(user2.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
                 token,
-                REVERT_ERROR_UNAUTHORIZED_BLACKLISTER
+                REVERT_ERROR_UNAUTHORIZED
             );
         });
     });
@@ -191,7 +191,7 @@ describe("Contract 'ERC20Freezable'", async () => {
             await proveTx(token.connect(deployer).mint(user1.address, TOKEN_AMOUNT));
             await expect(
                 token.connect(user2).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT)
-            ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLACKLISTER);
+            ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED);
         });
 
         it("Is reverted if the contract is paused", async () => {
