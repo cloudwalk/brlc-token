@@ -28,6 +28,9 @@ contract YieldStreamer is
     /// @dev e.g. 0.1% rate should be represented as 0.001*RATE_FACTOR
     uint240 public constant RATE_FACTOR = 1000000000000;
 
+    /// @notice The fee rate that is used to calculate the fee amount
+    uint240 public constant FEE_RATE = 225000000;
+
     /// @notice The initial state of the next claim for an account
     struct ClaimState {
         uint16 day;    // The index of the day from which the yield will be calculated next time
@@ -495,7 +498,7 @@ contract YieldStreamer is
      */
     function calculateFee(uint256 amount, uint256 passedDays) public pure returns (uint256) {
         passedDays;
-        return (amount * 225000) / RATE_FACTOR;
+        return (amount * FEE_RATE) / RATE_FACTOR;
     }
 
     /**

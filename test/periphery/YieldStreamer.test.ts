@@ -15,6 +15,7 @@ const LOOK_BACK_PERIOD_LENGTH: number = 3;
 const INITIAL_YIELD_RATE_IN_PPM = 100000000; // 0.01%
 const BALANCE_TRACKER_INIT_DAY = 100;
 const YIELD_STREAMER_INIT_DAY = BALANCE_TRACKER_INIT_DAY + LOOK_BACK_PERIOD_LENGTH - 1;
+const FEE_RATE: BigNumber = BigNumber.from(225000000);
 const RATE_FACTOR: BigNumber = BigNumber.from(1000000000000);
 
 interface TestContext {
@@ -185,14 +186,10 @@ function defineExpectedYieldByDays(yieldByDaysRequest: YieldByDaysRequest): BigN
 }
 
 function calculateFee(amount: BigNumber, passedDays: number): BigNumber {
-  if (passedDays <= 180) {
-    return amount.mul(225000).div(RATE_FACTOR);
-  } else if (passedDays <= 360) {
-    return amount.mul(200000).div(RATE_FACTOR);
-  } else if (passedDays <= 720) {
-    return amount.mul(175000).div(RATE_FACTOR);
+  if (passedDays >= 0) {
+    return amount.mul(FEE_RATE).div(RATE_FACTOR);
   } else {
-    return amount.mul(150000).div(RATE_FACTOR);
+    return  BIG_NUMBER_ZERO;
   }
 }
 
