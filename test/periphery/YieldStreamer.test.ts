@@ -15,7 +15,7 @@ const LOOK_BACK_PERIOD_LENGTH: number = 3;
 const INITIAL_YIELD_RATE_IN_PPM = 100000000; // 0.01%
 const BALANCE_TRACKER_INIT_DAY = 100;
 const YIELD_STREAMER_INIT_DAY = BALANCE_TRACKER_INIT_DAY + LOOK_BACK_PERIOD_LENGTH - 1;
-const FEE_RATE: BigNumber = BigNumber.from(225000000);
+const FEE_RATE: BigNumber = BigNumber.from(225000000000);
 const RATE_FACTOR: BigNumber = BigNumber.from(1000000000000);
 
 interface TestContext {
