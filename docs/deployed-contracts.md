@@ -130,11 +130,15 @@
 | --- | --- | --- | --- |
 | 1 | ProxyAdmin | Proxy admin | [0xAD81F2257593B6B06930D549db588a92e483395a](https://explorer.mainnet.cloudwalk.io/address/0xAD81F2257593B6B06930D549db588a92e483395a) |
 | 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0x88EC3491f763f4cDCF2a8F9Edd4b752AE5B8C9Fb](https://explorer.mainnet.cloudwalk.io/address/0x88EC3491f763f4cDCF2a8F9Edd4b752AE5B8C9Fb) |
-| 3 | YieldStreamer | Proxy implementation | [0x8B46a20f285a4c0519bE8638765e6f0BC5dE069E](https://explorer.mainnet.cloudwalk.io/address/0x8B46a20f285a4c0519bE8638765e6f0BC5dE069E) |
+| 3 | YieldStreamer | Proxy implementation | [0xcC427bB7513a2Eaf78b24858E0e336195F2746Ea](https://explorer.mainnet.cloudwalk.io/address/0xcC427bB7513a2Eaf78b24858E0e336195F2746Ea) |
+|||| [0xd334A0101e179007056a3Fd0c98b460E6C152894](https://explorer.mainnet.cloudwalk.io/address/0xd334A0101e179007056a3Fd0c98b460E6C152894) |
+|||| [0x8B46a20f285a4c0519bE8638765e6f0BC5dE069E](https://explorer.mainnet.cloudwalk.io/address/0x8B46a20f285a4c0519bE8638765e6f0BC5dE069E) |
 
 ### CloudWalk (Testnet)
 | # | Name | Description | Address |
 | --- | --- | --- | --- |
 | 1 | ProxyAdmin | Proxy admin | [0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A](https://explorer.testnet.cloudwalk.io/address/0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A) |
 | 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0xe66681cD29F07c1C4c056B46B7d37007eF493486](https://explorer.testnet.cloudwalk.io/address/0xe66681cD29F07c1C4c056B46B7d37007eF493486) |
-| 3 | YieldStreamer | Proxy implementation | [0xC6e159694F72D451a84f5A29ae90187215E72C3D](https://explorer.testnet.cloudwalk.io/address/0xC6e159694F72D451a84f5A29ae90187215E72C3D) |
+| 3 | YieldStreamer | Proxy implementation | [0xA3934Ba7852cf3179B8B9b19ed2bfd75e5fEC6d9](https://explorer.testnet.cloudwalk.io/address/0xA3934Ba7852cf3179B8B9b19ed2bfd75e5fEC6d9) |
+|||| [0x082F0cdc853B638A4a954A1D2B4390C849Dced64](https://explorer.testnet.cloudwalk.io/address/0x082F0cdc853B638A4a954A1D2B4390C849Dced64) |
+|||| [0xC6e159694F72D451a84f5A29ae90187215E72C3D](https://explorer.testnet.cloudwalk.io/address/0xC6e159694F72D451a84f5A29ae90187215E72C3D) |
