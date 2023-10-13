@@ -4419,6 +4419,260 @@
           }
         }
       }
+    },
+    "f68bc7396e2aa2a84804969c66b04416a228e0e31025a42ec788c13c7ac0948d": {
+      "address": "0xA3934Ba7852cf3179B8B9b19ed2bfd75e5fEC6d9",
+      "txHash": "0xdd88a01e553e4721ac35333a1fe8a1d67d8544494e86311d9885f94dbf6c8fa8",
+      "layout": {
+        "solcVersion": "0.8.16",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "_paused",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_bool",
+            "contract": "PausableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\PausableUpgradeable.sol:29"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "PausableUpgradeable",
+            "src": "@openzeppelin\\contracts-upgradeable\\security\\PausableUpgradeable.sol:116"
+          },
+          {
+            "label": "_pauser",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_address",
+            "contract": "PausableExtUpgradeable",
+            "src": "contracts\\base\\common\\PausableExtUpgradeable.sol:17"
+          },
+          {
+            "label": "_blacklister",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_address",
+            "contract": "BlacklistableUpgradeable",
+            "src": "contracts\\base\\common\\BlacklistableUpgradeable.sol:16"
+          },
+          {
+            "label": "_blacklisted",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "BlacklistableUpgradeable",
+            "src": "contracts\\base\\common\\BlacklistableUpgradeable.sol:19"
+          },
+          {
+            "label": "_rescuer",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_address",
+            "contract": "RescuableUpgradeable",
+            "src": "contracts\\base\\common\\RescuableUpgradeable.sol:20"
+          },
+          {
+            "label": "_feeReceiver",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_address",
+            "contract": "YieldStreamer",
+            "src": "contracts\\periphery\\YieldStreamer.sol:53"
+          },
+          {
+            "label": "_balanceTracker",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_address",
+            "contract": "YieldStreamer",
+            "src": "contracts\\periphery\\YieldStreamer.sol:56"
+          },
+          {
+            "label": "_yieldRates",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_array(t_struct(YieldRate)6996_storage)dyn_storage",
+            "contract": "YieldStreamer",
+            "src": "contracts\\periphery\\YieldStreamer.sol:59"
+          },
+          {
+            "label": "_lookBackPeriods",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_array(t_struct(LookBackPeriod)6991_storage)dyn_storage",
+            "contract": "YieldStreamer",
+            "src": "contracts\\periphery\\YieldStreamer.sol:62"
+          },
+          {
+            "label": "_claims",
+            "offset": 0,
+            "slot": "159",
+            "type": "t_mapping(t_address,t_struct(ClaimState)6986_storage)",
+            "contract": "YieldStreamer",
+            "src": "contracts\\periphery\\YieldStreamer.sol:65"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "160",
+            "type": "t_array(t_uint256)45_storage",
+            "contract": "YieldStreamer",
+            "src": "contracts\\periphery\\YieldStreamer.sol:733"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(LookBackPeriod)6991_storage)dyn_storage": {
+            "label": "struct YieldStreamer.LookBackPeriod[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(YieldRate)6996_storage)dyn_storage": {
+            "label": "struct YieldStreamer.YieldRate[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)45_storage": {
+            "label": "uint256[45]",
+            "numberOfBytes": "1440"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(ClaimState)6986_storage)": {
+            "label": "mapping(address => struct YieldStreamer.ClaimState)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(ClaimState)6986_storage": {
+            "label": "struct YieldStreamer.ClaimState",
+            "members": [
+              {
+                "label": "day",
+                "type": "t_uint16",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "debit",
+                "type": "t_uint240",
+                "offset": 2,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(LookBackPeriod)6991_storage": {
+            "label": "struct YieldStreamer.LookBackPeriod",
+            "members": [
+              {
+                "label": "effectiveDay",
+                "type": "t_uint16",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "length",
+                "type": "t_uint16",
+                "offset": 2,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(YieldRate)6996_storage": {
+            "label": "struct YieldStreamer.YieldRate",
+            "members": [
+              {
+                "label": "effectiveDay",
+                "type": "t_uint16",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "value",
+                "type": "t_uint240",
+                "offset": 2,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint16": {
+            "label": "uint16",
+            "numberOfBytes": "2"
+          },
+          "t_uint240": {
+            "label": "uint240",
+            "numberOfBytes": "30"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
     }
   }
 }
