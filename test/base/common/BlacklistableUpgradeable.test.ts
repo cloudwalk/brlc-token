@@ -26,7 +26,8 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
     const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
     const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
 
-    const REVERT_ERROR_UNAUTHORIZED = "Unauthorized";
+    const REVERT_ERROR_UNAUTHORIZED_BLACKLISTER = "UnauthorizedBlacklister";
+    const REVERT_ERROR_UNAUTHORIZED_MAIN_BLACKLISTER = "UnauthorizedMainBlacklister";
     const REVERT_ERROR_BLACKLISTED_ACCOUNT = "BlacklistedAccount";
     const REVERT_ERROR_ZERO_ADDRESS_BLACKLISTED = "ZeroAddressToBlacklist";
 
@@ -131,7 +132,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
             const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
             await expect(blacklistable.connect(user).blacklist(user.address)).to.be.revertedWithCustomError(
                 blacklistable,
-                REVERT_ERROR_UNAUTHORIZED
+                REVERT_ERROR_UNAUTHORIZED_BLACKLISTER
             );
         });
 
@@ -163,7 +164,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
             const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
             await expect(blacklistable.connect(user).unBlacklist(user.address)).to.be.revertedWithCustomError(
                 blacklistable,
-                REVERT_ERROR_UNAUTHORIZED
+                REVERT_ERROR_UNAUTHORIZED_BLACKLISTER
             );
         });
     });
@@ -194,12 +195,14 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
                 .withArgs(user.address, true);
 
             expect(await blacklistable.isBlacklister(user.address)).to.equal(true);
+            await blacklistable.connect(deployer).configureBlacklister(user.address, false)
+            expect(await blacklistable.isBlacklister(user.address)).to.equal(false);
         });
 
         it("Is reverted if called not by the main blacklister", async () => {
             const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
             expect(blacklistable.connect(user).configureBlacklister(user.address, true))
-                .to.be.revertedWithCustomError(blacklistable, REVERT_ERROR_UNAUTHORIZED);
+                .to.be.revertedWithCustomError(blacklistable, REVERT_ERROR_UNAUTHORIZED_MAIN_BLACKLISTER);
         });
     });
 
