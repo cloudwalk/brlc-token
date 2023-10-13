@@ -92,6 +92,11 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     */
     error ZeroAddressToBlacklist();
 
+    /**
+     * @notice The account is already configured
+    */
+    error AlreadyConfigured();
+
     // -------------------- Modifiers --------------------------------
 
     /**
@@ -223,8 +228,11 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     * @param newMainBlacklister The address of the new main blacklister
     */
     function setMainBlacklister(address newMainBlacklister) external onlyOwner {
-        _mainBlacklister = newMainBlacklister;
+        if (_mainBlacklister == newMainBlacklister) {
+            revert AlreadyConfigured();
+        }
 
+        _mainBlacklister = newMainBlacklister;
         emit MainBlackListerChanged(newMainBlacklister);
     }
 
@@ -242,8 +250,11 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      */
     function configureBlacklister(address account, bool status) external onlyMainBlacklister {
         mapping(address=>bool) storage map = _getMap(_MAP_STORAGE_SLOT);
-        map[account] = status;
+        if (map[account] == status) {
+            revert AlreadyConfigured();
+        }
 
+        map[account] = status;
         emit BlacklisterConfigured(account, status);
     }
 

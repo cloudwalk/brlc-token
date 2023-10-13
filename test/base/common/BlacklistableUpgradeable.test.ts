@@ -30,6 +30,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
     const REVERT_ERROR_UNAUTHORIZED_MAIN_BLACKLISTER = "UnauthorizedMainBlacklister";
     const REVERT_ERROR_BLACKLISTED_ACCOUNT = "BlacklistedAccount";
     const REVERT_ERROR_ZERO_ADDRESS_BLACKLISTED = "ZeroAddressToBlacklist";
+    const REVERT_ERROR_ALREADY_CONFIGURED = "AlreadyConfigured";
 
     const ZERO_ADDRESS = ethers.constants.AddressZero;
 
@@ -112,6 +113,13 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
                 REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER
             );
         });
+
+        it("Is reverted the the account is already a main blacklister", async () => {
+            const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
+            expect(await blacklistable.mainBlacklister()).to.eq(deployer.address);
+            expect(blacklistable.setMainBlacklister(deployer.address))
+                .to.be.revertedWithCustomError(blacklistable, REVERT_ERROR_ALREADY_CONFIGURED);
+        })
     });
 
     describe("Function 'blacklist()'", async () => {
@@ -203,6 +211,15 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
             const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
             expect(blacklistable.connect(user).configureBlacklister(user.address, true))
                 .to.be.revertedWithCustomError(blacklistable, REVERT_ERROR_UNAUTHORIZED_MAIN_BLACKLISTER);
+        });
+
+        it("Is reverted if the account is already configured", async () => {
+            const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
+            await expect(blacklistable.connect(deployer).configureBlacklister(user.address, true))
+                .to.emit(blacklistable, EVENT_NAME_BLACKLISTER_CHANGED)
+                .withArgs(user.address, true);
+            await expect(blacklistable.connect(deployer).configureBlacklister(user.address, true))
+                .to.be.revertedWithCustomError(blacklistable, REVERT_ERROR_ALREADY_CONFIGURED);
         });
     });
 
