@@ -164,10 +164,9 @@ describe("Contract 'ERC20Freezable'", async () => {
 
         it("Is reverted if the caller is not a blacklister", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
-            await expect(token.connect(user1).freeze(user2.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
-                token,
-                REVERT_ERROR_UNAUTHORIZED_BLACKLISTER
-            );
+            await expect(token.connect(user1).freeze(user2.address, TOKEN_AMOUNT))
+                .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLACKLISTER)
+                .withArgs(user1.address);
         });
     });
 
@@ -190,8 +189,9 @@ describe("Contract 'ERC20Freezable'", async () => {
             await proveTx(token.connect(user1).approveFreezing());
             await proveTx(token.connect(deployer).mint(user1.address, TOKEN_AMOUNT));
             await expect(
-                token.connect(user2).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT)
-            ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLACKLISTER);
+                token.connect(user2).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT))
+                .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLACKLISTER)
+                .withArgs(user2.address);
         });
 
         it("Is reverted if the contract is paused", async () => {
