@@ -31,6 +31,9 @@ contract YieldStreamer is
     /// @notice The fee rate that is used to calculate the fee amount
     uint240 public constant FEE_RATE = 225000000000;
 
+    /// @notice The coefficient used to round the yield, fee and other related values
+    uint256 public constant ROUNDING_COEF = 10000;
+
     /// @notice The initial state of the next claim for an account
     struct ClaimState {
         uint16 day;    // The index of the day from which the yield will be calculated next time
@@ -549,6 +552,9 @@ contract YieldStreamer is
         ClaimState memory state = _claims[account];
         ClaimResult memory result;
         result.prevClaimDebit = state.debit;
+        if (amount != type(uint256).max) {
+            amount = _roundDown(amount);
+        }
 
         if (state.day != --day) {
             /**
@@ -629,11 +635,14 @@ contract YieldStreamer is
                 if (amount != type(uint256).max) {
                     result.nextClaimDebit = amount - result.primaryYield;
                     if (result.nextClaimDebit > result.streamYield) {
-                        result.shortfall = result.nextClaimDebit - result.streamYield;
+                        result.shortfall = _roundUpward(result.nextClaimDebit - result.streamYield);
                         result.nextClaimDebit = result.streamYield;
+                    } else {
+                        result.yield = amount;
                     }
                 } else {
                     result.nextClaimDebit = result.streamYield;
+                    result.yield = _roundDown(result.primaryYield + result.streamYield);
                 }
 
                 result.fee += calculateFee(result.nextClaimDebit, 0);
@@ -660,17 +669,21 @@ contract YieldStreamer is
 
             if (amount != type(uint256).max) {
                 if (amount > result.streamYield) {
-                    result.shortfall = amount - result.streamYield;
+                    result.shortfall = _roundUpward(amount - result.streamYield);
                     result.nextClaimDebit += result.streamYield;
                 } else {
                     result.nextClaimDebit += amount;
+                    result.yield = amount;
                 }
             } else {
                 result.nextClaimDebit += result.streamYield;
+                result.yield = _roundDown(result.streamYield);
             }
 
             result.fee = calculateFee(result.nextClaimDebit - state.debit, 0);
         }
+
+        result.fee = _roundUpward(result.fee);
 
         return result;
     }
@@ -691,13 +704,10 @@ contract YieldStreamer is
         _claims[account].day = _toUint16(preview.nextClaimDay);
         _claims[account].debit = _toUint240(preview.nextClaimDebit);
 
-        if (amount == type(uint256).max) {
-            amount = preview.primaryYield + preview.streamYield;
-        }
         IERC20Upgradeable(token()).transfer(_feeReceiver, preview.fee);
-        IERC20Upgradeable(token()).transfer(account, amount - preview.fee);
+        IERC20Upgradeable(token()).transfer(account, preview.yield - preview.fee);
 
-        emit Claim(account, amount, preview.fee);
+        emit Claim(account, preview.yield, preview.fee);
 
         return preview;
     }
@@ -724,6 +734,18 @@ contract YieldStreamer is
         }
 
         return uint16(value);
+    }
+
+    function _roundDown(uint256 amount) internal pure returns (uint256) {
+        return (amount / ROUNDING_COEF) * ROUNDING_COEF;
+    }
+
+    function _roundUpward(uint256 amount) internal pure returns (uint256) {
+        uint256 roundedAmount = _roundDown(amount);
+        if (roundedAmount < amount) {
+            roundedAmount += ROUNDING_COEF;
+        }
+        return roundedAmount;
     }
 
     /**
