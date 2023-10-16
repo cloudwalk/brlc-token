@@ -497,10 +497,8 @@ contract YieldStreamer is
      * @notice Calculates the amount of yield fee
      *
      * @param amount The yield amount to calculate the fee for
-     * @param passedDays The number of days passed since the yield was accrued
      */
-    function calculateFee(uint256 amount, uint256 passedDays) public pure returns (uint256) {
-        passedDays;
+    function calculateFee(uint256 amount) public pure returns (uint256) {
         return (amount * FEE_RATE) / RATE_FACTOR;
     }
 
@@ -597,13 +595,12 @@ contract YieldStreamer is
             }
 
             /**
-             * Calculate accrued yield and fee for the specified period
+             * Calculate accrued yield for the specified period
              * Exit the loop when the accrued yield exceeds the claim amount
              */
             uint256 i = 0;
             do {
                 result.primaryYield += yieldByDays[i];
-                result.fee += calculateFee(yieldByDays[i], lastIndex - i);
             } while (result.primaryYield < amount && ++i < lastIndex);
 
             if (i == 0) {
@@ -618,17 +615,16 @@ contract YieldStreamer is
 
                 result.nextClaimDay += i;
                 result.nextClaimDebit += yieldByDays[i] - surplus;
-                result.fee -= calculateFee(surplus, lastIndex - i);
 
                 /**
-                 * Complete the calculation of the accrued yield and fee for the period
+                 * Complete the calculation of the accrued yield for the period
                  */
                 while (++i < lastIndex) {
                     result.primaryYield += yieldByDays[i];
                 }
             } else {
                 /**
-                 * If the yield doesn't exceed the amount, calculate the yield and fee for today
+                 * If the yield doesn't exceed the amount, calculate the yield for today
                  */
                 result.nextClaimDay = day;
 
@@ -644,13 +640,11 @@ contract YieldStreamer is
                     result.nextClaimDebit = result.streamYield;
                     result.yield = _roundDown(result.primaryYield + result.streamYield);
                 }
-
-                result.fee += calculateFee(result.nextClaimDebit, 0);
             }
         } else {
             /**
              * The account has already made a claim today
-             * Therefore, recalculate the yield and fee only for today
+             * Therefore, recalculate the yield only for today
              */
 
             result.nextClaimDay = day;
@@ -679,11 +673,9 @@ contract YieldStreamer is
                 result.nextClaimDebit += result.streamYield;
                 result.yield = _roundDown(result.streamYield);
             }
-
-            result.fee = calculateFee(result.nextClaimDebit - state.debit, 0);
         }
 
-        result.fee = _roundUpward(result.fee);
+        result.fee = _roundUpward(calculateFee(result.yield));
 
         return result;
     }
