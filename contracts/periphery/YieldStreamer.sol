@@ -615,6 +615,7 @@ contract YieldStreamer is
 
                 result.nextClaimDay += i;
                 result.nextClaimDebit += yieldByDays[i] - surplus;
+                result.yield = amount;
 
                 /**
                  * Complete the calculation of the accrued yield for the period
@@ -633,6 +634,7 @@ contract YieldStreamer is
                     if (result.nextClaimDebit > result.streamYield) {
                         result.shortfall = _roundUpward(result.nextClaimDebit - result.streamYield);
                         result.nextClaimDebit = result.streamYield;
+                        // result.yield is zero at this point
                     } else {
                         result.yield = amount;
                     }
@@ -665,6 +667,7 @@ contract YieldStreamer is
                 if (amount > result.streamYield) {
                     result.shortfall = _roundUpward(amount - result.streamYield);
                     result.nextClaimDebit += result.streamYield;
+                    // result.yield is zero at this point
                 } else {
                     result.nextClaimDebit += amount;
                     result.yield = amount;
