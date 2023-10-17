@@ -33,13 +33,6 @@ interface IYieldStreamer {
     }
 
     /**
-     * @notice Claims all accrued yield
-     *
-     * Emits a {Claim} event
-     */
-    function claimAll() external;
-
-    /**
      * @notice Claims a portion of accrued yield
      *
      * @param amount The portion of yield to claim

@@ -330,13 +330,6 @@ contract YieldStreamer is
     /**
      * @inheritdoc IYieldStreamer
      */
-    function claimAll() external whenNotPaused notBlacklisted(_msgSender()) {
-        _claim(_msgSender(), type(uint256).max);
-    }
-
-    /**
-     * @inheritdoc IYieldStreamer
-     */
     function claim(uint256 amount) external whenNotPaused notBlacklisted(_msgSender()) {
         if (amount != _roundDown(amount)) {
             revert NonRoundedClaimAmount();
