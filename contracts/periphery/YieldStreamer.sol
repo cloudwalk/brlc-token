@@ -155,6 +155,11 @@ contract YieldStreamer is
     error FeeReceiverAlreadyConfigured();
 
     /**
+     * @notice Thrown when the requested claim amount is non-rounded down according to the `ROUNDING_COEF` value
+     */
+    error NonRoundedClaimAmount();
+
+    /**
      * @notice Thrown when the value does not fit in the type uint16
      */
     error SafeCastOverflowUint16();
@@ -333,6 +338,9 @@ contract YieldStreamer is
      * @inheritdoc IYieldStreamer
      */
     function claim(uint256 amount) external whenNotPaused notBlacklisted(_msgSender()) {
+        if (amount != _roundDown(amount)) {
+            revert NonRoundedClaimAmount();
+        }
         _claim(_msgSender(), amount);
     }
 
