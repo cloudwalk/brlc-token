@@ -163,7 +163,7 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      *
      * @param account The address to blocklist
      */
-    function blocklist(address account) external onlyBlocklister {
+    function blocklist(address account) public onlyBlocklister {
         if (account == address(0)) {
             revert ZeroAddressToBlocklist();
         }
@@ -187,7 +187,7 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      *
      * @param account The address to remove from the blocklist
      */
-    function unBlocklist(address account) external onlyBlocklister {
+    function unBlocklist(address account) public onlyBlocklister {
         if (!_blocklisted[account]) {
             return;
         }
@@ -203,7 +203,7 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      * Emits a {SelfBlocklisted} event
      * Emits a {Blocklisted} event
      */
-    function selfBlocklist() external {
+    function selfBlocklist() public {
         address sender = _msgSender();
 
         if (_blocklisted[sender]) {
@@ -298,38 +298,14 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
     //*************** Service Functions For Backward Compatibility ***************
 
     function blacklist(address account) external onlyBlocklister {
-        if (account == address(0)) {
-            revert ZeroAddressToBlocklist();
-        }
-        if (_blocklisted[account]) {
-            return;
-        }
-
-        _blocklisted[account] = true;
-
-        emit Blocklisted(account);
+        blocklist(account);
     }
 
     function unBlacklist(address account) external onlyBlocklister {
-        if (!_blocklisted[account]) {
-            return;
-        }
-
-        _blocklisted[account] = false;
-
-        emit UnBlocklisted(account);
+        unBlocklist(account);
     }
 
     function selfBlacklist() external {
-        address sender = _msgSender();
-
-        if (_blocklisted[sender]) {
-            return;
-        }
-
-        _blocklisted[sender] = true;
-
-        emit SelfBlocklisted(sender);
-        emit Blocklisted(sender);
+        selfBlocklist();
     }
 }
