@@ -8,12 +8,13 @@ pragma solidity 0.8.16;
  * @notice The interface of a token that supports mint and burn operations
  */
 interface IERC20Mintable {
+
     /**
-     * @notice Emitted when the master minter is changed
+     * @notice Emitted when the main minter is changed
      *
-     * @param newMasterMinter The address of a new master minter
+     * @param newMainMinter The address of a new main minter
      */
-    event MasterMinterChanged(address indexed newMasterMinter);
+    event MainMinterChanged(address indexed newMainMinter);
 
     /**
      * @notice Emitted when a minter account is configured
@@ -48,9 +49,9 @@ interface IERC20Mintable {
     event Burn(address indexed burner, uint256 amount);
 
     /**
-     * @notice Returns the master minter address
+     * @notice Returns the main minter address
      */
-    function masterMinter() external view returns (address);
+    function mainMinter() external view returns (address);
 
     /**
      * @notice Checks if the account is configured as a minter
@@ -69,13 +70,13 @@ interface IERC20Mintable {
     function minterAllowance(address minter) external view returns (uint256);
 
     /**
-     * @notice Updates the master minter address
+     * @notice Updates the main minter address
      *
-     * Emits a {MasterMinterChanged} event
+     * Emits a {MainMinterChanged} event
      *
-     * @param newMasterMinter The address of a new master minter
+     * @param newMainMinter The address of a new main minter
      */
-    function updateMasterMinter(address newMasterMinter) external;
+    function updateMainMinter(address newMainMinter) external;
 
     /**
      * @notice Configures a minter

@@ -2,16 +2,16 @@
 
 pragma solidity 0.8.16;
 
-import { BlacklistableUpgradeable } from "../../../base/common/BlacklistableUpgradeable.sol";
+import { BlocklistableUpgradeable } from "../../../base/common/BlocklistableUpgradeable.sol";
 
 /**
- * @title BlacklistableUpgradeableMock contract
+ * @title BlocklistableUpgradeableMock contract
  * @author CloudWalk Inc.
- * @notice An implementation of the {BlacklistableUpgradeable} contract for testing purposes
+ * @notice An implementation of the {BlocklistableUpgradeable} contract for testing purposes
  */
-contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
-    /// @notice Emitted when a test function of the `notBlacklisted` modifier executes successfully
-    event TestNotBlacklistedModifierSucceeded();
+contract BlocklistableUpgradeableMock is BlocklistableUpgradeable {
+    /// @notice Emitted when a test function of the `notBlocklisted` modifier executes successfully
+    event TestNotBlocklistedModifierSucceeded();
 
     /**
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
@@ -31,7 +31,7 @@ contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
      * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
      */
     function initialize() public initializer {
-        __Blacklistable_init();
+        __Blocklistable_init();
     }
 
     /**
@@ -39,7 +39,7 @@ contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
      * has the 'onlyInitializing' modifier
      */
     function call_parent_initialize() public {
-        __Blacklistable_init();
+        __Blocklistable_init();
     }
 
     /**
@@ -47,14 +47,14 @@ contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
      * has the 'onlyInitializing' modifier
      */
     function call_parent_initialize_unchained() public {
-        __Blacklistable_init_unchained();
+        __Blocklistable_init_unchained();
     }
 
     /**
-     * @notice Checks the execution of the {notBlacklisted} modifier
-     * Emits an event {TestNotBlacklistedModifierSucceeded} if modifier is not reverted
+     * @notice Checks the execution of the {notBlocklisted} modifier
+     * Emits an event {TestNotBlocklistedModifierSucceeded} if modifier is not reverted
      */
-    function testNotBlacklistedModifier() external notBlacklisted(_msgSender()) {
-        emit TestNotBlacklistedModifierSucceeded();
+    function testNotBlocklistedModifier() external notBlocklisted(_msgSender()) {
+        emit TestNotBlocklistedModifierSucceeded();
     }
 }

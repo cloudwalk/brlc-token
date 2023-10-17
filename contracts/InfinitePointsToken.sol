@@ -49,7 +49,7 @@ contract InfinitePointsToken is ERC20Base {
         __Ownable_init_unchained();
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
-        __Blacklistable_init_unchained();
+        __Blocklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
         __ERC20Base_init_unchained();
 

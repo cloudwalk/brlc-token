@@ -8,7 +8,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { IYieldStreamer } from "./../base/interfaces/periphery/IYieldStreamer.sol";
 import { IBalanceTracker } from "./../base/interfaces/periphery/IBalanceTracker.sol";
 import { PausableExtUpgradeable } from "./../base/common/PausableExtUpgradeable.sol";
-import { BlacklistableUpgradeable } from "./../base/common/BlacklistableUpgradeable.sol";
+import { BlocklistableUpgradeable } from "./../base/common/BlocklistableUpgradeable.sol";
 import { RescuableUpgradeable } from "./../base/common/RescuableUpgradeable.sol";
 
 /**
@@ -19,7 +19,7 @@ import { RescuableUpgradeable } from "./../base/common/RescuableUpgradeable.sol"
 contract YieldStreamer is
     OwnableUpgradeable,
     PausableExtUpgradeable,
-    BlacklistableUpgradeable,
+    BlocklistableUpgradeable,
     RescuableUpgradeable,
     IBalanceTracker,
     IYieldStreamer
@@ -194,7 +194,7 @@ contract YieldStreamer is
         __Ownable_init_unchained();
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
-        __Blacklistable_init_unchained();
+        __Blocklistable_init_unchained();
         __YieldStreamer_init_unchained();
     }
 
@@ -322,14 +322,14 @@ contract YieldStreamer is
     /**
      * @inheritdoc IYieldStreamer
      */
-    function claimAll() external whenNotPaused notBlacklisted(_msgSender()) {
+    function claimAll() external whenNotPaused notBlocklisted(_msgSender()) {
         _claim(_msgSender(), type(uint256).max);
     }
 
     /**
      * @inheritdoc IYieldStreamer
      */
-    function claim(uint256 amount) external whenNotPaused notBlacklisted(_msgSender()) {
+    function claim(uint256 amount) external whenNotPaused notBlocklisted(_msgSender()) {
         _claim(_msgSender(), amount);
     }
 

@@ -41,7 +41,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         __Ownable_init_unchained();
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
-        __Blacklistable_init_unchained();
+        __Blocklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
         __ERC20Base_init_unchained();
         __ERC20Freezable_init_unchained();
@@ -71,10 +71,10 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @inheritdoc IERC20Freezable
      *
      * @dev The contract must not be paused
-     * @dev Can only be called by the blacklister account
+     * @dev Can only be called by the blocklister account
      * @dev The token freezing must be approved by the `account`
      */
-    function freeze(address account, uint256 amount) external whenNotPaused onlyBlacklister {
+    function freeze(address account, uint256 amount) external whenNotPaused onlyBlocklister {
         if (!_freezeApprovals[account]) {
             revert FreezingNotApproved();
         }
@@ -88,10 +88,10 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @inheritdoc IERC20Freezable
      *
      * @dev The contract must not be paused
-     * @dev Can only be called by the blacklister account
+     * @dev Can only be called by the blocklister account
      * @dev The frozen balance must be greater than the `amount`
      */
-    function transferFrozen(address from, address to, uint256 amount) public virtual whenNotPaused onlyBlacklister {
+    function transferFrozen(address from, address to, uint256 amount) public virtual whenNotPaused onlyBlocklister {
         uint256 balance = _frozenBalances[from];
 
         if (amount > balance) {
