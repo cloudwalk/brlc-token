@@ -124,13 +124,20 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
                 }
             }
 
-            if (balanceOf(from) < restrictedBalance + amount) {
+            if (_balanceOf_ERC20Restrictable(from) < restrictedBalance + amount) {
                 revert TransferExceededRestrictedAmount();
             }
 
             _totalRestrictedBalances[from] = restrictedBalance;
         }
     }
+
+    /**
+     * @notice Returns the transferable amount of tokens owned by account
+     *
+     * @param account The account to check
+     */
+    function _balanceOf_ERC20Restrictable(address account) internal view virtual returns (uint256);
 
     /**
      * @dev This empty reserved space is put in place to allow future versions
