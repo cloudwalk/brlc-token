@@ -35,6 +35,9 @@ contract YieldStreamer is
     /// @dev e.g. value `12345678` will be rounded upward to `12350000` and down to `12340000`
     uint256 public constant ROUNDING_COEF = 10000;
 
+    /// @notice The minimum amount that is allowed to be claimed
+    uint256 public constant MIN_CLAIM_AMOUNT = 1000000;
+
     /// @notice The initial state of the next claim for an account
     struct ClaimState {
         uint16 day;    // The index of the day from which the yield will be calculated next time
@@ -154,6 +157,11 @@ contract YieldStreamer is
      * @notice Thrown when the same fee receiver is already configured
      */
     error FeeReceiverAlreadyConfigured();
+
+    /**
+     * @notice Thrown when the requested claim amount is below the allowed minimum
+     */
+    error ClaimAmountBelowMinimum();
 
     /**
      * @notice Thrown when the requested claim amount is non-rounded down according to the `ROUNDING_COEF` value
@@ -333,9 +341,13 @@ contract YieldStreamer is
      *
      * @dev The contract must not be paused
      * @dev The caller of the function must not be blacklisted
+     * @dev The requested claim amount must be no less than the `MIN_CLAIM_AMOUNT` value
      * @dev The requested claim amount must be rounded according to the `ROUNDING_COEF` value
      */
     function claim(uint256 amount) external whenNotPaused notBlacklisted(_msgSender()) {
+        if (amount < MIN_CLAIM_AMOUNT) {
+            revert ClaimAmountBelowMinimum();
+        }
         if (amount != _roundDown(amount)) {
             revert NonRoundedClaimAmount();
         }
@@ -377,9 +389,13 @@ contract YieldStreamer is
     /**
      * @inheritdoc IYieldStreamer
      *
+     * @dev The requested claim amount must be no less than the `MIN_CLAIM_AMOUNT` value
      * @dev The requested claim amount must be rounded according to the `ROUNDING_COEF` value
      */
     function claimPreview(address account, uint256 amount) public view returns (ClaimResult memory) {
+        if (amount < MIN_CLAIM_AMOUNT) {
+            revert ClaimAmountBelowMinimum();
+        }
         if (amount != _roundDown(amount)) {
             revert NonRoundedClaimAmount();
         }
