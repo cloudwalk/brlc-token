@@ -17,7 +17,7 @@ interface IYieldStreamer {
     event Claim(address indexed account, uint256 yield, uint256 fee);
 
     /**
-     * @notice A struct describing the details of the result of the claim operation
+     * @notice A structure describing the result details of a claim operation
      */
     struct ClaimResult {
         uint256 nextClaimDay;   // The index of the day from which the subsequent yield will be calculated next time
@@ -27,9 +27,9 @@ interface IYieldStreamer {
         uint256 primaryYield;   // The yield primary amount based on the number of whole days passed since the previous claim
         uint256 streamYield;    // The yield stream amount based on the time passed since the beginning of the current day
         uint256 lastDayYield;   // The whole-day yield for the last day in the time range of this claim
-        uint256 shortfall;      // The amount of yield that is not enough to cover this claim, rounded upward
+        uint256 shortfall;      // The amount of yield that is not enough to cover this claim
         uint256 fee;            // The amount of fee for this claim, rounded upward
-        uint256 yield;          // The amount of yield for this claim, rounded down
+        uint256 yield;          // The amount of final yield for this claim before applying the fee, rounded down
     }
 
     /**

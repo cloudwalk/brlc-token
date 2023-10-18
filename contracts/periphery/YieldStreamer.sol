@@ -32,6 +32,7 @@ contract YieldStreamer is
     uint240 public constant FEE_RATE = 225000000000;
 
     /// @notice The coefficient used to round the yield, fee and other related values
+    /// @dev e.g. value `12345678` will be rounded upward to `12350000` and down to `12340000`
     uint256 public constant ROUNDING_COEF = 10000;
 
     /// @notice The initial state of the next claim for an account
@@ -329,6 +330,10 @@ contract YieldStreamer is
 
     /**
      * @inheritdoc IYieldStreamer
+     *
+     * @dev The contract must not be paused
+     * @dev The caller of the function must not be blacklisted
+     * @dev The requested claim amount must be rounded according to the `ROUNDING_COEF` value
      */
     function claim(uint256 amount) external whenNotPaused notBlacklisted(_msgSender()) {
         if (amount != _roundDown(amount)) {
@@ -371,6 +376,8 @@ contract YieldStreamer is
 
     /**
      * @inheritdoc IYieldStreamer
+     *
+     * @dev The requested claim amount must be rounded according to the `ROUNDING_COEF` value
      */
     function claimPreview(address account, uint256 amount) public view returns (ClaimResult memory) {
         if (amount != _roundDown(amount)) {
@@ -690,7 +697,7 @@ contract YieldStreamer is
      * @param account The address of an account to claim the yield for
      * @param amount The amount of yield to claim
      */
-    function _claim(address account, uint256 amount) internal returns (ClaimResult memory) {
+    function _claim(address account, uint256 amount) internal {
         ClaimResult memory preview = _claimPreview(account, amount);
 
         if (preview.shortfall > 0) {
@@ -704,8 +711,6 @@ contract YieldStreamer is
         IERC20Upgradeable(token()).transfer(account, preview.yield - preview.fee);
 
         emit Claim(account, preview.yield, preview.fee);
-
-        return preview;
     }
 
     /**
