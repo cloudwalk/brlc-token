@@ -373,6 +373,9 @@ contract YieldStreamer is
      * @inheritdoc IYieldStreamer
      */
     function claimPreview(address account, uint256 amount) public view returns (ClaimResult memory) {
+        if (amount != _roundDown(amount)) {
+            revert NonRoundedClaimAmount();
+        }
         return _claimPreview(account, amount);
     }
 
@@ -551,9 +554,6 @@ contract YieldStreamer is
         ClaimState memory state = _claims[account];
         ClaimResult memory result;
         result.prevClaimDebit = state.debit;
-        if (amount != type(uint256).max) {
-            amount = _roundDown(amount);
-        }
 
         if (state.day != --day) {
             /**
@@ -633,7 +633,7 @@ contract YieldStreamer is
                 if (amount != type(uint256).max) {
                     result.nextClaimDebit = amount - result.primaryYield;
                     if (result.nextClaimDebit > result.streamYield) {
-                        result.shortfall = _roundUpward(result.nextClaimDebit - result.streamYield);
+                        result.shortfall = result.nextClaimDebit - result.streamYield;
                         result.nextClaimDebit = result.streamYield;
                         // result.yield is zero at this point
                     } else {
@@ -666,7 +666,7 @@ contract YieldStreamer is
 
             if (amount != type(uint256).max) {
                 if (amount > result.streamYield) {
-                    result.shortfall = _roundUpward(amount - result.streamYield);
+                    result.shortfall = amount - result.streamYield;
                     result.nextClaimDebit += result.streamYield;
                     // result.yield is zero at this point
                 } else {
