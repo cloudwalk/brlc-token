@@ -166,7 +166,7 @@ contract YieldStreamer is
     /**
      * @notice Thrown when the requested claim amount is non-rounded down according to the `ROUNDING_COEF` value
      */
-    error NonRoundedClaimAmount();
+    error ClaimAmountNonRounded();
 
     /**
      * @notice Thrown when the value does not fit in the type uint16
@@ -349,7 +349,7 @@ contract YieldStreamer is
             revert ClaimAmountBelowMinimum();
         }
         if (amount != _roundDown(amount)) {
-            revert NonRoundedClaimAmount();
+            revert ClaimAmountNonRounded();
         }
         _claim(_msgSender(), amount);
     }
@@ -397,7 +397,7 @@ contract YieldStreamer is
             revert ClaimAmountBelowMinimum();
         }
         if (amount != _roundDown(amount)) {
-            revert NonRoundedClaimAmount();
+            revert ClaimAmountNonRounded();
         }
         return _claimPreview(account, amount);
     }
