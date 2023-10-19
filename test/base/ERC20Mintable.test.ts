@@ -65,7 +65,7 @@ describe("Contract 'ERC20Mintable'", async () => {
     async function deployAndConfigureToken(): Promise<{ token: Contract }> {
         const { token } = await deployToken();
         await proveTx(token.connect(deployer).setPauser(pauser.address));
-        await proveTx(token.connect(deployer).setBlacklister(blacklister.address));
+        await proveTx(token.connect(deployer).setMainBlacklister(blacklister.address));
         await proveTx(token.connect(deployer).updateMasterMinter(masterMinter.address));
         await proveTx(token.connect(masterMinter).configureMinter(minter.address, MINT_ALLOWANCE));
         return { token };
@@ -76,7 +76,7 @@ describe("Contract 'ERC20Mintable'", async () => {
             const { token } = await setUpFixture(deployToken);
             expect(await token.owner()).to.equal(deployer.address);
             expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
-            expect(await token.blacklister()).to.equal(ethers.constants.AddressZero);
+            expect(await token.mainBlacklister()).to.equal(ethers.constants.AddressZero);
             expect(await token.masterMinter()).to.equal(ethers.constants.AddressZero);
         });
 

@@ -56,7 +56,7 @@ describe("Contract 'ERC20Freezable'", async () => {
     async function deployAndConfigureToken(): Promise<{ token: Contract }> {
         const { token } = await deployToken();
         await proveTx(token.connect(deployer).setPauser(pauser.address));
-        await proveTx(token.connect(deployer).setBlacklister(blacklister.address));
+        await proveTx(token.connect(deployer).setMainBlacklister(blacklister.address));
         return { token };
     }
 
@@ -65,7 +65,7 @@ describe("Contract 'ERC20Freezable'", async () => {
             const { token } = await setUpFixture(deployToken);
             expect(await token.owner()).to.equal(deployer.address);
             expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
-            expect(await token.blacklister()).to.equal(ethers.constants.AddressZero);
+            expect(await token.mainBlacklister()).to.equal(ethers.constants.AddressZero);
         });
 
         it("Is reverted if called for the second time", async () => {
@@ -164,10 +164,9 @@ describe("Contract 'ERC20Freezable'", async () => {
 
         it("Is reverted if the caller is not a blacklister", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
-            await expect(token.connect(user1).freeze(user2.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
-                token,
-                REVERT_ERROR_UNAUTHORIZED_BLACKLISTER
-            );
+            await expect(token.connect(user1).freeze(user2.address, TOKEN_AMOUNT))
+                .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLACKLISTER)
+                .withArgs(user1.address);
         });
     });
 
@@ -190,8 +189,9 @@ describe("Contract 'ERC20Freezable'", async () => {
             await proveTx(token.connect(user1).approveFreezing());
             await proveTx(token.connect(deployer).mint(user1.address, TOKEN_AMOUNT));
             await expect(
-                token.connect(user2).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT)
-            ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLACKLISTER);
+                token.connect(user2).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT))
+                .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLACKLISTER)
+                .withArgs(user2.address);
         });
 
         it("Is reverted if the contract is paused", async () => {
