@@ -152,7 +152,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     function mint(
         address account,
         uint256 amount
-    ) external whenNotPaused onlyMinter notBlacklisted(_msgSender()) notBlacklisted(account) returns (bool) {
+    ) external whenNotPaused onlyMinter notBlacklisted(_msgSender()) returns (bool) {
         if (amount == 0) {
             revert ZeroMintAmount();
         }

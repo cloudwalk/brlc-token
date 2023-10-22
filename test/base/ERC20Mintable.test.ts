@@ -187,7 +187,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         });
     });
 
-    describe("Function 'mint()", async () => {
+    describe("Function 'mint()'", async () => {
         it("Executes as expected and emits the correct events", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             const oldMintAllowance: BigNumber = await token.minterAllowance(minter.address);
@@ -259,7 +259,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         });
     });
 
-    describe("Function 'burn()", async () => {
+    describe("Function 'burn()'", async () => {
         it("Executes as expected and emits the correct events", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             await proveTx(token.connect(minter).mint(minter.address, TOKEN_AMOUNT));
