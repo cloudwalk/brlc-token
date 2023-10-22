@@ -133,6 +133,18 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
         _;
     }
 
+    /**
+     * @notice Throws if the account is blacklisted, but allows the blacklister to bypass the check
+     *
+     * @param account The address to check for presence in the blacklist
+     */
+    modifier notBlacklistedOrBypassIfBlacklister(address account) {
+        if (_blacklisted[account] && !isBlacklister(_msgSender())) {
+            revert BlacklistedAccount(account);
+        }
+        _;
+    }
+
     // -------------------- Functions --------------------------------
 
     /**

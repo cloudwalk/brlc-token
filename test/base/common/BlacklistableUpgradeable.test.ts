@@ -20,6 +20,8 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
     const EVENT_NAME_MAIN_BLACKLISTER_CHANGED = "MainBlackListerChanged";
     const EVENT_NAME_BLACKLISTER_CHANGED = "BlacklisterConfigured";
     const EVENT_NAME_TEST_NOT_BLACKLISTED_MODIFIER_SUCCEEDED = "TestNotBlacklistedModifierSucceeded";
+    const EVENT_NAME_TEST_NOT_BLACKLISTED_OR_BYPASS_IF_BLACKLISTER_MODIFIER_SUCCEEDED =
+        "TestNotBlacklistedOrBypassIfBlacklisterModifierSucceeded";
 
     const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED =
         "Initializable: contract is already initialized";
@@ -236,6 +238,35 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
             const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
             await proveTx(blacklistable.connect(blacklister).blacklist(user.address));
             await expect(blacklistable.connect(user).testNotBlacklistedModifier()).to.be.revertedWithCustomError(
+                blacklistable,
+                REVERT_ERROR_BLACKLISTED_ACCOUNT
+            );
+        });
+    });
+
+    describe("Modifier 'notBlacklistedOrBypassIfBlacklister'", async () => {
+        it("Is not reverted if the caller not blacklisted", async () => {
+            const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
+            await expect(blacklistable.connect(user).testNotBlacklistedOrBypassIfBlacklister()).to.emit(
+                blacklistable,
+                EVENT_NAME_TEST_NOT_BLACKLISTED_OR_BYPASS_IF_BLACKLISTER_MODIFIER_SUCCEEDED
+            );
+        });
+
+        it("Is not reverted if the caller is blacklister and is blacklisted", async () => {
+            const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
+            await proveTx(blacklistable.connect(blacklister).blacklist(user.address));
+            await proveTx(blacklistable.connect(deployer).configureBlacklister(user.address, true));
+            await expect(blacklistable.connect(user).testNotBlacklistedOrBypassIfBlacklister()).to.emit(
+                blacklistable,
+                EVENT_NAME_TEST_NOT_BLACKLISTED_OR_BYPASS_IF_BLACKLISTER_MODIFIER_SUCCEEDED
+            );
+        });
+
+        it("Is reverted if the caller is not blacklister and is blacklisted", async () => {
+            const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
+            await proveTx(blacklistable.connect(blacklister).blacklist(user.address));
+            await expect(blacklistable.connect(user).testNotBlacklistedOrBypassIfBlacklister()).to.be.revertedWithCustomError(
                 blacklistable,
                 REVERT_ERROR_BLACKLISTED_ACCOUNT
             );
