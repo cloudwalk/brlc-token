@@ -612,10 +612,10 @@ contract YieldStreamer is
             /**
              * Update the first day in the yield by days array
              */
-            if (yieldByDays[0] > state.debit) {
-                yieldByDays[0] -= state.debit;
-            } else {
+            if (state.debit > yieldByDays[0]) {
                 yieldByDays[0] = 0;
+            } else {
+                yieldByDays[0] -= state.debit;
             }
 
             /**
