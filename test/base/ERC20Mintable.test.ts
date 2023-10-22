@@ -229,9 +229,17 @@ describe("Contract 'ERC20Mintable'", async () => {
         it("Is reverted if the destination address is blacklisted", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             await proveTx(token.connect(user).selfBlacklist());
+
             await expect(token.connect(minter).mint(user.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
                 token,
                 REVERT_ERROR_BLACKLISTED_ACCOUNT
+            );
+
+            await proveTx(token.connect(blacklister).configureBlacklister(minter.address, true));
+            await expect(token.connect(minter).mint(user.address, TOKEN_AMOUNT)).to.changeTokenBalances(
+                token,
+                [user],
+                [TOKEN_AMOUNT]
             );
         });
 

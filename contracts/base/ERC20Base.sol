@@ -95,7 +95,7 @@ abstract contract ERC20Base is
         address from,
         address to,
         uint256 amount
-    ) internal virtual override whenNotPaused notBlacklisted(from) notBlacklisted(to) {
+    ) internal virtual override whenNotPaused notBlacklisted(from) notBlacklistedOrBypassIfBlacklister(to) {
         super._beforeTokenTransfer(from, to, amount);
     }
 
