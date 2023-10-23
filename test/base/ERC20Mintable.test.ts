@@ -46,13 +46,13 @@ describe("Contract 'ERC20Mintable'", async () => {
     let tokenFactory: ContractFactory;
     let deployer: SignerWithAddress;
     let pauser: SignerWithAddress;
-    let blacklister: SignerWithAddress;
+    let mainBlacklister: SignerWithAddress;
     let masterMinter: SignerWithAddress;
     let minter: SignerWithAddress;
     let user: SignerWithAddress;
 
     before(async () => {
-        [deployer, pauser, blacklister, masterMinter, minter, user] = await ethers.getSigners();
+        [deployer, pauser, mainBlacklister, masterMinter, minter, user] = await ethers.getSigners();
         tokenFactory = await ethers.getContractFactory("ERC20MintableMock");
     });
 
@@ -65,7 +65,7 @@ describe("Contract 'ERC20Mintable'", async () => {
     async function deployAndConfigureToken(): Promise<{ token: Contract }> {
         const { token } = await deployToken();
         await proveTx(token.connect(deployer).setPauser(pauser.address));
-        await proveTx(token.connect(deployer).setMainBlacklister(blacklister.address));
+        await proveTx(token.connect(deployer).setMainBlacklister(mainBlacklister.address));
         await proveTx(token.connect(deployer).updateMasterMinter(masterMinter.address));
         await proveTx(token.connect(masterMinter).configureMinter(minter.address, MINT_ALLOWANCE));
         return { token };
@@ -158,7 +158,10 @@ describe("Contract 'ERC20Mintable'", async () => {
             await proveTx(token.connect(masterMinter).removeMinter(minter.address));
             await expect(
                 token.connect(user).configureMinter(minter.address, MINT_ALLOWANCE)
-            ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MASTER_MINTER);
+            ).to.be.revertedWithCustomError(
+                token,
+                REVERT_ERROR_UNAUTHORIZED_MASTER_MINTER
+            ).withArgs(user.address);
         });
     });
 
@@ -180,90 +183,113 @@ describe("Contract 'ERC20Mintable'", async () => {
 
         it("Is reverted if called not by the master minter", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
-            await expect(token.connect(user).removeMinter(minter.address)).to.be.revertedWithCustomError(
+            await expect(
+                token.connect(user).removeMinter(minter.address)
+            ).to.be.revertedWithCustomError(
                 token,
                 REVERT_ERROR_UNAUTHORIZED_MASTER_MINTER
-            );
+            ).withArgs(user.address);
         });
     });
 
     describe("Function 'mint()'", async () => {
-        it("Executes as expected and emits the correct events", async () => {
-            const { token } = await setUpFixture(deployAndConfigureToken);
-            const oldMintAllowance: BigNumber = await token.minterAllowance(minter.address);
-            const newExpectedMintAllowance: BigNumber = oldMintAllowance.sub(BigNumber.from(TOKEN_AMOUNT));
-            const tx: TransactionResponse = await token.connect(minter).mint(user.address, TOKEN_AMOUNT);
-            await expect(tx).to.emit(token, EVENT_NAME_MINT).withArgs(minter.address, user.address, TOKEN_AMOUNT);
-            await expect(tx)
-                .to.emit(token, EVENT_NAME_TRANSFER)
-                .withArgs(ethers.constants.AddressZero, user.address, TOKEN_AMOUNT);
-            await expect(tx).to.changeTokenBalances(token, [user], [TOKEN_AMOUNT]);
-            expect(await token.minterAllowance(minter.address)).to.equal(newExpectedMintAllowance);
+        describe("Executes as expected and emits the correct events if", async () => {
+            async function checkMinting(token: Contract) {
+                const oldMintAllowance: BigNumber = await token.minterAllowance(minter.address);
+                const newExpectedMintAllowance: BigNumber = oldMintAllowance.sub(BigNumber.from(TOKEN_AMOUNT));
+                const tx: TransactionResponse = await token.connect(minter).mint(user.address, TOKEN_AMOUNT);
+                await expect(tx).to.emit(token, EVENT_NAME_MINT).withArgs(minter.address, user.address, TOKEN_AMOUNT);
+                await expect(tx)
+                    .to.emit(token, EVENT_NAME_TRANSFER)
+                    .withArgs(ethers.constants.AddressZero, user.address, TOKEN_AMOUNT);
+                await expect(tx).to.changeTokenBalances(token, [user], [TOKEN_AMOUNT]);
+                expect(await token.minterAllowance(minter.address)).to.equal(newExpectedMintAllowance);
+            }
+
+            it("The caller and destination address are not blacklisted", async () => {
+                const { token } = await setUpFixture(deployAndConfigureToken);
+                await checkMinting(token);
+            });
+
+            it("The destination address is blacklisted but the caller is a blacklister", async () => {
+                const { token } = await setUpFixture(deployAndConfigureToken);
+                await proveTx(token.connect(mainBlacklister).configureBlacklister(minter.address, true));
+                await proveTx(token.connect(user).selfBlacklist());
+                await checkMinting(token);
+            });
         });
 
-        it("Is reverted if the contract is paused", async () => {
-            const { token } = await setUpFixture(deployAndConfigureToken);
-            await proveTx(token.connect(pauser).pause());
-            await expect(token.connect(minter).mint(user.address, TOKEN_AMOUNT)).to.be.revertedWith(
-                REVERT_MESSAGE_PAUSABLE_PAUSED
-            );
-        });
+        describe("Is reverted if", async () => {
+            it("The contract is paused", async () => {
+                const { token } = await setUpFixture(deployAndConfigureToken);
+                await proveTx(token.connect(pauser).pause());
+                await expect(token.connect(minter).mint(user.address, TOKEN_AMOUNT)).to.be.revertedWith(
+                    REVERT_MESSAGE_PAUSABLE_PAUSED
+                );
+            });
 
-        it("Is reverted if the caller is not a minter", async () => {
-            const { token } = await setUpFixture(deployAndConfigureToken);
-            await expect(token.connect(user).mint(user.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
-                token,
-                REVERT_ERROR_UNAUTHORIZED_MINTER
-            );
-        });
+            it("The caller is not a minter", async () => {
+                const { token } = await setUpFixture(deployAndConfigureToken);
+                await expect(
+                    token.connect(user).mint(user.address, TOKEN_AMOUNT)
+                ).to.be.revertedWithCustomError(
+                    token,
+                    REVERT_ERROR_UNAUTHORIZED_MINTER
+                ).withArgs(user.address);
+            });
 
-        it("Is reverted if the caller is blacklisted", async () => {
-            const { token } = await setUpFixture(deployAndConfigureToken);
-            await proveTx(token.connect(minter).selfBlacklist());
-            await expect(token.connect(minter).mint(user.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
-                token,
-                REVERT_ERROR_BLACKLISTED_ACCOUNT
-            );
-        });
+            it("The caller is blacklisted even if the caller is a blacklister", async () => {
+                const { token } = await setUpFixture(deployAndConfigureToken);
+                await proveTx(token.connect(mainBlacklister).configureBlacklister(minter.address, true));
+                await proveTx(token.connect(minter).selfBlacklist());
+                await expect(
+                    token.connect(minter).mint(user.address, TOKEN_AMOUNT)
+                ).to.be.revertedWithCustomError(
+                    token,
+                    REVERT_ERROR_BLACKLISTED_ACCOUNT
+                ).withArgs(minter.address);
+            });
 
-        it("Is reverted if the destination address is blacklisted", async () => {
-            const { token } = await setUpFixture(deployAndConfigureToken);
-            await proveTx(token.connect(user).selfBlacklist());
+            it("The destination address is blacklisted and the caller is not a blacklister", async () => {
+                const { token } = await setUpFixture(deployAndConfigureToken);
+                await proveTx(token.connect(user).selfBlacklist());
 
-            await expect(token.connect(minter).mint(user.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
-                token,
-                REVERT_ERROR_BLACKLISTED_ACCOUNT
-            );
+                await expect(
+                    token.connect(minter).mint(user.address, TOKEN_AMOUNT)
+                ).to.be.revertedWithCustomError(
+                    token,
+                    REVERT_ERROR_BLACKLISTED_ACCOUNT
+                ).withArgs(user.address);
+            });
 
-            await proveTx(token.connect(blacklister).configureBlacklister(minter.address, true));
-            await expect(token.connect(minter).mint(user.address, TOKEN_AMOUNT)).to.changeTokenBalances(
-                token,
-                [user],
-                [TOKEN_AMOUNT]
-            );
-        });
+            it("The destination address is zero", async () => {
+                const { token } = await setUpFixture(deployAndConfigureToken);
+                await expect(
+                    token.connect(minter).mint(ethers.constants.AddressZero, TOKEN_AMOUNT)
+                ).to.be.revertedWith(
+                    REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT
+                );
+            });
 
-        it("Is reverted if the destination address is zero", async () => {
-            const { token } = await setUpFixture(deployAndConfigureToken);
-            await expect(token.connect(minter).mint(ethers.constants.AddressZero, TOKEN_AMOUNT)).to.be.revertedWith(
-                REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT
-            );
-        });
+            it("The mint amount is zero", async () => {
+                const { token } = await setUpFixture(deployAndConfigureToken);
+                await expect(
+                    token.connect(minter).mint(user.address, 0)
+                ).to.be.revertedWithCustomError(
+                    token,
+                    REVERT_ERROR_ZERO_MINT_AMOUNT
+                );
+            });
 
-        it("Is reverted if the mint amount is zero", async () => {
-            const { token } = await setUpFixture(deployAndConfigureToken);
-            await expect(token.connect(minter).mint(user.address, 0)).to.be.revertedWithCustomError(
-                token,
-                REVERT_ERROR_ZERO_MINT_AMOUNT
-            );
-        });
-
-        it("Is reverted if the mint amount exceeds the mint allowance", async () => {
-            const { token } = await setUpFixture(deployAndConfigureToken);
-            await expect(token.connect(minter).mint(user.address, MINT_ALLOWANCE + 1)).to.be.revertedWithCustomError(
-                token,
-                REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE
-            );
+            it("The mint amount exceeds the mint allowance", async () => {
+                const { token } = await setUpFixture(deployAndConfigureToken);
+                await expect(
+                    token.connect(minter).mint(user.address, MINT_ALLOWANCE + 1)
+                ).to.be.revertedWithCustomError(
+                    token,
+                    REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE
+                );
+            });
         });
     });
 
@@ -293,25 +319,31 @@ describe("Contract 'ERC20Mintable'", async () => {
         it("Is reverted if the caller is not a minter", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             await proveTx(token.connect(minter).mint(user.address, TOKEN_AMOUNT));
-            await expect(token.connect(user).burn(TOKEN_AMOUNT)).to.be.revertedWithCustomError(
+            await expect(
+                token.connect(user).burn(TOKEN_AMOUNT)
+            ).to.be.revertedWithCustomError(
                 token,
                 REVERT_ERROR_UNAUTHORIZED_MINTER
-            );
+            ).withArgs(user.address);
         });
 
         it("Is reverted if the caller is blacklisted", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             await proveTx(token.connect(minter).mint(minter.address, TOKEN_AMOUNT));
             await proveTx(token.connect(minter).selfBlacklist());
-            await expect(token.connect(minter).burn(TOKEN_AMOUNT)).to.be.revertedWithCustomError(
+            await expect(
+                token.connect(minter).burn(TOKEN_AMOUNT)
+            ).to.be.revertedWithCustomError(
                 token,
                 REVERT_ERROR_BLACKLISTED_ACCOUNT
-            );
+            ).withArgs(minter.address);
         });
 
         it("Is reverted if the burn amount is zero", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
-            await expect(token.connect(minter).burn(0)).to.be.revertedWithCustomError(
+            await expect(
+                token.connect(minter).burn(0)
+            ).to.be.revertedWithCustomError(
                 token,
                 REVERT_ERROR_ZERO_BURN_AMOUNT
             );
@@ -320,9 +352,9 @@ describe("Contract 'ERC20Mintable'", async () => {
         it("Is reverted if the burn amount exceeds the caller token balance", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             await proveTx(token.connect(minter).mint(minter.address, TOKEN_AMOUNT));
-            await expect(token.connect(minter).burn(TOKEN_AMOUNT + 1)).to.be.revertedWith(
-                REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE
-            );
+            await expect(
+                token.connect(minter).burn(TOKEN_AMOUNT + 1)
+            ).to.be.revertedWith(REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
         });
     });
 });
