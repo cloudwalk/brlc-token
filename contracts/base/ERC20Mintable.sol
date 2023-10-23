@@ -152,7 +152,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     function mint(
         address account,
         uint256 amount
-    ) external whenNotPaused onlyMinter notBlacklisted(_msgSender()) returns (bool) {
+    ) external onlyMinter notBlacklisted(_msgSender()) returns (bool) {
         if (amount == 0) {
             revert ZeroMintAmount();
         }
@@ -178,7 +178,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The message sender must not be blacklisted
      * @dev The `amount` value must be greater than zero
      */
-    function burn(uint256 amount) external whenNotPaused onlyMinter notBlacklisted(_msgSender()) {
+    function burn(uint256 amount) external onlyMinter notBlacklisted(_msgSender()) {
         if (amount == 0) {
             revert ZeroBurnAmount();
         }
