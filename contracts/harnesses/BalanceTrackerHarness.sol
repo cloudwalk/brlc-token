@@ -11,24 +11,32 @@ import { HarnessAdministrable } from "./HarnessAdministrable.sol";
  * @notice The same as {BalanceTracker} but with the new functions of setting internal variables for testing
  */
 contract BalanceTrackerHarness is BalanceTracker, HarnessAdministrable {
+    /// @notice The structure with the contract state
+    struct BalanceTrackerHarnessState {
+        uint256 currentBlockTimestamp;
+        bool usingRealBlockTimestamps;
+    }
 
-    uint256 public currentBlockTimestamp;
-    bool public usingRealBlockTimestamps;
+    /// @notice The memory slot used to store the contract state
+    /// @dev It is the same as keccak256("balance tracker harness storage slot")
+    bytes32 private constant _STORAGE_SLOT = 0xceb91ca8f20e7d3bc24614515796ccaa88bb45ed0206676ef6d6620478090c43;
 
     function setInitializationDay(uint16 day) external onlyHarnessAdmin {
         INITIALIZATION_DAY = day;
     }
 
     function addBalanceRecord(address account, uint16 day, uint240 value) external onlyHarnessAdmin {
-        _balanceRecords[account].push(Record({day: day, value: value}));
+        _balanceRecords[account].push(Record({ day: day, value: value }));
     }
 
     function setBlockTimestamp(uint256 day, uint256 time) external onlyHarnessAdmin {
-        currentBlockTimestamp = day * (24 * 60 * 60) + time;
+        BalanceTrackerHarnessState storage state = _getBalanceTrackerHarnessState();
+        state.currentBlockTimestamp = day * (24 * 60 * 60) + time;
     }
 
     function setUsingRealBlockTimestamps(bool newValue) external onlyHarnessAdmin {
-        usingRealBlockTimestamps = newValue;
+        BalanceTrackerHarnessState storage state = _getBalanceTrackerHarnessState();
+        state.usingRealBlockTimestamps = newValue;
     }
 
     function deleteBalanceRecords(address account) external onlyHarnessAdmin {
@@ -36,15 +44,28 @@ contract BalanceTrackerHarness is BalanceTracker, HarnessAdministrable {
     }
 
     function _blockTimestamp() internal view virtual override returns (uint256) {
-        if (usingRealBlockTimestamps) {
+        BalanceTrackerHarnessState storage state = _getBalanceTrackerHarnessState();
+        if (state.usingRealBlockTimestamps) {
             return super._blockTimestamp();
         } else {
-            uint256 blockTimestamp = currentBlockTimestamp;
+            uint256 blockTimestamp = state.currentBlockTimestamp;
             if (blockTimestamp < NEGATIVE_TIME_SHIFT) {
                 return 0;
             } else {
                 return blockTimestamp - NEGATIVE_TIME_SHIFT;
             }
         }
+    }
+
+    /**
+     * @notice Returns the contract stored state structure
+     */
+    function _getBalanceTrackerHarnessState() internal pure returns (BalanceTrackerHarnessState storage) {
+        BalanceTrackerHarnessState storage state;
+        /// @solidity memory-safe-assembly
+        assembly {
+            state.slot := _STORAGE_SLOT
+        }
+        return state;
     }
 }
