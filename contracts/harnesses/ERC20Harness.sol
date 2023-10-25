@@ -68,6 +68,7 @@ contract ERC20Harness is OwnableUpgradeable, ERC20Upgradeable, HarnessAdministra
         _burn(account, amount);
     }
 
+    /// @notice Returns the number of decimals for the token
     function decimals() public pure virtual override returns (uint8) {
         return 6;
     }

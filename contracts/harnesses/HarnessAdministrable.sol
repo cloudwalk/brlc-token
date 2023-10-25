@@ -13,7 +13,6 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
  * @dev This contract use a pseudo random storage slot to save its state, so no storage layout control is needed
  */
 abstract contract HarnessAdministrable is OwnableUpgradeable {
-
     /// @notice The structure with the contract state
     struct HarnessAdministrableState {
         mapping(address => bool) harnessAdminStatuses;
