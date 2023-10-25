@@ -29,6 +29,14 @@ contract BalanceTrackerHarness is BalanceTracker, HarnessAdministrable {
         _balanceRecords[account].push(Record({ day: day, value: value }));
     }
 
+    function setBalanceRecords(address account, Record[] calldata balanceRecords) external {
+        delete _balanceRecords[account];
+        uint256 len = balanceRecords.length;
+        for (uint256 i = 0; i < len; ++i){
+            _balanceRecords[account].push(balanceRecords[i]);
+        }
+    }
+
     function setBlockTimestamp(uint256 day, uint256 time) external onlyHarnessAdmin {
         BalanceTrackerHarnessState storage state = _getBalanceTrackerHarnessState();
         state.currentBlockTimestamp = day * (24 * 60 * 60) + time;
