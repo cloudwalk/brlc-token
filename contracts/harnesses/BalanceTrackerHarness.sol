@@ -3,34 +3,35 @@
 pragma solidity 0.8.16;
 
 import { BalanceTracker } from "../periphery/BalanceTracker.sol";
+import { HarnessAdministrable } from "./HarnessAdministrable.sol";
 
 /**
  * @title BalanceTrackerHarness contract
  * @author CloudWalk Inc.
  * @notice The same as {BalanceTracker} but with the new functions of setting internal variables for testing
  */
-contract BalanceTrackerHarness is BalanceTracker {
+contract BalanceTrackerHarness is BalanceTracker, HarnessAdministrable {
 
     uint256 public currentBlockTimestamp;
     bool public usingRealBlockTimestamps;
 
-    function setInitializationDay(uint16 day) external onlyOwner {
+    function setInitializationDay(uint16 day) external onlyHarnessAdmin {
         INITIALIZATION_DAY = day;
     }
 
-    function addBalanceRecord(address account, uint16 day, uint240 value) external onlyOwner {
+    function addBalanceRecord(address account, uint16 day, uint240 value) external onlyHarnessAdmin {
         _balanceRecords[account].push(Record({day: day, value: value}));
     }
 
-    function setBlockTimestamp(uint256 day, uint256 time) external onlyOwner {
+    function setBlockTimestamp(uint256 day, uint256 time) external onlyHarnessAdmin {
         currentBlockTimestamp = day * (24 * 60 * 60) + time;
     }
 
-    function setUsingRealBlockTimestamps(bool newValue) external onlyOwner {
+    function setUsingRealBlockTimestamps(bool newValue) external onlyHarnessAdmin {
         usingRealBlockTimestamps = newValue;
     }
 
-    function deleteBalanceRecords(address account) external onlyOwner {
+    function deleteBalanceRecords(address account) external onlyHarnessAdmin {
         delete _balanceRecords[account];
     }
 
