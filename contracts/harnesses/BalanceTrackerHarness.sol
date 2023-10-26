@@ -67,7 +67,7 @@ contract BalanceTrackerHarness is BalanceTracker, HarnessAdministrable {
     }
 
     /**
-     * @notice Sets the boolean variable that whether the real block time is used in the contract
+     * @notice Sets the boolean variable that defines whether the real block time is used in the contract
      *
      * @param newValue The new value. If true the real block time is used. Otherwise previously set time is used
      */
@@ -83,6 +83,22 @@ contract BalanceTrackerHarness is BalanceTracker, HarnessAdministrable {
      */
     function deleteBalanceRecords(address account) external onlyHarnessAdmin {
         delete _balanceRecords[account];
+    }
+
+    /**
+     * @notice Returns the boolean value that defines whether the real block time is used in the contract or not
+     */
+    function getUsingRealBlockTimestamps() external view returns (bool) {
+        BalanceTrackerHarnessState storage state = _getBalanceTrackerHarnessState();
+        return state.usingRealBlockTimestamps;
+    }
+
+    /**
+     * @notice Returns the internal state variable that defines the block timestamp if real time is not used
+     */
+    function getCurrentBlockTimestamp() external view returns (uint256) {
+        BalanceTrackerHarnessState storage state = _getBalanceTrackerHarnessState();
+        return state.currentBlockTimestamp;
     }
 
     /// @notice Returns the block timestamp according to the contract settings: the real time or a previously set time
