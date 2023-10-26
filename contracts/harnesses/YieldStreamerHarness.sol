@@ -14,14 +14,14 @@ contract YieldStreamerHarness is YieldStreamer, HarnessAdministrable {
     /**
      * @notice Deletes all records from the yield rate chronological array
      */
-    function deleteYieldRates() external onlyHarnessAdmin {
+    function deleteYieldRates() external onlyOwner {
         delete _yieldRates;
     }
 
     /**
      * @notice Deletes all records from the look-back period chronological array
      */
-    function deleteLookBackPeriods() external onlyHarnessAdmin {
+    function deleteLookBackPeriods() external onlyOwner {
         delete _lookBackPeriods;
     }
 

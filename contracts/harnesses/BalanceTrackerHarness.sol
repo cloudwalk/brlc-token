@@ -26,7 +26,7 @@ contract BalanceTrackerHarness is BalanceTracker, HarnessAdministrable {
      *
      * @param day The new initialization day to set
      */
-    function setInitializationDay(uint16 day) external onlyHarnessAdmin {
+    function setInitializationDay(uint16 day) external onlyOwner {
         INITIALIZATION_DAY = day;
     }
 
@@ -47,7 +47,7 @@ contract BalanceTrackerHarness is BalanceTracker, HarnessAdministrable {
      * @param account The address of the account to set the balance record array for
      * @param balanceRecords The array of new records to set
      */
-    function setBalanceRecords(address account, Record[] calldata balanceRecords) external {
+    function setBalanceRecords(address account, Record[] calldata balanceRecords) external onlyHarnessAdmin {
         delete _balanceRecords[account];
         uint256 len = balanceRecords.length;
         for (uint256 i = 0; i < len; ++i) {
@@ -71,7 +71,7 @@ contract BalanceTrackerHarness is BalanceTracker, HarnessAdministrable {
      *
      * @param newValue The new value. If true the real block time is used. Otherwise previously set time is used
      */
-    function setUsingRealBlockTimestamps(bool newValue) external onlyHarnessAdmin {
+    function setUsingRealBlockTimestamps(bool newValue) external onlyOwner {
         BalanceTrackerHarnessState storage state = _getBalanceTrackerHarnessState();
         state.usingRealBlockTimestamps = newValue;
     }
