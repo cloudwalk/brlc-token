@@ -146,7 +146,8 @@
 | --- | --- | --- | --- |
 | 1 | ProxyAdmin | Proxy admin | [0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A](https://explorer.testnet.cloudwalk.io/address/0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A) |
 | 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0xe66681cD29F07c1C4c056B46B7d37007eF493486](https://explorer.testnet.cloudwalk.io/address/0xe66681cD29F07c1C4c056B46B7d37007eF493486) |
-| 3 | YieldStreamer | Proxy implementation | [0xE4916b691E073dFdC28F441c877EE210994D797e](https://explorer.testnet.cloudwalk.io/address/0xE4916b691E073dFdC28F441c877EE210994D797e) |
+| 3 | YieldStreamerHarness | Proxy implementation | [0x115525Eb7288cfE3eE68738Ab611923ec4551c77](https://explorer.testnet.cloudwalk.io/address/0x115525Eb7288cfE3eE68738Ab611923ec4551c77) |
+|||| [0xE4916b691E073dFdC28F441c877EE210994D797e](https://explorer.testnet.cloudwalk.io/address/0xE4916b691E073dFdC28F441c877EE210994D797e) |
 |||| [0xA3934Ba7852cf3179B8B9b19ed2bfd75e5fEC6d9](https://explorer.testnet.cloudwalk.io/address/0xA3934Ba7852cf3179B8B9b19ed2bfd75e5fEC6d9) |
 |||| [0x082F0cdc853B638A4a954A1D2B4390C849Dced64](https://explorer.testnet.cloudwalk.io/address/0x082F0cdc853B638A4a954A1D2B4390C849Dced64) |
 |||| [0xC6e159694F72D451a84f5A29ae90187215E72C3D](https://explorer.testnet.cloudwalk.io/address/0xC6e159694F72D451a84f5A29ae90187215E72C3D) |
