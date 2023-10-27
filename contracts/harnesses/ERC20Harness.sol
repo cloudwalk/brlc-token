@@ -4,13 +4,14 @@ pragma solidity 0.8.16;
 
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import { HarnessAdministrable } from "./HarnessAdministrable.sol";
 
 /**
  * @title ERC20Harness contract
  * @author CloudWalk Inc.
  * @notice An implementation of the {ERC20Upgradeable} contract for testing purposes
  */
-contract ERC20Harness is OwnableUpgradeable, ERC20Upgradeable {
+contract ERC20Harness is OwnableUpgradeable, ERC20Upgradeable, HarnessAdministrable {
     /**
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *
@@ -43,7 +44,7 @@ contract ERC20Harness is OwnableUpgradeable, ERC20Upgradeable {
      * @param account The address of an account to mint for
      * @param amount The amount of tokens to mint
      */
-    function mint(address account, uint256 amount) external onlyOwner {
+    function mint(address account, uint256 amount) external onlyHarnessAdmin {
         _mint(account, amount);
     }
 
@@ -53,7 +54,7 @@ contract ERC20Harness is OwnableUpgradeable, ERC20Upgradeable {
      * @param account The address of an account to mint for
      * @param amount The amount of tokens to burn
      */
-    function burn(address account, uint256 amount) external onlyOwner {
+    function burn(address account, uint256 amount) external onlyHarnessAdmin {
         _burn(account, amount);
     }
 
@@ -62,11 +63,12 @@ contract ERC20Harness is OwnableUpgradeable, ERC20Upgradeable {
      *
      * @param account The address of an account to mint for
      */
-    function burnAll(address account) external onlyOwner {
+    function burnAll(address account) external onlyHarnessAdmin {
         uint256 amount = balanceOf(account);
         _burn(account, amount);
     }
 
+    /// @notice Returns the number of decimals for the token
     function decimals() public pure virtual override returns (uint8) {
         return 6;
     }
