@@ -12,11 +12,14 @@ const BIG_NUMBER_MAX_UINT256 = ethers.constants.MaxUint256;
 const YIELD_STREAMER_INIT_TOKEN_BALANCE: BigNumber = BigNumber.from(1000_000_000_000);
 const USER_CURRENT_TOKEN_BALANCE: BigNumber = BigNumber.from(1000_000_000_000);
 const LOOK_BACK_PERIOD_LENGTH: number = 3;
-const INITIAL_YIELD_RATE_IN_PPM = 100000000; // 0.01%
+const INITIAL_YIELD_RATE = 10000000000; // 1%
 const BALANCE_TRACKER_INIT_DAY = 100;
 const YIELD_STREAMER_INIT_DAY = BALANCE_TRACKER_INIT_DAY + LOOK_BACK_PERIOD_LENGTH - 1;
 const FEE_RATE: BigNumber = BigNumber.from(225000000000);
 const RATE_FACTOR: BigNumber = BigNumber.from(1000000000000);
+const MIN_CLAIM_AMOUNT: BigNumber = BigNumber.from(1000000);
+const ROUNDING_COEF: BigNumber = BigNumber.from(10000);
+const BALANCE_TRACKER_ADDRESS_STUB = "0x0000000000000000000000000000000000000001";
 
 interface TestContext {
   tokenMock: Contract;
@@ -24,7 +27,7 @@ interface TestContext {
   yieldStreamer: Contract;
 }
 
-interface L {
+interface BalanceRecord {
   day: number,
   value: BigNumber,
 }
@@ -39,6 +42,8 @@ interface ClaimResult {
   lastDayYield: BigNumber;
   shortfall: BigNumber;
   fee: BigNumber;
+  yield: BigNumber;
+  claimDebitIsGreaterThanFirstDayYield: boolean;
 }
 
 interface LookBackPeriodRecord {
@@ -59,19 +64,19 @@ interface ClaimRequest {
   claimDebit: BigNumber;
   lookBackPeriodLength: number,
   yieldRateRecords: YieldRateRecord[],
-  balanceRecords: L[],
+  balanceRecords: BalanceRecord[],
 }
 
 interface YieldByDaysRequest {
   lookBackPeriodLength: number,
   yieldRateRecords: YieldRateRecord[],
-  balanceRecords: L[],
+  balanceRecords: BalanceRecord[],
   dayFrom: number,
   dayTo: number,
   claimDebit: BigNumber,
 }
 
-const balanceRecordsCase1: L[] = [
+const balanceRecordsCase1: BalanceRecord[] = [
   { day: BALANCE_TRACKER_INIT_DAY, value: BigNumber.from(0) },
   { day: BALANCE_TRACKER_INIT_DAY + 1, value: BigNumber.from(8000_000_000_000) },
   { day: BALANCE_TRACKER_INIT_DAY + 2, value: BigNumber.from(7000_000_000_000) },
@@ -85,20 +90,20 @@ const balanceRecordsCase1: L[] = [
 
 const yieldRateRecordCase1: YieldRateRecord = {
   effectiveDay: YIELD_STREAMER_INIT_DAY,
-  value: BigNumber.from(INITIAL_YIELD_RATE_IN_PPM),
+  value: BigNumber.from(INITIAL_YIELD_RATE),
 };
 
 const yieldRateRecordCase2: YieldRateRecord = {
   effectiveDay: YIELD_STREAMER_INIT_DAY + 4,
-  value: BigNumber.from(INITIAL_YIELD_RATE_IN_PPM * 2),
+  value: BigNumber.from(INITIAL_YIELD_RATE * 2),
 };
 
 const yieldRateRecordCase3: YieldRateRecord = {
   effectiveDay: YIELD_STREAMER_INIT_DAY + 6,
-  value: BigNumber.from(INITIAL_YIELD_RATE_IN_PPM * 3),
+  value: BigNumber.from(INITIAL_YIELD_RATE * 3),
 };
 
-function defineExpectedDailyBalances(balanceRecords: L[], dayFrom: number, dayTo: number): BigNumber[] {
+function defineExpectedDailyBalances(balanceRecords: BalanceRecord[], dayFrom: number, dayTo: number): BigNumber[] {
   if (dayFrom > dayTo) {
     throw new Error(
       `Cannot define daily balances because 'dayFrom' is greater than 'dayTo'. ` +
@@ -134,6 +139,18 @@ function min(bigNumber1: BigNumber, bigNumber2: BigNumber): BigNumber {
   } else {
     return bigNumber2;
   }
+}
+
+function roundDown(value: BigNumber): BigNumber {
+  return value.div(ROUNDING_COEF).mul(ROUNDING_COEF);
+}
+
+function roundUpward(value: BigNumber): BigNumber {
+  let roundedValue = value.div(ROUNDING_COEF).mul(ROUNDING_COEF);
+  if (!roundedValue.eq(value)) {
+    roundedValue = roundedValue.add(ROUNDING_COEF);
+  }
+  return roundedValue;
 }
 
 function defineYieldRate(yieldRateRecords: YieldRateRecord[], day: number): BigNumber {
@@ -185,12 +202,8 @@ function defineExpectedYieldByDays(yieldByDaysRequest: YieldByDaysRequest): BigN
   return yieldByDays;
 }
 
-function calculateFee(amount: BigNumber, passedDays: number): BigNumber {
-  if (passedDays >= 0) {
-    return amount.mul(FEE_RATE).div(RATE_FACTOR);
-  } else {
-    return  BIG_NUMBER_ZERO;
-  }
+function calculateFee(amount: BigNumber): BigNumber {
+  return roundUpward(amount.mul(FEE_RATE).div(RATE_FACTOR));
 }
 
 function defineExpectedClaimResult(claimRequest: ClaimRequest): ClaimResult {
@@ -211,13 +224,14 @@ function defineExpectedClaimResult(claimRequest: ClaimRequest): ClaimResult {
   let indexWhenPrimaryYieldReachedAmount = lastIndex;
   let valueWhenPrimaryYieldReachedAmount: BigNumber = BIG_NUMBER_ZERO;
   let primaryYieldReachedAmount = false;
-  let fee: BigNumber = BIG_NUMBER_ZERO;
+  let claimDebitIsGreaterThanFirstDayYield = false;
 
   if (dayFrom !== dayTo) {
-    if (yieldByDays[0].gt(claimRequest.claimDebit)) {
+    if (yieldByDays[0].gte(claimRequest.claimDebit)) {
       yieldByDays[0] = yieldByDays[0].sub(claimRequest.claimDebit);
     } else {
       yieldByDays[0] = BIG_NUMBER_ZERO;
+      claimDebitIsGreaterThanFirstDayYield = true;
     }
   }
 
@@ -226,7 +240,6 @@ function defineExpectedClaimResult(claimRequest: ClaimRequest): ClaimResult {
     const yieldValue = yieldByDays[i];
     primaryYield = primaryYield.add(yieldValue);
     if (!primaryYieldReachedAmount) {
-      fee = fee.add(calculateFee(yieldValue, lastIndex - i));
       if (primaryYield.gte(claimRequest.amount)) {
         indexWhenPrimaryYieldReachedAmount = i;
         valueWhenPrimaryYieldReachedAmount = primaryYield;
@@ -239,10 +252,11 @@ function defineExpectedClaimResult(claimRequest: ClaimRequest): ClaimResult {
   let nextClaimDebit: BigNumber;
   let streamYield: BigNumber;
   if (dayFrom === dayTo) {
-    if (partialLastYield.gt(claimRequest.claimDebit)) {
+    if (partialLastYield.gte(claimRequest.claimDebit)) {
       streamYield = partialLastYield.sub(claimRequest.claimDebit);
     } else {
       streamYield = BIG_NUMBER_ZERO;
+      claimDebitIsGreaterThanFirstDayYield = true;
     }
     nextClaimDay = dayTo;
     if (claimRequest.amount.gt(streamYield)) {
@@ -250,7 +264,6 @@ function defineExpectedClaimResult(claimRequest: ClaimRequest): ClaimResult {
     } else {
       nextClaimDebit = claimRequest.claimDebit.add(claimRequest.amount);
     }
-    fee = fee.add(calculateFee(nextClaimDebit.sub(claimRequest.claimDebit), 0));
   } else {
     streamYield = partialLastYield;
     if (primaryYieldReachedAmount) {
@@ -260,7 +273,6 @@ function defineExpectedClaimResult(claimRequest: ClaimRequest): ClaimResult {
       if (indexWhenPrimaryYieldReachedAmount === 0) {
         nextClaimDebit = nextClaimDebit.add(claimRequest.claimDebit);
       }
-      fee = fee.sub(calculateFee(yieldSurplus, lastIndex - indexWhenPrimaryYieldReachedAmount));
     } else {
       nextClaimDay = dayTo;
       const amountSurplus: BigNumber = claimRequest.amount.sub(primaryYield);
@@ -269,15 +281,22 @@ function defineExpectedClaimResult(claimRequest: ClaimRequest): ClaimResult {
       } else {
         nextClaimDebit = partialLastYield;
       }
-      fee = fee.add(calculateFee(nextClaimDebit, 0));
     }
   }
 
-  const totalYield = primaryYield.add(streamYield);
+  let totalYield = primaryYield.add(streamYield);
   let shortfall: BigNumber = BIG_NUMBER_ZERO;
-  if (claimRequest.amount.lt(BIG_NUMBER_MAX_UINT256) && claimRequest.amount.gt(totalYield)) {
-    shortfall = claimRequest.amount.sub(totalYield);
+  if (claimRequest.amount.lt(BIG_NUMBER_MAX_UINT256)) {
+    if (claimRequest.amount.gt(totalYield)) {
+      shortfall = claimRequest.amount.sub(totalYield);
+      totalYield = BIG_NUMBER_ZERO;
+    } else {
+      totalYield = claimRequest.amount;
+    }
+  } else {
+    totalYield = roundDown(totalYield);
   }
+  const fee: BigNumber = calculateFee(totalYield);
 
   return {
     nextClaimDay: BigNumber.from(nextClaimDay),
@@ -288,8 +307,18 @@ function defineExpectedClaimResult(claimRequest: ClaimRequest): ClaimResult {
     primaryYield,
     lastDayYield: lastYield,
     shortfall,
-    fee
+    fee,
+    yield: totalYield,
+    claimDebitIsGreaterThanFirstDayYield
   };
+}
+
+function defineExpectedClaimAllResult(claimRequest: ClaimRequest): ClaimResult {
+  const previousAmount = claimRequest.amount;
+  claimRequest.amount = BIG_NUMBER_MAX_UINT256;
+  const claimResult = defineExpectedClaimResult(claimRequest);
+  claimRequest.amount = previousAmount;
+  return claimResult;
 }
 
 function compareClaimPreviews(actualClaimPreviewResult: any, expectedClaimPreviewResult: ClaimResult) {
@@ -321,6 +350,11 @@ function compareClaimPreviews(actualClaimPreviewResult: any, expectedClaimPrevie
   expect(actualClaimPreviewResult.fee.toString()).to.equal(
     expectedClaimPreviewResult.fee.toString(),
     "The 'fee' field is wrong"
+  );
+
+  expect(actualClaimPreviewResult.yield.toString()).to.equal(
+    expectedClaimPreviewResult.yield.toString(),
+    "The 'yield' field is wrong"
   );
 }
 
@@ -423,10 +457,29 @@ describe("Contract 'YieldStreamer'", async () => {
 
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED =
     "Initializable: contract is already initialized";
+  const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
+  const REVERT_MESSAGE_PAUSABLE_PAUSED = "Pausable: paused";
 
+
+  const REVERT_ERROR_BLACKLISTED_ACCOUNT = "BlacklistedAccount";
+  const REVERT_ERROR_BALANCE_TRACKER_ALREADY_CONFIGURED = "BalanceTrackerAlreadyConfigured";
+  const REVERT_ERROR_CLAIM_AMOUNT_BELOW_MINIMUM = "ClaimAmountBelowMinimum";
+  const REVERT_ERROR_CLAIM_AMOUNT_NON_ROUNDED = "ClaimAmountNonRounded";
   const REVERT_ERROR_CLAIM_REJECTION_DUE_TO_SHORTFALL = "ClaimRejectionDueToShortfall";
+  const REVERT_ERROR_FEE_RECEIVER_ALREADY_CONFIGURED = "FeeReceiverAlreadyConfigured";
+  const REVERT_ERROR_LOOK_BACK_PERIOD_COUNT_LIMIT = "LookBackPeriodCountLimit";
+  const REVERT_ERROR_LOOK_BACK_PERIOD_INVALID_EFFECTIVE_DAY = "LookBackPeriodInvalidEffectiveDay";
+  const REVERT_ERROR_LOOK_BACK_PERIOD_INVALID_PARAMETERS_COMBINATION = "LookBackPeriodInvalidParametersCombination";
+  const REVERT_ERROR_LOOK_BACK_PERIOD_LENGTH_ALREADY_CONFIGURED = "LookBackPeriodLengthAlreadyConfigured";
+  const REVERT_ERROR_LOOK_BACK_PERIOD_LENGTH_ZERO = "LookBackPeriodLengthZero";
+  const REVERT_ERROR_SAFE_CAST_OVERFLOW_UINT16 = "SafeCastOverflowUint16";
+  const REVERT_ERROR_SAFE_CAST_OVERFLOW_UINT240 = "SafeCastOverflowUint240";
+  const REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY = "YieldRateInvalidEffectiveDay";
+  const REVERT_ERROR_YIELD_RATE_VALUE_ALREADY_CONFIGURED = "YieldRateValueAlreadyConfigured";
 
+  const EVENT_BALANCE_TRACKER_CHANGED = "BalanceTrackerChanged";
   const EVENT_CLAIM = "Claim";
+  const EVENT_FEE_RECEIVER_CHANGED = "FeeReceiverChanged";
   const EVENT_LOOK_BACK_PERIOD_CONFIGURED = "LookBackPeriodConfigured";
   const EVENT_YIELD_RATE_CONFIGURED = "YieldRateConfigured";
 
@@ -466,7 +519,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
     await proveTx(yieldStreamer.setFeeReceiver(feeReceiver.address));
     await proveTx(yieldStreamer.setBalanceTracker(balanceTrackerMock.address));
-    await proveTx(yieldStreamer.configureYieldRate(YIELD_STREAMER_INIT_DAY, INITIAL_YIELD_RATE_IN_PPM));
+    await proveTx(yieldStreamer.configureYieldRate(YIELD_STREAMER_INIT_DAY, INITIAL_YIELD_RATE));
     await proveTx(yieldStreamer.configureLookBackPeriod(YIELD_STREAMER_INIT_DAY, LOOK_BACK_PERIOD_LENGTH));
     await proveTx(balanceTrackerMock.setCurrentBalance(user.address, USER_CURRENT_TOKEN_BALANCE));
     await proveTx(tokenMock.mintForTest(yieldStreamer.address, YIELD_STREAMER_INIT_TOKEN_BALANCE));
@@ -485,6 +538,10 @@ describe("Contract 'YieldStreamer'", async () => {
       expect(await yieldStreamer.owner()).to.equal(deployer.address);
       expect(await yieldStreamer.balanceTracker()).to.equal(ZERO_ADDRESS);
       expect(await yieldStreamer.feeReceiver()).to.equal(ZERO_ADDRESS);
+      expect(await yieldStreamer.RATE_FACTOR()).to.equal(RATE_FACTOR);
+      expect(await yieldStreamer.FEE_RATE()).to.equal(FEE_RATE);
+      expect(await yieldStreamer.MIN_CLAIM_AMOUNT()).to.equal(MIN_CLAIM_AMOUNT);
+      expect(await yieldStreamer.ROUNDING_COEF()).to.equal(ROUNDING_COEF);
       await checkLookBackPeriods(yieldStreamer, []);
       await checkYieldRates(yieldStreamer, []);
     });
@@ -501,6 +558,122 @@ describe("Contract 'YieldStreamer'", async () => {
       await yieldStreamerImplementation.deployed();
       await expect(yieldStreamerImplementation.initialize()).to.be.revertedWith(
         REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
+      );
+    });
+  });
+
+  describe(" Function 'setFeeReceiver()'", async () => {
+    it("Executes as expected", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+
+      await expect(
+        context.yieldStreamer.setFeeReceiver(feeReceiver.address)
+      ).to.emit(
+        context.yieldStreamer,
+        EVENT_FEE_RECEIVER_CHANGED
+      ).withArgs(
+        feeReceiver.address,
+        ZERO_ADDRESS
+      );
+
+      expect(await context.yieldStreamer.feeReceiver()).to.equal(feeReceiver.address);
+
+      await expect(
+        context.yieldStreamer.setFeeReceiver(ZERO_ADDRESS)
+      ).to.emit(
+        context.yieldStreamer,
+        EVENT_FEE_RECEIVER_CHANGED
+      ).withArgs(
+        ZERO_ADDRESS,
+        feeReceiver.address
+      );
+
+      expect(await context.yieldStreamer.feeReceiver()).to.equal(ZERO_ADDRESS);
+    });
+
+    it("Is reverted if it is called not by the owner", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+
+      await expect(
+        context.yieldStreamer.connect(user).setFeeReceiver(feeReceiver.address)
+      ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+    });
+
+    it("Is reverted if the same fee receiver is already configured", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+
+      await expect(
+        context.yieldStreamer.setFeeReceiver(ZERO_ADDRESS)
+      ).to.be.revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_FEE_RECEIVER_ALREADY_CONFIGURED
+      );
+
+      await proveTx(context.yieldStreamer.setFeeReceiver(feeReceiver.address));
+
+      await expect(
+        context.yieldStreamer.setFeeReceiver(feeReceiver.address)
+      ).to.be.revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_FEE_RECEIVER_ALREADY_CONFIGURED
+      );
+    });
+  });
+
+  describe(" Function 'setBalanceTracker()'", async () => {
+    it("Executes as expected", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+
+      await expect(
+        context.yieldStreamer.setBalanceTracker(BALANCE_TRACKER_ADDRESS_STUB)
+      ).to.emit(
+        context.yieldStreamer,
+        EVENT_BALANCE_TRACKER_CHANGED
+      ).withArgs(
+        BALANCE_TRACKER_ADDRESS_STUB,
+        ZERO_ADDRESS
+      );
+
+      expect(await context.yieldStreamer.balanceTracker()).to.equal(BALANCE_TRACKER_ADDRESS_STUB);
+
+      await expect(
+        context.yieldStreamer.setBalanceTracker(ZERO_ADDRESS)
+      ).to.emit(
+        context.yieldStreamer,
+        EVENT_BALANCE_TRACKER_CHANGED
+      ).withArgs(
+        ZERO_ADDRESS,
+        BALANCE_TRACKER_ADDRESS_STUB
+      );
+
+      expect(await context.yieldStreamer.balanceTracker()).to.equal(ZERO_ADDRESS);
+    });
+
+    it("Is reverted if it is called not by the owner", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+
+      await expect(
+        context.yieldStreamer.connect(user).setBalanceTracker(BALANCE_TRACKER_ADDRESS_STUB)
+      ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+    });
+
+    it("Is reverted if the same balance tracker is already configured", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+
+      await expect(
+        context.yieldStreamer.setBalanceTracker(ZERO_ADDRESS)
+      ).to.be.revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_BALANCE_TRACKER_ALREADY_CONFIGURED
+      );
+
+      await proveTx(context.yieldStreamer.setBalanceTracker(BALANCE_TRACKER_ADDRESS_STUB));
+
+      await expect(
+        context.yieldStreamer.setBalanceTracker(BALANCE_TRACKER_ADDRESS_STUB)
+      ).to.be.revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_BALANCE_TRACKER_ALREADY_CONFIGURED
       );
     });
   });
@@ -526,6 +699,96 @@ describe("Contract 'YieldStreamer'", async () => {
 
       await checkLookBackPeriods(context.yieldStreamer, [expectedLookBackPeriodRecord]);
     });
+
+    it("Is reverted if it is called not by the owner", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
+
+      await expect(context.yieldStreamer.connect(user).configureLookBackPeriod(
+        effectiveDay,
+        LOOK_BACK_PERIOD_LENGTH
+      )).revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+    });
+
+    it("Is reverted if the effective day is invalid", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
+
+      await proveTx(context.yieldStreamer.configureLookBackPeriod(
+        effectiveDay,
+        LOOK_BACK_PERIOD_LENGTH
+      ));
+
+      await expect(context.yieldStreamer.configureLookBackPeriod(
+        effectiveDay,
+        LOOK_BACK_PERIOD_LENGTH
+      )).revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_LOOK_BACK_PERIOD_INVALID_EFFECTIVE_DAY
+      );
+    });
+
+    it("Is reverted if the same length is already configured", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
+
+      await proveTx(context.yieldStreamer.configureLookBackPeriod(
+        effectiveDay,
+        LOOK_BACK_PERIOD_LENGTH
+      ));
+
+      await expect(context.yieldStreamer.configureLookBackPeriod(
+        effectiveDay + 1,
+        LOOK_BACK_PERIOD_LENGTH
+      )).revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_LOOK_BACK_PERIOD_LENGTH_ALREADY_CONFIGURED
+      );
+    });
+
+    it("Is reverted if the new length is zero", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
+
+      await expect(context.yieldStreamer.configureLookBackPeriod(
+        effectiveDay,
+        BIG_NUMBER_ZERO
+      )).revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_LOOK_BACK_PERIOD_LENGTH_ZERO
+      );
+    });
+
+    it("Is reverted if the parameters combination is wrong", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = LOOK_BACK_PERIOD_LENGTH - 2;
+
+      await expect(context.yieldStreamer.configureLookBackPeriod(
+        effectiveDay,
+        LOOK_BACK_PERIOD_LENGTH
+      )).revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_LOOK_BACK_PERIOD_INVALID_PARAMETERS_COMBINATION
+      );
+    });
+
+    it("Is reverted if a look-back period is already configured", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
+
+      await proveTx(context.yieldStreamer.configureLookBackPeriod(
+        effectiveDay,
+        LOOK_BACK_PERIOD_LENGTH
+      ));
+
+      await expect(context.yieldStreamer.configureLookBackPeriod(
+        effectiveDay + 1,
+        LOOK_BACK_PERIOD_LENGTH + 1
+      )).revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_LOOK_BACK_PERIOD_COUNT_LIMIT
+      );
+    });
   });
 
   describe(" Function 'configureYieldRate()'", async () => {
@@ -533,11 +796,11 @@ describe("Contract 'YieldStreamer'", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
       const expectedYieldRateRecord1: YieldRateRecord = {
         effectiveDay: YIELD_STREAMER_INIT_DAY,
-        value: BigNumber.from(INITIAL_YIELD_RATE_IN_PPM)
+        value: BigNumber.from(INITIAL_YIELD_RATE)
       };
       const expectedYieldRateRecord2: YieldRateRecord = {
         effectiveDay: YIELD_STREAMER_INIT_DAY + 3,
-        value: BigNumber.from(INITIAL_YIELD_RATE_IN_PPM * 2)
+        value: BigNumber.from(INITIAL_YIELD_RATE * 2)
       };
 
       await expect(context.yieldStreamer.configureYieldRate(
@@ -564,10 +827,86 @@ describe("Contract 'YieldStreamer'", async () => {
 
       await checkYieldRates(context.yieldStreamer, [expectedYieldRateRecord1, expectedYieldRateRecord2]);
     });
+
+    it("Is reverted if it is called not by the owner", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
+
+      await expect(context.yieldStreamer.connect(user).configureYieldRate(
+        effectiveDay,
+        INITIAL_YIELD_RATE
+      )).revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+    });
+
+    it("Is reverted if the effective day is invalid", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
+
+      await proveTx(context.yieldStreamer.configureYieldRate(
+        effectiveDay,
+        INITIAL_YIELD_RATE
+      ));
+
+      await expect(context.yieldStreamer.configureYieldRate(
+        effectiveDay,
+        INITIAL_YIELD_RATE
+      )).revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY
+      );
+    });
+
+    it("Is reverted if the same value is already configured", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
+
+      await proveTx(context.yieldStreamer.configureYieldRate(
+        effectiveDay,
+        INITIAL_YIELD_RATE
+      ));
+
+      await expect(context.yieldStreamer.configureYieldRate(
+        effectiveDay + 1,
+        INITIAL_YIELD_RATE
+      )).revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_YIELD_RATE_VALUE_ALREADY_CONFIGURED
+      );
+    });
+
+    // This test is to cover the internal function `_toUint16()`
+    it("Is reverted if the effective day index is greater than 16-bit unsigned integer", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = 65536;
+
+      await expect(context.yieldStreamer.configureYieldRate(
+        effectiveDay,
+        INITIAL_YIELD_RATE
+      )).revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_SAFE_CAST_OVERFLOW_UINT16
+      );
+    });
+
+    // This test is to cover the internal function `_toUint240()`
+    it("Is reverted if the new value is greater than 240-bit unsigned integer", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
+      const yieldRateValue: BigNumber =
+        BigNumber.from("0x1000000000000000000000000000000000000000000000000000000000000");
+
+      await expect(context.yieldStreamer.configureYieldRate(
+        effectiveDay,
+        yieldRateValue
+      )).revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_SAFE_CAST_OVERFLOW_UINT240
+      );
+    });
   });
 
   describe(" Function 'calculateYieldByDays()'", async () => {
-    const balanceRecords: L[] = balanceRecordsCase1;
+    const balanceRecords: BalanceRecord[] = balanceRecordsCase1;
     const lookBackPeriodLength = LOOK_BACK_PERIOD_LENGTH;
     const dayFrom = YIELD_STREAMER_INIT_DAY + 2;
     const dayTo = balanceRecords[balanceRecords.length - 1].day + 1;
@@ -682,7 +1021,7 @@ describe("Contract 'YieldStreamer'", async () => {
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
 
-        claimRequest.amount = expectedClaimAllResult.primaryYield.div(2);
+        claimRequest.amount = roundDown(expectedClaimAllResult.primaryYield.div(2));
         await checkClaimPreview(context, claimRequest);
       });
 
@@ -692,7 +1031,9 @@ describe("Contract 'YieldStreamer'", async () => {
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
 
-        claimRequest.amount = expectedClaimAllResult.primaryYield.add(expectedClaimAllResult.streamYield.div(3));
+        claimRequest.amount = roundDown(
+          expectedClaimAllResult.primaryYield.add(expectedClaimAllResult.streamYield.div(3))
+        );
         await checkClaimPreview(context, claimRequest);
       });
 
@@ -701,60 +1042,39 @@ describe("Contract 'YieldStreamer'", async () => {
         const claimRequest: ClaimRequest = { ...baseClaimRequest };
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
-        const expectedShortfall = 1;
+        const expectedShortfall = roundUpward(BigNumber.from(1));
 
-        claimRequest.amount =
-          expectedClaimAllResult.primaryYield.add(expectedClaimAllResult.streamYield).add(expectedShortfall);
+        claimRequest.amount = expectedClaimAllResult.yield.add(expectedShortfall);
         await checkClaimPreview(context, claimRequest);
       });
 
-      it("The amount equals zero", async () => {
+      it("The amount equals the minimum allowed claim amount", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
         const claimRequest: ClaimRequest = { ...baseClaimRequest };
 
-        claimRequest.amount = BIG_NUMBER_ZERO;
+        claimRequest.amount = MIN_CLAIM_AMOUNT;
         await checkClaimPreview(context, claimRequest);
       });
     });
-  });
-
-  describe("Function 'claimAll()'", async () => {
-    describe("Executes as expected if", async () => {
-      const claimRequest: ClaimRequest = {
-        amount: BIG_NUMBER_MAX_UINT256,
-        firstYieldDay: YIELD_STREAMER_INIT_DAY,
-        claimDay: YIELD_STREAMER_INIT_DAY + 10,
-        claimTime: 12 * 3600,
-        claimDebit: BIG_NUMBER_ZERO,
-        lookBackPeriodLength: LOOK_BACK_PERIOD_LENGTH,
-        yieldRateRecords: [yieldRateRecordCase1],
-        balanceRecords: balanceRecordsCase1
-      };
-
-      it("Token balances are according to case 1", async () => {
+    describe("Is reverted if", async () => {
+      it("The amount is bellow the allowed minimum", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, claimRequest.balanceRecords));
-        await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
-        const expectedClaimResult: ClaimResult = defineExpectedClaimResult(claimRequest);
-        const totalYield: BigNumber = expectedClaimResult.primaryYield.add(expectedClaimResult.streamYield);
-        const totalYieldWithoutFee: BigNumber = totalYield.sub(expectedClaimResult.fee);
-        const tx: TransactionResponse = await context.yieldStreamer.connect(user).claimAll();
-
-        await expect(tx).to.emit(context.yieldStreamer, EVENT_CLAIM).withArgs(
-          user.address,
-          totalYield,
-          expectedClaimResult.fee
+        await expect(
+          context.yieldStreamer.claimPreview(user.address, MIN_CLAIM_AMOUNT.sub(1))
+        ).to.be.revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_CLAIM_AMOUNT_BELOW_MINIMUM
         );
+      });
 
-        await expect(tx).to.changeTokenBalances(
-          context.tokenMock,
-          [context.yieldStreamer, user, feeReceiver],
-          [BIG_NUMBER_ZERO.sub(totalYield), totalYieldWithoutFee, expectedClaimResult.fee],
+      it("The amount is non-rounded", async () => {
+        const context: TestContext = await setUpFixture(deployAndConfigureContracts);
+        await expect(
+          context.yieldStreamer.claimPreview(user.address, MIN_CLAIM_AMOUNT.add(1))
+        ).to.be.revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_CLAIM_AMOUNT_NON_ROUNDED
         );
-
-        const actualClaimState = await context.yieldStreamer.getLastClaimDetails(user.address);
-        expect(actualClaimState.day).to.equal(expectedClaimResult.nextClaimDay);
-        expect(actualClaimState.debit).to.equal(expectedClaimResult.nextClaimDebit);
       });
     });
   });
@@ -803,7 +1123,7 @@ describe("Contract 'YieldStreamer'", async () => {
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
 
-        claimRequest.amount = expectedClaimAllResult.primaryYield.div(2);
+        claimRequest.amount = roundDown(expectedClaimAllResult.primaryYield.div(2));
         await checkClaim(context, claimRequest);
       });
 
@@ -813,29 +1133,54 @@ describe("Contract 'YieldStreamer'", async () => {
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
 
-        claimRequest.amount = expectedClaimAllResult.primaryYield.add(expectedClaimAllResult.streamYield.div(2));
+        claimRequest.amount = roundDown(
+          expectedClaimAllResult.primaryYield.add(expectedClaimAllResult.streamYield.div(2))
+        );
         await checkClaim(context, claimRequest);
       });
 
-      it("The amount equals zero", async () => {
+      it("The amount equals the minimum allowed claim amount", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
         const claimRequest: ClaimRequest = { ...baseClaimRequest };
 
-        claimRequest.amount = BIG_NUMBER_ZERO;
+        claimRequest.amount = MIN_CLAIM_AMOUNT;
         await checkClaim(context, claimRequest);
       });
     });
 
     describe("Is reverted if", async () => {
+      it("The contract is paused", async () => {
+        const context: TestContext = await setUpFixture(deployAndConfigureContracts);
+        await proveTx(context.yieldStreamer.setPauser(deployer.address));
+        await proveTx(context.yieldStreamer.pause());
+
+        await expect(
+          context.yieldStreamer.connect(user).claim(0)
+        ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+      });
+
+      it("The user is blacklisted", async () => {
+        const context: TestContext = await setUpFixture(deployAndConfigureContracts);
+        await proveTx(context.yieldStreamer.connect(user).selfBlacklist());
+
+        await expect(
+          context.yieldStreamer.connect(user).claim(0)
+        ).to.be.revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_BLACKLISTED_ACCOUNT
+        ).withArgs(
+          user.address
+        );
+      });
+
       it("The amount is greater than possible primary yield plus the possible stream yield", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
         const claimRequest: ClaimRequest = { ...baseClaimRequest };
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
-        const expectedShortfall = 1;
+        const expectedShortfall = roundUpward(BigNumber.from(1));
 
-        claimRequest.amount =
-          expectedClaimAllResult.primaryYield.add(expectedClaimAllResult.streamYield).add(expectedShortfall);
+        claimRequest.amount = expectedClaimAllResult.yield.add(expectedShortfall);
 
         await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, claimRequest.balanceRecords));
         await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
@@ -847,41 +1192,38 @@ describe("Contract 'YieldStreamer'", async () => {
           REVERT_ERROR_CLAIM_REJECTION_DUE_TO_SHORTFALL
         );
       });
+
+      it("The amount is bellow the allowed minimum", async () => {
+        const context: TestContext = await setUpFixture(deployAndConfigureContracts);
+        await expect(
+          context.yieldStreamer.connect(user).claim(MIN_CLAIM_AMOUNT.sub(1))
+        ).to.be.revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_CLAIM_AMOUNT_BELOW_MINIMUM
+        );
+      });
+
+      it("The amount is non-rounded", async () => {
+        const context: TestContext = await setUpFixture(deployAndConfigureContracts);
+        await expect(
+          context.yieldStreamer.connect(user).claim(MIN_CLAIM_AMOUNT.add(1))
+        ).to.be.revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_CLAIM_AMOUNT_NON_ROUNDED
+        );
+      });
     });
   });
 
   describe("Complex claim scenarios", async () => {
-    async function executeAndCheckFullClaim(context: TestContext, claimRequest: ClaimRequest) {
-      await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
-
-      const expectedClaimResult: ClaimResult = defineExpectedClaimResult(claimRequest);
-      const actualClaimResult = await context.yieldStreamer.claimAllPreview(user.address);
-      compareClaimPreviews(actualClaimResult, expectedClaimResult);
-
-      const totalYield: BigNumber = expectedClaimResult.primaryYield.add(expectedClaimResult.streamYield);
-      const totalYieldWithoutFee: BigNumber = totalYield.sub(expectedClaimResult.fee);
-
-      const tx: TransactionResponse = await context.yieldStreamer.connect(user).claimAll();
-
-      await expect(tx).to.emit(context.yieldStreamer, EVENT_CLAIM).withArgs(
-        user.address,
-        totalYield,
-        expectedClaimResult.fee
-      );
-
-      await expect(tx).to.changeTokenBalances(
-        context.tokenMock,
-        [context.yieldStreamer, user, feeReceiver],
-        [BIG_NUMBER_ZERO.sub(totalYield), totalYieldWithoutFee, expectedClaimResult.fee],
-      );
-
-      return expectedClaimResult;
-    }
 
     async function executeAndCheckPartialClaim(context: TestContext, claimRequest: ClaimRequest) {
       const expectedClaimResult: ClaimResult = defineExpectedClaimResult(claimRequest);
+      const expectedClaimAllResult: ClaimResult = defineExpectedClaimAllResult(claimRequest);
       const actualClaimResult = await context.yieldStreamer.claimPreview(user.address, claimRequest.amount);
+      const actualClaimAllResult = await context.yieldStreamer.claimAllPreview(user.address);
       compareClaimPreviews(actualClaimResult, expectedClaimResult);
+      compareClaimPreviews(actualClaimAllResult, expectedClaimAllResult);
 
       const totalYield: BigNumber = claimRequest.amount;
       const totalYieldWithoutFee: BigNumber = totalYield.sub(expectedClaimResult.fee);
@@ -914,140 +1256,107 @@ describe("Contract 'YieldStreamer'", async () => {
       })[0];
     }
 
-    it("Case 1: three consecutive full claims, never on the same day", async () => {
-      const balanceRecords: L[] = balanceRecordsCase1;
+    const balanceRecords: BalanceRecord[] = balanceRecordsCase1;
 
+    const baseClaimRequest: ClaimRequest = {
+      amount: BIG_NUMBER_MAX_UINT256,
+      firstYieldDay: YIELD_STREAMER_INIT_DAY,
+      claimDay: YIELD_STREAMER_INIT_DAY + 10,
+      claimTime: 12 * 3600,
+      claimDebit: BIG_NUMBER_ZERO,
+      lookBackPeriodLength: LOOK_BACK_PERIOD_LENGTH,
+      yieldRateRecords: [yieldRateRecordCase1],
+      balanceRecords: balanceRecords
+    };
+
+    it("Case 1: three consecutive partial claims, never stop at the same day", async () => {
       const context: TestContext = await setUpFixture(deployAndConfigureContracts);
       await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
 
-      const claimRequest: ClaimRequest = {
-        amount: BIG_NUMBER_MAX_UINT256,
-        firstYieldDay: YIELD_STREAMER_INIT_DAY,
-        claimDay: YIELD_STREAMER_INIT_DAY + 3,
-        claimTime: 12 * 3600,
-        claimDebit: BIG_NUMBER_ZERO,
-        lookBackPeriodLength: LOOK_BACK_PERIOD_LENGTH,
-        yieldRateRecords: [yieldRateRecordCase1],
-        balanceRecords: balanceRecords
-      };
-
-      let claimResult: ClaimResult = await executeAndCheckFullClaim(context, claimRequest);
-
-      claimRequest.firstYieldDay = claimResult.nextClaimDay.toNumber();
-      claimRequest.claimDay += 2;
-      claimRequest.claimTime += 2 * 3600;
-      claimRequest.claimDebit = claimResult.nextClaimDebit;
-
-      claimResult = await executeAndCheckFullClaim(context, claimRequest);
-
-      claimRequest.firstYieldDay = claimResult.nextClaimDay.toNumber();
-      claimRequest.claimDay += 6;
-      claimRequest.claimTime += 4 * 3600;
-      claimRequest.claimDebit = claimResult.nextClaimDebit;
-
-      await executeAndCheckFullClaim(context, claimRequest);
-    });
-
-    it("Case 2: three consecutive full claims, the last two are at the same day", async () => {
-      const balanceRecords: L[] = balanceRecordsCase1;
-
-      const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-      await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
-
-      const claimRequest: ClaimRequest = {
-        amount: BIG_NUMBER_MAX_UINT256,
-        firstYieldDay: YIELD_STREAMER_INIT_DAY,
-        claimDay: YIELD_STREAMER_INIT_DAY + 9,
-        claimTime: 12 * 3600,
-        claimDebit: BIG_NUMBER_ZERO,
-        lookBackPeriodLength: LOOK_BACK_PERIOD_LENGTH,
-        yieldRateRecords: [yieldRateRecordCase1],
-        balanceRecords: balanceRecords
-      };
-
-      let claimResult: ClaimResult = await executeAndCheckFullClaim(context, claimRequest);
-
-      claimRequest.firstYieldDay = claimResult.nextClaimDay.toNumber();
-      claimRequest.claimTime += 2 * 3600;
-      claimRequest.claimDebit = claimResult.nextClaimDebit;
-
-      claimResult = await executeAndCheckFullClaim(context, claimRequest);
-
-      claimRequest.firstYieldDay = claimResult.nextClaimDay.toNumber();
-      claimRequest.claimTime += 4 * 3600;
-      claimRequest.claimDebit = claimResult.nextClaimDebit;
-
-      await executeAndCheckFullClaim(context, claimRequest);
-    });
-
-    it("Case 3: three consecutive partial claims, never on the same day", async () => {
-      const balanceRecords: L[] = balanceRecordsCase1;
-
-      const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-      await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
-
-      const claimRequest: ClaimRequest = {
-        amount: BigNumber.from(123456),
-        firstYieldDay: YIELD_STREAMER_INIT_DAY,
-        claimDay: YIELD_STREAMER_INIT_DAY + 10,
-        claimTime: 12 * 3600,
-        claimDebit: BIG_NUMBER_ZERO,
-        lookBackPeriodLength: LOOK_BACK_PERIOD_LENGTH,
-        yieldRateRecords: [yieldRateRecordCase1],
-        balanceRecords: balanceRecords
-      };
+      const claimRequest: ClaimRequest = { ...baseClaimRequest };
+      claimRequest.amount = MIN_CLAIM_AMOUNT;
       await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
 
       let claimResult: ClaimResult = await executeAndCheckPartialClaim(context, claimRequest);
 
       claimRequest.firstYieldDay = claimResult.nextClaimDay.toNumber();
       claimRequest.claimDebit = claimResult.nextClaimDebit;
-      claimRequest.amount = defineYieldForFirstClaimDay(context, claimRequest).sub(claimResult.nextClaimDebit).add(1);
+      claimRequest.amount = roundDown(
+        defineYieldForFirstClaimDay(context, claimRequest).sub(claimResult.nextClaimDebit).add(MIN_CLAIM_AMOUNT)
+      );
 
+      let previousClaimResult = claimResult;
       claimResult = await executeAndCheckPartialClaim(context, claimRequest);
+
+      expect(previousClaimResult.firstYieldDay).to.not.equal(
+        claimResult.firstYieldDay,
+        "Claim 1 and claim 2 happened at the same day. Change the test conditions"
+      );
 
       claimRequest.firstYieldDay = claimResult.nextClaimDay.toNumber();
       claimRequest.claimDebit = claimResult.nextClaimDebit;
-      claimRequest.amount = defineYieldForFirstClaimDay(context, claimRequest).sub(claimResult.nextClaimDebit).add(1);
+      claimRequest.amount = roundDown(
+        defineYieldForFirstClaimDay(context, claimRequest).sub(claimResult.nextClaimDebit).add(MIN_CLAIM_AMOUNT)
+      );
 
-      await executeAndCheckPartialClaim(context, claimRequest);
+      previousClaimResult = claimResult;
+      claimResult = await executeAndCheckPartialClaim(context, claimRequest);
+
+      expect(previousClaimResult.firstYieldDay).to.not.equal(
+        claimResult.firstYieldDay,
+        "Claim 2 and claim 3 happened at the same day. Change the test conditions"
+      );
     });
 
-    it("Case 4: three consecutive partial claims, the two three are at the same day, then revert", async () => {
-      const balanceRecords: L[] = balanceRecordsCase1;
-
+    it("Case 2: four consecutive partial claims, two stop at some day, two stop at yesterday, then revert", async () => {
       const context: TestContext = await setUpFixture(deployAndConfigureContracts);
       await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
 
-      const claimRequest: ClaimRequest = {
-        amount: BIG_NUMBER_MAX_UINT256,
-        firstYieldDay: YIELD_STREAMER_INIT_DAY,
-        claimDay: YIELD_STREAMER_INIT_DAY + 10,
-        claimTime: 12 * 3600,
-        claimDebit: BIG_NUMBER_ZERO,
-        lookBackPeriodLength: LOOK_BACK_PERIOD_LENGTH,
-        yieldRateRecords: [yieldRateRecordCase1],
-        balanceRecords: balanceRecords
-      };
+      const claimRequest: ClaimRequest = { ...baseClaimRequest };
+
       await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
 
-      let expectedClaimResult: ClaimResult = defineExpectedClaimResult(claimRequest);
+      const expectedClaimAllResult: ClaimResult = defineExpectedClaimAllResult(claimRequest);
 
-      claimRequest.amount = expectedClaimResult.primaryYield.add(1);
+      claimRequest.amount = roundDown(expectedClaimAllResult.primaryYield.div(2));
 
-      expectedClaimResult = await executeAndCheckPartialClaim(context, claimRequest);
-
-      claimRequest.firstYieldDay = expectedClaimResult.nextClaimDay.toNumber();
-      claimRequest.claimDebit = expectedClaimResult.nextClaimDebit;
-      claimRequest.amount = BigNumber.from(1);
-
-      expectedClaimResult = await executeAndCheckPartialClaim(context, claimRequest);
+      let expectedClaimResult: ClaimResult = await executeAndCheckPartialClaim(context, claimRequest);
+      expect(expectedClaimResult.nextClaimDay).not.equal(
+        claimRequest.claimDay - 1,
+        "The next claim day after claim 1 is yesterday but it must be earlier. Change the test conditions"
+      );
 
       claimRequest.firstYieldDay = expectedClaimResult.nextClaimDay.toNumber();
       claimRequest.claimDebit = expectedClaimResult.nextClaimDebit;
-      claimRequest.amount = BigNumber.from(1);
+      claimRequest.amount = MIN_CLAIM_AMOUNT;
+
+      let previousExpectedClaimResult = expectedClaimResult;
+      expectedClaimResult = await executeAndCheckPartialClaim(context, claimRequest);
+      expect(expectedClaimResult.nextClaimDay).to.equal(
+        previousExpectedClaimResult.nextClaimDay,
+        "The next yield day must be the same for claim 1 and claim 2. Change the test conditions"
+      );
+
+      claimRequest.firstYieldDay = expectedClaimResult.nextClaimDay.toNumber();
+      claimRequest.claimDebit = expectedClaimResult.nextClaimDebit;
+      claimRequest.amount = roundDown(expectedClaimResult.primaryYield.add(ROUNDING_COEF));
 
       expectedClaimResult = await executeAndCheckPartialClaim(context, claimRequest);
+      expect(expectedClaimResult.nextClaimDay).equal(
+        claimRequest.claimDay - 1,
+        "The next claim day after claim 3 is not yesterday but it must be. Change the test conditions"
+      );
+
+      claimRequest.firstYieldDay = expectedClaimResult.nextClaimDay.toNumber();
+      claimRequest.claimDebit = expectedClaimResult.nextClaimDebit;
+      claimRequest.amount = MIN_CLAIM_AMOUNT;
+
+      previousExpectedClaimResult = expectedClaimResult;
+      expectedClaimResult = await executeAndCheckPartialClaim(context, claimRequest);
+      expect(expectedClaimResult.nextClaimDay).to.equal(
+        previousExpectedClaimResult.nextClaimDay,
+        "The next yield day must be the same for claim 3 and claim 4. Change the test conditions"
+      );
 
       claimRequest.firstYieldDay = expectedClaimResult.nextClaimDay.toNumber();
       claimRequest.claimDebit = expectedClaimResult.nextClaimDebit;
@@ -1064,6 +1373,64 @@ describe("Contract 'YieldStreamer'", async () => {
         expectedClaimResult.shortfall
       );
     });
-  });
 
+    it("Case 3: a partial claim that stops at yesterday, then check claim all", async () => {
+      const context: TestContext = await setUpFixture(deployAndConfigureContracts);
+      await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
+
+      const claimRequest: ClaimRequest = { ...baseClaimRequest };
+      claimRequest.claimTime = 23 * 3600 + 3599;
+
+      await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
+
+      let expectedClaimAllResult: ClaimResult = defineExpectedClaimAllResult(claimRequest);
+
+      claimRequest.amount = roundDown(expectedClaimAllResult.yield.sub(MIN_CLAIM_AMOUNT.mul(1)));
+
+      const expectedClaimResult: ClaimResult = await executeAndCheckPartialClaim(context, claimRequest);
+      expect(expectedClaimResult.nextClaimDay).equal(
+        claimRequest.claimDay - 1,
+        "The next claim day after claim 1 is not yesterday but it must be. Change the test conditions"
+      );
+
+      claimRequest.firstYieldDay = expectedClaimResult.nextClaimDay.toNumber();
+      claimRequest.claimDebit = expectedClaimResult.nextClaimDebit;
+      expectedClaimAllResult = defineExpectedClaimAllResult(claimRequest);
+      const actualClaimAllResult = await context.yieldStreamer.claimAllPreview(user.address);
+      compareClaimPreviews(actualClaimAllResult, expectedClaimAllResult);
+      expect(expectedClaimAllResult.claimDebitIsGreaterThanFirstDayYield).to.equal(
+        true,
+        "The claim debit is not greater that the yield, but it must be. Change the test conditions"
+      );
+    });
+
+    it("Case 4: a situation when claim debit is greater than the first day yield", async () => {
+      const context: TestContext = await setUpFixture(deployAndConfigureContracts);
+      await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
+
+      const claimRequest: ClaimRequest = { ...baseClaimRequest };
+
+      await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
+
+      let expectedClaimAllResult: ClaimResult = defineExpectedClaimAllResult(claimRequest);
+
+      claimRequest.amount = roundDown(expectedClaimAllResult.primaryYield.sub(MIN_CLAIM_AMOUNT));
+
+      const expectedClaimResult: ClaimResult = await executeAndCheckPartialClaim(context, claimRequest);
+      expect(expectedClaimResult.nextClaimDay).not.equal(
+        claimRequest.claimDay - 1,
+        "The next claim day after the claim is yesterday but it must not be. Change the test conditions"
+      );
+
+      claimRequest.firstYieldDay = expectedClaimResult.nextClaimDay.toNumber();
+      claimRequest.claimDebit = expectedClaimResult.nextClaimDebit;
+      expectedClaimAllResult = defineExpectedClaimAllResult(claimRequest);
+      const actualClaimAllResult = await context.yieldStreamer.claimAllPreview(user.address);
+      compareClaimPreviews(actualClaimAllResult, expectedClaimAllResult);
+      expect(expectedClaimAllResult.claimDebitIsGreaterThanFirstDayYield).to.equal(
+        true,
+        "The claim debit is not greater that the first day yield, but it must be. Change the test conditions"
+      );
+    });
+  });
 });

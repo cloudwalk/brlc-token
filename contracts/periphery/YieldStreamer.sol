@@ -31,6 +31,13 @@ contract YieldStreamer is
     /// @notice The fee rate that is used to calculate the fee amount
     uint240 public constant FEE_RATE = 225000000000;
 
+    /// @notice The coefficient used to round the yield, fee and other related values
+    /// @dev e.g. value `12345678` will be rounded upward to `12350000` and down to `12340000`
+    uint256 public constant ROUNDING_COEF = 10000;
+
+    /// @notice The minimum amount that is allowed to be claimed
+    uint256 public constant MIN_CLAIM_AMOUNT = 1000000;
+
     /// @notice The initial state of the next claim for an account
     struct ClaimState {
         uint16 day;    // The index of the day from which the yield will be calculated next time
@@ -150,6 +157,16 @@ contract YieldStreamer is
      * @notice Thrown when the same fee receiver is already configured
      */
     error FeeReceiverAlreadyConfigured();
+
+    /**
+     * @notice Thrown when the requested claim amount is below the allowed minimum
+     */
+    error ClaimAmountBelowMinimum();
+
+    /**
+     * @notice Thrown when the requested claim amount is non-rounded down according to the `ROUNDING_COEF` value
+     */
+    error ClaimAmountNonRounded();
 
     /**
      * @notice Thrown when the value does not fit in the type uint16
@@ -321,15 +338,19 @@ contract YieldStreamer is
 
     /**
      * @inheritdoc IYieldStreamer
-     */
-    function claimAll() external whenNotPaused notBlacklisted(_msgSender()) {
-        _claim(_msgSender(), type(uint256).max);
-    }
-
-    /**
-     * @inheritdoc IYieldStreamer
+     *
+     * @dev The contract must not be paused
+     * @dev The caller of the function must not be blacklisted
+     * @dev The requested claim amount must be no less than the `MIN_CLAIM_AMOUNT` value
+     * @dev The requested claim amount must be rounded according to the `ROUNDING_COEF` value
      */
     function claim(uint256 amount) external whenNotPaused notBlacklisted(_msgSender()) {
+        if (amount < MIN_CLAIM_AMOUNT) {
+            revert ClaimAmountBelowMinimum();
+        }
+        if (amount != _roundDown(amount)) {
+            revert ClaimAmountNonRounded();
+        }
         _claim(_msgSender(), amount);
     }
 
@@ -367,8 +388,17 @@ contract YieldStreamer is
 
     /**
      * @inheritdoc IYieldStreamer
+     *
+     * @dev The requested claim amount must be no less than the `MIN_CLAIM_AMOUNT` value
+     * @dev The requested claim amount must be rounded according to the `ROUNDING_COEF` value
      */
     function claimPreview(address account, uint256 amount) public view returns (ClaimResult memory) {
+        if (amount < MIN_CLAIM_AMOUNT) {
+            revert ClaimAmountBelowMinimum();
+        }
+        if (amount != _roundDown(amount)) {
+            revert ClaimAmountNonRounded();
+        }
         return _claimPreview(account, amount);
     }
 
@@ -494,10 +524,8 @@ contract YieldStreamer is
      * @notice Calculates the amount of yield fee
      *
      * @param amount The yield amount to calculate the fee for
-     * @param passedDays The number of days passed since the yield was accrued
      */
-    function calculateFee(uint256 amount, uint256 passedDays) public pure returns (uint256) {
-        passedDays;
+    function calculateFee(uint256 amount) public pure returns (uint256) {
         return (amount * FEE_RATE) / RATE_FACTOR;
     }
 
@@ -584,20 +612,19 @@ contract YieldStreamer is
             /**
              * Update the first day in the yield by days array
              */
-            if (yieldByDays[0] > state.debit) {
-                yieldByDays[0] -= state.debit;
-            } else {
+            if (state.debit > yieldByDays[0]) {
                 yieldByDays[0] = 0;
+            } else {
+                yieldByDays[0] -= state.debit;
             }
 
             /**
-             * Calculate accrued yield and fee for the specified period
+             * Calculate accrued yield for the specified period
              * Exit the loop when the accrued yield exceeds the claim amount
              */
             uint256 i = 0;
             do {
                 result.primaryYield += yieldByDays[i];
-                result.fee += calculateFee(yieldByDays[i], lastIndex - i);
             } while (result.primaryYield < amount && ++i < lastIndex);
 
             if (i == 0) {
@@ -612,17 +639,17 @@ contract YieldStreamer is
 
                 result.nextClaimDay += i;
                 result.nextClaimDebit += yieldByDays[i] - surplus;
-                result.fee -= calculateFee(surplus, lastIndex - i);
+                result.yield = amount;
 
                 /**
-                 * Complete the calculation of the accrued yield and fee for the period
+                 * Complete the calculation of the accrued yield for the period
                  */
                 while (++i < lastIndex) {
                     result.primaryYield += yieldByDays[i];
                 }
             } else {
                 /**
-                 * If the yield doesn't exceed the amount, calculate the yield and fee for today
+                 * If the yield doesn't exceed the amount, calculate the yield for today
                  */
                 result.nextClaimDay = day;
 
@@ -631,17 +658,19 @@ contract YieldStreamer is
                     if (result.nextClaimDebit > result.streamYield) {
                         result.shortfall = result.nextClaimDebit - result.streamYield;
                         result.nextClaimDebit = result.streamYield;
+                        // result.yield is zero at this point
+                    } else {
+                        result.yield = amount;
                     }
                 } else {
                     result.nextClaimDebit = result.streamYield;
+                    result.yield = _roundDown(result.primaryYield + result.streamYield);
                 }
-
-                result.fee += calculateFee(result.nextClaimDebit, 0);
             }
         } else {
             /**
              * The account has already made a claim today
-             * Therefore, recalculate the yield and fee only for today
+             * Therefore, recalculate the yield only for today
              */
 
             result.nextClaimDay = day;
@@ -662,15 +691,18 @@ contract YieldStreamer is
                 if (amount > result.streamYield) {
                     result.shortfall = amount - result.streamYield;
                     result.nextClaimDebit += result.streamYield;
+                    // result.yield is zero at this point
                 } else {
                     result.nextClaimDebit += amount;
+                    result.yield = amount;
                 }
             } else {
                 result.nextClaimDebit += result.streamYield;
+                result.yield = _roundDown(result.streamYield);
             }
-
-            result.fee = calculateFee(result.nextClaimDebit - state.debit, 0);
         }
+
+        result.fee = _roundUpward(calculateFee(result.yield));
 
         return result;
     }
@@ -681,7 +713,7 @@ contract YieldStreamer is
      * @param account The address of an account to claim the yield for
      * @param amount The amount of yield to claim
      */
-    function _claim(address account, uint256 amount) internal returns (ClaimResult memory) {
+    function _claim(address account, uint256 amount) internal {
         ClaimResult memory preview = _claimPreview(account, amount);
 
         if (preview.shortfall > 0) {
@@ -691,15 +723,10 @@ contract YieldStreamer is
         _claims[account].day = _toUint16(preview.nextClaimDay);
         _claims[account].debit = _toUint240(preview.nextClaimDebit);
 
-        if (amount == type(uint256).max) {
-            amount = preview.primaryYield + preview.streamYield;
-        }
         IERC20Upgradeable(token()).transfer(_feeReceiver, preview.fee);
-        IERC20Upgradeable(token()).transfer(account, amount - preview.fee);
+        IERC20Upgradeable(token()).transfer(account, preview.yield - preview.fee);
 
-        emit Claim(account, amount, preview.fee);
-
-        return preview;
+        emit Claim(account, preview.yield, preview.fee);
     }
 
     /**
@@ -724,6 +751,18 @@ contract YieldStreamer is
         }
 
         return uint16(value);
+    }
+
+    function _roundDown(uint256 amount) internal pure returns (uint256) {
+        return (amount / ROUNDING_COEF) * ROUNDING_COEF;
+    }
+
+    function _roundUpward(uint256 amount) internal pure returns (uint256) {
+        uint256 roundedAmount = _roundDown(amount);
+        if (roundedAmount < amount) {
+            roundedAmount += ROUNDING_COEF;
+        }
+        return roundedAmount;
     }
 
     /**
