@@ -126,7 +126,8 @@
 | --- | --- | --- | --- |
 | 1 | ProxyAdmin | Proxy admin | [0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A](https://explorer.testnet.cloudwalk.io/address/0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A) |
 | 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0xB1f571b3254C99A0A562124738f0193dE2B2b2A9](https://explorer.testnet.cloudwalk.io/address/0xB1f571b3254C99A0A562124738f0193dE2B2b2A9) |
-| 3 | BalanceTracker | Proxy implementation | [0x905c3B80A01289f6DF288B0941EAaE17292e3C51](https://explorer.testnet.cloudwalk.io/address/0x905c3B80A01289f6DF288B0941EAaE17292e3C51) |
+| 3 | BalanceTrackerHarness | Proxy implementation | [0xA3Deb65Ae92ddFDA323aFD0fDa5e18403d821a6f](https://explorer.testnet.cloudwalk.io/address/0xA3Deb65Ae92ddFDA323aFD0fDa5e18403d821a6f) |
+|||| [0x905c3B80A01289f6DF288B0941EAaE17292e3C51](https://explorer.testnet.cloudwalk.io/address/0x905c3B80A01289f6DF288B0941EAaE17292e3C51) |
 |||| [0xa4CE1352fb4d6E900d2a1946BF98630a850560fa](https://explorer.testnet.cloudwalk.io/address/0xa4CE1352fb4d6E900d2a1946BF98630a850560fa) |
 
 # YieldStreamer
