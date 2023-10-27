@@ -13,6 +13,9 @@ contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
     /// @notice Emitted when a test function of the `notBlacklisted` modifier executes successfully
     event TestNotBlacklistedModifierSucceeded();
 
+    /// @notice Emitted when a test function of the `notBlacklistedOrBypassIfBlacklister` modifier executes successfully
+    event TestNotBlacklistedOrBypassIfBlacklisterModifierSucceeded();
+
     /**
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *
@@ -56,5 +59,13 @@ contract BlacklistableUpgradeableMock is BlacklistableUpgradeable {
      */
     function testNotBlacklistedModifier() external notBlacklisted(_msgSender()) {
         emit TestNotBlacklistedModifierSucceeded();
+    }
+
+    /**
+     * @notice Checks the execution of the {notBlacklistedOrBypassIfBlacklister} modifier
+     * Emits an event {TestNotBlacklistedOrBypassIfBlacklisterModifierSucceeded} if modifier is not reverted
+     */
+    function testNotBlacklistedOrBypassIfBlacklister() external notBlacklistedOrBypassIfBlacklister(_msgSender()) {
+        emit TestNotBlacklistedOrBypassIfBlacklisterModifierSucceeded();
     }
 }
