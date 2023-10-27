@@ -126,9 +126,10 @@
 | --- | --- | --- | --- |
 | 1 | ProxyAdmin | Proxy admin | [0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A](https://explorer.testnet.cloudwalk.io/address/0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A) |
 | 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0xB1f571b3254C99A0A562124738f0193dE2B2b2A9](https://explorer.testnet.cloudwalk.io/address/0xB1f571b3254C99A0A562124738f0193dE2B2b2A9) |
-| 3 | BalanceTrackerHarness | Proxy implementation | [0xA3Deb65Ae92ddFDA323aFD0fDa5e18403d821a6f](https://explorer.testnet.cloudwalk.io/address/0xA3Deb65Ae92ddFDA323aFD0fDa5e18403d821a6f) |
-|||| [0x905c3B80A01289f6DF288B0941EAaE17292e3C51](https://explorer.testnet.cloudwalk.io/address/0x905c3B80A01289f6DF288B0941EAaE17292e3C51) |
-|||| [0xa4CE1352fb4d6E900d2a1946BF98630a850560fa](https://explorer.testnet.cloudwalk.io/address/0xa4CE1352fb4d6E900d2a1946BF98630a850560fa) |
+| 3 | BalanceTrackerHarness | Proxy implementation | [0xf41a54A72D8d18EAc17daCCB8De3B578C07170C2](https://explorer.testnet.cloudwalk.io/address/0xf41a54A72D8d18EAc17daCCB8De3B578C07170C2) |
+|||| <strike>[0xA3Deb65Ae92ddFDA323aFD0fDa5e18403d821a6f](https://explorer.testnet.cloudwalk.io/address/0xA3Deb65Ae92ddFDA323aFD0fDa5e18403d821a6f)</strike> |
+|||| <strike>[0x905c3B80A01289f6DF288B0941EAaE17292e3C51](https://explorer.testnet.cloudwalk.io/address/0x905c3B80A01289f6DF288B0941EAaE17292e3C51)</strike> |
+|||| <strike>[0xa4CE1352fb4d6E900d2a1946BF98630a850560fa](https://explorer.testnet.cloudwalk.io/address/0xa4CE1352fb4d6E900d2a1946BF98630a850560fa)</strike> |
 
 # YieldStreamer
 
@@ -138,8 +139,8 @@
 | 1 | ProxyAdmin | Proxy admin | [0xAD81F2257593B6B06930D549db588a92e483395a](https://explorer.mainnet.cloudwalk.io/address/0xAD81F2257593B6B06930D549db588a92e483395a) |
 | 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0x88EC3491f763f4cDCF2a8F9Edd4b752AE5B8C9Fb](https://explorer.mainnet.cloudwalk.io/address/0x88EC3491f763f4cDCF2a8F9Edd4b752AE5B8C9Fb) |
 | 3 | YieldStreamer | Proxy implementation | [0xcC427bB7513a2Eaf78b24858E0e336195F2746Ea](https://explorer.mainnet.cloudwalk.io/address/0xcC427bB7513a2Eaf78b24858E0e336195F2746Ea) |
-|||| [0xd334A0101e179007056a3Fd0c98b460E6C152894](https://explorer.mainnet.cloudwalk.io/address/0xd334A0101e179007056a3Fd0c98b460E6C152894) |
-|||| [0x8B46a20f285a4c0519bE8638765e6f0BC5dE069E](https://explorer.mainnet.cloudwalk.io/address/0x8B46a20f285a4c0519bE8638765e6f0BC5dE069E) |
+|||| <strike>[0xd334A0101e179007056a3Fd0c98b460E6C152894](https://explorer.mainnet.cloudwalk.io/address/0xd334A0101e179007056a3Fd0c98b460E6C152894)</strike> |
+|||| <strike>[0x8B46a20f285a4c0519bE8638765e6f0BC5dE069E](https://explorer.mainnet.cloudwalk.io/address/0x8B46a20f285a4c0519bE8638765e6f0BC5dE069E)</strike> |
 
 ### CloudWalk (Testnet)
 | # | Name | Description | Address |
@@ -147,7 +148,7 @@
 | 1 | ProxyAdmin | Proxy admin | [0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A](https://explorer.testnet.cloudwalk.io/address/0xaa76888fB35eDBdf302C5cD48E2A7207f78e566A) |
 | 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0xe66681cD29F07c1C4c056B46B7d37007eF493486](https://explorer.testnet.cloudwalk.io/address/0xe66681cD29F07c1C4c056B46B7d37007eF493486) |
 | 3 | YieldStreamerHarness | Proxy implementation | [0x115525Eb7288cfE3eE68738Ab611923ec4551c77](https://explorer.testnet.cloudwalk.io/address/0x115525Eb7288cfE3eE68738Ab611923ec4551c77) |
-|||| [0xE4916b691E073dFdC28F441c877EE210994D797e](https://explorer.testnet.cloudwalk.io/address/0xE4916b691E073dFdC28F441c877EE210994D797e) |
-|||| [0xA3934Ba7852cf3179B8B9b19ed2bfd75e5fEC6d9](https://explorer.testnet.cloudwalk.io/address/0xA3934Ba7852cf3179B8B9b19ed2bfd75e5fEC6d9) |
-|||| [0x082F0cdc853B638A4a954A1D2B4390C849Dced64](https://explorer.testnet.cloudwalk.io/address/0x082F0cdc853B638A4a954A1D2B4390C849Dced64) |
-|||| [0xC6e159694F72D451a84f5A29ae90187215E72C3D](https://explorer.testnet.cloudwalk.io/address/0xC6e159694F72D451a84f5A29ae90187215E72C3D) |
+|||| <strike>[0xE4916b691E073dFdC28F441c877EE210994D797e](https://explorer.testnet.cloudwalk.io/address/0xE4916b691E073dFdC28F441c877EE210994D797e)</strike> |
+|||| <strike>[0xA3934Ba7852cf3179B8B9b19ed2bfd75e5fEC6d9](https://explorer.testnet.cloudwalk.io/address/0xA3934Ba7852cf3179B8B9b19ed2bfd75e5fEC6d9)</strike> |
+|||| <strike>[0x082F0cdc853B638A4a954A1D2B4390C849Dced64](https://explorer.testnet.cloudwalk.io/address/0x082F0cdc853B638A4a954A1D2B4390C849Dced64)</strike> |
+|||| <strike>[0xC6e159694F72D451a84f5A29ae90187215E72C3D](https://explorer.testnet.cloudwalk.io/address/0xC6e159694F72D451a84f5A29ae90187215E72C3D)</strike> |
