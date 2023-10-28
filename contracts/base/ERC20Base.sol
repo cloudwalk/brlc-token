@@ -57,9 +57,9 @@ abstract contract ERC20Base is
     /**
      * @inheritdoc ERC20Upgradeable
      *
-     * @notice The contract must not be paused
-     * @notice The `owner` address must not be blacklisted
-     * @notice The `spender` address must not be blacklisted
+     * @dev The contract must not be paused
+     * @dev The `owner` address must not be blacklisted
+     * @dev The `spender` address must not be blacklisted
      */
     function _approve(
         address owner,
@@ -72,9 +72,9 @@ abstract contract ERC20Base is
     /**
      * @inheritdoc ERC20Upgradeable
      *
-     * @notice The contract must not be paused
-     * @notice The `owner` address must not be blacklisted
-     * @notice The `spender` address must not be blacklisted
+     * @dev The contract must not be paused
+     * @dev The `owner` address must not be blacklisted
+     * @dev The `spender` address must not be blacklisted
      */
     function _spendAllowance(
         address owner,
@@ -87,21 +87,20 @@ abstract contract ERC20Base is
     /**
      * @inheritdoc ERC20Upgradeable
      *
-     * @notice The contract must not be paused
-     * @notice The `from` address must not be blacklisted
-     * @notice The `to` address must not be blacklisted
+     * @dev The contract must not be paused
+     * @dev The `from` address must not be blacklisted
+     * @dev The `to` address must not be blacklisted
      */
     function _beforeTokenTransfer(
         address from,
         address to,
         uint256 amount
-    ) internal virtual override whenNotPaused notBlacklisted(from) notBlacklisted(to) {
+    ) internal virtual override whenNotPaused notBlacklisted(from) notBlacklistedOrBypassIfBlacklister(to) {
         super._beforeTokenTransfer(from, to, amount);
     }
 
     /**
      * @inheritdoc ERC20Upgradeable
-
      */
     function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._afterTokenTransfer(from, to, amount);

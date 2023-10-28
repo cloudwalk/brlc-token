@@ -63,7 +63,7 @@ describe("Contract 'ERC20Base'", async () => {
             expect(await token.owner()).to.equal(deployer.address);
             expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
             expect(await token.rescuer()).to.equal(ethers.constants.AddressZero);
-            expect(await token.blacklister()).to.equal(ethers.constants.AddressZero);
+            expect(await token.mainBlacklister()).to.equal(ethers.constants.AddressZero);
         });
 
         it("Is reverted if called for the second time", async () => {

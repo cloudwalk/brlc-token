@@ -98,7 +98,7 @@ describe("Contract 'ERC20Hookable'", async () => {
             const { token } = await setUpFixture(deployToken);
             expect(await token.owner()).to.equal(deployer.address);
             expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
-            expect(await token.blacklister()).to.equal(ethers.constants.AddressZero);
+            expect(await token.mainBlacklister()).to.equal(ethers.constants.AddressZero);
         });
 
         it("Is reverted if called for the second time", async () => {
