@@ -31,62 +31,75 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     // -------------------- Functions --------------------------------
 
     /**
+     * @notice The internal initializer of the upgradable contract
+     */
+    function __ERC20Restrictable_init(string memory name_, string memory symbol_) internal onlyInitializing {
+        __Context_init_unchained();
+        __Ownable_init_unchained();
+        __Pausable_init_unchained();
+        __PausableExt_init_unchained();
+        __Blacklistable_init_unchained();
+        __ERC20_init_unchained(name_, symbol_);
+        __ERC20Base_init_unchained();
+        __ERC20Restrictable_init_unchained();
+    }
+
+    /**
+     * @notice The internal unchained initializer of the upgradable contract
+     */
+    function __ERC20Restrictable_init_unchained() internal onlyInitializing {}
+
+    /**
      * @inheritdoc IERC20Restrictable
      */
     function assignPurposes(address account, bytes32[] memory purposes) external onlyOwner {
-        _purposeAssignments[account] = purposes;
+        for (uint256 i = 0; i < purposes.length; i++) {
+            if (purposes[i] == bytes32(0)) {
+                revert ZeroPurpose();
+            }
+        }
+
         emit AssignPurposes(account, purposes, _purposeAssignments[account]);
+
+        _purposeAssignments[account] = purposes;
     }
 
     /**
      * @inheritdoc IERC20Restrictable
      */
-    function removeRestriction(address account, uint256 amount, bytes32 purpose) external onlyBlacklister {
+    function updateRestriction(address account, bytes32 purpose, uint256 balance) external onlyBlacklister {
         if (purpose == bytes32(0)) {
             revert ZeroPurpose();
         }
-        if (amount == type(uint256).max) {
-            amount = _restrictedPurposeBalances[account][purpose];
+
+        uint256 oldBalance = _restrictedPurposeBalances[account][purpose];
+        _restrictedPurposeBalances[account][purpose] = balance;
+
+        if (oldBalance > balance) {
+            _totalRestrictedBalances[account] -= oldBalance - balance;
+        } else {
+            _totalRestrictedBalances[account] += balance - oldBalance;
         }
 
-        _restrictedPurposeBalances[account][purpose] -= amount;
-        _totalRestrictedBalances[account] -= amount;
-
-        emit RemoveRestriction(account, amount, purpose);
+        emit UpdateRestriction(account, purpose, balance);
     }
 
     /**
      * @inheritdoc IERC20Restrictable
      */
-    function transferWithPurpose(address to, uint256 amount, bytes32 purpose) external returns (bool) {
-        if (purpose == bytes32(0)) {
-            revert ZeroPurpose();
-        }
-
-        if (!super.transfer(to, amount)) {
-            return false;
-        }
-
-        _totalRestrictedBalances[_msgSender()] += amount;
-        _restrictedPurposeBalances[_msgSender()][purpose] += amount;
-
-        emit TransferWithPurpose(_msgSender(), to, amount, purpose);
-
-        return true;
+    function assignedPurposes(address account) external view returns (bytes32[] memory) {
+        return _purposeAssignments[account];
     }
 
     /**
      * @inheritdoc IERC20Restrictable
      */
     function balanceOfRestricted(address account, bytes32 purpose) external view returns (uint256) {
-        return _restrictedPurposeBalances[account][purpose];
-    }
-
-    /**
-     * @inheritdoc IERC20Restrictable
-     */
-    function balanceOfRestricted(address account) external view returns (uint256) {
-        return _totalRestrictedBalances[account];
+        if (purpose == bytes32(0)) {
+            return _totalRestrictedBalances[account];
+        } else {
+            return _restrictedPurposeBalances[account][purpose];
+        }
     }
 
     /**
