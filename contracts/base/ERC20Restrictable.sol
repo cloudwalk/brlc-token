@@ -92,9 +92,9 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /**
      * @inheritdoc ERC20Base
      */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         // Execute basic transfer logic
-        super._beforeTokenTransfer(from, to, amount);
+        super._afterTokenTransfer(from, to, amount);
 
         // Execute restricted transfer logic
         uint256 restrictedBalance = _totalRestrictedBalances[from];
@@ -124,7 +124,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
                 }
             }
 
-            if (_balanceOf_ERC20Restrictable(from) < restrictedBalance + amount) {
+            if (_balanceOf_ERC20Restrictable(from) < restrictedBalance) {
                 revert TransferExceededRestrictedAmount();
             }
 
