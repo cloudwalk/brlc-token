@@ -178,6 +178,9 @@ describe("Contract 'ERC20Restrictable'", async () => {
         it("Is reverted if the caller is not a blacklister", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             await expect(
+                token.connect(deployer).updateRestriction(purposeAccount1.address, PURPOSE_1, 100)
+            ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLACKLISTER);
+            await expect(
                 token.connect(user1).updateRestriction(purposeAccount1.address, PURPOSE_1, 100)
             ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLACKLISTER);
         });
@@ -207,14 +210,14 @@ describe("Contract 'ERC20Restrictable'", async () => {
     });
 
     describe("Restricted balance scenarios", async () => {
-        it("Restricted tokens are transferred properly", async () => {
+        it("Restricted tokens are transferred properly (single-purpose accounts)", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
 
             await proveTx(token.connect(deployer).assignPurposes(purposeAccount1.address, [PURPOSE_1]));
             await proveTx(token.connect(deployer).assignPurposes(purposeAccount2.address, [PURPOSE_2]));
-
             await proveTx(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 100));
             await proveTx(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_2, 200));
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(300);
 
             await proveTx(token.connect(deployer).mint(user1.address, 300));
 
@@ -244,6 +247,46 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(75);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(175);
+        });
+
+        it("Restricted tokens are transferred properly (multi-purpose account)", async () => {
+            const { token } = await setUpFixture(deployAndConfigureToken);
+
+            await proveTx(token.connect(deployer).assignPurposes(purposeAccount1.address, [PURPOSE_1, PURPOSE_2]));
+            await proveTx(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 100));
+            await proveTx(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_2, 100));
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(200);
+
+            await proveTx(token.connect(deployer).mint(user1.address, 200));
+
+            await expect(token.connect(user1).transfer(user2.address, 1)).to.be.revertedWithCustomError(
+                token,
+                REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT
+            );
+
+            await expect(token.connect(user1).transfer(purposeAccount1.address, 50)).to.changeTokenBalances(
+                token,
+                [user1, purposeAccount1],
+                [-50, 50]
+            );
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(50);
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(100);
+
+            await expect(token.connect(user1).transfer(purposeAccount1.address, 100)).to.changeTokenBalances(
+                token,
+                [user1, purposeAccount1],
+                [-100, 100]
+            );
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(0);
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(50);
+
+            await expect(token.connect(user1).transfer(purposeAccount1.address, 50)).to.changeTokenBalances(
+                token,
+                [user1, purposeAccount1],
+                [-50, 50]
+            );
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(0);
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(0);
         });
 
         it("Not restricted tokens are transferred properly", async () => {
