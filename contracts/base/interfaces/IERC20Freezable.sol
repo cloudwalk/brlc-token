@@ -63,7 +63,7 @@ interface IERC20Freezable {
     /**
      * @notice Checks if token freezing is approved for an account
      *
-     * @param account The account to check
+     * @param account The account to check the approval for
      * @return True if token freezing is approved for the account
      */
     function freezeApproval(address account) external view returns (bool);
@@ -71,8 +71,8 @@ interface IERC20Freezable {
     /**
      * @notice Retrieves the frozen balance of an account
      *
-     * @param account The account to check
+     * @param account The account to check the balance of
      * @return The amount of tokens that are frozen for the account
      */
-    function frozenBalance(address account) external view returns (uint256);
+    function balanceOfFrozen(address account) external view returns (uint256);
 }

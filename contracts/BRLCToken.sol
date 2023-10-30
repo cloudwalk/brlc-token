@@ -100,6 +100,6 @@ contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictabl
      * @inheritdoc ERC20Restrictable
      */
     function _balanceOf_ERC20Restrictable(address account) internal view virtual override returns (uint256) {
-        return balanceOf(account) - frozenBalance(account);
+        return balanceOf(account) - balanceOfFrozen(account);
     }
 }
