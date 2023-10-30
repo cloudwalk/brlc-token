@@ -126,10 +126,9 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
         it("Is reverted if zero purpose is assigned", async () => {
             const { token } = await setUpFixture(deployToken);
-            await expect(token.connect(deployer).assignPurposes(purposeAccount1.address, [PURPOSE_ZERO])).to.be.revertedWithCustomError(
-                token,
-                REVERT_ERROR_ZERO_PURPOSE
-            );
+            await expect(
+                token.connect(deployer).assignPurposes(purposeAccount1.address, [PURPOSE_1, PURPOSE_ZERO])
+            ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_PURPOSE);
         });
     });
 
@@ -141,39 +140,53 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
             await expect(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 100))
                 .to.emit(token, "UpdateRestriction")
-                .withArgs(user1.address, PURPOSE_1, 100);
+                .withArgs(user1.address, PURPOSE_1, 100, 0);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(100);
+
+            await expect(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_2, 100))
+                .to.emit(token, "UpdateRestriction")
+                .withArgs(user1.address, PURPOSE_2, 100, 0);
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(100);
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(200);
 
             await expect(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 200))
                 .to.emit(token, "UpdateRestriction")
-                .withArgs(user1.address, PURPOSE_1, 200);
+                .withArgs(user1.address, PURPOSE_1, 200, 100);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(200);
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(300);
 
             await expect(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 100))
                 .to.emit(token, "UpdateRestriction")
-                .withArgs(user1.address, PURPOSE_1, 100);
+                .withArgs(user1.address, PURPOSE_1, 100, 200);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(200);
 
             await expect(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 0))
                 .to.emit(token, "UpdateRestriction")
-                .withArgs(user1.address, PURPOSE_1, 0);
+                .withArgs(user1.address, PURPOSE_1, 0, 100);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(0);
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(100);
+
+            await expect(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_2, 0))
+                .to.emit(token, "UpdateRestriction")
+                .withArgs(user1.address, PURPOSE_2, 0, 100);
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(0);
+            expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(0);
         });
 
-        it("Is reverted if the caller is not the blacklister", async () => {
+        it("Is reverted if the caller is not a blacklister", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
-            await expect(token.connect(user1).updateRestriction(purposeAccount1.address, PURPOSE_1, 100)).to.be.revertedWithCustomError(
-                token,
-                REVERT_ERROR_UNAUTHORIZED_BLACKLISTER
-            );
+            await expect(
+                token.connect(user1).updateRestriction(purposeAccount1.address, PURPOSE_1, 100)
+            ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLACKLISTER);
         });
 
-        it("Is reverted if the restriction is zero", async () => {
+        it("Is reverted if the provided purpose is zero", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
-            await expect(token.connect(blacklister).updateRestriction(purposeAccount1.address, PURPOSE_ZERO, 100)).to.be.revertedWithCustomError(
-                token,
-                REVERT_ERROR_ZERO_PURPOSE
-            );
+            await expect(
+                token.connect(blacklister).updateRestriction(purposeAccount1.address, PURPOSE_ZERO, 100)
+            ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_PURPOSE);
         });
     });
 

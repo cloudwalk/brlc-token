@@ -11,13 +11,13 @@ import { ERC20Base } from "./ERC20Base.sol";
  * @notice The ERC20 token implementation that supports restriction operations
  */
 abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
-    /// @notice The mapping of the assigned purposes
+    /// @notice The mapping of the assigned purposes: account => purposes
     mapping(address => bytes32[]) private _purposeAssignments;
 
-    /// @notice The mapping of the total restricted balances
+    /// @notice The mapping of the total restricted balances: account => total balance
     mapping(address => uint256) private _totalRestrictedBalances;
 
-    /// @notice The mapping of the restricted purpose balances
+    /// @notice The mapping of the restricted purpose balances: account => purpose => balance
     mapping(address => mapping(bytes32 => uint256)) private _restrictedPurposeBalances;
 
     // -------------------- Errors -----------------------------------
@@ -81,7 +81,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
             _totalRestrictedBalances[account] += balance - oldBalance;
         }
 
-        emit UpdateRestriction(account, purpose, balance);
+        emit UpdateRestriction(account, purpose, balance, oldBalance);
     }
 
     /**
@@ -148,7 +148,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /**
      * @notice Returns the transferable amount of tokens owned by account
      *
-     * @param account The account to check
+     * @param account The account to get the balance of
      */
     function _balanceOf_ERC20Restrictable(address account) internal view virtual returns (uint256);
 
