@@ -118,18 +118,18 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @inheritdoc IERC20Freezable
      */
-    function frozenBalance(address account) external view returns (uint256) {
+    function frozenBalance(address account) public view returns (uint256) {
         return _frozenBalances[account];
     }
 
     /**
      * @inheritdoc ERC20Base
      */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        super._beforeTokenTransfer(from, to, amount);
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
+        super._afterTokenTransfer(from, to, amount);
         uint256 frozen = _frozenBalances[from];
         if (frozen != 0) {
-            if (balanceOf(from) < frozen + amount) {
+            if (balanceOf(from) < frozen) {
                 revert TransferExceededFrozenAmount();
             }
         }
