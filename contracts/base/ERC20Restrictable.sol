@@ -126,8 +126,8 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
                         purposeAmount = 0;
                     } else {
                         restrictedBalance -= purposeBalance;
-                        purposeBalance = 0;
                         purposeAmount -= purposeBalance;
+                        purposeBalance = 0;
                     }
                     _restrictedPurposeBalances[from][purpose] = purposeBalance;
                 }
