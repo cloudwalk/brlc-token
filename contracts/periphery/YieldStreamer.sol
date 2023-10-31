@@ -452,7 +452,7 @@ contract YieldStreamer is
 
         // Define first day yield and initial sum yield
         uint256 sumYield = 0;
-        uint256 dayYield = getMinimumInRange(dailyBalances, 0, periodLength) * rateValue / RATE_FACTOR;
+        uint256 dayYield = _getMinimumInRange(dailyBalances, 0, periodLength) * rateValue / RATE_FACTOR;
         if (dayYield > nextClaimDebit) {
             sumYield = dayYield - nextClaimDebit;
         }
@@ -468,7 +468,7 @@ contract YieldStreamer is
                     nextRateDay = _yieldRates[++rateIndex].effectiveDay;
                 }
             }
-            uint256 minBalance = getMinimumInRange(dailyBalances, i, i + periodLength);
+            uint256 minBalance = _getMinimumInRange(dailyBalances, i, i + periodLength);
             dayYield = minBalance * rateValue / RATE_FACTOR;
             sumYield += dayYield;
             dailyBalances[i + periodLength] += sumYield;
@@ -543,6 +543,53 @@ contract YieldStreamer is
         return _feeReceiver;
     }
 
+    /**
+     * @notice Returns the daily balances with yield for the specified account and range of days
+     *
+     * The function returns the same values as if the account claims all available yield (if any exists) at the end of
+     * each day from the requested day range without token spending
+     *
+     * Requirements:
+     *
+     * - The `fromDay` value must not be greater than the `toDay` value
+     *
+     * @param account The address of the account to get the balances with yield for
+     * @param fromDay The index of the first day of the range
+     * @param toDay The index of the last day of the range
+     */
+    function getDailyBalancesWithYield(
+        address account,
+        uint16 fromDay,
+        uint16 toDay
+    ) external view returns (uint256[] memory) {
+        uint256[] memory balanceWithYieldByDays = getDailyBalances(account, fromDay, toDay);
+        ClaimState memory state = _claims[account];
+
+        if (state.day == 0) {
+            state.day = _lookBackPeriods[0].effectiveDay;
+        }
+
+        if (state.day <= toDay) {
+            uint256[] memory yieldByDays = calculateYieldByDays(account, state.day, toDay, state.debit);
+            if (state.debit > yieldByDays[0]) {
+                yieldByDays[0] = 0;
+            } else {
+                yieldByDays[0] -= state.debit;
+            }
+
+            uint256 len = balanceWithYieldByDays.length;
+            uint256 sumYield = 0;
+            for (uint256 i = 0; i < len; ++i) {
+                if (i + fromDay >= state.day + 1) {
+                    sumYield += yieldByDays[i + fromDay - state.day - 1];
+                    balanceWithYieldByDays[i] += sumYield;
+                }
+            }
+        }
+
+        return balanceWithYieldByDays;
+    }
+
     // -------------------- Internal Functions -----------------------
     /**
      * @notice Searches a minimum value in an array for the specified range of indexes
@@ -551,7 +598,7 @@ contract YieldStreamer is
      * @param begIndex The index of the array from which the search begins, including that index
      * @param endIndex The index of the array at which the search ends, excluding that index
      */
-    function getMinimumInRange(
+    function _getMinimumInRange(
         uint256[] memory array,
         uint256 begIndex,
         uint256 endIndex
