@@ -132,17 +132,17 @@ describe("Contract 'ERC20Freezable'", async () => {
             await expect(token.connect(blacklister).freeze(user1.address, TOKEN_AMOUNT))
                 .to.emit(token, EVENT_NAME_FREEZE)
                 .withArgs(user1.address, TOKEN_AMOUNT, 0);
-            expect(await token.frozenBalance(user1.address)).to.eq(TOKEN_AMOUNT);
+            expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT);
             await proveTx(token.connect(deployer).mint(user1.address, TOKEN_AMOUNT));
             expect(await token.balanceOf(user1.address)).to.eq(TOKEN_AMOUNT);
             await expect(token.connect(blacklister).freeze(user1.address, TOKEN_AMOUNT + 1))
                 .to.emit(token, EVENT_NAME_FREEZE)
                 .withArgs(user1.address, TOKEN_AMOUNT + 1, TOKEN_AMOUNT);
-            expect(await token.frozenBalance(user1.address)).to.eq(TOKEN_AMOUNT + 1);
+            expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT + 1);
             await expect(token.connect(blacklister).freeze(user1.address, TOKEN_AMOUNT - 2))
                 .to.emit(token, EVENT_NAME_FREEZE)
                 .withArgs(user1.address, TOKEN_AMOUNT - 2, TOKEN_AMOUNT + 1);
-            expect(await token.frozenBalance(user1.address)).to.eq(TOKEN_AMOUNT - 2);
+            expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT - 2);
         });
 
         it("Is reverted if freezing is not approved", async () => {

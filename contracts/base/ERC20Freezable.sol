@@ -118,8 +118,15 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @inheritdoc IERC20Freezable
      */
-    function frozenBalance(address account) public view returns (uint256) {
+    function balanceOfFrozen(address account) public view returns (uint256) {
         return _frozenBalances[account];
+    }
+
+    /**
+     * @dev [DEPRECATED] Keep this function for backward compatibility
+     */
+    function frozenBalance(address account) public view returns (uint256) {
+        return balanceOfFrozen(account);
     }
 
     /**
