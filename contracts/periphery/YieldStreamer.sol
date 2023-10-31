@@ -178,6 +178,11 @@ contract YieldStreamer is
      */
     error SafeCastOverflowUint240();
 
+    /**
+     * @notice Thrown when the specified "to" day is prior the specified "from" day
+     */
+    error ToDayPriorFromDay();
+
     // -------------------- Initializers -----------------------------
 
     /**
@@ -412,7 +417,12 @@ contract YieldStreamer is
     }
 
     /**
-     * @notice Calculates the daily yield of an account accrued for the specified period
+     * @notice Calculates the daily yield of an account accrued for a specified period of days
+     *
+     * Requirements:
+     *
+     * - The `fromDay` value must not be greater than the `toDay` value
+     * - The `fromDay` value must not be less than the initialization day of the used BalanceTracker contract
      *
      * @param account The address of an account to calculate the yield for
      * @param fromDay The index of the first day of the period
@@ -424,57 +434,12 @@ contract YieldStreamer is
         uint256 fromDay,
         uint256 toDay,
         uint256 nextClaimDebit
-    ) public view returns (uint256[] memory) {
-        /**
-         * Fetch the yield rate
-         */
-        uint256 rateIndex = _yieldRates.length;
-        while (_yieldRates[--rateIndex].effectiveDay > fromDay && rateIndex > 0) {}
-
-        /**
-         * Fetch the look-back period
-         */
-        uint256 periodLength = _lookBackPeriods[0].length;
-
-        /**
-         * Calculate the daily yield for the period
-         */
-        uint256 yieldRange = toDay - fromDay + 1;
-        uint256[] memory dailyBalances = getDailyBalances(account, fromDay + 1 - periodLength, toDay + 1);
-        uint256[] memory yieldByDays = new uint256[](yieldRange);
-        uint256 rateValue = _yieldRates[rateIndex].value;
-        uint256 nextRateDay;
-        if (rateIndex != _yieldRates.length - 1) {
-            nextRateDay = _yieldRates[++rateIndex].effectiveDay;
-        } else {
-            nextRateDay = toDay + 1;
+    ) external view returns (uint256[] memory) {
+        if (toDay < fromDay) {
+            revert ToDayPriorFromDay();
         }
-
-        // Define first day yield and initial sum yield
-        uint256 sumYield = 0;
-        uint256 dayYield = getMinimumInRange(dailyBalances, 0, periodLength) * rateValue / RATE_FACTOR;
-        if (dayYield > nextClaimDebit) {
-            sumYield = dayYield - nextClaimDebit;
-        }
-        dailyBalances[periodLength] += sumYield;
-        yieldByDays[0] = dayYield;
-
-
-        // Define yield for other days
-        for (uint256 i = 1; i < yieldRange; ++i) {
-            if (fromDay + i == nextRateDay) {
-                rateValue = _yieldRates[rateIndex].value;
-                if (rateIndex != _yieldRates.length - 1) {
-                    nextRateDay = _yieldRates[++rateIndex].effectiveDay;
-                }
-            }
-            uint256 minBalance = getMinimumInRange(dailyBalances, i, i + periodLength);
-            dayYield = minBalance * rateValue / RATE_FACTOR;
-            sumYield += dayYield;
-            dailyBalances[i + periodLength] += sumYield;
-            yieldByDays[i] = dayYield;
-        }
-
+        uint256[] memory yieldByDays;
+        (yieldByDays,) = _calculateYieldAndPossibleBalanceByDays(account, fromDay, toDay, nextClaimDebit);
         return yieldByDays;
     }
 
@@ -543,7 +508,127 @@ contract YieldStreamer is
         return _feeReceiver;
     }
 
+    /**
+     * @notice Returns the daily balances with yield for a specified account and period of days
+     *
+     * The function returns the same values as if the account claims all available yield (if any exists) at the end of
+     * each day within the requested period of days without token spending
+     *
+     * Requirements:
+     *
+     * - The `fromDay` value must not be greater than the `toDay` value
+     * - The `fromDay` value must not be less than the initialization day of the used BalanceTracker contract
+     *
+     * @param account The address of the account to get the balances with yield for
+     * @param fromDay The index of the first day of the period
+     * @param toDay The index of the last day of the period
+     */
+    function getDailyBalancesWithYield(
+        address account,
+        uint16 fromDay,
+        uint16 toDay
+    ) external view returns (uint256[] memory) {
+        if (toDay < fromDay) {
+            revert ToDayPriorFromDay();
+        }
+
+        ClaimState memory state = _claims[account];
+
+        if (state.day == 0) {
+            state.day = _lookBackPeriods[0].effectiveDay;
+        }
+
+        if (state.day > toDay) {
+            return getDailyBalances(account, fromDay, toDay);
+        } else {
+            uint256[] memory possibleBalanceByDays;
+            (, possibleBalanceByDays) = _calculateYieldAndPossibleBalanceByDays(account, state.day, toDay, state.debit);
+            uint256 firstDayWithYield = toDay + 2 - possibleBalanceByDays.length;
+            uint256[] memory dailyBalances;
+            if (fromDay < firstDayWithYield) {
+                dailyBalances = getDailyBalances(account, fromDay, firstDayWithYield - 1);
+            }
+
+            uint256 len = toDay + 1 - fromDay;
+            uint256[] memory dailyBalancesWithYield = new uint256[](len);
+            uint256 i = 0;
+            for (; i + fromDay < firstDayWithYield; ++i) {
+                dailyBalancesWithYield[i] = dailyBalances[i];
+            }
+            uint256 j = i + fromDay - firstDayWithYield;
+            for (; i < len; ++i) {
+                dailyBalancesWithYield[i] = possibleBalanceByDays[j++];
+            }
+            return dailyBalancesWithYield;
+        }
+    }
+
     // -------------------- Internal Functions -----------------------
+    /**
+     * @notice Calculates the daily yield and possible balance of an account for a specified period of days
+     *
+     * @param account The address of an account to calculate the yield and possible balance for
+     * @param fromDay The index of the first day of the period
+     * @param toDay The index of the last day of the period
+     * @param nextClaimDebit The amount of yield that is considered claimed for the first day of the period
+     */
+    function _calculateYieldAndPossibleBalanceByDays(
+        address account,
+        uint256 fromDay,
+        uint256 toDay,
+        uint256 nextClaimDebit
+    ) internal view returns (uint256[] memory yieldByDays, uint256[] memory possibleBalanceByDays) {
+        /**
+         * Fetch the yield rate
+         */
+        uint256 rateIndex = _yieldRates.length;
+        while (_yieldRates[--rateIndex].effectiveDay > fromDay && rateIndex > 0) {}
+
+        /**
+         * Fetch the look-back period
+         */
+        uint256 periodLength = _lookBackPeriods[0].length;
+
+        /**
+         * Calculate the daily yield for the period
+         */
+        uint256 yieldRange = toDay - fromDay + 1;
+        possibleBalanceByDays = getDailyBalances(account, fromDay + 1 - periodLength, toDay + 1);
+        yieldByDays = new uint256[](yieldRange);
+        uint256 rateValue = _yieldRates[rateIndex].value;
+        uint256 nextRateDay;
+        if (rateIndex != _yieldRates.length - 1) {
+            nextRateDay = _yieldRates[++rateIndex].effectiveDay;
+        } else {
+            nextRateDay = toDay + 1;
+        }
+
+        // Define first day yield and initial sum yield
+        uint256 sumYield = 0;
+        uint256 dayYield = _getMinimumInRange(possibleBalanceByDays, 0, periodLength) * rateValue / RATE_FACTOR;
+        if (dayYield > nextClaimDebit) {
+            sumYield = dayYield - nextClaimDebit;
+        }
+        possibleBalanceByDays[periodLength] += sumYield;
+        yieldByDays[0] = dayYield;
+
+
+        // Define yield for other days
+        for (uint256 i = 1; i < yieldRange; ++i) {
+            if (fromDay + i == nextRateDay) {
+                rateValue = _yieldRates[rateIndex].value;
+                if (rateIndex != _yieldRates.length - 1) {
+                    nextRateDay = _yieldRates[++rateIndex].effectiveDay;
+                }
+            }
+            uint256 minBalance = _getMinimumInRange(possibleBalanceByDays, i, i + periodLength);
+            dayYield = minBalance * rateValue / RATE_FACTOR;
+            sumYield += dayYield;
+            possibleBalanceByDays[i + periodLength] += sumYield;
+            yieldByDays[i] = dayYield;
+        }
+    }
+
     /**
      * @notice Searches a minimum value in an array for the specified range of indexes
      *
@@ -551,7 +636,7 @@ contract YieldStreamer is
      * @param begIndex The index of the array from which the search begins, including that index
      * @param endIndex The index of the array at which the search ends, excluding that index
      */
-    function getMinimumInRange(
+    function _getMinimumInRange(
         uint256[] memory array,
         uint256 begIndex,
         uint256 endIndex
@@ -600,7 +685,8 @@ contract YieldStreamer is
             /**
              * Calculate the yield by days since the last claim day until yesterday
              */
-            uint256[] memory yieldByDays = calculateYieldByDays(account, result.nextClaimDay, day, state.debit);
+            uint256[] memory yieldByDays;
+            (yieldByDays, )= _calculateYieldAndPossibleBalanceByDays(account, result.nextClaimDay, day, state.debit);
             uint256 lastIndex = yieldByDays.length - 1;
 
             /**
@@ -677,7 +763,8 @@ contract YieldStreamer is
             result.firstYieldDay = day;
             result.nextClaimDebit = state.debit;
 
-            uint256[] memory yieldByDays = calculateYieldByDays(account, day, day, state.debit);
+            uint256[] memory yieldByDays;
+            (yieldByDays, ) = _calculateYieldAndPossibleBalanceByDays(account, day, day, state.debit);
             result.lastDayYield = yieldByDays[0];
             result.streamYield = calculateStream(result.lastDayYield, time);
 

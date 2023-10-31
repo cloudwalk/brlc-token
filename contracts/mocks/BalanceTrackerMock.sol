@@ -19,11 +19,16 @@ contract BalanceTrackerMock is IBalanceTracker {
     address internal _token;
     uint256 internal _day;
     uint256 internal _time;
+    uint256 internal _initDay;
     mapping(address => BalanceRecord[]) public _balanceRecords;
     mapping(address => uint256) public _currentBalances;
 
     constructor(address token_) {
         _token = token_;
+    }
+
+    function setInitDay(uint256 initDay_) external {
+        _initDay = initDay_;
     }
 
     function setDayAndTime(uint256 day_, uint256 time_) external {
@@ -51,31 +56,36 @@ contract BalanceTrackerMock is IBalanceTracker {
         uint256 fromDay,
         uint256 toDay
     ) external view returns (uint256[] memory) {
-        uint16 day;
+        uint16 dayOfBalanceChange;
         uint256 balance;
         uint256 recordIndex = _balanceRecords[account].length;
+        if (fromDay < _initDay) {
+            revert("BalanceTrackerMock: the 'from' day is prior the init day");
+        }
+        if (fromDay > toDay) {
+            revert("BalanceTrackerMock: the 'to' day is prior the 'from' day");
+        }
         if (recordIndex == 0) {
-            balance = _currentBalances[account];
-            day = type(uint16).max;
+            revert("BalanceTrackerMock: balance records does not set for the account");
         } else if (toDay >= _balanceRecords[account][--recordIndex].day) {
             balance = _currentBalances[account];
-            day = _balanceRecords[account][recordIndex].day;
+            dayOfBalanceChange = _balanceRecords[account][recordIndex].day;
         } else {
             while (_balanceRecords[account][--recordIndex].day > toDay) {}
             balance = _balanceRecords[account][recordIndex + 1].value;
-            day = _balanceRecords[account][recordIndex].day;
+            dayOfBalanceChange = _balanceRecords[account][recordIndex].day;
         }
 
         uint256 i = toDay + 1 - fromDay;
-        uint256 dayIndex = fromDay + i;
+        uint256 day = fromDay + i;
         uint256[] memory balances = new uint256[](i);
         do {
             i--;
-            dayIndex--;
-            if (dayIndex == day) {
+            day--;
+            if (day == dayOfBalanceChange) {
                 balance = _balanceRecords[account][recordIndex].value;
                 if (recordIndex != 0) {
-                    day = _balanceRecords[account][--recordIndex].day;
+                    dayOfBalanceChange = _balanceRecords[account][--recordIndex].day;
                 }
             }
             balances[i] = balance;
