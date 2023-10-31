@@ -76,6 +76,15 @@ interface YieldByDaysRequest {
   claimDebit: BigNumber,
 }
 
+interface BalanceWithYieldByDaysRequest extends YieldByDaysRequest {
+  firstYieldDay: number,
+}
+
+interface ClaimState {
+  day: number;
+  debit: BigNumber;
+}
+
 const balanceRecordsCase1: BalanceRecord[] = [
   { day: BALANCE_TRACKER_INIT_DAY, value: BigNumber.from(0) },
   { day: BALANCE_TRACKER_INIT_DAY + 1, value: BigNumber.from(8000_000_000_000) },
@@ -200,6 +209,32 @@ function defineExpectedYieldByDays(yieldByDaysRequest: YieldByDaysRequest): BigN
   }
 
   return yieldByDays;
+}
+
+function defineExpectedBalanceWithYieldByDays(request: BalanceWithYieldByDaysRequest): BigNumber[] {
+  const { balanceRecords, dayFrom, dayTo, firstYieldDay } = request;
+  const balancesWithYield: BigNumber[] = defineExpectedDailyBalances(balanceRecords, dayFrom, dayTo);
+  if (firstYieldDay <= dayTo) {
+    const yieldByDaysRequest: YieldByDaysRequest = { ...(request as YieldByDaysRequest) };
+    yieldByDaysRequest.dayFrom = request.firstYieldDay;
+    const yields: BigNumber[] = defineExpectedYieldByDays(yieldByDaysRequest);
+    if (yields[0].gt(request.claimDebit)) {
+      yields[0] = yields[0].sub(request.claimDebit);
+    } else {
+      yields[0] = BIG_NUMBER_ZERO;
+    }
+
+    let sumYield = BIG_NUMBER_ZERO;
+    for (let i = 0; i < balancesWithYield.length; ++i) {
+      const yieldIndex = i + dayFrom - firstYieldDay - 1;
+      if (yieldIndex >= 0) {
+        sumYield = sumYield.add(yields[yieldIndex]);
+        balancesWithYield[i] = balancesWithYield[i].add(sumYield);
+      }
+    }
+  }
+
+  return balancesWithYield;
 }
 
 function calculateFee(amount: BigNumber): BigNumber {
@@ -460,7 +495,6 @@ describe("Contract 'YieldStreamer'", async () => {
   const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
   const REVERT_MESSAGE_PAUSABLE_PAUSED = "Pausable: paused";
 
-
   const REVERT_ERROR_BLACKLISTED_ACCOUNT = "BlacklistedAccount";
   const REVERT_ERROR_BALANCE_TRACKER_ALREADY_CONFIGURED = "BalanceTrackerAlreadyConfigured";
   const REVERT_ERROR_CLAIM_AMOUNT_BELOW_MINIMUM = "ClaimAmountBelowMinimum";
@@ -474,6 +508,7 @@ describe("Contract 'YieldStreamer'", async () => {
   const REVERT_ERROR_LOOK_BACK_PERIOD_LENGTH_ZERO = "LookBackPeriodLengthZero";
   const REVERT_ERROR_SAFE_CAST_OVERFLOW_UINT16 = "SafeCastOverflowUint16";
   const REVERT_ERROR_SAFE_CAST_OVERFLOW_UINT240 = "SafeCastOverflowUint240";
+  const REVERT_ERROR_TO_DAY_PRIOR_FROM_DAY = "ToDayPriorFromDay";
   const REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY = "YieldRateInvalidEffectiveDay";
   const REVERT_ERROR_YIELD_RATE_VALUE_ALREADY_CONFIGURED = "YieldRateValueAlreadyConfigured";
 
@@ -521,6 +556,7 @@ describe("Contract 'YieldStreamer'", async () => {
     await proveTx(yieldStreamer.setBalanceTracker(balanceTrackerMock.address));
     await proveTx(yieldStreamer.configureYieldRate(YIELD_STREAMER_INIT_DAY, INITIAL_YIELD_RATE));
     await proveTx(yieldStreamer.configureLookBackPeriod(YIELD_STREAMER_INIT_DAY, LOOK_BACK_PERIOD_LENGTH));
+    await proveTx(balanceTrackerMock.setInitDay(BALANCE_TRACKER_INIT_DAY));
     await proveTx(balanceTrackerMock.setCurrentBalance(user.address, USER_CURRENT_TOKEN_BALANCE));
     await proveTx(tokenMock.mintForTest(yieldStreamer.address, YIELD_STREAMER_INIT_TOKEN_BALANCE));
 
@@ -967,6 +1003,23 @@ describe("Contract 'YieldStreamer'", async () => {
           yieldByDaysRequest.yieldRateRecords.push(yieldRateRecordCase3);
           await checkYieldByDays(context, yieldByDaysRequest);
         });
+      });
+    });
+
+    describe("Is reverted if", async () => {
+      it("The 'to' day is prior the 'from' day", async () => {
+        const context: TestContext = await setUpFixture(deployAndConfigureContracts);
+        const yieldByDaysRequest: YieldByDaysRequest = { ...yieldByDaysBaseRequest };
+        await expect(
+          context.yieldStreamer.calculateYieldByDays(
+            user.address,
+            dayFrom,
+            dayFrom - 1,
+            yieldByDaysRequest.claimDebit
+          )).to.revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_TO_DAY_PRIOR_FROM_DAY,
+        );
       });
     });
   });
@@ -1431,6 +1484,145 @@ describe("Contract 'YieldStreamer'", async () => {
         true,
         "The claim debit is not greater that the first day yield, but it must be. Change the test conditions"
       );
+    });
+  });
+
+  describe(" Function 'getDailyBalancesWithYield()'", async () => {
+    const balanceRecords: BalanceRecord[] = balanceRecordsCase1;
+    const balanceWithYieldByDaysRequestBase: BalanceWithYieldByDaysRequest = {
+      lookBackPeriodLength: LOOK_BACK_PERIOD_LENGTH,
+      yieldRateRecords: [yieldRateRecordCase1],
+      balanceRecords: balanceRecords,
+      dayFrom: YIELD_STREAMER_INIT_DAY,
+      dayTo: YIELD_STREAMER_INIT_DAY,
+      claimDebit: BIG_NUMBER_ZERO,
+      firstYieldDay: YIELD_STREAMER_INIT_DAY,
+    };
+
+    const currentDay: number = YIELD_STREAMER_INIT_DAY + 10;
+    const currentTime: number = 12 * 3600;
+
+    const claimRequestBase: ClaimRequest = {
+      amount: BIG_NUMBER_MAX_UINT256,
+      firstYieldDay: YIELD_STREAMER_INIT_DAY,
+      claimDay: currentDay,
+      claimTime: currentTime,
+      claimDebit: BIG_NUMBER_ZERO,
+      lookBackPeriodLength: LOOK_BACK_PERIOD_LENGTH,
+      yieldRateRecords: [yieldRateRecordCase1],
+      balanceRecords: balanceRecordsCase1
+    };
+
+    async function checkGetDailyBalancesWithYield(props: {
+      firstDayRangeRelativeToNexClaimDay: number,
+      lastDayRangeRelativeToNexClaimDay: number,
+      executeClaimPriorTheCall: boolean,
+    }) {
+      const context: TestContext = await setUpFixture(deployAndConfigureContracts);
+      await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
+      await proveTx(context.balanceTrackerMock.setDayAndTime(currentDay, currentTime));
+      const claimRequest: ClaimRequest = { ...claimRequestBase };
+      const expectedClaimAllResult: ClaimResult = defineExpectedClaimAllResult(claimRequest);
+      if (props.executeClaimPriorTheCall) {
+        claimRequest.amount = roundDown(expectedClaimAllResult.primaryYield.div(2));
+        await proveTx(await context.yieldStreamer.connect(user).claim(claimRequest.amount));
+      }
+      const claimState: ClaimState = await context.yieldStreamer.getLastClaimDetails(user.address);
+
+      const balanceWithYieldByDaysRequest: BalanceWithYieldByDaysRequest = { ...balanceWithYieldByDaysRequestBase };
+      const nextClaimDay: number = claimState.day || YIELD_STREAMER_INIT_DAY;
+      balanceWithYieldByDaysRequest.firstYieldDay = nextClaimDay;
+      balanceWithYieldByDaysRequest.claimDebit = claimState.debit;
+      balanceWithYieldByDaysRequest.dayFrom = nextClaimDay + props.firstDayRangeRelativeToNexClaimDay;
+      balanceWithYieldByDaysRequest.dayTo = nextClaimDay + props.lastDayRangeRelativeToNexClaimDay;
+
+      const expectedBalanceWithYieldByDays: BigNumber[] =
+        defineExpectedBalanceWithYieldByDays(balanceWithYieldByDaysRequest);
+      const actualBalanceWithYieldByDays = await context.yieldStreamer.getDailyBalancesWithYield(
+        user.address,
+        balanceWithYieldByDaysRequest.dayFrom,
+        balanceWithYieldByDaysRequest.dayTo
+      );
+      expect(actualBalanceWithYieldByDays).to.deep.equal(expectedBalanceWithYieldByDays);
+    }
+
+
+    describe("Executes as expected if", async () => {
+      describe("There was a claim made by the account and", async () => {
+        it("Argument 'fromDay' is prior the next claim day and `toDay` is after the next claim day", async () => {
+          await checkGetDailyBalancesWithYield({
+            firstDayRangeRelativeToNexClaimDay: -(LOOK_BACK_PERIOD_LENGTH + 1),
+            lastDayRangeRelativeToNexClaimDay: +(LOOK_BACK_PERIOD_LENGTH + 1),
+            executeClaimPriorTheCall: true
+          });
+        });
+        it("Arguments 'fromDay', `toDay` are both prior the next claim day", async () => {
+          await checkGetDailyBalancesWithYield({
+            firstDayRangeRelativeToNexClaimDay: -(LOOK_BACK_PERIOD_LENGTH + 1),
+            lastDayRangeRelativeToNexClaimDay: -1,
+            executeClaimPriorTheCall: true
+          });
+        });
+        it("Arguments 'fromDay', `toDay` are both after the next claim day", async () => {
+          await checkGetDailyBalancesWithYield({
+            firstDayRangeRelativeToNexClaimDay: +1,
+            lastDayRangeRelativeToNexClaimDay: +(LOOK_BACK_PERIOD_LENGTH + 1),
+            executeClaimPriorTheCall: true
+          });
+        });
+        it("Arguments 'fromDay', `toDay` are both equal to the next claim day", async () => {
+          await checkGetDailyBalancesWithYield({
+            firstDayRangeRelativeToNexClaimDay: 0,
+            lastDayRangeRelativeToNexClaimDay: 0,
+            executeClaimPriorTheCall: true
+          });
+        });
+      });
+      describe("There were no claims made by the account and", async () => {
+        it("Argument 'fromDay' is prior the next claim day and `toDay` is after the next claim day", async () => {
+          await checkGetDailyBalancesWithYield({
+            firstDayRangeRelativeToNexClaimDay: -(YIELD_STREAMER_INIT_DAY - BALANCE_TRACKER_INIT_DAY),
+            lastDayRangeRelativeToNexClaimDay: +10,
+            executeClaimPriorTheCall: false
+          });
+        });
+        it("Arguments 'fromDay', `toDay` are both prior the next claim day", async () => {
+          await checkGetDailyBalancesWithYield({
+            firstDayRangeRelativeToNexClaimDay: -1,
+            lastDayRangeRelativeToNexClaimDay: -1,
+            executeClaimPriorTheCall: false
+          });
+        });
+        it("Arguments 'fromDay', `toDay` are both after the next claim day", async () => {
+          await checkGetDailyBalancesWithYield({
+            firstDayRangeRelativeToNexClaimDay: +1,
+            lastDayRangeRelativeToNexClaimDay: +1,
+            executeClaimPriorTheCall: false
+          });
+        });
+        it("Arguments 'fromDay', `toDay` are both equal to the next claim day", async () => {
+          await checkGetDailyBalancesWithYield({
+            firstDayRangeRelativeToNexClaimDay: 0,
+            lastDayRangeRelativeToNexClaimDay: 0,
+            executeClaimPriorTheCall: false
+          });
+        });
+      });
+    });
+
+    describe("Is reverted if", async () => {
+      it("The 'to' day is prior the 'from' day", async () => {
+        const context: TestContext = await setUpFixture(deployAndConfigureContracts);
+        await expect(
+          context.yieldStreamer.getDailyBalancesWithYield(
+            user.address,
+            balanceWithYieldByDaysRequestBase.dayFrom,
+            balanceWithYieldByDaysRequestBase.dayFrom - 1,
+          )).to.revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_TO_DAY_PRIOR_FROM_DAY,
+        );
+      });
     });
   });
 });
