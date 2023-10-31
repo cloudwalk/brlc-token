@@ -419,6 +419,11 @@ contract YieldStreamer is
     /**
      * @notice Calculates the daily yield of an account accrued for a specified period of days
      *
+     * Requirements:
+     *
+     * - The `fromDay` value must not be greater than the `toDay` value
+     * - The `fromDay` value must not be less than the initialization day of the used BalanceTracker contract
+     *
      * @param account The address of an account to calculate the yield for
      * @param fromDay The index of the first day of the period
      * @param toDay The index of the last day of the period
@@ -512,6 +517,7 @@ contract YieldStreamer is
      * Requirements:
      *
      * - The `fromDay` value must not be greater than the `toDay` value
+     * - The `fromDay` value must not be less than the initialization day of the used BalanceTracker contract
      *
      * @param account The address of the account to get the balances with yield for
      * @param fromDay The index of the first day of the period
