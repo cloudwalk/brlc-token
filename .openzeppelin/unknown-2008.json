@@ -3833,7 +3833,7 @@
             "label": "_balanceRecords",
             "offset": 0,
             "slot": "102",
-            "type": "t_mapping(t_address,t_array(t_struct(Record)6317_storage)dyn_storage)",
+            "type": "t_mapping(t_address,t_array(t_struct(Record)7392_storage)dyn_storage)",
             "contract": "BalanceTracker",
             "src": "contracts\\periphery\\BalanceTracker.sol:38"
           },
@@ -3851,7 +3851,7 @@
             "label": "address",
             "numberOfBytes": "20"
           },
-          "t_array(t_struct(Record)6317_storage)dyn_storage": {
+          "t_array(t_struct(Record)7392_storage)dyn_storage": {
             "label": "struct BalanceTracker.Record[]",
             "numberOfBytes": "32"
           },
@@ -3871,11 +3871,11 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_mapping(t_address,t_array(t_struct(Record)6317_storage)dyn_storage)": {
+          "t_mapping(t_address,t_array(t_struct(Record)7392_storage)dyn_storage)": {
             "label": "mapping(address => struct BalanceTracker.Record[])",
             "numberOfBytes": "32"
           },
-          "t_struct(Record)6317_storage": {
+          "t_struct(Record)7392_storage": {
             "label": "struct BalanceTracker.Record",
             "members": [
               {
