@@ -5,7 +5,8 @@
 | --- | --- | --- | --- |
 | 1 | ProxyAdmin | Proxy admin | [0xAD81F2257593B6B06930D549db588a92e483395a](https://explorer.mainnet.cloudwalk.io/address/0xAD81F2257593B6B06930D549db588a92e483395a) |
 | 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0xA9a55a81a4C085EC0C31585Aed4cFB09D78dfD53](https://explorer.mainnet.cloudwalk.io/address/0xA9a55a81a4C085EC0C31585Aed4cFB09D78dfD53) |
-| 3 | BRLCToken | Proxy implementation | [0x58AC16B8B1839344F506DcA6E8C14d9f3231798d/](https://explorer.mainnet.cloudwalk.io/address/0x58AC16B8B1839344F506DcA6E8C14d9f3231798d) |
+| 3 | BRLCToken | Proxy implementation | [0xc385B97D650a2C624a2dE69bF5Fc139ffDa6c979](https://explorer.mainnet.cloudwalk.io/address/0xc385B97D650a2C624a2dE69bF5Fc139ffDa6c979) |
+|||| <strike>[0x58AC16B8B1839344F506DcA6E8C14d9f3231798d](https://explorer.mainnet.cloudwalk.io/address/0x58AC16B8B1839344F506DcA6E8C14d9f3231798d)</strike> |
 |||| <strike>[0xad9930ba93388d45e417318f9e53d6FE2050e22a](https://explorer.mainnet.cloudwalk.io/address/0xad9930ba93388d45e417318f9e53d6FE2050e22a)</strike> |
 |||| <strike>[0xbe22164f3a6b0c9A3B57ced2Ee0A8B11aCb37eE6](https://explorer.mainnet.cloudwalk.io/address/0xbe22164f3a6b0c9A3B57ced2Ee0A8B11aCb37eE6)</strike> |
 |||| <strike>[0x1d92badf74792F6B970211803407527650A98E20](https://explorer.mainnet.cloudwalk.io/address/0x1d92badf74792F6B970211803407527650A98E20)</strike> |
@@ -57,7 +58,8 @@
 | --- | --- | --- | --- |
 | 1 | ProxyAdmin | Proxy admin | [0xAD81F2257593B6B06930D549db588a92e483395a](https://explorer.mainnet.cloudwalk.io/address/0xAD81F2257593B6B06930D549db588a92e483395a) |
 | 2 | TransparentUpgradeableProxy | Upgradeable proxy | [0x7907A11948226348beDE63887e27c3F3a00AA6A9](https://explorer.mainnet.cloudwalk.io/address/0x7907A11948226348beDE63887e27c3F3a00AA6A9) |
-| 3 | USJimToken | Proxy implementation | [0x75418F539eF5368AEDE40582160d2966F6dB994A](https://explorer.mainnet.cloudwalk.io/address/0x75418F539eF5368AEDE40582160d2966F6dB994A) |
+| 3 | USJimToken | Proxy implementation | [0x05f0db36634B6C1Df6E5bC380222479f464d9ced](https://explorer.mainnet.cloudwalk.io/address/0x05f0db36634B6C1Df6E5bC380222479f464d9ced) |
+|||| <strike>[0x75418F539eF5368AEDE40582160d2966F6dB994A](https://explorer.mainnet.cloudwalk.io/address/0x75418F539eF5368AEDE40582160d2966F6dB994A)</strike> |
 |||| <strike>[0x17d922fBD6c7a50621d63D299476932d2a8731Ef](https://explorer.mainnet.cloudwalk.io/address/0x17d922fBD6c7a50621d63D299476932d2a8731Ef)</strike> |
 |||| <strike>[0xCf7F87e9B5919B6CC3b8A77cfC0Ce58d3dDF38AD](https://explorer.mainnet.cloudwalk.io/address/0xCf7F87e9B5919B6CC3b8A77cfC0Ce58d3dDF38AD)</strike> |
 
