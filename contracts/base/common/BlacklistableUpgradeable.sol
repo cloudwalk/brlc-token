@@ -12,22 +12,14 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
  * which can be applied to functions to restrict their usage to not blacklisted accounts only.
  */
 abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
-    /// @notice The structure that represents simple boolean value
-    struct BooleanSlot {
-        bool value;
+    /// @notice The structure that represents balacklistable contract storage
+    struct BlacklistableStorageSlot {
+    mapping(address => bool) blacklisters;
+        bool enabled;
     }
 
-    /// @notice The structure that represents addresses to booleans mapping
-    struct MappingSlot {
-        mapping(address => bool) value;
-    }
-
-    /// @notice The memory slot used to store blacklist enabled status
-    bytes32 private constant _STORAGE_SLOT_ENABLED =
-        0x65a5ef57b95bb3a6a1b189500246cdea963cdb15617669409046b421e2d54f00;
-
-    /// @notice The memory slot used to store blacklisters mapping
-    bytes32 private constant _STORAGE_SLOT_BLACKLISTERS =
+    /// @notice The memory slot used to store the blacklistable contract storage
+    bytes32 private constant _BLACKLISTABLE_STORAGE_SLOT =
         0xff11fdfa16fed3260ed0e7147f7cc6da11a60208b5b9406d12a635614ffd9141;
 
     /// @notice The address of the blacklister that is allowed to add and remove accounts from the blacklist
@@ -254,16 +246,16 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      *
      * Emits a {BlacklistEnabled} event
      *
-     * @param status The new status of the blacklist
+     * @param enabled The enabled/disabled status of the blacklist
      */
-    function enableBlacklist(bool status) external onlyOwner {
-        BooleanSlot storage enabled = _getBooleanSlot(_STORAGE_SLOT_ENABLED);
-        if (enabled.value == status) {
+    function enableBlacklist(bool enabled) external onlyOwner {
+        BlacklistableStorageSlot storage storageSlot = _getBlacklistableSlot(_BLACKLISTABLE_STORAGE_SLOT);
+        if (storageSlot.enabled == enabled) {
             revert AlreadyConfigured();
         }
 
-        enabled.value = status;
-        emit BlacklistEnabled(status);
+        storageSlot.enabled = enabled;
+        emit BlacklistEnabled(enabled);
     }
 
     /**
@@ -299,12 +291,12 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * @param status The new status of the blacklister
      */
     function configureBlacklister(address account, bool status) external onlyMainBlacklister {
-        MappingSlot storage blacklisters = _getMappingSlot(_STORAGE_SLOT_BLACKLISTERS);
-        if (blacklisters.value[account] == status) {
+        BlacklistableStorageSlot storage storageSlot = _getBlacklistableSlot(_BLACKLISTABLE_STORAGE_SLOT);
+        if (storageSlot.blacklisters[account] == status) {
             revert AlreadyConfigured();
         }
 
-        blacklisters.value[account] = status;
+        storageSlot.blacklisters[account] = status;
         emit BlacklisterConfigured(account, status);
     }
 
@@ -332,7 +324,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * @return True if the account is a configured blacklister, False otherwise
      */
     function isBlacklister(address account) public view returns (bool) {
-        return _getMappingSlot(_STORAGE_SLOT_BLACKLISTERS).value[account];
+        return _getBlacklistableSlot(_BLACKLISTABLE_STORAGE_SLOT).blacklisters[account];
     }
 
     /**
@@ -341,23 +333,13 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * @return True if the blacklist is enabled, False otherwise
      */
     function isBlacklistEnabled() public view returns (bool) {
-        return _getBooleanSlot(_STORAGE_SLOT_ENABLED).value;
+        return _getBlacklistableSlot(_BLACKLISTABLE_STORAGE_SLOT).enabled;
     }
 
     /**
      * @dev Returns an `MappingSlot` with member `value` located at `slot`
      */
-    function _getMappingSlot(bytes32 slot) internal pure returns (MappingSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
-
-    /**
-     * @dev Returns an `BooleanSlot` with member `value` located at `slot`
-     */
-    function _getBooleanSlot(bytes32 slot) internal pure returns (BooleanSlot storage r) {
+    function _getBlacklistableSlot(bytes32 slot) internal pure returns (BlacklistableStorageSlot storage r) {
         /// @solidity memory-safe-assembly
         assembly {
             r.slot := slot
