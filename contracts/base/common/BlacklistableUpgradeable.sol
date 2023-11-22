@@ -14,7 +14,9 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     /// @notice The structure that represents balacklistable contract storage
     struct BlacklistableStorageSlot {
-    mapping(address => bool) blacklisters;
+        /// @notice The mapping of presence in the blacklist for a given address
+        mapping(address => bool) blacklisters;
+        /// @notice The enabled/disabled status of the blacklist
         bool enabled;
     }
 
@@ -69,7 +71,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     /**
      * @notice Emitted when the blacklist is enabled or disabled
      *
-     * @param status The new status of the blacklist
+     * @param status The new enabled/disabled status of the blacklist
      */
     event BlacklistEnabled(bool indexed status);
 
@@ -246,16 +248,16 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      *
      * Emits a {BlacklistEnabled} event
      *
-     * @param enabled The enabled/disabled status of the blacklist
+     * @param status The new enabled/disabled status of the blacklist
      */
-    function enableBlacklist(bool enabled) external onlyOwner {
+    function enableBlacklist(bool status) external onlyOwner {
         BlacklistableStorageSlot storage storageSlot = _getBlacklistableSlot(_BLACKLISTABLE_STORAGE_SLOT);
-        if (storageSlot.enabled == enabled) {
+        if (storageSlot.enabled == status) {
             revert AlreadyConfigured();
         }
 
-        storageSlot.enabled = enabled;
-        emit BlacklistEnabled(enabled);
+        storageSlot.enabled = status;
+        emit BlacklistEnabled(status);
     }
 
     /**
