@@ -22,6 +22,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
     const EVENT_NAME_TEST_NOT_BLACKLISTED_MODIFIER_SUCCEEDED = "TestNotBlacklistedModifierSucceeded";
     const EVENT_NAME_TEST_NOT_BLACKLISTED_OR_BYPASS_IF_BLACKLISTER_MODIFIER_SUCCEEDED =
         "TestNotBlacklistedOrBypassIfBlacklisterModifierSucceeded";
+    const EVENT_NAME_BLACKLIST_ENABLED = "BlacklistEnabled";
 
     const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED =
         "Initializable: contract is already initialized";
@@ -50,6 +51,7 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
     async function deployBlacklistable(): Promise<{ blacklistable: Contract }> {
         const blacklistable: Contract = await upgrades.deployProxy(blacklistableFactory);
         await blacklistable.deployed();
+        await proveTx(blacklistable.enableBlacklist(true));
         return { blacklistable };
     }
 
@@ -95,6 +97,47 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
             const { blacklistable } = await setUpFixture(deployBlacklistable);
             await expect(blacklistable.call_parent_initialize_unchained()).to.be.revertedWith(
                 REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
+            );
+        });
+    });
+
+    describe("Function 'enableBlacklist()'", async () => {
+        it("Executes as expected and emits the correct event", async () => {
+            const { blacklistable } = await setUpFixture(deployBlacklistable);
+            expect(await blacklistable.isBlacklistEnabled()).to.equal(true);
+            await expect(blacklistable.connect(deployer).enableBlacklist(false))
+                .to.emit(blacklistable, EVENT_NAME_BLACKLIST_ENABLED)
+                .withArgs(false);
+            expect(await blacklistable.isBlacklistEnabled()).to.equal(false);
+            await expect(blacklistable.connect(deployer).enableBlacklist(true))
+                .to.emit(blacklistable, EVENT_NAME_BLACKLIST_ENABLED)
+                .withArgs(true);
+            expect(await blacklistable.isBlacklistEnabled()).to.equal(true);
+        });
+
+        it("Is reverted if blacklist is already enabled", async () => {
+            const { blacklistable } = await setUpFixture(deployBlacklistable);
+            expect(await blacklistable.isBlacklistEnabled()).to.equal(true);
+            await expect(blacklistable.connect(deployer).enableBlacklist(true)).to.be.revertedWithCustomError(
+                blacklistable,
+                REVERT_ERROR_ALREADY_CONFIGURED
+            );
+        });
+
+        it("Is reverted if blacklist already disabled", async () => {
+            const { blacklistable } = await setUpFixture(deployBlacklistable);
+            await proveTx(blacklistable.connect(deployer).enableBlacklist(false));
+            expect(await blacklistable.isBlacklistEnabled()).to.equal(false);
+            await expect(blacklistable.connect(deployer).enableBlacklist(false)).to.be.revertedWithCustomError(
+                blacklistable,
+                REVERT_ERROR_ALREADY_CONFIGURED
+            );
+        });
+
+        it("Is reverted if called not by the owner", async () => {
+            const { blacklistable } = await setUpFixture(deployBlacklistable);
+            await expect(blacklistable.connect(user).enableBlacklist(true)).to.be.revertedWith(
+                REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER
             );
         });
     });
@@ -228,6 +271,17 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
     describe("Modifier 'notBlacklisted'", async () => {
         it("Is not reverted if the caller is not blacklisted", async () => {
             const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
+            expect(await blacklistable.isBlacklistEnabled()).to.equal(true);
+            await expect(blacklistable.connect(user).testNotBlacklistedModifier()).to.emit(
+                blacklistable,
+                EVENT_NAME_TEST_NOT_BLACKLISTED_MODIFIER_SUCCEEDED
+            );
+        });
+
+        it("Is not reverted if the caller is blacklisted and blacklist is disabled", async () => {
+            const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
+            await proveTx(blacklistable.connect(blacklister).blacklist(user.address));
+            await proveTx(blacklistable.connect(deployer).enableBlacklist(false));
             await expect(blacklistable.connect(user).testNotBlacklistedModifier()).to.emit(
                 blacklistable,
                 EVENT_NAME_TEST_NOT_BLACKLISTED_MODIFIER_SUCCEEDED
@@ -247,14 +301,16 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
     describe("Modifier 'notBlacklistedOrBypassIfBlacklister'", async () => {
         it("Is not reverted if the caller not blacklisted", async () => {
             const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
+            expect(await blacklistable.isBlacklistEnabled()).to.equal(true);
             await expect(blacklistable.connect(user).testNotBlacklistedOrBypassIfBlacklister()).to.emit(
                 blacklistable,
                 EVENT_NAME_TEST_NOT_BLACKLISTED_OR_BYPASS_IF_BLACKLISTER_MODIFIER_SUCCEEDED
             );
         });
 
-        it("Is not reverted if the caller is blacklister and is blacklisted", async () => {
+        it("Is not reverted if the caller is blacklisted and is blacklister", async () => {
             const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
+            expect(await blacklistable.isBlacklistEnabled()).to.equal(true);
             await proveTx(blacklistable.connect(blacklister).blacklist(user.address));
             await proveTx(blacklistable.connect(deployer).configureBlacklister(user.address, true));
             await expect(blacklistable.connect(user).testNotBlacklistedOrBypassIfBlacklister()).to.emit(
@@ -263,8 +319,19 @@ describe("Contract 'BlacklistableUpgradeable'", async () => {
             );
         });
 
-        it("Is reverted if the caller is not blacklister and is blacklisted", async () => {
+        it("Is not reverted if the caller is blacklisted and blacklist is disabled", async () => {
             const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
+            await proveTx(blacklistable.connect(blacklister).blacklist(user.address));
+            await proveTx(blacklistable.connect(deployer).enableBlacklist(false));
+            await expect(blacklistable.connect(user).testNotBlacklistedOrBypassIfBlacklister()).to.emit(
+                blacklistable,
+                EVENT_NAME_TEST_NOT_BLACKLISTED_OR_BYPASS_IF_BLACKLISTER_MODIFIER_SUCCEEDED
+            );
+        });
+
+        it("Is reverted if the caller is blacklisted and isn't blacklister", async () => {
+            const { blacklistable } = await setUpFixture(deployAndConfigureBlacklistable);
+            expect(await blacklistable.isBlacklistEnabled()).to.equal(true);
             await proveTx(blacklistable.connect(blacklister).blacklist(user.address));
             await expect(blacklistable.connect(user).testNotBlacklistedOrBypassIfBlacklister()).to.be.revertedWithCustomError(
                 blacklistable,

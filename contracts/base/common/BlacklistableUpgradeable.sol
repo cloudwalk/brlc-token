@@ -12,10 +12,19 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
  * which can be applied to functions to restrict their usage to not blacklisted accounts only.
  */
 abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
-    /// @notice The structure that represents mapping of addresses to booleans
+    /// @notice The structure that represents simple boolean value
+    struct BooleanSlot {
+        bool value;
+    }
+
+    /// @notice The structure that represents addresses to booleans mapping
     struct MappingSlot {
         mapping(address => bool) value;
     }
+
+    /// @notice The memory slot used to store blacklist enabled status
+    bytes32 private constant _STORAGE_SLOT_ENABLED =
+        0x65a5ef57b95bb3a6a1b189500246cdea963cdb15617669409046b421e2d54f00;
 
     /// @notice The memory slot used to store blacklisters mapping
     bytes32 private constant _STORAGE_SLOT_BLACKLISTERS =
@@ -64,6 +73,13 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * @param status The new status of the blacklister
      */
     event BlacklisterConfigured(address indexed blacklister, bool status);
+
+    /**
+     * @notice Emitted when the blacklist is enabled or disabled
+     *
+     * @param status The new status of the blacklist
+     */
+    event BlacklistEnabled(bool indexed status);
 
     // -------------------- Errors -----------------------------------
 
@@ -127,7 +143,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * @param account The address to check for presence in the blacklist
      */
     modifier notBlacklisted(address account) {
-        if (_blacklisted[account]) {
+        if (_blacklisted[account] && isBlacklistEnabled()) {
             revert BlacklistedAccount(account);
         }
         _;
@@ -139,7 +155,7 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
      * @param account The address to check for presence in the blacklist
      */
     modifier notBlacklistedOrBypassIfBlacklister(address account) {
-        if (_blacklisted[account] && !isBlacklister(_msgSender())) {
+        if (_blacklisted[account] && isBlacklistEnabled() && !isBlacklister(_msgSender())) {
             revert BlacklistedAccount(account);
         }
         _;
@@ -230,6 +246,27 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
+     * @notice Enables or disables the blacklist
+     *
+     * Requirements:
+     *
+     * - Can only be called by the owner
+     *
+     * Emits a {BlacklistEnabled} event
+     *
+     * @param status The new status of the blacklist
+     */
+    function enableBlacklist(bool status) external onlyOwner {
+        BooleanSlot storage enabled = _getBooleanSlot(_STORAGE_SLOT_ENABLED);
+        if (enabled.value == status) {
+            revert AlreadyConfigured();
+        }
+
+        enabled.value = status;
+        emit BlacklistEnabled(status);
+    }
+
+    /**
      * @notice Updates the main blacklister address
      *
      * Requirements:
@@ -299,9 +336,28 @@ abstract contract BlacklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
+     * @notice Checks if the blacklist is enabled
+     *
+     * @return True if the blacklist is enabled, False otherwise
+     */
+    function isBlacklistEnabled() public view returns (bool) {
+        return _getBooleanSlot(_STORAGE_SLOT_ENABLED).value;
+    }
+
+    /**
      * @dev Returns an `MappingSlot` with member `value` located at `slot`
      */
     function _getMappingSlot(bytes32 slot) internal pure returns (MappingSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `BooleanSlot` with member `value` located at `slot`
+     */
+    function _getBooleanSlot(bytes32 slot) internal pure returns (BooleanSlot storage r) {
         /// @solidity memory-safe-assembly
         assembly {
             r.slot := slot
