@@ -44,7 +44,7 @@ describe("Contract 'InfinitePointsToken'", async () => {
             expect(await token.owner()).to.equal(deployer.address);
             expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
             expect(await token.rescuer()).to.equal(ethers.constants.AddressZero);
-            expect(await token.mainBlacklister()).to.equal(ethers.constants.AddressZero);
+            expect(await token.mainBlocklister()).to.equal(ethers.constants.AddressZero);
             expect(await token.balanceOf(deployer.address)).to.equal(BigNumber.from(TOTAL_SUPPLY));
         });
 

@@ -495,7 +495,7 @@ describe("Contract 'YieldStreamer'", async () => {
   const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
   const REVERT_MESSAGE_PAUSABLE_PAUSED = "Pausable: paused";
 
-  const REVERT_ERROR_BLACKLISTED_ACCOUNT = "BlacklistedAccount";
+  const REVERT_ERROR_BLOCKLISTED_ACCOUNT = "BlocklistedAccount";
   const REVERT_ERROR_BALANCE_TRACKER_ALREADY_CONFIGURED = "BalanceTrackerAlreadyConfigured";
   const REVERT_ERROR_CLAIM_AMOUNT_BELOW_MINIMUM = "ClaimAmountBelowMinimum";
   const REVERT_ERROR_CLAIM_AMOUNT_NON_ROUNDED = "ClaimAmountNonRounded";
@@ -541,7 +541,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
     const yieldStreamer: Contract = await upgrades.deployProxy(yieldStreamerFactory);
     await yieldStreamer.deployed();
-    await proveTx(yieldStreamer.enableBlacklist(true));
+    await proveTx(yieldStreamer.enableBlocklist(true));
 
     return {
       tokenMock,
@@ -1213,15 +1213,15 @@ describe("Contract 'YieldStreamer'", async () => {
         ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
       });
 
-      it("The user is blacklisted", async () => {
+      it("The user is blocklisted", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        await proveTx(context.yieldStreamer.connect(user).selfBlacklist());
+        await proveTx(context.yieldStreamer.connect(user).selfBlocklist());
 
         await expect(
           context.yieldStreamer.connect(user).claim(0)
         ).to.be.revertedWithCustomError(
           context.yieldStreamer,
-          REVERT_ERROR_BLACKLISTED_ACCOUNT
+          REVERT_ERROR_BLOCKLISTED_ACCOUNT
         ).withArgs(
           user.address
         );
