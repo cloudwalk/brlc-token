@@ -454,6 +454,8 @@ describe("Contract 'YieldStreamer'", async () => {
     const yieldStreamer: Contract = await upgrades.deployProxy(yieldStreamerFactory);
     await yieldStreamer.deployed();
 
+    await proveTx(yieldStreamer.enableBlocklist(true));
+
     return {
       tokenMock,
       balanceTrackerMock,

@@ -12,13 +12,16 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
  * which can be applied to functions to restrict their usage to not blocklisted accounts only.
  */
 abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
-    /// @notice The structure used to describe blocklisters mapping
-    struct MappingSlot {
-        mapping (address => bool) blocklisters;
+    /// @notice The structure that represents blocklistable contract storage
+    struct BlocklistableStorageSlot {
+        /// @notice The mapping of presence in the blocklist for a given address
+        mapping(address => bool) blocklisters;
+        /// @notice The enabled/disabled status of the blocklist
+        bool enabled;
     }
 
     /// @notice The memory slot used to store blocklisters mapping
-    bytes32 private constant _MAP_STORAGE_SLOT = 0xff11fdfa16fed3260ed0e7147f7cc6da11a60208b5b9406d12a635614ffd9141;
+    bytes32 private constant _BLOCKLISTABLE_STORAGE_SLOT = 0xff11fdfa16fed3260ed0e7147f7cc6da11a60208b5b9406d12a635614ffd9141;
 
     /// @notice The address of the blocklister that is allowed to add and remove accounts from the blocklist
     address private _mainBlocklister;
@@ -63,6 +66,13 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      * @param status The new status of the blocklister
      */
     event BlocklisterConfigured(address indexed blocklister, bool status);
+
+    /**
+     * @notice Emitted when the blocklist is enabled or disabled
+     *
+     * @param status The new enabled/disabled status of the blocklist
+     */
+    event BlocklistEnabled(bool indexed status);
 
     // -------------------- Errors -----------------------------------
 
@@ -126,7 +136,19 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      * @param account The address to check for presence in the blocklist
      */
     modifier notBlocklisted(address account) {
-        if (_blocklisted[account]) {
+        if (_blocklisted[account] && isBlocklistEnabled()) {
+            revert BlocklistedAccount(account);
+        }
+        _;
+    }
+
+    /**
+     * @notice Throws if the account is blocklisted, but allows the blocklister to bypass the check
+     *
+     * @param account The address to check for presence in the blocklist
+     */
+    modifier notBlocklistedOrBypassIfBlocklister(address account) {
+        if (_blocklisted[account] && isBlocklistEnabled() && !isBlocklister(_msgSender())) {
             revert BlocklistedAccount(account);
         }
         _;
@@ -217,6 +239,27 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
+     * @notice Enables or disables the blocklist
+     *
+     * Requirements:
+     *
+     * - Can only be called by the owner
+     *
+     * Emits a {BlocklistEnabled} event
+     *
+     * @param status The new enabled/disabled status of the blocklist
+     */
+    function enableBlocklist(bool status) external onlyOwner {
+        BlocklistableStorageSlot storage storageSlot = _getBlocklistableSlot(_BLOCKLISTABLE_STORAGE_SLOT);
+        if (storageSlot.enabled == status) {
+            revert AlreadyConfigured();
+        }
+
+        storageSlot.enabled = status;
+        emit BlocklistEnabled(status);
+    }
+
+    /**
     * @notice Updates the main blocklister address
     *
     * Requirements:
@@ -249,12 +292,12 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      * @param status The new status of the blocklister
      */
     function configureBlocklister(address account, bool status) external onlyMainBlocklister {
-        mapping(address=>bool) storage map = _getMap(_MAP_STORAGE_SLOT);
-        if (map[account] == status) {
+        BlocklistableStorageSlot storage storageSlot = _getBlocklistableSlot(_BLOCKLISTABLE_STORAGE_SLOT);
+        if (storageSlot.blocklisters[account] == status) {
             revert AlreadyConfigured();
         }
 
-        map[account] = status;
+        storageSlot.blocklisters[account] = status;
         emit BlocklisterConfigured(account, status);
     }
 
@@ -282,17 +325,23 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      * @return True if the account is a configured blocklister, False otherwise
      */
     function isBlocklister(address account) public view returns (bool) {
-        mapping(address=>bool) storage map = _getMap(_MAP_STORAGE_SLOT);
-        return map[account];
+        return _getBlocklistableSlot(_BLOCKLISTABLE_STORAGE_SLOT).blocklisters[account];
     }
 
-    function _getMap(bytes32 slot) internal view returns (mapping(address=>bool) storage) {
-        MappingSlot storage r;
+    /**
+     * @notice Checks if the blocklist is enabled
+     *
+     * @return True if the blocklist is enabled, False otherwise
+     */
+    function isBlocklistEnabled() public view returns (bool) {
+        return _getBlocklistableSlot(_BLOCKLISTABLE_STORAGE_SLOT).enabled;
+    }
+
+    function _getBlocklistableSlot(bytes32 slot) internal pure returns (BlocklistableStorageSlot storage r) {
         /// @solidity memory-safe-assembly
         assembly {
             r.slot := slot
         }
-        return r.blocklisters;
     }
 
     //*************** Service Functions For Backward Compatibility ***************
