@@ -208,10 +208,4 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     function minterAllowance(address minter) external view returns (uint256) {
         return _mintersAllowance[minter];
     }
-
-    //*************** Service Functions For Backward Compatibility ***************
-
-    function updateMasterMinter(address newMasterMinter) external onlyOwner {
-        updateMainMinter(newMasterMinter);
-    }
 }

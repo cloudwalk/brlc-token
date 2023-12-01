@@ -358,25 +358,4 @@ describe("Contract 'ERC20Mintable'", async () => {
             ).to.be.revertedWith(REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
         });
     });
-
-    describe("Backward Compatibility functions", async () => {
-        it("Function 'updateMasterMinter()' executes as expected and emits the correct event", async () => {
-            const { token } = await setUpFixture(deployToken);
-            await expect(token.connect(deployer).updateMasterMinter(mainMinter.address))
-                .to.emit(token, EVENT_NAME_MAIN_MINTER_CHANGED)
-                .withArgs(mainMinter.address);
-            expect(await token.mainMinter()).to.equal(mainMinter.address);
-            await expect(token.connect(deployer).updateMasterMinter(mainMinter.address)).not.to.emit(
-                token,
-                EVENT_NAME_MAIN_MINTER_CHANGED
-            );
-        });
-
-        it("Function 'updateMasterMinter()' is reverted if called not by the owner", async () => {
-            const { token } = await setUpFixture(deployToken);
-            await expect(token.connect(user).updateMasterMinter(mainMinter.address)).to.be.revertedWith(
-                REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER
-            );
-        });
-    });
 });
