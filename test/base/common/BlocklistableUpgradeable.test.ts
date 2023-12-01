@@ -404,5 +404,12 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
                 EVENT_NAME_SELFBLOCKLISTED
             );
         });
+
+        it("Function 'isBlacklisted' executes as expected", async () => {
+            const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
+            expect(await blocklistable.isBlacklisted(user.address)).to.equal(false);
+            await proveTx(blocklistable.connect(user).selfBlocklist());
+            expect(await blocklistable.isBlacklisted(user.address)).to.equal(true);
+        })
     });
 });

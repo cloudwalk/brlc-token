@@ -361,4 +361,8 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
     function selfBlacklist() external {
         selfBlocklist();
     }
+
+    function isBlacklisted(address account) external view returns (bool) {
+        return isBlocklisted(account);
+    }
 }
