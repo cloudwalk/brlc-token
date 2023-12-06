@@ -280,6 +280,7 @@ contract YieldStreamer is
      *
      * - Can only be called by the contract owner
      * - The new day must be greater than the last day
+     * - The new day must be greater than the look-back period
      * - The new value must not be zero
      *
      * Emits an {LookBackPeriodConfigured} event
@@ -302,7 +303,7 @@ contract YieldStreamer is
             revert LookBackPeriodInvalidParametersCombination();
         }
 
-        if (_lookBackPeriods.length > 0) {
+        if (_lookBackPeriods.length != 0) {
             // As temporary solution, prevent multiple configuration
             // of the look-back period as this will require a more complex logic
             revert LookBackPeriodCountLimit();
@@ -310,6 +311,41 @@ contract YieldStreamer is
 
         _lookBackPeriods.push(LookBackPeriod({ effectiveDay: _toUint16(effectiveDay), length: _toUint16(length) }));
 
+        emit LookBackPeriodConfigured(effectiveDay, length);
+    }
+
+    /**
+     * @notice Updates the look-back period at the specified index
+     *
+     * Requirements:
+     *
+     * - Can only be called by the contract owner
+     * - The new day must be greater than the last day
+     * - The new day must be greater than the look-back period
+     * - The new value must not be zero
+     *
+     * Emits an {LookBackPeriodConfigured} event
+     *
+     * @param effectiveDay The index of the day the look-back period come into use
+     * @param length The length of the new look-back period in days
+     * @param index The index of the look-back period in the array
+     */
+    function updateLookBackPeriod(uint256 effectiveDay, uint256 length,  uint256 index) external onlyOwner {
+        if (length == 0) {
+            revert LookBackPeriodLengthZero();
+        }
+        if (effectiveDay < length - 1) {
+            revert LookBackPeriodInvalidParametersCombination();
+        }
+
+        if (_lookBackPeriods.length != 1) {
+            // As temporary solution, prevent multiple configuration
+            // of the look-back period as this will require a more complex logic
+            revert LookBackPeriodCountLimit();
+        }
+
+        _lookBackPeriods[index].effectiveDay = _toUint16(effectiveDay);
+        _lookBackPeriods[index].length = _toUint16(length);
         emit LookBackPeriodConfigured(effectiveDay, length);
     }
 
