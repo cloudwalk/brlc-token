@@ -502,6 +502,7 @@ describe("Contract 'YieldStreamer'", async () => {
   const REVERT_ERROR_CLAIM_REJECTION_DUE_TO_SHORTFALL = "ClaimRejectionDueToShortfall";
   const REVERT_ERROR_FEE_RECEIVER_ALREADY_CONFIGURED = "FeeReceiverAlreadyConfigured";
   const REVERT_ERROR_LOOK_BACK_PERIOD_COUNT_LIMIT = "LookBackPeriodCountLimit";
+  const REVERT_ERROR_LOOK_BACK_PERIOD_WRONG_INDEX = "LookBackPeriodWrongIndex";
   const REVERT_ERROR_LOOK_BACK_PERIOD_INVALID_EFFECTIVE_DAY = "LookBackPeriodInvalidEffectiveDay";
   const REVERT_ERROR_LOOK_BACK_PERIOD_INVALID_PARAMETERS_COMBINATION = "LookBackPeriodInvalidParametersCombination";
   const REVERT_ERROR_LOOK_BACK_PERIOD_LENGTH_ALREADY_CONFIGURED = "LookBackPeriodLengthAlreadyConfigured";
@@ -516,6 +517,7 @@ describe("Contract 'YieldStreamer'", async () => {
   const EVENT_CLAIM = "Claim";
   const EVENT_FEE_RECEIVER_CHANGED = "FeeReceiverChanged";
   const EVENT_LOOK_BACK_PERIOD_CONFIGURED = "LookBackPeriodConfigured";
+  const EVENT_LOOK_BACK_PERIOD_UPDATED = "LookBackPeriodUpdated";
   const EVENT_YIELD_RATE_CONFIGURED = "YieldRateConfigured";
 
   let tokenMockFactory: ContractFactory;
@@ -852,10 +854,13 @@ describe("Contract 'YieldStreamer'", async () => {
         0
       )).to.emit(
         context.yieldStreamer,
-        EVENT_LOOK_BACK_PERIOD_CONFIGURED
+        EVENT_LOOK_BACK_PERIOD_UPDATED
       ).withArgs(
-        expectedLookBackPeriodRecord.effectiveDay,
-        expectedLookBackPeriodRecord.length
+        0,
+        YIELD_STREAMER_INIT_DAY + 1,
+        YIELD_STREAMER_INIT_DAY,
+        LOOK_BACK_PERIOD_LENGTH + 1,
+        LOOK_BACK_PERIOD_LENGTH
       );
 
       await checkLookBackPeriods(context.yieldStreamer, [expectedLookBackPeriodRecord]);
@@ -909,6 +914,24 @@ describe("Contract 'YieldStreamer'", async () => {
       )).revertedWithCustomError(
         context.yieldStreamer,
         REVERT_ERROR_LOOK_BACK_PERIOD_INVALID_PARAMETERS_COMBINATION
+      );
+    });
+
+    it("Is reverted if the look-back period index is wrong", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+
+      await proveTx(context.yieldStreamer.configureLookBackPeriod(
+        YIELD_STREAMER_INIT_DAY,
+        LOOK_BACK_PERIOD_LENGTH
+      ));
+
+      await expect(context.yieldStreamer.updateLookBackPeriod(
+        YIELD_STREAMER_INIT_DAY + 1,
+        LOOK_BACK_PERIOD_LENGTH + 1,
+        1
+      )).revertedWithCustomError(
+        context.yieldStreamer,
+        REVERT_ERROR_LOOK_BACK_PERIOD_WRONG_INDEX
       );
     });
   });

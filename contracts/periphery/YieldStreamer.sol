@@ -98,6 +98,23 @@ contract YieldStreamer is
     event LookBackPeriodConfigured(uint256 effectiveDay, uint256 length);
 
     /**
+     * @notice Emitted when an existing look-back period is updated
+     *
+     * @param index The The index of the updated look-back period in the chronological array
+     * @param oldEffectiveDay The old index of the day the updated look-back period come into use
+     * @param newEffectiveDay The new index of the day the updated look-back period come into use
+     * @param newLength  The old length of the updated look-back period in days
+     * @param oldLength  The old length of the updated look-back period in days
+     */
+    event LookBackPeriodUpdated(
+        uint256 index,
+        uint256 newEffectiveDay,
+        uint256 oldEffectiveDay,
+        uint256 newLength,
+        uint256 oldLength
+    );
+
+    /**
      * @notice Emitted when a new yield rate is added to the chronological array
      *
      * @param effectiveDay The index of the day the yield rate come into use
@@ -131,6 +148,11 @@ contract YieldStreamer is
      * @notice Thrown when the limit of count for already configured look-back periods has reached
      */
     error LookBackPeriodCountLimit();
+
+    /**
+     * @notice Thrown when the specified look-back period index is out of range
+     */
+    error LookBackPeriodWrongIndex();
 
     /**
      * @notice Thrown when the specified effective day of a yield rate is not greater than the last configured one
@@ -337,16 +359,21 @@ contract YieldStreamer is
         if (effectiveDay < length - 1) {
             revert LookBackPeriodInvalidParametersCombination();
         }
-
-        if (_lookBackPeriods.length != 1) {
-            // As temporary solution, prevent multiple configuration
-            // of the look-back period as this will require a more complex logic
-            revert LookBackPeriodCountLimit();
+        if (index >= _lookBackPeriods.length) {
+            revert LookBackPeriodWrongIndex();
         }
 
-        _lookBackPeriods[index].effectiveDay = _toUint16(effectiveDay);
-        _lookBackPeriods[index].length = _toUint16(length);
-        emit LookBackPeriodConfigured(effectiveDay, length);
+        LookBackPeriod storage period = _lookBackPeriods[index];
+
+        emit LookBackPeriodUpdated(
+            index,
+            effectiveDay,
+            period.effectiveDay,
+            length,
+            period.length);
+
+        period.effectiveDay = _toUint16(effectiveDay);
+        period.length = _toUint16(length);
     }
 
     /**
