@@ -599,7 +599,7 @@ describe("Contract 'YieldStreamer'", async () => {
     });
   });
 
-  describe(" Function 'setFeeReceiver()'", async () => {
+  describe("Function 'setFeeReceiver()'", async () => {
     it("Executes as expected", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
 
@@ -657,7 +657,7 @@ describe("Contract 'YieldStreamer'", async () => {
     });
   });
 
-  describe(" Function 'setBalanceTracker()'", async () => {
+  describe("Function 'setBalanceTracker()'", async () => {
     it("Executes as expected", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
 
@@ -715,7 +715,7 @@ describe("Contract 'YieldStreamer'", async () => {
     });
   });
 
-  describe(" Function 'configureLookBackPeriod()'", async () => {
+  describe("Function 'configureLookBackPeriod()'", async () => {
     it("Executes as expected", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
       const expectedLookBackPeriodRecord: LookBackPeriodRecord = {
@@ -913,7 +913,7 @@ describe("Contract 'YieldStreamer'", async () => {
     });
   });
 
-  describe(" Function 'configureYieldRate()'", async () => {
+  describe("Function 'configureYieldRate()'", async () => {
     it("Executes as expected", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
       const expectedYieldRateRecord1: YieldRateRecord = {
@@ -1027,7 +1027,7 @@ describe("Contract 'YieldStreamer'", async () => {
     });
   });
 
-  describe(" Function 'calculateYieldByDays()'", async () => {
+  describe("Function 'calculateYieldByDays()'", async () => {
     const balanceRecords: BalanceRecord[] = balanceRecordsCase1;
     const lookBackPeriodLength = LOOK_BACK_PERIOD_LENGTH;
     const dayFrom = YIELD_STREAMER_INIT_DAY + 2;
@@ -1110,7 +1110,7 @@ describe("Contract 'YieldStreamer'", async () => {
     });
   });
 
-  describe(" Function 'claimAllPreview()'", async () => {
+  describe("Function 'claimAllPreview()'", async () => {
     describe("Executes as expected if", async () => {
       const claimRequest: ClaimRequest = {
         amount: BIG_NUMBER_MAX_UINT256,
@@ -1133,7 +1133,7 @@ describe("Contract 'YieldStreamer'", async () => {
     });
   });
 
-  describe(" Function 'claimPreview()'", async () => {
+  describe("Function 'claimPreview()'", async () => {
     describe("Executes as expected if token balances are according to case 1 and", async () => {
       const baseClaimRequest: ClaimRequest = {
         amount: BIG_NUMBER_MAX_UINT256,
@@ -1218,7 +1218,7 @@ describe("Contract 'YieldStreamer'", async () => {
     });
   });
 
-  describe(" Function 'claim()'", async () => {
+  describe("Function 'claim()'", async () => {
     const baseClaimRequest: ClaimRequest = {
       amount: BIG_NUMBER_MAX_UINT256,
       firstYieldDay: YIELD_STREAMER_INIT_DAY,
@@ -1573,7 +1573,7 @@ describe("Contract 'YieldStreamer'", async () => {
     });
   });
 
-  describe(" Function 'getDailyBalancesWithYield()'", async () => {
+  describe("Function 'getDailyBalancesWithYield()'", async () => {
     const balanceRecords: BalanceRecord[] = balanceRecordsCase1;
     const balanceWithYieldByDaysRequestBase: BalanceWithYieldByDaysRequest = {
       lookBackPeriodLength: LOOK_BACK_PERIOD_LENGTH,
