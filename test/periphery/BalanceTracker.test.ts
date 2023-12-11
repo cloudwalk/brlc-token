@@ -12,6 +12,9 @@ const NEGATIVE_TIME_SHIFT = 3 * HOUR_IN_SECONDS;
 const ZERO_ADDRESS = ethers.constants.AddressZero;
 const ZERO_BIG_NUMBER = ethers.constants.Zero;
 const INIT_TOKEN_BALANCE: BigNumber = BigNumber.from(1000_000_000_000);
+const INIT_SERVICE_ACC_TOKEN_BALANCE: BigNumber = BigNumber.from(10_000_000_000);
+const SERVICE_USER_ADDRESS = "0xf128B6142D65fBF539a5204561da920602fe34c3"
+const SERVICE_START_DAY = 19703
 
 interface BalanceRecord {
   accountAddress: string;
@@ -198,7 +201,12 @@ function defineExpectedDailyBalances(context: TestContext, dailyBalancesRequest:
   const dailyBalances: BigNumber[] = [];
   if (balanceRecords.length === 0) {
     for (let day = dayFrom; day <= dayTo; ++day) {
-      dailyBalances.push(currentBalance);
+      if(address == SERVICE_USER_ADDRESS && day <= SERVICE_START_DAY)
+      {
+        dailyBalances.push(INIT_SERVICE_ACC_TOKEN_BALANCE);
+      } else {
+        dailyBalances.push(currentBalance);
+      }
     }
   } else {
     let recordIndex = 0;
@@ -209,9 +217,19 @@ function defineExpectedDailyBalances(context: TestContext, dailyBalancesRequest:
         }
       }
       if (recordIndex >= balanceRecords.length || balanceRecords[recordIndex].day < day) {
-        dailyBalances.push(currentBalance);
+        if(address == SERVICE_USER_ADDRESS && day <= SERVICE_START_DAY)
+        {
+          dailyBalances.push(INIT_SERVICE_ACC_TOKEN_BALANCE);
+        } else {
+          dailyBalances.push(currentBalance);
+        }
       } else {
-        dailyBalances.push(balanceRecords[recordIndex].value);
+        if(address == SERVICE_USER_ADDRESS && day <= SERVICE_START_DAY)
+        {
+          dailyBalances.push(INIT_SERVICE_ACC_TOKEN_BALANCE);
+        } else {
+          dailyBalances.push(balanceRecords[recordIndex].value);
+        }
       }
     }
   }
@@ -283,6 +301,7 @@ describe("Contract 'BalanceTracker'", async () => {
     const balanceByAddressMap: Map<string, BigNumber> = new Map();
     balanceByAddressMap.set(user1.address, INIT_TOKEN_BALANCE);
     balanceByAddressMap.set(user2.address, INIT_TOKEN_BALANCE);
+    balanceByAddressMap.set(SERVICE_USER_ADDRESS, ZERO_BIG_NUMBER);
     const balanceRecordsByAddressMap: Map<string, BalanceRecord[]> = new Map();
     return {
       balanceTracker,
@@ -644,6 +663,94 @@ describe("Contract 'BalanceTracker'", async () => {
           const tokenTransfers: TokenTransfer[] = [];
           const dayFrom: number = context.balanceTrackerInitDay;
           const dayTo: number = context.balanceTrackerInitDay + 3;
+          await checkDailyBalances(context, tokenTransfers, dayFrom, dayTo);
+        });
+      });
+    });
+
+    describe("Executes as expected for the service account if", async () => {
+      async function checkDailyBalances(
+          context: TestContext,
+          tokenTransfers: TokenTransfer[],
+          dayFrom: number,
+          dayTo: number
+      ) {
+        await executeTokenTransfers(context, tokenTransfers);
+
+        const expectedDailyBalancesForTestUser: BigNumber[] = defineExpectedDailyBalances(context, {
+          address: SERVICE_USER_ADDRESS,
+          dayFrom: dayFrom,
+          dayTo: dayTo
+        });
+        const actualDailyBalancesForTestUser: BigNumber[] =
+            await context.balanceTracker.getDailyBalances(SERVICE_USER_ADDRESS, dayFrom, dayTo);
+        expect(expectedDailyBalancesForTestUser).to.deep.equal(actualDailyBalancesForTestUser);
+      }
+
+      function prepareTokenTransfers(context: TestContext, firstTransferDay: number): TokenTransfer[] {
+        const transfer1: TokenTransfer = {
+          executionDay: firstTransferDay,
+          addressFrom: user1.address,
+          addressTo: SERVICE_USER_ADDRESS,
+          amount: BigNumber.from(100),
+        };
+        const transfer2: TokenTransfer = {
+          executionDay: firstTransferDay + 2,
+          addressFrom: user1.address,
+          addressTo: SERVICE_USER_ADDRESS,
+          amount: BigNumber.from(500),
+        };
+        const transfer3: TokenTransfer = {
+          executionDay: firstTransferDay + 6,
+          addressFrom: user1.address,
+          addressTo: SERVICE_USER_ADDRESS,
+          amount: BigNumber.from(10000 / 2),
+        };
+        return [transfer1, transfer2, transfer3];
+      }
+
+      describe("There are several balance records starting from the previous days with gaps and", async () => {
+        it("The 'from' day equals the some previous days and the `to` day is before init test day", async () => {
+          const context: TestContext = await initTestContext();
+          const tokenTransfers: TokenTransfer[] = prepareTokenTransfers(context, SERVICE_START_DAY);
+          const dayFrom: number = SERVICE_START_DAY - 6;
+          const dayTo: number = SERVICE_START_DAY - 1;
+          await checkDailyBalances(context, tokenTransfers, dayFrom, dayTo);
+        });
+
+        it("The 'from' day equals the some previous days and the `to` day is the init test day", async () => {
+          const context: TestContext = await initTestContext();
+          const tokenTransfers: TokenTransfer[] = prepareTokenTransfers(context, SERVICE_START_DAY + 1);
+          const dayFrom: number = SERVICE_START_DAY - 5;
+          const dayTo: number = SERVICE_START_DAY;
+          await checkDailyBalances(context, tokenTransfers, dayFrom, dayTo);
+        });
+
+        it("The 'from' day is the some previous day and the `to` day is the after init test day", async () => {
+          const context: TestContext = await initTestContext();
+          const tokenTransfers: TokenTransfer[] = prepareTokenTransfers(context, SERVICE_START_DAY + 1);
+          const dayFrom: number = SERVICE_START_DAY - 3;
+          const dayTo: number = SERVICE_START_DAY + 2;
+          await checkDailyBalances(context, tokenTransfers, dayFrom, dayTo);
+        });
+      });
+
+      describe("There are several balance records starting in the init service day with gaps and", async () => {
+        it("The 'from' day is init service day and the `to` day is the after init service test day", async () => {
+          const context: TestContext = await initTestContext();
+          const tokenTransfers: TokenTransfer[] = prepareTokenTransfers(context, SERVICE_START_DAY + 1);
+          const dayFrom: number = SERVICE_START_DAY;
+          const dayTo: number = SERVICE_START_DAY + 5;
+          await checkDailyBalances(context, tokenTransfers, dayFrom, dayTo);
+        });
+      });
+
+      describe("There are several balance records starting in the after init service day with gaps and", async () => {
+        it("The 'from' day is after service day and the `to` day is the after init service test day", async () => {
+          const context: TestContext = await initTestContext();
+          const tokenTransfers: TokenTransfer[] = prepareTokenTransfers(context, SERVICE_START_DAY + 1);
+          const dayFrom: number = SERVICE_START_DAY + 1;
+          const dayTo: number = SERVICE_START_DAY + 6;
           await checkDailyBalances(context, tokenTransfers, dayFrom, dayTo);
         });
       });
