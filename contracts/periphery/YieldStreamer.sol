@@ -122,6 +122,23 @@ contract YieldStreamer is
      */
     event YieldRateConfigured(uint256 effectiveDay, uint256 value);
 
+    /**
+     * @notice Emitted when an yield rate is updated
+     *
+     * @param index The The index of the yield rate array in the chronological array
+     * @param newEffectiveDay The new effective day of the updated yield rate come into use
+     * @param oldEffectiveDay The old effective day of the updated yield rate
+     * @param newValue The new yield rate value
+     * @param oldValue The old yield rate value
+     */
+    event YieldRateUpdated(
+        uint256 index,
+        uint256 newEffectiveDay,
+        uint256 oldEffectiveDay,
+        uint256 newValue,
+        uint256 oldValue
+    );
+
     // -------------------- Errors -----------------------------------
 
     /**
@@ -163,6 +180,11 @@ contract YieldStreamer is
      * @notice Thrown when the specified value of a yield rate is already configured
      */
     error YieldRateValueAlreadyConfigured();
+
+    /**
+     * @notice Thrown when the index of a yield rate is out of range
+     */
+    error YieldRateWrongIndex();
 
     /**
      * @notice Thrown when the requested claim is rejected due to its amount is greater than the available yield
@@ -359,7 +381,7 @@ contract YieldStreamer is
         if (effectiveDay < length - 1) {
             revert LookBackPeriodInvalidParametersCombination();
         }
-        if (index >= _lookBackPeriods.length) {
+        if (_lookBackPeriods.length == 0 || index >= _lookBackPeriods.length) {
             revert LookBackPeriodWrongIndex();
         }
 
@@ -400,6 +422,47 @@ contract YieldStreamer is
         _yieldRates.push(YieldRate({ effectiveDay: _toUint16(effectiveDay), value: _toUint240(value) }));
 
         emit YieldRateConfigured(effectiveDay, value);
+    }
+
+    /**
+     * @notice Updates the yield rate at the specified index
+     *
+     * Requirements:
+     *
+     * - Can only be called by the contract owner
+     * - Yield rate must be configured
+     * - The index must be in range of yield rates array
+     * - The new day must be equal or greater than previous and equal or less than next days
+     *
+     * Emits an {YieldRateUpdated} event
+     *
+     * @param effectiveDay The index of the day the yield rate come into use
+     * @param value The value of the yield rate
+     * @param index The index of the yield rate in the array
+     */
+    function updateYieldRate(uint256 effectiveDay, uint256 value, uint256 index) external onlyOwner {
+        if (_yieldRates.length == 0 || index >= _yieldRates.length) {
+            revert YieldRateWrongIndex();
+        }
+
+        if (
+            (index > 0 && _yieldRates.length - 1 >= index - 1 && effectiveDay < _yieldRates[index - 1].effectiveDay) ||
+            (_yieldRates.length - 1 >= index + 1 && effectiveDay > _yieldRates[index + 1].effectiveDay)
+        ) {
+            revert YieldRateInvalidEffectiveDay();
+        }
+
+        YieldRate storage yieldRate = _yieldRates[index];
+
+        emit YieldRateUpdated(
+            index,
+            effectiveDay,
+            yieldRate.effectiveDay,
+            value,
+            yieldRate.value);
+
+        yieldRate.effectiveDay = _toUint16(effectiveDay);
+        yieldRate.value = _toUint240(value);
     }
 
     // -------------------- User Functions ---------------------------
