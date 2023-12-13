@@ -12,6 +12,9 @@ const NEGATIVE_TIME_SHIFT = 3 * HOUR_IN_SECONDS;
 const ZERO_ADDRESS = ethers.constants.AddressZero;
 const ZERO_BIG_NUMBER = ethers.constants.Zero;
 const INIT_TOKEN_BALANCE: BigNumber = BigNumber.from(1000_000_000_000);
+const SERVICE_ACCOUNT_SPECIAL_TOKEN_BALANCE: BigNumber = BigNumber.from(10_000_000_000);
+const SERVICE_ACCOUNT_ADDRESS = "0xf128B6142D65fBF539a5204561da920602fe34c3";
+const SERVICE_START_DAY = 19703; // The date: 2023-12-12
 
 interface BalanceRecord {
   accountAddress: string;
@@ -645,6 +648,24 @@ describe("Contract 'BalanceTracker'", async () => {
           const dayFrom: number = context.balanceTrackerInitDay;
           const dayTo: number = context.balanceTrackerInitDay + 3;
           await checkDailyBalances(context, tokenTransfers, dayFrom, dayTo);
+        });
+      });
+    });
+
+    describe("Executes as expected for the service account if", async () => {
+      describe("There were no token transfers for the account and ", async () => {
+        it("The 'from' day is before the service start day and the `to` day is after it", async () => {
+          const context: TestContext = await initTestContext();
+          const dayFrom = SERVICE_START_DAY - 1;
+          const dayTo = SERVICE_START_DAY + 1;
+          const expectedDailyBalances: BigNumber[] = [
+            SERVICE_ACCOUNT_SPECIAL_TOKEN_BALANCE,
+            SERVICE_ACCOUNT_SPECIAL_TOKEN_BALANCE,
+            ZERO_BIG_NUMBER
+          ];
+          const actualDailyBalances: BigNumber[] =
+            await context.balanceTracker.getDailyBalances(SERVICE_ACCOUNT_ADDRESS, dayFrom, dayTo);
+          expect(expectedDailyBalances).to.deep.equal(actualDailyBalances);
         });
       });
     });
