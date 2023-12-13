@@ -487,6 +487,22 @@ async function setUpFixture(func: any) {
   }
 }
 
+function expectedYieldRateRecords(): YieldRateRecord[] {
+  const expectedYieldRateRecord1: YieldRateRecord = {
+    effectiveDay: YIELD_STREAMER_INIT_DAY,
+    value: BigNumber.from(INITIAL_YIELD_RATE)
+  };
+  const expectedYieldRateRecord2: YieldRateRecord = {
+    effectiveDay: YIELD_STREAMER_INIT_DAY + 3,
+    value: BigNumber.from(INITIAL_YIELD_RATE * 2)
+  };
+  const expectedYieldRateRecord3: YieldRateRecord = {
+    effectiveDay: YIELD_STREAMER_INIT_DAY + 6,
+    value: BigNumber.from(INITIAL_YIELD_RATE * 3)
+  };
+
+  return [expectedYieldRateRecord1, expectedYieldRateRecord2, expectedYieldRateRecord3];
+}
 
 describe("Contract 'YieldStreamer'", async () => {
 
@@ -512,6 +528,7 @@ describe("Contract 'YieldStreamer'", async () => {
   const REVERT_ERROR_TO_DAY_PRIOR_FROM_DAY = "ToDayPriorFromDay";
   const REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY = "YieldRateInvalidEffectiveDay";
   const REVERT_ERROR_YIELD_RATE_VALUE_ALREADY_CONFIGURED = "YieldRateValueAlreadyConfigured";
+  const REVERT_ERROR_YIELD_RATE_WRONG_INDEX = "YieldRateWrongIndex";
 
   const EVENT_BALANCE_TRACKER_CHANGED = "BalanceTrackerChanged";
   const EVENT_CLAIM = "Claim";
@@ -519,6 +536,7 @@ describe("Contract 'YieldStreamer'", async () => {
   const EVENT_LOOK_BACK_PERIOD_CONFIGURED = "LookBackPeriodConfigured";
   const EVENT_LOOK_BACK_PERIOD_UPDATED = "LookBackPeriodUpdated";
   const EVENT_YIELD_RATE_CONFIGURED = "YieldRateConfigured";
+  const EVENT_YIELD_RATE_UPDATED = "YieldRateUpdated";
 
   let tokenMockFactory: ContractFactory;
   let balanceTrackerMockFactory: ContractFactory;
@@ -881,6 +899,19 @@ describe("Contract 'YieldStreamer'", async () => {
       )).revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
 
+    it("Is reverted if look backs are not configured", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+
+      await expect(context.yieldStreamer.updateLookBackPeriod(
+          YIELD_STREAMER_INIT_DAY,
+          LOOK_BACK_PERIOD_LENGTH,
+          4
+      )).revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_LOOK_BACK_PERIOD_WRONG_INDEX
+      );
+    });
+
     it("Is reverted if the new length is zero", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
 
@@ -939,14 +970,10 @@ describe("Contract 'YieldStreamer'", async () => {
   describe("Function 'configureYieldRate()'", async () => {
     it("Executes as expected", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
-      const expectedYieldRateRecord1: YieldRateRecord = {
-        effectiveDay: YIELD_STREAMER_INIT_DAY,
-        value: BigNumber.from(INITIAL_YIELD_RATE)
-      };
-      const expectedYieldRateRecord2: YieldRateRecord = {
-        effectiveDay: YIELD_STREAMER_INIT_DAY + 3,
-        value: BigNumber.from(INITIAL_YIELD_RATE * 2)
-      };
+      const [
+          expectedYieldRateRecord1,
+          expectedYieldRateRecord2
+      ] = expectedYieldRateRecords();
 
       await expect(context.yieldStreamer.configureYieldRate(
         expectedYieldRateRecord1.effectiveDay,
@@ -1046,6 +1073,250 @@ describe("Contract 'YieldStreamer'", async () => {
       )).revertedWithCustomError(
         context.yieldStreamer,
         REVERT_ERROR_SAFE_CAST_OVERFLOW_UINT240
+      );
+    });
+  });
+
+  describe("Function 'updateYieldRate()'", async () => {
+    it("Executes as expected", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const [
+          expectedYieldRateRecord1,
+          expectedYieldRateRecord2,
+          expectedYieldRateRecord3
+      ] = expectedYieldRateRecords();
+
+      await proveTx(context.yieldStreamer.configureYieldRate(
+          expectedYieldRateRecord1.effectiveDay,
+          expectedYieldRateRecord1.value
+      ));
+
+      await proveTx(context.yieldStreamer.configureYieldRate(
+          expectedYieldRateRecord2.effectiveDay,
+          expectedYieldRateRecord2.value
+      ));
+
+      await proveTx(context.yieldStreamer.configureYieldRate(
+          expectedYieldRateRecord3.effectiveDay,
+          expectedYieldRateRecord3.value
+      ));
+
+      const expectedYieldRateRecordUpdated1: YieldRateRecord = {
+        effectiveDay: YIELD_STREAMER_INIT_DAY + 2,
+        value: BigNumber.from(INITIAL_YIELD_RATE * 4)
+      };
+
+      await expect(context.yieldStreamer.updateYieldRate(
+          expectedYieldRateRecordUpdated1.effectiveDay,
+          expectedYieldRateRecordUpdated1.value,
+          0
+      )).to.emit(
+          context.yieldStreamer,
+          EVENT_YIELD_RATE_UPDATED
+      ).withArgs(
+          0,
+          expectedYieldRateRecordUpdated1.effectiveDay,
+          expectedYieldRateRecord1.effectiveDay,
+          expectedYieldRateRecordUpdated1.value,
+          expectedYieldRateRecord1.value
+      );
+
+      await checkYieldRates(context.yieldStreamer, [
+          expectedYieldRateRecordUpdated1,
+          expectedYieldRateRecord2,
+          expectedYieldRateRecord3
+      ]);
+
+      const expectedYieldRateRecordUpdated2: YieldRateRecord = {
+        effectiveDay: YIELD_STREAMER_INIT_DAY + 4,
+        value: BigNumber.from(INITIAL_YIELD_RATE * 4)
+      };
+
+      await expect(context.yieldStreamer.updateYieldRate(
+          expectedYieldRateRecordUpdated2.effectiveDay,
+          expectedYieldRateRecordUpdated2.value,
+          1
+      )).to.emit(
+          context.yieldStreamer,
+          EVENT_YIELD_RATE_UPDATED
+      ).withArgs(
+          1,
+          expectedYieldRateRecordUpdated2.effectiveDay,
+          expectedYieldRateRecord2.effectiveDay,
+          expectedYieldRateRecordUpdated2.value,
+          expectedYieldRateRecord2.value
+      );
+
+      await checkYieldRates(context.yieldStreamer, [
+          expectedYieldRateRecordUpdated1,
+          expectedYieldRateRecordUpdated2,
+          expectedYieldRateRecord3
+      ]);
+
+      const expectedYieldRateRecordUpdated3: YieldRateRecord = {
+        effectiveDay: YIELD_STREAMER_INIT_DAY + 8,
+        value: BigNumber.from(INITIAL_YIELD_RATE * 4)
+      };
+
+      await expect(context.yieldStreamer.updateYieldRate(
+          expectedYieldRateRecordUpdated3.effectiveDay,
+          expectedYieldRateRecordUpdated3.value,
+          2
+      )).to.emit(
+          context.yieldStreamer,
+          EVENT_YIELD_RATE_UPDATED
+      ).withArgs(
+          2,
+          expectedYieldRateRecordUpdated3.effectiveDay,
+          expectedYieldRateRecord3.effectiveDay,
+          expectedYieldRateRecordUpdated3.value,
+          expectedYieldRateRecord3.value
+      );
+
+      await checkYieldRates(context.yieldStreamer, [
+          expectedYieldRateRecordUpdated1,
+          expectedYieldRateRecordUpdated2,
+          expectedYieldRateRecordUpdated3
+      ]);
+    });
+
+    it("Is reverted if it is called not by the owner", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
+
+      await expect(context.yieldStreamer.connect(user).updateYieldRate(
+          effectiveDay,
+          INITIAL_YIELD_RATE,
+          1
+      )).revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+    });
+
+    it("Is reverted if yield rates are not configured", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+
+      await expect(context.yieldStreamer.updateYieldRate(
+          YIELD_STREAMER_INIT_DAY,
+          INITIAL_YIELD_RATE,
+          4
+      )).revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_YIELD_RATE_WRONG_INDEX
+      );
+    });
+
+    it("Is reverted if the index is out of yield rate array", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
+
+      await proveTx(context.yieldStreamer.configureYieldRate(
+          effectiveDay,
+          INITIAL_YIELD_RATE
+      ));
+
+      await expect(context.yieldStreamer.updateYieldRate(
+          effectiveDay,
+          INITIAL_YIELD_RATE,
+          4
+      )).revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_YIELD_RATE_WRONG_INDEX
+      );
+    });
+
+    it("Is reverted if the effective day is invalid", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+
+      await proveTx(context.yieldStreamer.configureYieldRate(
+          YIELD_STREAMER_INIT_DAY + 2,
+          INITIAL_YIELD_RATE
+      ));
+
+      await proveTx(context.yieldStreamer.configureYieldRate(
+          YIELD_STREAMER_INIT_DAY + 4,
+          INITIAL_YIELD_RATE * 2
+      ));
+
+      await proveTx(context.yieldStreamer.configureYieldRate(
+          YIELD_STREAMER_INIT_DAY + 6,
+          INITIAL_YIELD_RATE * 3
+      ));
+
+      await expect(context.yieldStreamer.updateYieldRate(
+          YIELD_STREAMER_INIT_DAY + 10,
+          INITIAL_YIELD_RATE,
+          0
+      )).revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY
+      );
+
+      await expect(context.yieldStreamer.updateYieldRate(
+          YIELD_STREAMER_INIT_DAY + 1,
+          INITIAL_YIELD_RATE,
+          1
+      )).revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY
+      );
+
+      await expect(context.yieldStreamer.updateYieldRate(
+          YIELD_STREAMER_INIT_DAY + 10,
+          INITIAL_YIELD_RATE,
+          1
+      )).revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY
+      );
+
+      await expect(context.yieldStreamer.updateYieldRate(
+          YIELD_STREAMER_INIT_DAY + 1,
+          INITIAL_YIELD_RATE,
+          2
+      )).revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY
+      );
+    });
+
+    // This test is to cover the internal function `_toUint16()`
+    it("Is reverted if the effective day index is greater than 16-bit unsigned integer", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = 65536;
+
+      await proveTx(context.yieldStreamer.configureYieldRate(
+          YIELD_STREAMER_INIT_DAY,
+          INITIAL_YIELD_RATE
+      ));
+
+      await expect(context.yieldStreamer.updateYieldRate(
+          effectiveDay,
+          INITIAL_YIELD_RATE,
+          0
+      )).revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_SAFE_CAST_OVERFLOW_UINT16
+      );
+    });
+
+    // This test is to cover the internal function `_toUint240()`
+    it("Is reverted if the new value is greater than 240-bit unsigned integer", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
+      const yieldRateValue: BigNumber =
+          BigNumber.from("0x1000000000000000000000000000000000000000000000000000000000000");
+
+      await proveTx(context.yieldStreamer.configureYieldRate(
+          YIELD_STREAMER_INIT_DAY,
+          INITIAL_YIELD_RATE
+      ));
+
+      await expect(context.yieldStreamer.updateYieldRate(
+          effectiveDay,
+          yieldRateValue,
+          0
+      )).revertedWithCustomError(
+          context.yieldStreamer,
+          REVERT_ERROR_SAFE_CAST_OVERFLOW_UINT240
       );
     });
   });
