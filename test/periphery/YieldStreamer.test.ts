@@ -1,10 +1,10 @@
-import {ethers, network, upgrades} from "hardhat";
-import {expect} from "chai";
-import {BigNumber, Contract, ContractFactory} from "ethers";
-import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
-import {proveTx} from "../../test-utils/eth";
-import {TransactionResponse} from "@ethersproject/abstract-provider";
+import { ethers, network, upgrades } from "hardhat";
+import { expect } from "chai";
+import { BigNumber, Contract, ContractFactory } from "ethers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { proveTx } from "../../test-utils/eth";
+import { TransactionResponse } from "@ethersproject/abstract-provider";
 
 const ZERO_ADDRESS = ethers.constants.AddressZero;
 const BIG_NUMBER_ZERO = ethers.constants.Zero;
@@ -88,15 +88,15 @@ interface ClaimState {
 }
 
 const balanceRecordsCase1: BalanceRecord[] = [
-  {day: BALANCE_TRACKER_INIT_DAY, value: BigNumber.from(0)},
-  {day: BALANCE_TRACKER_INIT_DAY + 1, value: BigNumber.from(8000_000_000_000)},
-  {day: BALANCE_TRACKER_INIT_DAY + 2, value: BigNumber.from(7000_000_000_000)},
-  {day: BALANCE_TRACKER_INIT_DAY + 3, value: BigNumber.from(6000_000_000_000)},
-  {day: BALANCE_TRACKER_INIT_DAY + 4, value: BigNumber.from(5000_000_000_000)},
-  {day: BALANCE_TRACKER_INIT_DAY + 5, value: BigNumber.from(1000_000_000_000)},
-  {day: BALANCE_TRACKER_INIT_DAY + 6, value: BigNumber.from(3000_000_000_000)},
-  {day: BALANCE_TRACKER_INIT_DAY + 7, value: BigNumber.from(2000_000_000_000)},
-  {day: BALANCE_TRACKER_INIT_DAY + 8, value: BigNumber.from(1000_000_000_000)},
+  { day: BALANCE_TRACKER_INIT_DAY, value: BigNumber.from(0) },
+  { day: BALANCE_TRACKER_INIT_DAY + 1, value: BigNumber.from(8000_000_000_000) },
+  { day: BALANCE_TRACKER_INIT_DAY + 2, value: BigNumber.from(7000_000_000_000) },
+  { day: BALANCE_TRACKER_INIT_DAY + 3, value: BigNumber.from(6000_000_000_000) },
+  { day: BALANCE_TRACKER_INIT_DAY + 4, value: BigNumber.from(5000_000_000_000) },
+  { day: BALANCE_TRACKER_INIT_DAY + 5, value: BigNumber.from(1000_000_000_000) },
+  { day: BALANCE_TRACKER_INIT_DAY + 6, value: BigNumber.from(3000_000_000_000) },
+  { day: BALANCE_TRACKER_INIT_DAY + 7, value: BigNumber.from(2000_000_000_000) },
+  { day: BALANCE_TRACKER_INIT_DAY + 8, value: BigNumber.from(1000_000_000_000) },
 ];
 
 const yieldRateRecordCase1: YieldRateRecord = {
@@ -184,7 +184,7 @@ function defineYieldRate(yieldRateRecords: YieldRateRecord[], day: number): BigN
 }
 
 function defineExpectedYieldByDays(yieldByDaysRequest: YieldByDaysRequest): BigNumber[] {
-  const {lookBackPeriodLength, yieldRateRecords, balanceRecords, dayFrom, dayTo, claimDebit} = yieldByDaysRequest;
+  const { lookBackPeriodLength, yieldRateRecords, balanceRecords, dayFrom, dayTo, claimDebit } = yieldByDaysRequest;
   if (dayFrom > dayTo) {
     throw new Error("Day 'from' is grater than day 'to' when defining the yield by days");
   }
@@ -214,10 +214,10 @@ function defineExpectedYieldByDays(yieldByDaysRequest: YieldByDaysRequest): BigN
 }
 
 function defineExpectedBalanceWithYieldByDays(request: BalanceWithYieldByDaysRequest): BigNumber[] {
-  const {balanceRecords, dayFrom, dayTo, firstYieldDay} = request;
+  const { balanceRecords, dayFrom, dayTo, firstYieldDay } = request;
   const balancesWithYield: BigNumber[] = defineExpectedDailyBalances(balanceRecords, dayFrom, dayTo);
   if (firstYieldDay <= dayTo) {
-    const yieldByDaysRequest: YieldByDaysRequest = {...(request as YieldByDaysRequest)};
+    const yieldByDaysRequest: YieldByDaysRequest = { ...(request as YieldByDaysRequest) };
     yieldByDaysRequest.dayFrom = request.firstYieldDay;
     const yields: BigNumber[] = defineExpectedYieldByDays(yieldByDaysRequest);
     if (yields[0].gt(request.claimDebit)) {
@@ -573,7 +573,7 @@ describe("Contract 'YieldStreamer'", async () => {
   }
 
   async function deployAndConfigureContracts(): Promise<TestContext> {
-    const {tokenMock, balanceTrackerMock, yieldStreamer} = await deployContracts();
+    const { tokenMock, balanceTrackerMock, yieldStreamer } = await deployContracts();
 
     await proveTx(yieldStreamer.setFeeReceiver(feeReceiver.address));
     await proveTx(yieldStreamer.setBalanceTracker(balanceTrackerMock.address));
@@ -593,7 +593,7 @@ describe("Contract 'YieldStreamer'", async () => {
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
-      const {yieldStreamer} = context;
+      const { yieldStreamer } = context;
       expect(await yieldStreamer.owner()).to.equal(deployer.address);
       expect(await yieldStreamer.balanceTracker()).to.equal(ZERO_ADDRESS);
       expect(await yieldStreamer.feeReceiver()).to.equal(ZERO_ADDRESS);
@@ -1286,20 +1286,20 @@ describe("Contract 'YieldStreamer'", async () => {
       describe("There is only one yield record and", async () => {
         it("The claim debit is zero", async () => {
           const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-          const yieldByDaysRequest: YieldByDaysRequest = {...yieldByDaysBaseRequest};
+          const yieldByDaysRequest: YieldByDaysRequest = { ...yieldByDaysBaseRequest };
           await checkYieldByDays(context, yieldByDaysRequest);
         });
 
         it("The claim debit is non-zero and small", async () => {
           const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-          const yieldByDaysRequest: YieldByDaysRequest = {...yieldByDaysBaseRequest};
+          const yieldByDaysRequest: YieldByDaysRequest = { ...yieldByDaysBaseRequest };
           yieldByDaysRequest.claimDebit = BigNumber.from(123456);
           await checkYieldByDays(context, yieldByDaysRequest);
         });
 
         it("The claim debit is non-zero and huge", async () => {
           const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-          const yieldByDaysRequest: YieldByDaysRequest = {...yieldByDaysBaseRequest};
+          const yieldByDaysRequest: YieldByDaysRequest = { ...yieldByDaysBaseRequest };
           yieldByDaysRequest.claimDebit = BIG_NUMBER_MAX_UINT256;
           await checkYieldByDays(context, yieldByDaysRequest);
         });
@@ -1308,7 +1308,7 @@ describe("Contract 'YieldStreamer'", async () => {
       describe("There are three yield records and", async () => {
         it("The claim debit is zero", async () => {
           const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-          const yieldByDaysRequest: YieldByDaysRequest = {...yieldByDaysBaseRequest};
+          const yieldByDaysRequest: YieldByDaysRequest = { ...yieldByDaysBaseRequest };
           yieldByDaysRequest.yieldRateRecords.push(yieldRateRecordCase2);
           yieldByDaysRequest.yieldRateRecords.push(yieldRateRecordCase3);
           await checkYieldByDays(context, yieldByDaysRequest);
@@ -1319,7 +1319,7 @@ describe("Contract 'YieldStreamer'", async () => {
     describe("Is reverted if", async () => {
       it("The 'to' day is prior the 'from' day", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const yieldByDaysRequest: YieldByDaysRequest = {...yieldByDaysBaseRequest};
+        const yieldByDaysRequest: YieldByDaysRequest = { ...yieldByDaysBaseRequest };
         await expect(
           context.yieldStreamer.calculateYieldByDays(
             user.address,
@@ -1380,7 +1380,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount equals a half of the possible primary yield", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = {...baseClaimRequest};
+        const claimRequest: ClaimRequest = { ...baseClaimRequest };
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
 
@@ -1390,7 +1390,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount equals the possible primary yield plus a third of the possible stream yield", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = {...baseClaimRequest};
+        const claimRequest: ClaimRequest = { ...baseClaimRequest };
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
 
@@ -1402,7 +1402,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount is greater than possible primary yield plus the possible stream yield", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = {...baseClaimRequest};
+        const claimRequest: ClaimRequest = { ...baseClaimRequest };
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
         const expectedShortfall = roundUpward(BigNumber.from(1));
@@ -1413,7 +1413,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount equals the minimum allowed claim amount", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = {...baseClaimRequest};
+        const claimRequest: ClaimRequest = { ...baseClaimRequest };
 
         claimRequest.amount = MIN_CLAIM_AMOUNT;
         await checkClaimPreview(context, claimRequest);
@@ -1482,7 +1482,7 @@ describe("Contract 'YieldStreamer'", async () => {
     describe("Executes as expected if token balances are according to case 1 and", async () => {
       it("The amount equals a half of the possible primary yield", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = {...baseClaimRequest};
+        const claimRequest: ClaimRequest = { ...baseClaimRequest };
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
 
@@ -1492,7 +1492,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount equals the possible primary yield plus a half of the possible stream yield", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = {...baseClaimRequest};
+        const claimRequest: ClaimRequest = { ...baseClaimRequest };
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
 
@@ -1504,7 +1504,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount equals the minimum allowed claim amount", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = {...baseClaimRequest};
+        const claimRequest: ClaimRequest = { ...baseClaimRequest };
 
         claimRequest.amount = MIN_CLAIM_AMOUNT;
         await checkClaim(context, claimRequest);
@@ -1538,7 +1538,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount is greater than possible primary yield plus the possible stream yield", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = {...baseClaimRequest};
+        const claimRequest: ClaimRequest = { ...baseClaimRequest };
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
         const expectedShortfall = roundUpward(BigNumber.from(1));
@@ -1636,7 +1636,7 @@ describe("Contract 'YieldStreamer'", async () => {
       const context: TestContext = await setUpFixture(deployAndConfigureContracts);
       await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
 
-      const claimRequest: ClaimRequest = {...baseClaimRequest};
+      const claimRequest: ClaimRequest = { ...baseClaimRequest };
       claimRequest.amount = MIN_CLAIM_AMOUNT;
       await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
 
@@ -1675,7 +1675,7 @@ describe("Contract 'YieldStreamer'", async () => {
       const context: TestContext = await setUpFixture(deployAndConfigureContracts);
       await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
 
-      const claimRequest: ClaimRequest = {...baseClaimRequest};
+      const claimRequest: ClaimRequest = { ...baseClaimRequest };
 
       await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
 
@@ -1741,7 +1741,7 @@ describe("Contract 'YieldStreamer'", async () => {
       const context: TestContext = await setUpFixture(deployAndConfigureContracts);
       await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
 
-      const claimRequest: ClaimRequest = {...baseClaimRequest};
+      const claimRequest: ClaimRequest = { ...baseClaimRequest };
       claimRequest.claimTime = 23 * 3600 + 3599;
 
       await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
@@ -1771,7 +1771,7 @@ describe("Contract 'YieldStreamer'", async () => {
       const context: TestContext = await setUpFixture(deployAndConfigureContracts);
       await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
 
-      const claimRequest: ClaimRequest = {...baseClaimRequest};
+      const claimRequest: ClaimRequest = { ...baseClaimRequest };
 
       await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
 
@@ -1831,7 +1831,7 @@ describe("Contract 'YieldStreamer'", async () => {
       const context: TestContext = await setUpFixture(deployAndConfigureContracts);
       await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
       await proveTx(context.balanceTrackerMock.setDayAndTime(currentDay, currentTime));
-      const claimRequest: ClaimRequest = {...claimRequestBase};
+      const claimRequest: ClaimRequest = { ...claimRequestBase };
       const expectedClaimAllResult: ClaimResult = defineExpectedClaimAllResult(claimRequest);
       if (props.executeClaimPriorTheCall) {
         claimRequest.amount = roundDown(expectedClaimAllResult.primaryYield.div(2));
@@ -1839,7 +1839,7 @@ describe("Contract 'YieldStreamer'", async () => {
       }
       const claimState: ClaimState = await context.yieldStreamer.getLastClaimDetails(user.address);
 
-      const balanceWithYieldByDaysRequest: BalanceWithYieldByDaysRequest = {...balanceWithYieldByDaysRequestBase};
+      const balanceWithYieldByDaysRequest: BalanceWithYieldByDaysRequest = { ...balanceWithYieldByDaysRequestBase };
       const nextClaimDay: number = claimState.day || YIELD_STREAMER_INIT_DAY;
       balanceWithYieldByDaysRequest.firstYieldDay = nextClaimDay;
       balanceWithYieldByDaysRequest.claimDebit = claimState.debit;
