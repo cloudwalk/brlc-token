@@ -1,10 +1,10 @@
-import { ethers, network, upgrades } from "hardhat";
-import { expect } from "chai";
-import { BigNumber, Contract, ContractFactory } from "ethers";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx } from "../../test-utils/eth";
-import { TransactionResponse } from "@ethersproject/abstract-provider";
+import {ethers, network, upgrades} from "hardhat";
+import {expect} from "chai";
+import {BigNumber, Contract, ContractFactory} from "ethers";
+import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
+import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
+import {proveTx} from "../../test-utils/eth";
+import {TransactionResponse} from "@ethersproject/abstract-provider";
 
 const ZERO_ADDRESS = ethers.constants.AddressZero;
 const BIG_NUMBER_ZERO = ethers.constants.Zero;
@@ -12,9 +12,11 @@ const BIG_NUMBER_MAX_UINT256 = ethers.constants.MaxUint256;
 const YIELD_STREAMER_INIT_TOKEN_BALANCE: BigNumber = BigNumber.from(1000_000_000_000);
 const USER_CURRENT_TOKEN_BALANCE: BigNumber = BigNumber.from(1000_000_000_000);
 const LOOK_BACK_PERIOD_LENGTH: number = 3;
+const LOOK_BACK_PERIOD_INDEX_ZERO = 0;
 const INITIAL_YIELD_RATE = 10000000000; // 1%
 const BALANCE_TRACKER_INIT_DAY = 100;
 const YIELD_STREAMER_INIT_DAY = BALANCE_TRACKER_INIT_DAY + LOOK_BACK_PERIOD_LENGTH - 1;
+const YIELD_RATE_INDEX_ZERO = 0;
 const FEE_RATE: BigNumber = BigNumber.from(225000000000);
 const RATE_FACTOR: BigNumber = BigNumber.from(1000000000000);
 const MIN_CLAIM_AMOUNT: BigNumber = BigNumber.from(1000000);
@@ -86,15 +88,15 @@ interface ClaimState {
 }
 
 const balanceRecordsCase1: BalanceRecord[] = [
-  { day: BALANCE_TRACKER_INIT_DAY, value: BigNumber.from(0) },
-  { day: BALANCE_TRACKER_INIT_DAY + 1, value: BigNumber.from(8000_000_000_000) },
-  { day: BALANCE_TRACKER_INIT_DAY + 2, value: BigNumber.from(7000_000_000_000) },
-  { day: BALANCE_TRACKER_INIT_DAY + 3, value: BigNumber.from(6000_000_000_000) },
-  { day: BALANCE_TRACKER_INIT_DAY + 4, value: BigNumber.from(5000_000_000_000) },
-  { day: BALANCE_TRACKER_INIT_DAY + 5, value: BigNumber.from(1000_000_000_000) },
-  { day: BALANCE_TRACKER_INIT_DAY + 6, value: BigNumber.from(3000_000_000_000) },
-  { day: BALANCE_TRACKER_INIT_DAY + 7, value: BigNumber.from(2000_000_000_000) },
-  { day: BALANCE_TRACKER_INIT_DAY + 8, value: BigNumber.from(1000_000_000_000) },
+  {day: BALANCE_TRACKER_INIT_DAY, value: BigNumber.from(0)},
+  {day: BALANCE_TRACKER_INIT_DAY + 1, value: BigNumber.from(8000_000_000_000)},
+  {day: BALANCE_TRACKER_INIT_DAY + 2, value: BigNumber.from(7000_000_000_000)},
+  {day: BALANCE_TRACKER_INIT_DAY + 3, value: BigNumber.from(6000_000_000_000)},
+  {day: BALANCE_TRACKER_INIT_DAY + 4, value: BigNumber.from(5000_000_000_000)},
+  {day: BALANCE_TRACKER_INIT_DAY + 5, value: BigNumber.from(1000_000_000_000)},
+  {day: BALANCE_TRACKER_INIT_DAY + 6, value: BigNumber.from(3000_000_000_000)},
+  {day: BALANCE_TRACKER_INIT_DAY + 7, value: BigNumber.from(2000_000_000_000)},
+  {day: BALANCE_TRACKER_INIT_DAY + 8, value: BigNumber.from(1000_000_000_000)},
 ];
 
 const yieldRateRecordCase1: YieldRateRecord = {
@@ -182,7 +184,7 @@ function defineYieldRate(yieldRateRecords: YieldRateRecord[], day: number): BigN
 }
 
 function defineExpectedYieldByDays(yieldByDaysRequest: YieldByDaysRequest): BigNumber[] {
-  const { lookBackPeriodLength, yieldRateRecords, balanceRecords, dayFrom, dayTo, claimDebit } = yieldByDaysRequest;
+  const {lookBackPeriodLength, yieldRateRecords, balanceRecords, dayFrom, dayTo, claimDebit} = yieldByDaysRequest;
   if (dayFrom > dayTo) {
     throw new Error("Day 'from' is grater than day 'to' when defining the yield by days");
   }
@@ -212,10 +214,10 @@ function defineExpectedYieldByDays(yieldByDaysRequest: YieldByDaysRequest): BigN
 }
 
 function defineExpectedBalanceWithYieldByDays(request: BalanceWithYieldByDaysRequest): BigNumber[] {
-  const { balanceRecords, dayFrom, dayTo, firstYieldDay } = request;
+  const {balanceRecords, dayFrom, dayTo, firstYieldDay} = request;
   const balancesWithYield: BigNumber[] = defineExpectedDailyBalances(balanceRecords, dayFrom, dayTo);
   if (firstYieldDay <= dayTo) {
-    const yieldByDaysRequest: YieldByDaysRequest = { ...(request as YieldByDaysRequest) };
+    const yieldByDaysRequest: YieldByDaysRequest = {...(request as YieldByDaysRequest)};
     yieldByDaysRequest.dayFrom = request.firstYieldDay;
     const yields: BigNumber[] = defineExpectedYieldByDays(yieldByDaysRequest);
     if (yields[0].gt(request.claimDebit)) {
@@ -487,7 +489,7 @@ async function setUpFixture(func: any) {
   }
 }
 
-function expectedYieldRateRecords(): YieldRateRecord[] {
+function defineExpectedYieldRateRecords(): YieldRateRecord[] {
   const expectedYieldRateRecord1: YieldRateRecord = {
     effectiveDay: YIELD_STREAMER_INIT_DAY,
     value: BigNumber.from(INITIAL_YIELD_RATE)
@@ -571,7 +573,7 @@ describe("Contract 'YieldStreamer'", async () => {
   }
 
   async function deployAndConfigureContracts(): Promise<TestContext> {
-    const { tokenMock, balanceTrackerMock, yieldStreamer } = await deployContracts();
+    const {tokenMock, balanceTrackerMock, yieldStreamer} = await deployContracts();
 
     await proveTx(yieldStreamer.setFeeReceiver(feeReceiver.address));
     await proveTx(yieldStreamer.setBalanceTracker(balanceTrackerMock.address));
@@ -591,7 +593,7 @@ describe("Contract 'YieldStreamer'", async () => {
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
-      const { yieldStreamer } = context;
+      const {yieldStreamer} = context;
       expect(await yieldStreamer.owner()).to.equal(deployer.address);
       expect(await yieldStreamer.balanceTracker()).to.equal(ZERO_ADDRESS);
       expect(await yieldStreamer.feeReceiver()).to.equal(ZERO_ADDRESS);
@@ -869,12 +871,12 @@ describe("Contract 'YieldStreamer'", async () => {
       await expect(context.yieldStreamer.updateLookBackPeriod(
         expectedLookBackPeriodRecord.effectiveDay,
         expectedLookBackPeriodRecord.length,
-        0
+        LOOK_BACK_PERIOD_INDEX_ZERO
       )).to.emit(
         context.yieldStreamer,
         EVENT_LOOK_BACK_PERIOD_UPDATED
       ).withArgs(
-        0,
+        LOOK_BACK_PERIOD_INDEX_ZERO,
         YIELD_STREAMER_INIT_DAY + 1,
         YIELD_STREAMER_INIT_DAY,
         LOOK_BACK_PERIOD_LENGTH + 1,
@@ -895,7 +897,7 @@ describe("Contract 'YieldStreamer'", async () => {
       await expect(context.yieldStreamer.connect(user).updateLookBackPeriod(
         YIELD_STREAMER_INIT_DAY + 1,
         LOOK_BACK_PERIOD_LENGTH + 1,
-        0
+        LOOK_BACK_PERIOD_INDEX_ZERO
       )).revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
 
@@ -903,12 +905,12 @@ describe("Contract 'YieldStreamer'", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
 
       await expect(context.yieldStreamer.updateLookBackPeriod(
-          YIELD_STREAMER_INIT_DAY,
-          LOOK_BACK_PERIOD_LENGTH,
-          4
+        YIELD_STREAMER_INIT_DAY,
+        LOOK_BACK_PERIOD_LENGTH,
+        LOOK_BACK_PERIOD_INDEX_ZERO
       )).revertedWithCustomError(
-          context.yieldStreamer,
-          REVERT_ERROR_LOOK_BACK_PERIOD_WRONG_INDEX
+        context.yieldStreamer,
+        REVERT_ERROR_LOOK_BACK_PERIOD_WRONG_INDEX
       );
     });
 
@@ -923,10 +925,10 @@ describe("Contract 'YieldStreamer'", async () => {
       await expect(context.yieldStreamer.updateLookBackPeriod(
         YIELD_STREAMER_INIT_DAY + 1,
         BIG_NUMBER_ZERO,
-        0
+        LOOK_BACK_PERIOD_INDEX_ZERO
       )).revertedWithCustomError(
-         context.yieldStreamer,
-         REVERT_ERROR_LOOK_BACK_PERIOD_LENGTH_ZERO
+        context.yieldStreamer,
+        REVERT_ERROR_LOOK_BACK_PERIOD_LENGTH_ZERO
       );
     });
 
@@ -941,7 +943,7 @@ describe("Contract 'YieldStreamer'", async () => {
       await expect(context.yieldStreamer.updateLookBackPeriod(
         LOOK_BACK_PERIOD_LENGTH - 2,
         LOOK_BACK_PERIOD_LENGTH,
-        0
+        LOOK_BACK_PERIOD_INDEX_ZERO
       )).revertedWithCustomError(
         context.yieldStreamer,
         REVERT_ERROR_LOOK_BACK_PERIOD_INVALID_PARAMETERS_COMBINATION
@@ -971,9 +973,9 @@ describe("Contract 'YieldStreamer'", async () => {
     it("Executes as expected", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
       const [
-          expectedYieldRateRecord1,
-          expectedYieldRateRecord2
-      ] = expectedYieldRateRecords();
+        expectedYieldRateRecord1,
+        expectedYieldRateRecord2
+      ] = defineExpectedYieldRateRecords();
 
       await expect(context.yieldStreamer.configureYieldRate(
         expectedYieldRateRecord1.effectiveDay,
@@ -1078,105 +1080,75 @@ describe("Contract 'YieldStreamer'", async () => {
   });
 
   describe("Function 'updateYieldRate()'", async () => {
-    it("Executes as expected", async () => {
+    it("Executes as expected if there are three yield rate records configured", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
-      const [
-          expectedYieldRateRecord1,
-          expectedYieldRateRecord2,
-          expectedYieldRateRecord3
-      ] = expectedYieldRateRecords();
-
-      await proveTx(context.yieldStreamer.configureYieldRate(
-          expectedYieldRateRecord1.effectiveDay,
-          expectedYieldRateRecord1.value
-      ));
-
-      await proveTx(context.yieldStreamer.configureYieldRate(
-          expectedYieldRateRecord2.effectiveDay,
-          expectedYieldRateRecord2.value
-      ));
-
-      await proveTx(context.yieldStreamer.configureYieldRate(
-          expectedYieldRateRecord3.effectiveDay,
-          expectedYieldRateRecord3.value
-      ));
-
-      const expectedYieldRateRecordUpdated1: YieldRateRecord = {
-        effectiveDay: YIELD_STREAMER_INIT_DAY + 2,
-        value: BigNumber.from(INITIAL_YIELD_RATE * 4)
+      const oldExpectedYieldRateRecords = defineExpectedYieldRateRecords();
+      const newExpectedYieldRateRecord = [...oldExpectedYieldRateRecords];
+      const recordIndex = Math.floor(oldExpectedYieldRateRecords.length / 2);
+      newExpectedYieldRateRecord[recordIndex] = {
+        effectiveDay: oldExpectedYieldRateRecords[recordIndex].effectiveDay + 1,
+        value: BigNumber.from(oldExpectedYieldRateRecords[recordIndex].value + 1)
       };
 
+      for (let expectedYieldRateRecord of oldExpectedYieldRateRecords) {
+        await proveTx(context.yieldStreamer.configureYieldRate(
+          expectedYieldRateRecord.effectiveDay,
+          expectedYieldRateRecord.value
+        ));
+      }
+
       await expect(context.yieldStreamer.updateYieldRate(
-          expectedYieldRateRecordUpdated1.effectiveDay,
-          expectedYieldRateRecordUpdated1.value,
-          0
+        newExpectedYieldRateRecord[recordIndex].effectiveDay,
+        newExpectedYieldRateRecord[recordIndex].value,
+        recordIndex
       )).to.emit(
-          context.yieldStreamer,
-          EVENT_YIELD_RATE_UPDATED
+        context.yieldStreamer,
+        EVENT_YIELD_RATE_UPDATED
       ).withArgs(
-          0,
-          expectedYieldRateRecordUpdated1.effectiveDay,
-          expectedYieldRateRecord1.effectiveDay,
-          expectedYieldRateRecordUpdated1.value,
-          expectedYieldRateRecord1.value
+        recordIndex,
+        newExpectedYieldRateRecord[recordIndex].effectiveDay,
+        oldExpectedYieldRateRecords[recordIndex].effectiveDay,
+        newExpectedYieldRateRecord[recordIndex].value,
+        oldExpectedYieldRateRecords[recordIndex].value
       );
 
       await checkYieldRates(context.yieldStreamer, [
-          expectedYieldRateRecordUpdated1,
-          expectedYieldRateRecord2,
-          expectedYieldRateRecord3
+        oldExpectedYieldRateRecords[0],
+        newExpectedYieldRateRecord[recordIndex],
+        oldExpectedYieldRateRecords[2]
       ]);
+    });
 
-      const expectedYieldRateRecordUpdated2: YieldRateRecord = {
-        effectiveDay: YIELD_STREAMER_INIT_DAY + 4,
-        value: BigNumber.from(INITIAL_YIELD_RATE * 4)
+    it("Executes as expected if there is only one yield rate record configured", async () => {
+      const context: TestContext = await setUpFixture(deployContracts);
+      const oldExpectedYieldRateRecord = defineExpectedYieldRateRecords()[0];
+      const newExpectedYieldRateRecord = {
+        effectiveDay: oldExpectedYieldRateRecord.effectiveDay + 1,
+        value: BigNumber.from(oldExpectedYieldRateRecord.value + 1)
       };
 
+      await proveTx(context.yieldStreamer.configureYieldRate(
+        oldExpectedYieldRateRecord.effectiveDay,
+        oldExpectedYieldRateRecord.value
+      ));
+
       await expect(context.yieldStreamer.updateYieldRate(
-          expectedYieldRateRecordUpdated2.effectiveDay,
-          expectedYieldRateRecordUpdated2.value,
-          1
+        newExpectedYieldRateRecord.effectiveDay,
+        newExpectedYieldRateRecord.value,
+        YIELD_RATE_INDEX_ZERO
       )).to.emit(
-          context.yieldStreamer,
-          EVENT_YIELD_RATE_UPDATED
+        context.yieldStreamer,
+        EVENT_YIELD_RATE_UPDATED
       ).withArgs(
-          1,
-          expectedYieldRateRecordUpdated2.effectiveDay,
-          expectedYieldRateRecord2.effectiveDay,
-          expectedYieldRateRecordUpdated2.value,
-          expectedYieldRateRecord2.value
+        YIELD_RATE_INDEX_ZERO,
+        newExpectedYieldRateRecord.effectiveDay,
+        oldExpectedYieldRateRecord.effectiveDay,
+        newExpectedYieldRateRecord.value,
+        oldExpectedYieldRateRecord.value
       );
 
       await checkYieldRates(context.yieldStreamer, [
-          expectedYieldRateRecordUpdated1,
-          expectedYieldRateRecordUpdated2,
-          expectedYieldRateRecord3
-      ]);
-
-      const expectedYieldRateRecordUpdated3: YieldRateRecord = {
-        effectiveDay: YIELD_STREAMER_INIT_DAY + 8,
-        value: BigNumber.from(INITIAL_YIELD_RATE * 4)
-      };
-
-      await expect(context.yieldStreamer.updateYieldRate(
-          expectedYieldRateRecordUpdated3.effectiveDay,
-          expectedYieldRateRecordUpdated3.value,
-          2
-      )).to.emit(
-          context.yieldStreamer,
-          EVENT_YIELD_RATE_UPDATED
-      ).withArgs(
-          2,
-          expectedYieldRateRecordUpdated3.effectiveDay,
-          expectedYieldRateRecord3.effectiveDay,
-          expectedYieldRateRecordUpdated3.value,
-          expectedYieldRateRecord3.value
-      );
-
-      await checkYieldRates(context.yieldStreamer, [
-          expectedYieldRateRecordUpdated1,
-          expectedYieldRateRecordUpdated2,
-          expectedYieldRateRecordUpdated3
+        newExpectedYieldRateRecord
       ]);
     });
 
@@ -1185,9 +1157,9 @@ describe("Contract 'YieldStreamer'", async () => {
       const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
 
       await expect(context.yieldStreamer.connect(user).updateYieldRate(
-          effectiveDay,
-          INITIAL_YIELD_RATE,
-          1
+        effectiveDay,
+        INITIAL_YIELD_RATE,
+        YIELD_RATE_INDEX_ZERO
       )).revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
 
@@ -1195,12 +1167,12 @@ describe("Contract 'YieldStreamer'", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
 
       await expect(context.yieldStreamer.updateYieldRate(
-          YIELD_STREAMER_INIT_DAY,
-          INITIAL_YIELD_RATE,
-          4
+        YIELD_STREAMER_INIT_DAY,
+        INITIAL_YIELD_RATE,
+        YIELD_RATE_INDEX_ZERO
       )).revertedWithCustomError(
-          context.yieldStreamer,
-          REVERT_ERROR_YIELD_RATE_WRONG_INDEX
+        context.yieldStreamer,
+        REVERT_ERROR_YIELD_RATE_WRONG_INDEX
       );
     });
 
@@ -1209,114 +1181,72 @@ describe("Contract 'YieldStreamer'", async () => {
       const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
 
       await proveTx(context.yieldStreamer.configureYieldRate(
-          effectiveDay,
-          INITIAL_YIELD_RATE
+        effectiveDay,
+        INITIAL_YIELD_RATE
       ));
 
       await expect(context.yieldStreamer.updateYieldRate(
-          effectiveDay,
-          INITIAL_YIELD_RATE,
-          4
+        effectiveDay,
+        INITIAL_YIELD_RATE,
+        1
       )).revertedWithCustomError(
-          context.yieldStreamer,
-          REVERT_ERROR_YIELD_RATE_WRONG_INDEX
+        context.yieldStreamer,
+        REVERT_ERROR_YIELD_RATE_WRONG_INDEX
       );
     });
 
     it("Is reverted if the effective day is invalid", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
+      const expectedYieldRateRecords = defineExpectedYieldRateRecords();
 
-      await proveTx(context.yieldStreamer.configureYieldRate(
-          YIELD_STREAMER_INIT_DAY + 2,
-          INITIAL_YIELD_RATE
-      ));
+      for (let expectedYieldRateRecord of expectedYieldRateRecords) {
+        await proveTx(context.yieldStreamer.configureYieldRate(
+          expectedYieldRateRecord.effectiveDay,
+          expectedYieldRateRecord.value
+        ));
+      }
 
-      await proveTx(context.yieldStreamer.configureYieldRate(
-          YIELD_STREAMER_INIT_DAY + 4,
-          INITIAL_YIELD_RATE * 2
-      ));
-
-      await proveTx(context.yieldStreamer.configureYieldRate(
-          YIELD_STREAMER_INIT_DAY + 6,
-          INITIAL_YIELD_RATE * 3
-      ));
-
+      let recordIndex = 0;
+      // check revert if effective day is greater than next day if there is updating day with index 0
       await expect(context.yieldStreamer.updateYieldRate(
-          YIELD_STREAMER_INIT_DAY + 10,
-          INITIAL_YIELD_RATE,
-          0
+        expectedYieldRateRecords[recordIndex + 1].effectiveDay,
+        expectedYieldRateRecords[recordIndex].value,
+        recordIndex
       )).revertedWithCustomError(
-          context.yieldStreamer,
-          REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY
+        context.yieldStreamer,
+        REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY
       );
 
+      recordIndex = 1;
+      //check revert if effective day is less than previous day
       await expect(context.yieldStreamer.updateYieldRate(
-          YIELD_STREAMER_INIT_DAY + 1,
-          INITIAL_YIELD_RATE,
-          1
+        expectedYieldRateRecords[recordIndex - 1].effectiveDay,
+        expectedYieldRateRecords[recordIndex].value,
+        recordIndex
       )).revertedWithCustomError(
-          context.yieldStreamer,
-          REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY
+        context.yieldStreamer,
+        REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY
       );
 
+      // check revert if effective day is greater than next day with index != 0
       await expect(context.yieldStreamer.updateYieldRate(
-          YIELD_STREAMER_INIT_DAY + 10,
-          INITIAL_YIELD_RATE,
-          1
+        expectedYieldRateRecords[recordIndex + 1].effectiveDay,
+        expectedYieldRateRecords[recordIndex].value,
+        recordIndex
       )).revertedWithCustomError(
-          context.yieldStreamer,
-          REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY
+        context.yieldStreamer,
+        REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY
       );
 
+      recordIndex = 2;
+      // check revert if effective day is less than next day if the next day is last element in array
       await expect(context.yieldStreamer.updateYieldRate(
-          YIELD_STREAMER_INIT_DAY + 1,
-          INITIAL_YIELD_RATE,
-          2
+        expectedYieldRateRecords[recordIndex - 1].effectiveDay,
+        expectedYieldRateRecords[recordIndex].value,
+        recordIndex
       )).revertedWithCustomError(
-          context.yieldStreamer,
-          REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY
-      );
-    });
-
-    // This test is to cover the internal function `_toUint16()`
-    it("Is reverted if the effective day index is greater than 16-bit unsigned integer", async () => {
-      const context: TestContext = await setUpFixture(deployContracts);
-      const effectiveDay = 65536;
-
-      await proveTx(context.yieldStreamer.configureYieldRate(
-          YIELD_STREAMER_INIT_DAY,
-          INITIAL_YIELD_RATE
-      ));
-
-      await expect(context.yieldStreamer.updateYieldRate(
-          effectiveDay,
-          INITIAL_YIELD_RATE,
-          0
-      )).revertedWithCustomError(
-          context.yieldStreamer,
-          REVERT_ERROR_SAFE_CAST_OVERFLOW_UINT16
-      );
-    });
-
-    // This test is to cover the internal function `_toUint240()`
-    it("Is reverted if the new value is greater than 240-bit unsigned integer", async () => {
-      const context: TestContext = await setUpFixture(deployContracts);
-      const effectiveDay = YIELD_STREAMER_INIT_DAY + 1;
-      const yieldRateValue: BigNumber =
-          BigNumber.from("0x1000000000000000000000000000000000000000000000000000000000000");
-
-      await proveTx(context.yieldStreamer.configureYieldRate(
-          YIELD_STREAMER_INIT_DAY,
-          INITIAL_YIELD_RATE
-      ));
-
-      await expect(context.yieldStreamer.updateYieldRate(
-          effectiveDay,
-          yieldRateValue,
-          0
-      )).revertedWithCustomError(
-          context.yieldStreamer,
-          REVERT_ERROR_SAFE_CAST_OVERFLOW_UINT240
+        context.yieldStreamer,
+        REVERT_ERROR_YIELD_RATE_INVALID_EFFECTIVE_DAY
       );
     });
   });
@@ -1356,20 +1286,20 @@ describe("Contract 'YieldStreamer'", async () => {
       describe("There is only one yield record and", async () => {
         it("The claim debit is zero", async () => {
           const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-          const yieldByDaysRequest: YieldByDaysRequest = { ...yieldByDaysBaseRequest };
+          const yieldByDaysRequest: YieldByDaysRequest = {...yieldByDaysBaseRequest};
           await checkYieldByDays(context, yieldByDaysRequest);
         });
 
         it("The claim debit is non-zero and small", async () => {
           const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-          const yieldByDaysRequest: YieldByDaysRequest = { ...yieldByDaysBaseRequest };
+          const yieldByDaysRequest: YieldByDaysRequest = {...yieldByDaysBaseRequest};
           yieldByDaysRequest.claimDebit = BigNumber.from(123456);
           await checkYieldByDays(context, yieldByDaysRequest);
         });
 
         it("The claim debit is non-zero and huge", async () => {
           const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-          const yieldByDaysRequest: YieldByDaysRequest = { ...yieldByDaysBaseRequest };
+          const yieldByDaysRequest: YieldByDaysRequest = {...yieldByDaysBaseRequest};
           yieldByDaysRequest.claimDebit = BIG_NUMBER_MAX_UINT256;
           await checkYieldByDays(context, yieldByDaysRequest);
         });
@@ -1378,7 +1308,7 @@ describe("Contract 'YieldStreamer'", async () => {
       describe("There are three yield records and", async () => {
         it("The claim debit is zero", async () => {
           const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-          const yieldByDaysRequest: YieldByDaysRequest = { ...yieldByDaysBaseRequest };
+          const yieldByDaysRequest: YieldByDaysRequest = {...yieldByDaysBaseRequest};
           yieldByDaysRequest.yieldRateRecords.push(yieldRateRecordCase2);
           yieldByDaysRequest.yieldRateRecords.push(yieldRateRecordCase3);
           await checkYieldByDays(context, yieldByDaysRequest);
@@ -1389,7 +1319,7 @@ describe("Contract 'YieldStreamer'", async () => {
     describe("Is reverted if", async () => {
       it("The 'to' day is prior the 'from' day", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const yieldByDaysRequest: YieldByDaysRequest = { ...yieldByDaysBaseRequest };
+        const yieldByDaysRequest: YieldByDaysRequest = {...yieldByDaysBaseRequest};
         await expect(
           context.yieldStreamer.calculateYieldByDays(
             user.address,
@@ -1450,7 +1380,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount equals a half of the possible primary yield", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = { ...baseClaimRequest };
+        const claimRequest: ClaimRequest = {...baseClaimRequest};
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
 
@@ -1460,7 +1390,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount equals the possible primary yield plus a third of the possible stream yield", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = { ...baseClaimRequest };
+        const claimRequest: ClaimRequest = {...baseClaimRequest};
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
 
@@ -1472,7 +1402,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount is greater than possible primary yield plus the possible stream yield", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = { ...baseClaimRequest };
+        const claimRequest: ClaimRequest = {...baseClaimRequest};
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
         const expectedShortfall = roundUpward(BigNumber.from(1));
@@ -1483,7 +1413,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount equals the minimum allowed claim amount", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = { ...baseClaimRequest };
+        const claimRequest: ClaimRequest = {...baseClaimRequest};
 
         claimRequest.amount = MIN_CLAIM_AMOUNT;
         await checkClaimPreview(context, claimRequest);
@@ -1552,7 +1482,7 @@ describe("Contract 'YieldStreamer'", async () => {
     describe("Executes as expected if token balances are according to case 1 and", async () => {
       it("The amount equals a half of the possible primary yield", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = { ...baseClaimRequest };
+        const claimRequest: ClaimRequest = {...baseClaimRequest};
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
 
@@ -1562,7 +1492,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount equals the possible primary yield plus a half of the possible stream yield", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = { ...baseClaimRequest };
+        const claimRequest: ClaimRequest = {...baseClaimRequest};
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
 
@@ -1574,7 +1504,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount equals the minimum allowed claim amount", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = { ...baseClaimRequest };
+        const claimRequest: ClaimRequest = {...baseClaimRequest};
 
         claimRequest.amount = MIN_CLAIM_AMOUNT;
         await checkClaim(context, claimRequest);
@@ -1608,7 +1538,7 @@ describe("Contract 'YieldStreamer'", async () => {
 
       it("The amount is greater than possible primary yield plus the possible stream yield", async () => {
         const context: TestContext = await setUpFixture(deployAndConfigureContracts);
-        const claimRequest: ClaimRequest = { ...baseClaimRequest };
+        const claimRequest: ClaimRequest = {...baseClaimRequest};
         claimRequest.amount = BIG_NUMBER_MAX_UINT256;
         const expectedClaimAllResult: ClaimResult = defineExpectedClaimResult(claimRequest);
         const expectedShortfall = roundUpward(BigNumber.from(1));
@@ -1706,7 +1636,7 @@ describe("Contract 'YieldStreamer'", async () => {
       const context: TestContext = await setUpFixture(deployAndConfigureContracts);
       await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
 
-      const claimRequest: ClaimRequest = { ...baseClaimRequest };
+      const claimRequest: ClaimRequest = {...baseClaimRequest};
       claimRequest.amount = MIN_CLAIM_AMOUNT;
       await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
 
@@ -1745,7 +1675,7 @@ describe("Contract 'YieldStreamer'", async () => {
       const context: TestContext = await setUpFixture(deployAndConfigureContracts);
       await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
 
-      const claimRequest: ClaimRequest = { ...baseClaimRequest };
+      const claimRequest: ClaimRequest = {...baseClaimRequest};
 
       await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
 
@@ -1811,7 +1741,7 @@ describe("Contract 'YieldStreamer'", async () => {
       const context: TestContext = await setUpFixture(deployAndConfigureContracts);
       await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
 
-      const claimRequest: ClaimRequest = { ...baseClaimRequest };
+      const claimRequest: ClaimRequest = {...baseClaimRequest};
       claimRequest.claimTime = 23 * 3600 + 3599;
 
       await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
@@ -1841,7 +1771,7 @@ describe("Contract 'YieldStreamer'", async () => {
       const context: TestContext = await setUpFixture(deployAndConfigureContracts);
       await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
 
-      const claimRequest: ClaimRequest = { ...baseClaimRequest };
+      const claimRequest: ClaimRequest = {...baseClaimRequest};
 
       await proveTx(context.balanceTrackerMock.setDayAndTime(claimRequest.claimDay, claimRequest.claimTime));
 
@@ -1901,7 +1831,7 @@ describe("Contract 'YieldStreamer'", async () => {
       const context: TestContext = await setUpFixture(deployAndConfigureContracts);
       await proveTx(context.balanceTrackerMock.setBalanceRecords(user.address, balanceRecords));
       await proveTx(context.balanceTrackerMock.setDayAndTime(currentDay, currentTime));
-      const claimRequest: ClaimRequest = { ...claimRequestBase };
+      const claimRequest: ClaimRequest = {...claimRequestBase};
       const expectedClaimAllResult: ClaimResult = defineExpectedClaimAllResult(claimRequest);
       if (props.executeClaimPriorTheCall) {
         claimRequest.amount = roundDown(expectedClaimAllResult.primaryYield.div(2));
@@ -1909,7 +1839,7 @@ describe("Contract 'YieldStreamer'", async () => {
       }
       const claimState: ClaimState = await context.yieldStreamer.getLastClaimDetails(user.address);
 
-      const balanceWithYieldByDaysRequest: BalanceWithYieldByDaysRequest = { ...balanceWithYieldByDaysRequestBase };
+      const balanceWithYieldByDaysRequest: BalanceWithYieldByDaysRequest = {...balanceWithYieldByDaysRequestBase};
       const nextClaimDay: number = claimState.day || YIELD_STREAMER_INIT_DAY;
       balanceWithYieldByDaysRequest.firstYieldDay = nextClaimDay;
       balanceWithYieldByDaysRequest.claimDebit = claimState.debit;
