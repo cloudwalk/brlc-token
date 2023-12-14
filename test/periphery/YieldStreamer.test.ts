@@ -961,7 +961,7 @@ describe("Contract 'YieldStreamer'", async () => {
       await expect(context.yieldStreamer.updateLookBackPeriod(
         YIELD_STREAMER_INIT_DAY + 1,
         LOOK_BACK_PERIOD_LENGTH + 1,
-        1
+        LOOK_BACK_PERIOD_INDEX_ZERO + 1,
       )).revertedWithCustomError(
         context.yieldStreamer,
         REVERT_ERROR_LOOK_BACK_PERIOD_WRONG_INDEX
@@ -1112,17 +1112,13 @@ describe("Contract 'YieldStreamer'", async () => {
         oldExpectedYieldRateRecords[recordIndex].value
       );
 
-      await checkYieldRates(context.yieldStreamer, [
-        oldExpectedYieldRateRecords[0],
-        newExpectedYieldRateRecord[recordIndex],
-        oldExpectedYieldRateRecords[2]
-      ]);
+      await checkYieldRates(context.yieldStreamer, newExpectedYieldRateRecord);
     });
 
     it("Executes as expected if there is only one yield rate record configured", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
-      const oldExpectedYieldRateRecord = defineExpectedYieldRateRecords()[0];
-      const newExpectedYieldRateRecord = {
+      const [oldExpectedYieldRateRecord] = defineExpectedYieldRateRecords();
+      const newExpectedYieldRateRecord: YieldRateRecord = {
         effectiveDay: oldExpectedYieldRateRecord.effectiveDay + 1,
         value: BigNumber.from(oldExpectedYieldRateRecord.value + 1)
       };
@@ -1147,9 +1143,7 @@ describe("Contract 'YieldStreamer'", async () => {
         oldExpectedYieldRateRecord.value
       );
 
-      await checkYieldRates(context.yieldStreamer, [
-        newExpectedYieldRateRecord
-      ]);
+      await checkYieldRates(context.yieldStreamer, [newExpectedYieldRateRecord]);
     });
 
     it("Is reverted if it is called not by the owner", async () => {
@@ -1188,7 +1182,7 @@ describe("Contract 'YieldStreamer'", async () => {
       await expect(context.yieldStreamer.updateYieldRate(
         effectiveDay,
         INITIAL_YIELD_RATE,
-        1
+        YIELD_RATE_INDEX_ZERO + 1
       )).revertedWithCustomError(
         context.yieldStreamer,
         REVERT_ERROR_YIELD_RATE_WRONG_INDEX
@@ -1197,9 +1191,9 @@ describe("Contract 'YieldStreamer'", async () => {
 
     it("Is reverted if the effective day is invalid", async () => {
       const context: TestContext = await setUpFixture(deployContracts);
-      const expectedYieldRateRecords = defineExpectedYieldRateRecords();
+      const expectedYieldRateRecords: YieldRateRecord[] = defineExpectedYieldRateRecords();
 
-      for (let expectedYieldRateRecord of expectedYieldRateRecords) {
+      for (const expectedYieldRateRecord: YieldRateRecord of expectedYieldRateRecords) {
         await proveTx(context.yieldStreamer.configureYieldRate(
           expectedYieldRateRecord.effectiveDay,
           expectedYieldRateRecord.value
