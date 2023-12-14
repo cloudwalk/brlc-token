@@ -374,7 +374,7 @@ contract YieldStreamer is
      * @param length The length of the new look-back period in days
      * @param index The index of the look-back period in the array
      */
-    function updateLookBackPeriod(uint256 effectiveDay, uint256 length,  uint256 index) external onlyOwner {
+    function updateLookBackPeriod(uint256 effectiveDay, uint256 length, uint256 index) external onlyOwner {
         if (length == 0) {
             revert LookBackPeriodLengthZero();
         }
@@ -432,7 +432,8 @@ contract YieldStreamer is
      * - Can only be called by the contract owner
      * - Yield rate must be configured
      * - The index must be in range of yield rates array
-     * - The new effective day must be greater than one of the previous yield rate and less than the effective day on the next yield rate
+     * - The new effective day must be greater than one of the previous yield rate and
+     *   less than the effective day on the next yield rate
      *
      * Emits an {YieldRateUpdated} event
      *
@@ -447,7 +448,7 @@ contract YieldStreamer is
 
         uint256 lastIndex = _yieldRates.length - 1;
 
-        if(lastIndex != 0) {
+        if (lastIndex != 0) {
             int256 intEffectiveDay = int256(effectiveDay);
             int256 previousEffectiveDay = index != 0
                 ? int256(uint256(_yieldRates[index - 1].effectiveDay))
@@ -746,7 +747,6 @@ contract YieldStreamer is
         possibleBalanceByDays[periodLength] += sumYield;
         yieldByDays[0] = dayYield;
 
-
         // Define yield for other days
         for (uint256 i = 1; i < yieldRange; ++i) {
             if (fromDay + i == nextRateDay) {
@@ -820,7 +820,7 @@ contract YieldStreamer is
              * Calculate the yield by days since the last claim day until yesterday
              */
             uint256[] memory yieldByDays;
-            (yieldByDays, )= _calculateYieldAndPossibleBalanceByDays(account, result.nextClaimDay, day, state.debit);
+            (yieldByDays, ) = _calculateYieldAndPossibleBalanceByDays(account, result.nextClaimDay, day, state.debit);
             uint256 lastIndex = yieldByDays.length - 1;
 
             /**
