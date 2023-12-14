@@ -172,7 +172,7 @@ contract YieldStreamer is
     error LookBackPeriodWrongIndex();
 
     /**
-     * @notice Thrown when the specified effective day of a yield rate is not greater than the last configured one
+     * @notice Thrown when the specified effective day of a yield rate does not meet the requirements
      */
     error YieldRateInvalidEffectiveDay();
 
@@ -381,7 +381,7 @@ contract YieldStreamer is
         if (effectiveDay < length - 1) {
             revert LookBackPeriodInvalidParametersCombination();
         }
-        if (_lookBackPeriods.length == 0 || index >= _lookBackPeriods.length) {
+        if (index >= _lookBackPeriods.length) {
             revert LookBackPeriodWrongIndex();
         }
 
@@ -432,7 +432,7 @@ contract YieldStreamer is
      * - Can only be called by the contract owner
      * - Yield rate must be configured
      * - The index must be in range of yield rates array
-     * - The new day must be equal or greater than previous and equal or less than next days
+     * - The new effective day must be greater than one of the previous yield rate and less than the effective day on the next yield rate
      *
      * Emits an {YieldRateUpdated} event
      *
@@ -441,15 +441,23 @@ contract YieldStreamer is
      * @param index The index of the yield rate in the array
      */
     function updateYieldRate(uint256 effectiveDay, uint256 value, uint256 index) external onlyOwner {
-        if (_yieldRates.length == 0 || index >= _yieldRates.length) {
+        if (index >= _yieldRates.length) {
             revert YieldRateWrongIndex();
         }
 
-        if (
-            (index > 0 && _yieldRates.length - 1 >= index - 1 && effectiveDay < _yieldRates[index - 1].effectiveDay) ||
-            (_yieldRates.length - 1 >= index + 1 && effectiveDay > _yieldRates[index + 1].effectiveDay)
-        ) {
-            revert YieldRateInvalidEffectiveDay();
+        uint256 lastIndex = _yieldRates.length - 1;
+
+        if(lastIndex != 0) {
+            int256 intEffectiveDay = int256(effectiveDay);
+            int256 previousEffectiveDay = index != 0
+                ? int256(uint256(_yieldRates[index - 1].effectiveDay))
+                : type(int256).min;
+            int256 nextEffectiveDay = index != lastIndex
+                ? int256(uint256(_yieldRates[index + 1].effectiveDay))
+                : type(int256).max;
+            if (intEffectiveDay <= previousEffectiveDay || intEffectiveDay >= nextEffectiveDay) {
+                revert YieldRateInvalidEffectiveDay();
+            }
         }
 
         YieldRate storage yieldRate = _yieldRates[index];
