@@ -122,6 +122,23 @@ contract YieldStreamer is
      */
     event YieldRateConfigured(uint256 effectiveDay, uint256 value);
 
+    /**
+     * @notice Emitted when an yield rate is updated
+     *
+     * @param index The The index of the yield rate array in the chronological array
+     * @param newEffectiveDay The new effective day of the updated yield rate come into use
+     * @param oldEffectiveDay The old effective day of the updated yield rate
+     * @param newValue The new yield rate value
+     * @param oldValue The old yield rate value
+     */
+    event YieldRateUpdated(
+        uint256 index,
+        uint256 newEffectiveDay,
+        uint256 oldEffectiveDay,
+        uint256 newValue,
+        uint256 oldValue
+    );
+
     // -------------------- Errors -----------------------------------
 
     /**
@@ -155,7 +172,7 @@ contract YieldStreamer is
     error LookBackPeriodWrongIndex();
 
     /**
-     * @notice Thrown when the specified effective day of a yield rate is not greater than the last configured one
+     * @notice Thrown when the specified effective day of a yield rate does not meet the requirements
      */
     error YieldRateInvalidEffectiveDay();
 
@@ -163,6 +180,11 @@ contract YieldStreamer is
      * @notice Thrown when the specified value of a yield rate is already configured
      */
     error YieldRateValueAlreadyConfigured();
+
+    /**
+     * @notice Thrown when the index of a yield rate is out of range
+     */
+    error YieldRateWrongIndex();
 
     /**
      * @notice Thrown when the requested claim is rejected due to its amount is greater than the available yield
@@ -352,7 +374,7 @@ contract YieldStreamer is
      * @param length The length of the new look-back period in days
      * @param index The index of the look-back period in the array
      */
-    function updateLookBackPeriod(uint256 effectiveDay, uint256 length,  uint256 index) external onlyOwner {
+    function updateLookBackPeriod(uint256 effectiveDay, uint256 length, uint256 index) external onlyOwner {
         if (length == 0) {
             revert LookBackPeriodLengthZero();
         }
@@ -400,6 +422,56 @@ contract YieldStreamer is
         _yieldRates.push(YieldRate({ effectiveDay: _toUint16(effectiveDay), value: _toUint240(value) }));
 
         emit YieldRateConfigured(effectiveDay, value);
+    }
+
+    /**
+     * @notice Updates the yield rate at the specified index
+     *
+     * Requirements:
+     *
+     * - Can only be called by the contract owner
+     * - Yield rate must be configured
+     * - The index must be in range of yield rates array
+     * - The new effective day must be greater than one of the previous yield rate and
+     *   less than the effective day on the next yield rate
+     *
+     * Emits an {YieldRateUpdated} event
+     *
+     * @param effectiveDay The index of the day the yield rate come into use
+     * @param value The value of the yield rate
+     * @param index The index of the yield rate in the array
+     */
+    function updateYieldRate(uint256 effectiveDay, uint256 value, uint256 index) external onlyOwner {
+        if (index >= _yieldRates.length) {
+            revert YieldRateWrongIndex();
+        }
+
+        uint256 lastIndex = _yieldRates.length - 1;
+
+        if (lastIndex != 0) {
+            int256 intEffectiveDay = int256(effectiveDay);
+            int256 previousEffectiveDay = index != 0
+                ? int256(uint256(_yieldRates[index - 1].effectiveDay))
+                : type(int256).min;
+            int256 nextEffectiveDay = index != lastIndex
+                ? int256(uint256(_yieldRates[index + 1].effectiveDay))
+                : type(int256).max;
+            if (intEffectiveDay <= previousEffectiveDay || intEffectiveDay >= nextEffectiveDay) {
+                revert YieldRateInvalidEffectiveDay();
+            }
+        }
+
+        YieldRate storage yieldRate = _yieldRates[index];
+
+        emit YieldRateUpdated(
+            index,
+            effectiveDay,
+            yieldRate.effectiveDay,
+            value,
+            yieldRate.value);
+
+        yieldRate.effectiveDay = _toUint16(effectiveDay);
+        yieldRate.value = _toUint240(value);
     }
 
     // -------------------- User Functions ---------------------------
@@ -675,7 +747,6 @@ contract YieldStreamer is
         possibleBalanceByDays[periodLength] += sumYield;
         yieldByDays[0] = dayYield;
 
-
         // Define yield for other days
         for (uint256 i = 1; i < yieldRange; ++i) {
             if (fromDay + i == nextRateDay) {
@@ -749,7 +820,7 @@ contract YieldStreamer is
              * Calculate the yield by days since the last claim day until yesterday
              */
             uint256[] memory yieldByDays;
-            (yieldByDays, )= _calculateYieldAndPossibleBalanceByDays(account, result.nextClaimDay, day, state.debit);
+            (yieldByDays, ) = _calculateYieldAndPossibleBalanceByDays(account, result.nextClaimDay, day, state.debit);
             uint256 lastIndex = yieldByDays.length - 1;
 
             /**
