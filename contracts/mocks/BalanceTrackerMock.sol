@@ -10,7 +10,6 @@ import { IBalanceTracker } from "./../base/interfaces/periphery/IBalanceTracker.
  * @notice A simplified implementation of the {BalanceTracker} contract for testing the YieldStreamer contract
  */
 contract BalanceTrackerMock is IBalanceTracker {
-
     struct BalanceRecord {
         uint16 day;
         uint240 value;
@@ -39,7 +38,7 @@ contract BalanceTrackerMock is IBalanceTracker {
     function setBalanceRecords(address account, BalanceRecord[] calldata records) external {
         delete _balanceRecords[account];
         uint256 len = records.length;
-        for (uint256 i = 0; i < len; ++i){
+        for (uint256 i = 0; i < len; ++i) {
             _balanceRecords[account].push(records[i]);
         }
     }

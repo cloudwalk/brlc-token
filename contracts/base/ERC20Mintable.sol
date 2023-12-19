@@ -149,10 +149,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The `amount` value must be greater than zero and not
      * greater than the mint allowance of the minter
      */
-    function mint(
-        address account,
-        uint256 amount
-    ) external onlyMinter notBlocklisted(_msgSender()) returns (bool) {
+    function mint(address account, uint256 amount) external onlyMinter notBlocklisted(_msgSender()) returns (bool) {
         if (amount == 0) {
             revert ZeroMintAmount();
         }

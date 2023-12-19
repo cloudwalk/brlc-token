@@ -439,7 +439,7 @@ contract YieldStreamer is
             revert ToDayPriorFromDay();
         }
         uint256[] memory yieldByDays;
-        (yieldByDays,) = _calculateYieldAndPossibleBalanceByDays(account, fromDay, toDay, nextClaimDebit);
+        (yieldByDays, ) = _calculateYieldAndPossibleBalanceByDays(account, fromDay, toDay, nextClaimDebit);
         return yieldByDays;
     }
 
@@ -605,13 +605,12 @@ contract YieldStreamer is
 
         // Define first day yield and initial sum yield
         uint256 sumYield = 0;
-        uint256 dayYield = _getMinimumInRange(possibleBalanceByDays, 0, periodLength) * rateValue / RATE_FACTOR;
+        uint256 dayYield = (_getMinimumInRange(possibleBalanceByDays, 0, periodLength) * rateValue) / RATE_FACTOR;
         if (dayYield > nextClaimDebit) {
             sumYield = dayYield - nextClaimDebit;
         }
         possibleBalanceByDays[periodLength] += sumYield;
         yieldByDays[0] = dayYield;
-
 
         // Define yield for other days
         for (uint256 i = 1; i < yieldRange; ++i) {
@@ -622,7 +621,7 @@ contract YieldStreamer is
                 }
             }
             uint256 minBalance = _getMinimumInRange(possibleBalanceByDays, i, i + periodLength);
-            dayYield = minBalance * rateValue / RATE_FACTOR;
+            dayYield = (minBalance * rateValue) / RATE_FACTOR;
             sumYield += dayYield;
             possibleBalanceByDays[i + periodLength] += sumYield;
             yieldByDays[i] = dayYield;
@@ -686,7 +685,7 @@ contract YieldStreamer is
              * Calculate the yield by days since the last claim day until yesterday
              */
             uint256[] memory yieldByDays;
-            (yieldByDays, )= _calculateYieldAndPossibleBalanceByDays(account, result.nextClaimDay, day, state.debit);
+            (yieldByDays, ) = _calculateYieldAndPossibleBalanceByDays(account, result.nextClaimDay, day, state.debit);
             uint256 lastIndex = yieldByDays.length - 1;
 
             /**

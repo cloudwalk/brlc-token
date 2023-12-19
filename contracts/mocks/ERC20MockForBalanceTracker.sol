@@ -10,7 +10,6 @@ import { BalanceTracker } from "../periphery/BalanceTracker.sol";
  * @notice A simplified implementation of the ERC20 token contract for testing the BalanceTracker contract
  */
 contract ERC20MockForBalanceTracker {
-
     uint256 internal _totalSupply;
     mapping(address => uint256) internal _balances;
 
