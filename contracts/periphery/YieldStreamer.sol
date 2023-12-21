@@ -98,12 +98,46 @@ contract YieldStreamer is
     event LookBackPeriodConfigured(uint256 effectiveDay, uint256 length);
 
     /**
+     * @notice Emitted when an existing look-back period is updated
+     *
+     * @param index The The index of the updated look-back period in the chronological array
+     * @param oldEffectiveDay The old index of the day the updated look-back period come into use
+     * @param newEffectiveDay The new index of the day the updated look-back period come into use
+     * @param newLength  The old length of the updated look-back period in days
+     * @param oldLength  The old length of the updated look-back period in days
+     */
+    event LookBackPeriodUpdated(
+        uint256 index,
+        uint256 newEffectiveDay,
+        uint256 oldEffectiveDay,
+        uint256 newLength,
+        uint256 oldLength
+    );
+
+    /**
      * @notice Emitted when a new yield rate is added to the chronological array
      *
      * @param effectiveDay The index of the day the yield rate come into use
      * @param value The value of the yield rate
      */
     event YieldRateConfigured(uint256 effectiveDay, uint256 value);
+
+    /**
+     * @notice Emitted when an yield rate is updated
+     *
+     * @param index The The index of the yield rate array in the chronological array
+     * @param newEffectiveDay The new effective day of the updated yield rate come into use
+     * @param oldEffectiveDay The old effective day of the updated yield rate
+     * @param newValue The new yield rate value
+     * @param oldValue The old yield rate value
+     */
+    event YieldRateUpdated(
+        uint256 index,
+        uint256 newEffectiveDay,
+        uint256 oldEffectiveDay,
+        uint256 newValue,
+        uint256 oldValue
+    );
 
     // -------------------- Errors -----------------------------------
 
@@ -133,7 +167,12 @@ contract YieldStreamer is
     error LookBackPeriodCountLimit();
 
     /**
-     * @notice Thrown when the specified effective day of a yield rate is not greater than the last configured one
+     * @notice Thrown when the specified look-back period index is out of range
+     */
+    error LookBackPeriodWrongIndex();
+
+    /**
+     * @notice Thrown when the specified effective day of a yield rate does not meet the requirements
      */
     error YieldRateInvalidEffectiveDay();
 
@@ -141,6 +180,11 @@ contract YieldStreamer is
      * @notice Thrown when the specified value of a yield rate is already configured
      */
     error YieldRateValueAlreadyConfigured();
+
+    /**
+     * @notice Thrown when the index of a yield rate is out of range
+     */
+    error YieldRateWrongIndex();
 
     /**
      * @notice Thrown when the requested claim is rejected due to its amount is greater than the available yield
@@ -280,6 +324,7 @@ contract YieldStreamer is
      *
      * - Can only be called by the contract owner
      * - The new day must be greater than the last day
+     * - The new day must be greater than the look-back period
      * - The new value must not be zero
      *
      * Emits an {LookBackPeriodConfigured} event
@@ -302,7 +347,7 @@ contract YieldStreamer is
             revert LookBackPeriodInvalidParametersCombination();
         }
 
-        if (_lookBackPeriods.length > 0) {
+        if (_lookBackPeriods.length != 0) {
             // As temporary solution, prevent multiple configuration
             // of the look-back period as this will require a more complex logic
             revert LookBackPeriodCountLimit();
@@ -311,6 +356,46 @@ contract YieldStreamer is
         _lookBackPeriods.push(LookBackPeriod({ effectiveDay: _toUint16(effectiveDay), length: _toUint16(length) }));
 
         emit LookBackPeriodConfigured(effectiveDay, length);
+    }
+
+    /**
+     * @notice Updates the look-back period at the specified index
+     *
+     * Requirements:
+     *
+     * - Can only be called by the contract owner
+     * - The new day must be greater than the last day
+     * - The new day must be greater than the look-back period
+     * - The new value must not be zero
+     *
+     * Emits an {LookBackPeriodConfigured} event
+     *
+     * @param effectiveDay The index of the day the look-back period come into use
+     * @param length The length of the new look-back period in days
+     * @param index The index of the look-back period in the array
+     */
+    function updateLookBackPeriod(uint256 effectiveDay, uint256 length, uint256 index) external onlyOwner {
+        if (length == 0) {
+            revert LookBackPeriodLengthZero();
+        }
+        if (effectiveDay < length - 1) {
+            revert LookBackPeriodInvalidParametersCombination();
+        }
+        if (index >= _lookBackPeriods.length) {
+            revert LookBackPeriodWrongIndex();
+        }
+
+        LookBackPeriod storage period = _lookBackPeriods[index];
+
+        emit LookBackPeriodUpdated(
+            index,
+            effectiveDay,
+            period.effectiveDay,
+            length,
+            period.length);
+
+        period.effectiveDay = _toUint16(effectiveDay);
+        period.length = _toUint16(length);
     }
 
     /**
@@ -337,6 +422,56 @@ contract YieldStreamer is
         _yieldRates.push(YieldRate({ effectiveDay: _toUint16(effectiveDay), value: _toUint240(value) }));
 
         emit YieldRateConfigured(effectiveDay, value);
+    }
+
+    /**
+     * @notice Updates the yield rate at the specified index
+     *
+     * Requirements:
+     *
+     * - Can only be called by the contract owner
+     * - Yield rate must be configured
+     * - The index must be in range of yield rates array
+     * - The new effective day must be greater than one of the previous yield rate and
+     *   less than the effective day on the next yield rate
+     *
+     * Emits an {YieldRateUpdated} event
+     *
+     * @param effectiveDay The index of the day the yield rate come into use
+     * @param value The value of the yield rate
+     * @param index The index of the yield rate in the array
+     */
+    function updateYieldRate(uint256 effectiveDay, uint256 value, uint256 index) external onlyOwner {
+        if (index >= _yieldRates.length) {
+            revert YieldRateWrongIndex();
+        }
+
+        uint256 lastIndex = _yieldRates.length - 1;
+
+        if (lastIndex != 0) {
+            int256 intEffectiveDay = int256(effectiveDay);
+            int256 previousEffectiveDay = index != 0
+                ? int256(uint256(_yieldRates[index - 1].effectiveDay))
+                : type(int256).min;
+            int256 nextEffectiveDay = index != lastIndex
+                ? int256(uint256(_yieldRates[index + 1].effectiveDay))
+                : type(int256).max;
+            if (intEffectiveDay <= previousEffectiveDay || intEffectiveDay >= nextEffectiveDay) {
+                revert YieldRateInvalidEffectiveDay();
+            }
+        }
+
+        YieldRate storage yieldRate = _yieldRates[index];
+
+        emit YieldRateUpdated(
+            index,
+            effectiveDay,
+            yieldRate.effectiveDay,
+            value,
+            yieldRate.value);
+
+        yieldRate.effectiveDay = _toUint16(effectiveDay);
+        yieldRate.value = _toUint240(value);
     }
 
     // -------------------- User Functions ---------------------------
