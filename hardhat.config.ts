@@ -32,6 +32,13 @@ const config: HardhatUserConfig = {
       },
       gas: "auto"
     },
+    ledger: {
+      url: "http://127.0.0.1:3000",
+      accounts: {
+        mnemonic: "test test test test test test test test test test test junk",
+      },
+      gas: "auto"
+    },
   },
 };
 

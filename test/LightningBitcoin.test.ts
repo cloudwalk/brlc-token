@@ -49,7 +49,7 @@ describe("Contract 'LightningBitcoin'", async () => {
 
         it("Is reverted if called for the second time", async () => {
             const { token } = await setUpFixture(deployToken);
-            await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
+            await expect(token.callStatic.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
                 REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
             );
         });
@@ -57,7 +57,7 @@ describe("Contract 'LightningBitcoin'", async () => {
         it("Is reverted if the contract implementation is called even for the first time", async () => {
             const tokenImplementation: Contract = await tokenFactory.deploy();
             await tokenImplementation.deployed();
-            await expect(tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
+            await expect(tokenImplementation.callStatic.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
                 REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
             );
         });

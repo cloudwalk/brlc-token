@@ -50,7 +50,7 @@ describe("Contract 'InfinitePointsToken'", async () => {
 
         it("Is reverted if called for the second time", async () => {
             const { token } = await setUpFixture(deployToken);
-            await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY)).to.be.revertedWith(
+            await expect(token.callStatic.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY)).to.be.revertedWith(
                 REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
             );
         });
@@ -59,7 +59,7 @@ describe("Contract 'InfinitePointsToken'", async () => {
             const infinitePointsImplementation: Contract = await tokenFactory.deploy();
             await infinitePointsImplementation.deployed();
             await expect(
-                infinitePointsImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY)
+                infinitePointsImplementation.callStatic.initialize(TOKEN_NAME, TOKEN_SYMBOL, TOTAL_SUPPLY)
             ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
         });
     });
