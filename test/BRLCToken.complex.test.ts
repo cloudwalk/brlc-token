@@ -42,10 +42,10 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
 
     async function deployAndConfigureToken(): Promise<{ token: Contract }> {
         const { token } = await deployToken();
-        await proveTx(token.connect(deployer).setMainBlacklister(deployer.address));
-        await proveTx(token.connect(deployer).configureBlacklister(deployer.address, true));
+        await proveTx(token.connect(deployer).setMainBlocklister(deployer.address));
+        await proveTx(token.connect(deployer).configureBlocklister(deployer.address, true));
         await proveTx(token.connect(deployer).assignPurposes(purposeAccount.address, [PURPOSE]));
-        await proveTx(token.connect(deployer).updateMasterMinter(deployer.address));
+        await proveTx(token.connect(deployer).updateMainMinter(deployer.address));
         await proveTx(token.connect(deployer).configureMinter(deployer.address, 20));
         await proveTx(token.connect(user).approveFreezing());
         return { token };

@@ -22,7 +22,7 @@ describe("Contract 'ERC20Restrictable'", async () => {
     const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
 
     const REVERT_ERROR_ZERO_PURPOSE = "ZeroPurpose";
-    const REVERT_ERROR_UNAUTHORIZED_BLACKLISTER = "UnauthorizedBlacklister";
+    const REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER = "UnauthorizedBlocklister";
     const REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT = "TransferExceededRestrictedAmount";
 
     const PURPOSE_ZERO = "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -33,14 +33,14 @@ describe("Contract 'ERC20Restrictable'", async () => {
     let tokenFactory: ContractFactory;
     let deployer: SignerWithAddress;
     let pauser: SignerWithAddress;
-    let blacklister: SignerWithAddress;
+    let blocklister: SignerWithAddress;
     let user1: SignerWithAddress;
     let user2: SignerWithAddress;
     let purposeAccount1: SignerWithAddress;
     let purposeAccount2: SignerWithAddress;
 
     before(async () => {
-        [deployer, pauser, blacklister, user1, user2, purposeAccount1, purposeAccount2] = await ethers.getSigners();
+        [deployer, pauser, blocklister, user1, user2, purposeAccount1, purposeAccount2] = await ethers.getSigners();
         tokenFactory = await ethers.getContractFactory("ERC20RestrictableMock");
     });
 
@@ -53,7 +53,7 @@ describe("Contract 'ERC20Restrictable'", async () => {
     async function deployAndConfigureToken(): Promise<{ token: Contract }> {
         const { token } = await deployToken();
         await proveTx(token.connect(deployer).setPauser(pauser.address));
-        await proveTx(token.connect(deployer).setMainBlacklister(blacklister.address));
+        await proveTx(token.connect(deployer).setMainBlocklister(blocklister.address));
         return { token };
     }
 
@@ -62,7 +62,7 @@ describe("Contract 'ERC20Restrictable'", async () => {
             const { token } = await setUpFixture(deployToken);
             expect(await token.owner()).to.equal(deployer.address);
             expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
-            expect(await token.mainBlacklister()).to.equal(ethers.constants.AddressZero);
+            expect(await token.mainBlocklister()).to.equal(ethers.constants.AddressZero);
         });
 
         it("Is reverted if called for the second time", async () => {
@@ -138,57 +138,57 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(0);
 
-            await expect(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 100))
+            await expect(token.connect(blocklister).updateRestriction(user1.address, PURPOSE_1, 100))
                 .to.emit(token, "UpdateRestriction")
                 .withArgs(user1.address, PURPOSE_1, 100, 0);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(100);
 
-            await expect(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_2, 100))
+            await expect(token.connect(blocklister).updateRestriction(user1.address, PURPOSE_2, 100))
                 .to.emit(token, "UpdateRestriction")
                 .withArgs(user1.address, PURPOSE_2, 100, 0);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(100);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(200);
 
-            await expect(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 200))
+            await expect(token.connect(blocklister).updateRestriction(user1.address, PURPOSE_1, 200))
                 .to.emit(token, "UpdateRestriction")
                 .withArgs(user1.address, PURPOSE_1, 200, 100);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(200);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(300);
 
-            await expect(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 100))
+            await expect(token.connect(blocklister).updateRestriction(user1.address, PURPOSE_1, 100))
                 .to.emit(token, "UpdateRestriction")
                 .withArgs(user1.address, PURPOSE_1, 100, 200);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(200);
 
-            await expect(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 0))
+            await expect(token.connect(blocklister).updateRestriction(user1.address, PURPOSE_1, 0))
                 .to.emit(token, "UpdateRestriction")
                 .withArgs(user1.address, PURPOSE_1, 0, 100);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(0);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(100);
 
-            await expect(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_2, 0))
+            await expect(token.connect(blocklister).updateRestriction(user1.address, PURPOSE_2, 0))
                 .to.emit(token, "UpdateRestriction")
                 .withArgs(user1.address, PURPOSE_2, 0, 100);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(0);
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(0);
         });
 
-        it("Is reverted if the caller is not a blacklister", async () => {
+        it("Is reverted if the caller is not a blocklister", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             await expect(
                 token.connect(deployer).updateRestriction(purposeAccount1.address, PURPOSE_1, 100)
-            ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLACKLISTER);
+            ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
             await expect(
                 token.connect(user1).updateRestriction(purposeAccount1.address, PURPOSE_1, 100)
-            ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLACKLISTER);
+            ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
         });
 
         it("Is reverted if the provided purpose is zero", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
             await expect(
-                token.connect(blacklister).updateRestriction(purposeAccount1.address, PURPOSE_ZERO, 100)
+                token.connect(blocklister).updateRestriction(purposeAccount1.address, PURPOSE_ZERO, 100)
             ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_PURPOSE);
         });
     });
@@ -199,10 +199,10 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(0);
 
-            await proveTx(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 100));
+            await proveTx(token.connect(blocklister).updateRestriction(user1.address, PURPOSE_1, 100));
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
 
-            await proveTx(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_2, 200));
+            await proveTx(token.connect(blocklister).updateRestriction(user1.address, PURPOSE_2, 200));
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(200);
 
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(300);
@@ -215,8 +215,8 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
             await proveTx(token.connect(deployer).assignPurposes(purposeAccount1.address, [PURPOSE_1]));
             await proveTx(token.connect(deployer).assignPurposes(purposeAccount2.address, [PURPOSE_2]));
-            await proveTx(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 100));
-            await proveTx(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_2, 200));
+            await proveTx(token.connect(blocklister).updateRestriction(user1.address, PURPOSE_1, 100));
+            await proveTx(token.connect(blocklister).updateRestriction(user1.address, PURPOSE_2, 200));
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(300);
 
             await proveTx(token.connect(deployer).mint(user1.address, 300));
@@ -253,8 +253,8 @@ describe("Contract 'ERC20Restrictable'", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
 
             await proveTx(token.connect(deployer).assignPurposes(purposeAccount1.address, [PURPOSE_1, PURPOSE_2]));
-            await proveTx(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 100));
-            await proveTx(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_2, 100));
+            await proveTx(token.connect(blocklister).updateRestriction(user1.address, PURPOSE_1, 100));
+            await proveTx(token.connect(blocklister).updateRestriction(user1.address, PURPOSE_2, 100));
             expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(200);
 
             await proveTx(token.connect(deployer).mint(user1.address, 200));
@@ -293,7 +293,7 @@ describe("Contract 'ERC20Restrictable'", async () => {
             const { token } = await setUpFixture(deployAndConfigureToken);
 
             await proveTx(token.connect(deployer).assignPurposes(purposeAccount1.address, [PURPOSE_1]));
-            await proveTx(token.connect(blacklister).updateRestriction(user1.address, PURPOSE_1, 100));
+            await proveTx(token.connect(blocklister).updateRestriction(user1.address, PURPOSE_1, 100));
 
             await proveTx(token.connect(deployer).mint(user1.address, 200));
 

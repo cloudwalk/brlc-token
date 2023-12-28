@@ -8,7 +8,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { IYieldStreamer } from "./../base/interfaces/periphery/IYieldStreamer.sol";
 import { IBalanceTracker } from "./../base/interfaces/periphery/IBalanceTracker.sol";
 import { PausableExtUpgradeable } from "./../base/common/PausableExtUpgradeable.sol";
-import { BlacklistableUpgradeable } from "./../base/common/BlacklistableUpgradeable.sol";
+import { BlocklistableUpgradeable } from "./../base/common/BlocklistableUpgradeable.sol";
 import { RescuableUpgradeable } from "./../base/common/RescuableUpgradeable.sol";
 
 /**
@@ -19,7 +19,7 @@ import { RescuableUpgradeable } from "./../base/common/RescuableUpgradeable.sol"
 contract YieldStreamer is
     OwnableUpgradeable,
     PausableExtUpgradeable,
-    BlacklistableUpgradeable,
+    BlocklistableUpgradeable,
     RescuableUpgradeable,
     IBalanceTracker,
     IYieldStreamer
@@ -260,7 +260,7 @@ contract YieldStreamer is
         __Ownable_init_unchained();
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
-        __Blacklistable_init_unchained();
+        __Blocklistable_init_unchained();
         __YieldStreamer_init_unchained();
     }
 
@@ -480,11 +480,11 @@ contract YieldStreamer is
      * @inheritdoc IYieldStreamer
      *
      * @dev The contract must not be paused
-     * @dev The caller of the function must not be blacklisted
+     * @dev The caller of the function must not be blocklisted
      * @dev The requested claim amount must be no less than the `MIN_CLAIM_AMOUNT` value
      * @dev The requested claim amount must be rounded according to the `ROUNDING_COEF` value
      */
-    function claim(uint256 amount) external whenNotPaused notBlacklisted(_msgSender()) {
+    function claim(uint256 amount) external whenNotPaused notBlocklisted(_msgSender()) {
         if (amount < MIN_CLAIM_AMOUNT) {
             revert ClaimAmountBelowMinimum();
         }
@@ -574,7 +574,7 @@ contract YieldStreamer is
             revert ToDayPriorFromDay();
         }
         uint256[] memory yieldByDays;
-        (yieldByDays,) = _calculateYieldAndPossibleBalanceByDays(account, fromDay, toDay, nextClaimDebit);
+        (yieldByDays, ) = _calculateYieldAndPossibleBalanceByDays(account, fromDay, toDay, nextClaimDebit);
         return yieldByDays;
     }
 
@@ -740,7 +740,7 @@ contract YieldStreamer is
 
         // Define first day yield and initial sum yield
         uint256 sumYield = 0;
-        uint256 dayYield = _getMinimumInRange(possibleBalanceByDays, 0, periodLength) * rateValue / RATE_FACTOR;
+        uint256 dayYield = (_getMinimumInRange(possibleBalanceByDays, 0, periodLength) * rateValue) / RATE_FACTOR;
         if (dayYield > nextClaimDebit) {
             sumYield = dayYield - nextClaimDebit;
         }
@@ -756,7 +756,7 @@ contract YieldStreamer is
                 }
             }
             uint256 minBalance = _getMinimumInRange(possibleBalanceByDays, i, i + periodLength);
-            dayYield = minBalance * rateValue / RATE_FACTOR;
+            dayYield = (minBalance * rateValue) / RATE_FACTOR;
             sumYield += dayYield;
             possibleBalanceByDays[i + periodLength] += sumYield;
             yieldByDays[i] = dayYield;

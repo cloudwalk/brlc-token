@@ -6,19 +6,19 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { RescuableUpgradeable } from "./common/RescuableUpgradeable.sol";
 import { PausableExtUpgradeable } from "./common/PausableExtUpgradeable.sol";
-import { BlacklistableUpgradeable } from "./common/BlacklistableUpgradeable.sol";
+import { BlocklistableUpgradeable } from "./common/BlocklistableUpgradeable.sol";
 
 /**
  * @title ERC20Base contract
  * @author CloudWalk Inc.
  * @notice This contract is base implementation of the BRLC token with inherited Rescuable,
- * Pausable, and Blacklistable functionality.
+ * Pausable, and Blocklistable functionality.
  */
 abstract contract ERC20Base is
     OwnableUpgradeable,
     RescuableUpgradeable,
     PausableExtUpgradeable,
-    BlacklistableUpgradeable,
+    BlocklistableUpgradeable,
     ERC20Upgradeable
 {
     /**
@@ -35,7 +35,7 @@ abstract contract ERC20Base is
         __Rescuable_init_unchained();
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
-        __Blacklistable_init_unchained();
+        __Blocklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
         __ERC20Base_init_unchained();
     }
@@ -58,14 +58,14 @@ abstract contract ERC20Base is
      * @inheritdoc ERC20Upgradeable
      *
      * @dev The contract must not be paused
-     * @dev The `owner` address must not be blacklisted
-     * @dev The `spender` address must not be blacklisted
+     * @dev The `owner` address must not be blocklisted
+     * @dev The `spender` address must not be blocklisted
      */
     function _approve(
         address owner,
         address spender,
         uint256 amount
-    ) internal virtual override whenNotPaused notBlacklisted(owner) notBlacklisted(spender) {
+    ) internal virtual override whenNotPaused notBlocklisted(owner) notBlocklisted(spender) {
         super._approve(owner, spender, amount);
     }
 
@@ -73,14 +73,14 @@ abstract contract ERC20Base is
      * @inheritdoc ERC20Upgradeable
      *
      * @dev The contract must not be paused
-     * @dev The `owner` address must not be blacklisted
-     * @dev The `spender` address must not be blacklisted
+     * @dev The `owner` address must not be blocklisted
+     * @dev The `spender` address must not be blocklisted
      */
     function _spendAllowance(
         address owner,
         address spender,
         uint256 amount
-    ) internal virtual override whenNotPaused notBlacklisted(owner) notBlacklisted(spender) {
+    ) internal virtual override whenNotPaused notBlocklisted(owner) notBlocklisted(spender) {
         super._spendAllowance(owner, spender, amount);
     }
 
@@ -88,14 +88,14 @@ abstract contract ERC20Base is
      * @inheritdoc ERC20Upgradeable
      *
      * @dev The contract must not be paused
-     * @dev The `from` address must not be blacklisted
-     * @dev The `to` address must not be blacklisted
+     * @dev The `from` address must not be blocklisted
+     * @dev The `to` address must not be blocklisted
      */
     function _beforeTokenTransfer(
         address from,
         address to,
         uint256 amount
-    ) internal virtual override whenNotPaused notBlacklisted(from) notBlacklistedOrBypassIfBlacklister(to) {
+    ) internal virtual override whenNotPaused notBlocklisted(from) notBlocklistedOrBypassIfBlocklister(to) {
         super._beforeTokenTransfer(from, to, amount);
     }
 
