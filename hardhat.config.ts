@@ -16,8 +16,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       accounts: {
         mnemonic: "test test test test test test test test test test test junk",
-      },
-      initialDate: "01 Dec 2023 00:00:00 GMT", //It's needed for BalanceTracker test
+      }
     },
     ganache: {
       url: "http://127.0.0.1:7545",
