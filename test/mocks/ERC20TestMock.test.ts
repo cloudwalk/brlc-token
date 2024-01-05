@@ -13,7 +13,7 @@ async function setUpFixture(func: any) {
     }
 }
 
-describe("Contract 'ERC20TestMock'", async () => {
+describe("Contract 'ERC20TokenMock'", async () => {
     const TOKEN_NAME = "ERC20 Test";
     const TOKEN_SYMBOL = "TEST";
     const TOKEN_DECIMALS = 18;
@@ -30,7 +30,7 @@ describe("Contract 'ERC20TestMock'", async () => {
 
     before(async () => {
         [deployer, user] = await ethers.getSigners();
-        tokenFactory = await ethers.getContractFactory("ERC20TestMock");
+        tokenFactory = await ethers.getContractFactory("ERC20TokenMock");
     });
 
     async function deployToken(): Promise<{ token: Contract }> {
