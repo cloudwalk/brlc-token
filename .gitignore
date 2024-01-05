@@ -1,16 +1,23 @@
+# Project dependencies
 node_modules
-.env
-coverage
-coverage.json
-typechain
-typechain-types
 
-#Hardhat files
-cache
-artifacts
+# TypeChain files
+/typechain
+/typechain-types
 
-#IDE-specific files
+# Hardhat files
+/cache
+/artifacts
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+# IDE-specific files
 .idea
 
-#Version manager files
+# Version manager files
 .tool-versions
+
+# Environment variables
+.env
