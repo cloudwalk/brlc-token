@@ -1,4 +1,4 @@
-import { TransactionReceipt, TransactionResponse } from "@ethersproject/abstract-provider"
+import { TransactionReceipt, TransactionResponse } from "@ethersproject/abstract-provider";
 
 export async function proveTx(txResponsePromise: Promise<TransactionResponse>): Promise<TransactionReceipt> {
   const txReceipt = await txResponsePromise;

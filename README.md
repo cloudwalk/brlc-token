@@ -13,7 +13,7 @@ This repository contains [BRLC](https://infinitepay.io/brlc) token smart contrac
 
 ## Build and test
 
-``` sh
+```sh
 # Install all dependencies
 npm install
 
@@ -25,7 +25,9 @@ npx hardhat test
 ```
 
 ## Networks and deployments
+
 Information about deployments across all the networks can be found [here](./docs/deployed-contracts.md).
 
 ## Licensing
+
 This project is released under the MIT License, see [LICENSE](./LICENSE).

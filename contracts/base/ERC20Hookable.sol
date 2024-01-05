@@ -40,7 +40,12 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
      * @param code The error code of the hook failure
      * @param data The low level error data
      */
-    event BeforeTokenTransferHookFailure(address indexed hook, string reason, uint256 code, bytes data);
+    event BeforeTokenTransferHookFailure(
+        address indexed hook,
+        string reason,
+        uint256 code,
+        bytes data
+    );
 
     /**
      * @notice Emitted when a call of the `afterTokenTransfer` hook failed
@@ -50,14 +55,22 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
      * @param code The error code of the hook failure
      * @param data The low level error data
      */
-    event AfterTokenTransferHookFailure(address indexed hook, string reason, uint256 code, bytes data);
+    event AfterTokenTransferHookFailure(
+        address indexed hook,
+        string reason,
+        uint256 code,
+        bytes data
+    );
 
     // -------------------- Functions --------------------------------
 
     /**
      * @notice The internal initializer of the upgradable contract
      */
-    function __ERC20Hookable_init(string memory name_, string memory symbol_) internal onlyInitializing {
+    function __ERC20Hookable_init(
+        string memory name_,
+        string memory symbol_
+    ) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
@@ -112,21 +125,50 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
     /**
      * @dev Overrides the `_beforeTokenTransfer` function by calling attached hooks after the base logic
      */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override(ERC20Base) {
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override(ERC20Base) {
         super._beforeTokenTransfer(from, to, amount);
         for (uint256 i = 0; i < _beforeTokenTransferHooks.length; ++i) {
             if (_beforeTokenTransferHooks[i].policy == ErrorHandlingPolicy.Revert) {
-                IERC20Hook(_beforeTokenTransferHooks[i].account).beforeTokenTransfer(from, to, amount);
+                IERC20Hook(_beforeTokenTransferHooks[i].account).beforeTokenTransfer(
+                    from,
+                    to,
+                    amount
+                );
             } else {
                 // ErrorHandlingPolicy.Event
-                try IERC20Hook(_beforeTokenTransferHooks[i].account).beforeTokenTransfer(from, to, amount) {
+                try
+                    IERC20Hook(_beforeTokenTransferHooks[i].account).beforeTokenTransfer(
+                        from,
+                        to,
+                        amount
+                    )
+                {
                     // Do nothing
                 } catch Error(string memory reason) {
-                    emit BeforeTokenTransferHookFailure(_beforeTokenTransferHooks[i].account, reason, 0, "");
+                    emit BeforeTokenTransferHookFailure(
+                        _beforeTokenTransferHooks[i].account,
+                        reason,
+                        0,
+                        ""
+                    );
                 } catch Panic(uint errorCode) {
-                    emit BeforeTokenTransferHookFailure(_beforeTokenTransferHooks[i].account, "", errorCode, "");
+                    emit BeforeTokenTransferHookFailure(
+                        _beforeTokenTransferHooks[i].account,
+                        "",
+                        errorCode,
+                        ""
+                    );
                 } catch (bytes memory lowLevelData) {
-                    emit BeforeTokenTransferHookFailure(_beforeTokenTransferHooks[i].account, "", 0, lowLevelData);
+                    emit BeforeTokenTransferHookFailure(
+                        _beforeTokenTransferHooks[i].account,
+                        "",
+                        0,
+                        lowLevelData
+                    );
                 }
             }
         }
@@ -135,21 +177,50 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
     /**
      * @dev Overrides the `_afterTokenTransfer` function by calling attached hooks after the base logic
      */
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override {
         super._afterTokenTransfer(from, to, amount);
         for (uint256 i = 0; i < _afterTokenTransferHooks.length; ++i) {
             if (_afterTokenTransferHooks[i].policy == ErrorHandlingPolicy.Revert) {
-                IERC20Hook(_afterTokenTransferHooks[i].account).afterTokenTransfer(from, to, amount);
+                IERC20Hook(_afterTokenTransferHooks[i].account).afterTokenTransfer(
+                    from,
+                    to,
+                    amount
+                );
             } else {
                 // ErrorHandlingPolicy.Event
-                try IERC20Hook(_afterTokenTransferHooks[i].account).afterTokenTransfer(from, to, amount) {
+                try
+                    IERC20Hook(_afterTokenTransferHooks[i].account).afterTokenTransfer(
+                        from,
+                        to,
+                        amount
+                    )
+                {
                     // Do nothing
                 } catch Error(string memory reason) {
-                    emit AfterTokenTransferHookFailure(_afterTokenTransferHooks[i].account, reason, 0, "");
+                    emit AfterTokenTransferHookFailure(
+                        _afterTokenTransferHooks[i].account,
+                        reason,
+                        0,
+                        ""
+                    );
                 } catch Panic(uint errorCode) {
-                    emit AfterTokenTransferHookFailure(_afterTokenTransferHooks[i].account, "", errorCode, "");
+                    emit AfterTokenTransferHookFailure(
+                        _afterTokenTransferHooks[i].account,
+                        "",
+                        errorCode,
+                        ""
+                    );
                 } catch (bytes memory lowLevelData) {
-                    emit AfterTokenTransferHookFailure(_afterTokenTransferHooks[i].account, "", 0, lowLevelData);
+                    emit AfterTokenTransferHookFailure(
+                        _afterTokenTransferHooks[i].account,
+                        "",
+                        0,
+                        lowLevelData
+                    );
                 }
             }
         }

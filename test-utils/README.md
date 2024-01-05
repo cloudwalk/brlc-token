@@ -1,3 +1,3 @@
 ## Test utils directory
 
-This directory contains some custom utilities used in the tests
+This directory contains custom utilities used for smart contracts testing.

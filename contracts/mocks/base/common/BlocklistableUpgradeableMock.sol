@@ -65,7 +65,10 @@ contract BlocklistableUpgradeableMock is BlocklistableUpgradeable {
      * @notice Checks the execution of the {notBlocklistedOrBypassIfBlocklister} modifier
      * Emits an event {TestNotBlocklistedOrBypassIfBlocklisterModifierSucceeded} if modifier is not reverted
      */
-    function testNotBlocklistedOrBypassIfBlocklister() external notBlocklistedOrBypassIfBlocklister(_msgSender()) {
+    function testNotBlocklistedOrBypassIfBlocklister()
+        external
+        notBlocklistedOrBypassIfBlocklister(_msgSender())
+    {
         emit TestNotBlocklistedOrBypassIfBlocklisterModifierSucceeded();
     }
 }

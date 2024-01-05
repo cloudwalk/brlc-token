@@ -251,7 +251,9 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      * @param status The new enabled/disabled status of the blocklist
      */
     function enableBlocklist(bool status) external onlyOwner {
-        BlocklistableStorageSlot storage storageSlot = _getBlocklistableSlot(_BLOCKLISTABLE_STORAGE_SLOT);
+        BlocklistableStorageSlot storage storageSlot = _getBlocklistableSlot(
+            _BLOCKLISTABLE_STORAGE_SLOT
+        );
         if (storageSlot.enabled == status) {
             revert AlreadyConfigured();
         }
@@ -293,7 +295,9 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      * @param status The new status of the blocklister
      */
     function configureBlocklister(address account, bool status) external onlyMainBlocklister {
-        BlocklistableStorageSlot storage storageSlot = _getBlocklistableSlot(_BLOCKLISTABLE_STORAGE_SLOT);
+        BlocklistableStorageSlot storage storageSlot = _getBlocklistableSlot(
+            _BLOCKLISTABLE_STORAGE_SLOT
+        );
         if (storageSlot.blocklisters[account] == status) {
             revert AlreadyConfigured();
         }
@@ -341,7 +345,9 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
     /**
      * @dev Returns an `MappingSlot` with member `value` located at `slot`
      */
-    function _getBlocklistableSlot(bytes32 slot) internal pure returns (BlocklistableStorageSlot storage r) {
+    function _getBlocklistableSlot(
+        bytes32 slot
+    ) internal pure returns (BlocklistableStorageSlot storage r) {
         /// @solidity memory-safe-assembly
         assembly {
             r.slot := slot

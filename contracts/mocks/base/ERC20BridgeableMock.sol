@@ -31,7 +31,11 @@ contract ERC20BridgeableMock is ERC20Bridgeable {
      * @param symbol_ The symbol of the token
      * @param bridge_ The address of the bridge contract
      */
-    function initialize(string memory name_, string memory symbol_, address bridge_) public initializer {
+    function initialize(
+        string memory name_,
+        string memory symbol_,
+        address bridge_
+    ) public initializer {
         __ERC20Bridgeable_init(name_, symbol_, bridge_);
     }
 
@@ -43,7 +47,11 @@ contract ERC20BridgeableMock is ERC20Bridgeable {
      * @param symbol_ The symbol of the token
      * @param bridge_ The address of the bridge contract
      */
-    function call_parent_initialize(string memory name_, string memory symbol_, address bridge_) public {
+    function call_parent_initialize(
+        string memory name_,
+        string memory symbol_,
+        address bridge_
+    ) public {
         __ERC20Bridgeable_init(name_, symbol_, bridge_);
     }
 

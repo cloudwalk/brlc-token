@@ -41,7 +41,10 @@ contract USJimToken is ERC20Base, ERC20Mintable, ERC20Freezable {
      *
      * See {USJimToken-initialize}
      */
-    function __USJimToken_init(string memory name_, string memory symbol_) internal onlyInitializing {
+    function __USJimToken_init(
+        string memory name_,
+        string memory symbol_
+    ) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
@@ -71,7 +74,11 @@ contract USJimToken is ERC20Base, ERC20Mintable, ERC20Freezable {
     /**
      * @dev See {ERC20Base-_beforeTokenTransfer}
      */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override(ERC20Base) {
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override(ERC20Base) {
         super._beforeTokenTransfer(from, to, amount);
     }
 

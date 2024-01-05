@@ -43,7 +43,10 @@ contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictabl
      *
      * See {BRLCToken-initialize}
      */
-    function __BRLCToken_init(string memory name_, string memory symbol_) internal onlyInitializing {
+    function __BRLCToken_init(
+        string memory name_,
+        string memory symbol_
+    ) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
@@ -99,7 +102,9 @@ contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictabl
     /**
      * @inheritdoc ERC20Restrictable
      */
-    function _balanceOf_ERC20Restrictable(address account) internal view virtual override returns (uint256) {
+    function _balanceOf_ERC20Restrictable(
+        address account
+    ) internal view virtual override returns (uint256) {
         return balanceOf(account) - balanceOfFrozen(account);
     }
 }
