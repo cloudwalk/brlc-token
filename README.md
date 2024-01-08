@@ -26,7 +26,7 @@ npx hardhat test
 
 ## Networks and deployments
 
-Information about deployments across all the networks can be found [here](./docs/deployed-contracts.md).
+Information about deployments across all the networks can be found [here](./docs/deployed-contracts.json).
 
 ## Licensing
 
