@@ -67,9 +67,7 @@ contract ERC20RestrictableMock is ERC20Restrictable {
     /**
      * @inheritdoc ERC20Restrictable
      */
-    function _balanceOf_ERC20Restrictable(
-        address account
-    ) internal view virtual override returns (uint256) {
+    function _balanceOf_ERC20Restrictable(address account) internal view virtual override returns (uint256) {
         return balanceOf(account);
     }
 }

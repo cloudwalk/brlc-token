@@ -29,10 +29,7 @@ abstract contract ERC20Base is
      * @param name_ The name of the token
      * @param symbol_ The symbol of the token
      */
-    function __ERC20Base_init(
-        string memory name_,
-        string memory symbol_
-    ) internal onlyInitializing {
+    function __ERC20Base_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Rescuable_init_unchained();
@@ -98,25 +95,14 @@ abstract contract ERC20Base is
         address from,
         address to,
         uint256 amount
-    )
-        internal
-        virtual
-        override
-        whenNotPaused
-        notBlocklisted(from)
-        notBlocklistedOrBypassIfBlocklister(to)
-    {
+    ) internal virtual override whenNotPaused notBlocklisted(from) notBlocklistedOrBypassIfBlocklister(to) {
         super._beforeTokenTransfer(from, to, amount);
     }
 
     /**
      * @inheritdoc ERC20Upgradeable
      */
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual override {
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._afterTokenTransfer(from, to, amount);
     }
 }

@@ -72,10 +72,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @notice The internal initializer of the upgradable contract
      */
-    function __ERC20Mintable_init(
-        string memory name_,
-        string memory symbol_
-    ) internal onlyInitializing {
+    function __ERC20Mintable_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
@@ -152,10 +149,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The `amount` value must be greater than zero and not
      * greater than the mint allowance of the minter
      */
-    function mint(
-        address account,
-        uint256 amount
-    ) external onlyMinter notBlocklisted(_msgSender()) returns (bool) {
+    function mint(address account, uint256 amount) external onlyMinter notBlocklisted(_msgSender()) returns (bool) {
         if (amount == 0) {
             revert ZeroMintAmount();
         }

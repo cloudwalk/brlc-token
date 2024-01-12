@@ -37,11 +37,7 @@ contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
      * @param symbol_ The symbol of the token
      * @param bridge_ The address of the bridge contract
      */
-    function initialize(
-        string memory name_,
-        string memory symbol_,
-        address bridge_
-    ) external virtual initializer {
+    function initialize(string memory name_, string memory symbol_, address bridge_) external virtual initializer {
         __BRLCTokenBridgeable_init(name_, symbol_, bridge_);
     }
 
@@ -84,11 +80,7 @@ contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
     /**
      * @dev See {ERC20Base-_beforeTokenTransfer}
      */
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual override(ERC20Base) {
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override(ERC20Base) {
         super._beforeTokenTransfer(from, to, amount);
     }
 

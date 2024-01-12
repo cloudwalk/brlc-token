@@ -33,10 +33,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /**
      * @notice The internal initializer of the upgradable contract
      */
-    function __ERC20Restrictable_init(
-        string memory name_,
-        string memory symbol_
-    ) internal onlyInitializing {
+    function __ERC20Restrictable_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
@@ -70,11 +67,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /**
      * @inheritdoc IERC20Restrictable
      */
-    function updateRestriction(
-        address account,
-        bytes32 purpose,
-        uint256 balance
-    ) external onlyBlocklister {
+    function updateRestriction(address account, bytes32 purpose, uint256 balance) external onlyBlocklister {
         if (purpose == bytes32(0)) {
             revert ZeroPurpose();
         }
@@ -112,11 +105,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /**
      * @inheritdoc ERC20Base
      */
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual override {
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         // Execute basic transfer logic
         super._afterTokenTransfer(from, to, amount);
 

@@ -36,10 +36,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @notice The internal initializer of the upgradable contract
      */
-    function __ERC20Freezable_init(
-        string memory name_,
-        string memory symbol_
-    ) internal onlyInitializing {
+    function __ERC20Freezable_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
@@ -94,11 +91,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @dev Can only be called by the blocklister account
      * @dev The frozen balance must be greater than the `amount`
      */
-    function transferFrozen(
-        address from,
-        address to,
-        uint256 amount
-    ) public virtual whenNotPaused onlyBlocklister {
+    function transferFrozen(address from, address to, uint256 amount) public virtual whenNotPaused onlyBlocklister {
         uint256 balance = _frozenBalances[from];
 
         if (amount > balance) {
@@ -139,11 +132,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @inheritdoc ERC20Base
      */
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual override {
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._afterTokenTransfer(from, to, amount);
         uint256 frozen = _frozenBalances[from];
         if (frozen != 0) {
