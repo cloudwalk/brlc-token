@@ -68,31 +68,31 @@ describe("Contract 'ERC20Base'", async () => {
 
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the implementation contract is called even for the first time", async () => {
       const tokenImplementation: Contract = await tokenFactory.deploy();
       await tokenImplementation.deployed();
-      await expect(tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the internal initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.call_parent_initialize_unchained()).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        token.call_parent_initialize_unchained()
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -110,29 +110,27 @@ describe("Contract 'ERC20Base'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
       await proveTx(token.connect(pauser).pause());
-      await expect(token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)).to.be.revertedWith(
-        REVERT_MESSAGE_PAUSABLE_PAUSED
-      );
+      await expect(
+        token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)
+      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
     });
 
     it("Is reverted if the caller is blocklisted", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
       await proveTx(token.connect(user1).selfBlocklist());
-      await expect(token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_BLOCKLISTED_ACCOUNT
-      );
+      await expect(
+        token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
     });
 
     it("Is reverted if the recipient is blocklisted", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
       await proveTx(token.connect(user2).selfBlocklist());
-      await expect(token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_BLOCKLISTED_ACCOUNT
-      );
+      await expect(
+        token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
     });
   });
 
@@ -151,27 +149,25 @@ describe("Contract 'ERC20Base'", async () => {
     it("Is reverted if the contract is paused", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(pauser).pause());
-      await expect(token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)).to.be.revertedWith(
-        REVERT_MESSAGE_PAUSABLE_PAUSED
-      );
+      await expect(
+        token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)
+      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
     });
 
     it("Is reverted if the caller is blocklisted", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(user1).selfBlocklist());
-      await expect(token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_BLOCKLISTED_ACCOUNT
-      );
+      await expect(
+        token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
     });
 
     it("Is reverted if the spender is blocklisted", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(user2).selfBlocklist());
-      await expect(token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_BLOCKLISTED_ACCOUNT
-      );
+      await expect(
+        token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
     });
   });
 
@@ -191,9 +187,9 @@ describe("Contract 'ERC20Base'", async () => {
       await proveTx(token.connect(user1).approve(user2.address, TOKEN_AMOUNT));
       await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
       await proveTx(token.connect(pauser).pause());
-      await expect(token.connect(user2).transferFrom(user1.address, user2.address, TOKEN_AMOUNT)).to.be.revertedWith(
-        REVERT_MESSAGE_PAUSABLE_PAUSED
-      );
+      await expect(
+        token.connect(user2).transferFrom(user1.address, user2.address, TOKEN_AMOUNT)
+      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
     });
 
     it("Is reverted if the sender is blocklisted", async () => {
@@ -236,9 +232,9 @@ describe("Contract 'ERC20Base'", async () => {
     it("Is reverted if the contract is paused", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(pauser).pause());
-      await expect(token.increaseAllowance(user1.address, allowanceAddedValue)).to.be.revertedWith(
-        REVERT_MESSAGE_PAUSABLE_PAUSED
-      );
+      await expect(
+        token.increaseAllowance(user1.address, allowanceAddedValue)
+      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
     });
 
     it("Is reverted if the caller is blocklisted", async () => {
@@ -278,9 +274,9 @@ describe("Contract 'ERC20Base'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(user1).approve(user2.address, initialAllowance));
       await proveTx(token.connect(pauser).pause());
-      await expect(token.connect(user1).decreaseAllowance(user2.address, allowanceSubtractedValue)).to.be.revertedWith(
-        REVERT_MESSAGE_PAUSABLE_PAUSED
-      );
+      await expect(
+        token.connect(user1).decreaseAllowance(user2.address, allowanceSubtractedValue)
+      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
     });
 
     it("Is reverted if the caller is blocklisted", async () => {

@@ -51,17 +51,17 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
 
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge.address)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        token.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge.address)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the contract implementation is called even for the first time", async () => {
       const tokenImplementation: Contract = await tokenFactory.deploy();
       await tokenImplementation.deployed();
-      await expect(tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge.address)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge.address)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
   });
 

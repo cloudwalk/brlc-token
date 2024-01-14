@@ -70,31 +70,31 @@ describe("Contract 'RescuableUpgradeable'", async () => {
 
     it("Is reverted if called for the second time", async () => {
       const { rescuable } = await setUpFixture(deployRescuable);
-      await expect(rescuable.initialize()).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        rescuable.initialize()
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the implementation contract is called even for the first time", async () => {
       const rescuableImplementation: Contract = await rescuableFactory.deploy();
       await rescuableImplementation.deployed();
-      await expect(rescuableImplementation.initialize()).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        rescuableImplementation.initialize()
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the internal initializer is called outside of the init process", async () => {
       const { rescuable } = await setUpFixture(deployRescuable);
-      await expect(rescuable.call_parent_initialize()).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        rescuable.call_parent_initialize()
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { rescuable } = await setUpFixture(deployRescuable);
-      await expect(rescuable.call_parent_initialize_unchained()).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        rescuable.call_parent_initialize_unchained()
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -105,17 +105,16 @@ describe("Contract 'RescuableUpgradeable'", async () => {
         .to.emit(rescuable, EVENT_NAME_RESCUER_CHANGED)
         .withArgs(rescuer.address);
       expect(await rescuable.rescuer()).to.equal(rescuer.address);
-      await expect(rescuable.connect(deployer).setRescuer(rescuer.address)).not.to.emit(
-        rescuable,
-        EVENT_NAME_RESCUER_CHANGED
-      );
+      await expect(
+        rescuable.connect(deployer).setRescuer(rescuer.address)
+      ).not.to.emit(rescuable, EVENT_NAME_RESCUER_CHANGED);
     });
 
     it("Is reverted if called not by the owner", async () => {
       const { rescuable } = await setUpFixture(deployRescuable);
-      await expect(rescuable.connect(rescuer).setRescuer(rescuer.address)).to.be.revertedWith(
-        REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER
-      );
+      await expect(
+        rescuable.connect(rescuer).setRescuer(rescuer.address)
+      ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
   });
 

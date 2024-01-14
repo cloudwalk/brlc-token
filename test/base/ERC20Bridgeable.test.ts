@@ -62,31 +62,31 @@ describe("Contract 'ERC20Bridgeable'", async () => {
 
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge1.address)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        token.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge1.address)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the implementation contract is called even for the first time", async () => {
       const tokenImplementation: Contract = await tokenFactory.deploy();
       await tokenImplementation.deployed();
-      await expect(tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge1.address)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge1.address)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the internal initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge1.address)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge1.address)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.call_parent_initialize_unchained(bridge1.address)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        token.call_parent_initialize_unchained(bridge1.address)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -101,10 +101,9 @@ describe("Contract 'ERC20Bridgeable'", async () => {
 
     it("Is reverted if called not by the bridge", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.connect(user).mintForBridging(user.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_UNAUTHORIZED_BRIDGE
-      );
+      await expect(
+        token.connect(user).mintForBridging(user.address, TOKEN_AMOUNT)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BRIDGE);
     });
 
     it("Is reverted if called to mint for the zero address", async () => {
@@ -116,10 +115,9 @@ describe("Contract 'ERC20Bridgeable'", async () => {
 
     it("Is reverted if the token minting amount is zero", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.connect(bridge1).mintForBridging(user.address, 0)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_ZERO_MINT_FOR_BRIDGING_AMOUNT
-      );
+      await expect(
+        token.connect(bridge1).mintForBridging(user.address, 0)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_MINT_FOR_BRIDGING_AMOUNT);
     });
   });
 
@@ -136,10 +134,9 @@ describe("Contract 'ERC20Bridgeable'", async () => {
     it("Is reverted if called not by the bridge", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(bridge1).mintForBridging(user.address, TOKEN_AMOUNT));
-      await expect(token.connect(user).burnForBridging(user.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_UNAUTHORIZED_BRIDGE
-      );
+      await expect(
+        token.connect(user).burnForBridging(user.address, TOKEN_AMOUNT)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BRIDGE);
     });
 
     it("Is reverted if called to burn from the zero address", async () => {
@@ -151,17 +148,16 @@ describe("Contract 'ERC20Bridgeable'", async () => {
 
     it("Is reverted if called to burn more tokens than the bridge balance", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.connect(bridge1).burnForBridging(user.address, TOKEN_AMOUNT + 1)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(bridge1).burnForBridging(user.address, TOKEN_AMOUNT + 1)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Is reverted if the token burning amount is zero", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.connect(bridge1).burnForBridging(user.address, 0)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_ZERO_BURN_FOR_BRIDGING_AMOUNT
-      );
+      await expect(
+        token.connect(bridge1).burnForBridging(user.address, 0)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_BURN_FOR_BRIDGING_AMOUNT);
     });
   });
 
@@ -178,9 +174,9 @@ describe("Contract 'ERC20Bridgeable'", async () => {
     it("Is reverted if called not by the owner", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.bridge()).to.eq(bridge1.address);
-      await expect(token.connect(user).setBridge(bridge2.address)).to.be.revertedWith(
-        REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER
-      );
+      await expect(
+        token.connect(user).setBridge(bridge2.address)
+      ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
   });
 });

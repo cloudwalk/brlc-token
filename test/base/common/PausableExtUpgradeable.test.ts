@@ -56,31 +56,31 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
 
     it("Is reverted if called for the second time", async () => {
       const { pausableExt } = await setUpFixture(deployPausableExt);
-      await expect(pausableExt.initialize()).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        pausableExt.initialize()
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the implementation contract is called even for the first time", async () => {
       const pausableExtImplementation: Contract = await pausableExtFactory.deploy();
       await pausableExtImplementation.deployed();
-      await expect(pausableExtImplementation.initialize()).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        pausableExtImplementation.initialize()
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the internal initializer is called outside of the init process", async () => {
       const { pausableExt } = await setUpFixture(deployPausableExt);
-      await expect(pausableExt.call_parent_initialize()).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        pausableExt.call_parent_initialize()
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { pausableExt } = await setUpFixture(deployPausableExt);
-      await expect(pausableExt.call_parent_initialize_unchained()).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        pausableExt.call_parent_initialize_unchained()
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -91,17 +91,16 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
         .to.emit(pausableExt, EVENT_NAME_PAUSER_CHANGED)
         .withArgs(pauser.address);
       expect(await pausableExt.connect(deployer).pauser()).to.equal(pauser.address);
-      await expect(pausableExt.connect(deployer).setPauser(pauser.address)).not.to.emit(
-        pausableExt,
-        EVENT_NAME_PAUSER_CHANGED
-      );
+      await expect(
+        pausableExt.connect(deployer).setPauser(pauser.address)
+      ).not.to.emit(pausableExt, EVENT_NAME_PAUSER_CHANGED);
     });
 
     it("Is reverted if called not by the owner", async () => {
       const { pausableExt } = await setUpFixture(deployPausableExt);
-      await expect(pausableExt.connect(user).setPauser(pauser.address)).to.be.revertedWith(
-        REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER
-      );
+      await expect(
+        pausableExt.connect(user).setPauser(pauser.address)
+      ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
   });
 
@@ -116,10 +115,9 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
 
     it("Is reverted if called not by the pauser", async () => {
       const { pausableExt } = await setUpFixture(deployAndConfigurePausableExt);
-      await expect(pausableExt.connect(user).pause()).to.be.revertedWithCustomError(
-        pausableExt,
-        REVERT_ERROR_UNAUTHORIZED_PAUSER
-      );
+      await expect(
+        pausableExt.connect(user).pause()
+      ).to.be.revertedWithCustomError(pausableExt, REVERT_ERROR_UNAUTHORIZED_PAUSER);
     });
   });
 
@@ -135,10 +133,9 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
 
     it("Is reverted if called not by the pauser", async () => {
       const { pausableExt } = await setUpFixture(deployAndConfigurePausableExt);
-      await expect(pausableExt.connect(user).unpause()).to.be.revertedWithCustomError(
-        pausableExt,
-        REVERT_ERROR_UNAUTHORIZED_PAUSER
-      );
+      await expect(
+        pausableExt.connect(user).unpause()
+      ).to.be.revertedWithCustomError(pausableExt, REVERT_ERROR_UNAUTHORIZED_PAUSER);
     });
   });
 });

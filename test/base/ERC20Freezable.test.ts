@@ -69,31 +69,31 @@ describe("Contract 'ERC20Freezable'", async () => {
 
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the contract implementation is called even for the first time", async () => {
       const tokenImplementation: Contract = await tokenFactory.deploy();
       await tokenImplementation.deployed();
-      await expect(tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the internal initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.call_parent_initialize_unchained()).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        token.call_parent_initialize_unchained()
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -109,11 +109,10 @@ describe("Contract 'ERC20Freezable'", async () => {
 
     it("Is reverted if freezing is already approved", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await expect(token.connect(user1).approveFreezing());
-      await expect(token.connect(user1).approveFreezing()).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_FREEZING_ALREADY_APPROVED
-      );
+      await proveTx(token.connect(user1).approveFreezing());
+      await expect(
+        token.connect(user1).approveFreezing()
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_FREEZING_ALREADY_APPROVED);
     });
 
     it("Is reverted if contract is paused", async () => {
@@ -147,18 +146,17 @@ describe("Contract 'ERC20Freezable'", async () => {
     it("Is reverted if freezing is not approved", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       expect(await token.freezeApproval(user1.address)).to.eq(false);
-      await expect(token.connect(blocklister).freeze(user1.address, TOKEN_AMOUNT)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_FREEZING_NOT_APPROVED
-      );
+      await expect(
+        token.connect(blocklister).freeze(user1.address, TOKEN_AMOUNT)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_FREEZING_NOT_APPROVED);
     });
 
     it("Is reverted if contract is paused", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(pauser).pause());
-      await expect(token.connect(blocklister).freeze(user1.address, TOKEN_AMOUNT)).to.be.revertedWith(
-        REVERT_MESSAGE_PAUSABLE_PAUSED
-      );
+      await expect(
+        token.connect(blocklister).freeze(user1.address, TOKEN_AMOUNT)
+      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
     });
 
     it("Is reverted if the caller is not a blocklister", async () => {
@@ -229,7 +227,9 @@ describe("Contract 'ERC20Freezable'", async () => {
       await proveTx(token.connect(user1).approveFreezing());
       await proveTx(token.connect(deployer).mint(user1.address, TOKEN_AMOUNT + 1));
       await proveTx(token.connect(blocklister).freeze(user1.address, TOKEN_AMOUNT));
-      await expect(token.connect(user1).transfer(user2.address, 1)).to.changeTokenBalances(
+      await expect(
+        token.connect(user1).transfer(user2.address, 1)
+      ).to.changeTokenBalances(
         token,
         [user1, user2],
         [-1, 1]
@@ -241,10 +241,9 @@ describe("Contract 'ERC20Freezable'", async () => {
       await proveTx(token.connect(user1).approveFreezing());
       await proveTx(token.connect(deployer).mint(user1.address, TOKEN_AMOUNT + 1));
       await proveTx(token.connect(blocklister).freeze(user1.address, TOKEN_AMOUNT));
-      await expect(token.connect(user1).transfer(user2.address, 2)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT
-      );
+      await expect(
+        token.connect(user1).transfer(user2.address, 2)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
   });
 });

@@ -82,31 +82,31 @@ describe("Contract 'ERC20Mintable'", async () => {
 
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the contract implementation is called even for the first time", async () => {
       const tokenImplementation: Contract = await tokenFactory.deploy();
       await tokenImplementation.deployed();
-      await expect(tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the internal initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.call_parent_initialize_unchained()).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        token.call_parent_initialize_unchained()
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -117,17 +117,16 @@ describe("Contract 'ERC20Mintable'", async () => {
         .to.emit(token, EVENT_NAME_MAIN_MINTER_CHANGED)
         .withArgs(mainMinter.address);
       expect(await token.mainMinter()).to.equal(mainMinter.address);
-      await expect(token.connect(deployer).updateMainMinter(mainMinter.address)).not.to.emit(
-        token,
-        EVENT_NAME_MAIN_MINTER_CHANGED
-      );
+      await expect(
+        token.connect(deployer).updateMainMinter(mainMinter.address)
+      ).not.to.emit(token, EVENT_NAME_MAIN_MINTER_CHANGED);
     });
 
     it("Is reverted if called not by the owner", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.connect(user).updateMainMinter(mainMinter.address)).to.be.revertedWith(
-        REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER
-      );
+      await expect(
+        token.connect(user).updateMainMinter(mainMinter.address)
+      ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
   });
 
@@ -148,9 +147,9 @@ describe("Contract 'ERC20Mintable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(mainMinter).removeMinter(minter.address));
       await proveTx(token.connect(pauser).pause());
-      await expect(token.connect(mainMinter).configureMinter(minter.address, MINT_ALLOWANCE)).to.be.revertedWith(
-        REVERT_MESSAGE_PAUSABLE_PAUSED
-      );
+      await expect(
+        token.connect(mainMinter).configureMinter(minter.address, MINT_ALLOWANCE)
+      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
     });
 
     it("Is reverted if called not by the main minter", async () => {
@@ -172,10 +171,9 @@ describe("Contract 'ERC20Mintable'", async () => {
         .withArgs(minter.address);
       expect(await token.isMinter(minter.address)).to.equal(false);
       expect(await token.minterAllowance(minter.address)).to.equal(0);
-      await expect(token.connect(mainMinter).removeMinter(minter.address)).not.to.emit(
-        token,
-        EVENT_NAME_MINTER_REMOVED
-      );
+      await expect(
+        token.connect(mainMinter).removeMinter(minter.address)
+      ).not.to.emit(token, EVENT_NAME_MINTER_REMOVED);
     });
 
     it("Is reverted if called not by the main minter", async () => {
@@ -217,9 +215,9 @@ describe("Contract 'ERC20Mintable'", async () => {
       it("The contract is paused", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(token.connect(pauser).pause());
-        await expect(token.connect(minter).mint(user.address, TOKEN_AMOUNT)).to.be.revertedWith(
-          REVERT_MESSAGE_PAUSABLE_PAUSED
-        );
+        await expect(
+          token.connect(minter).mint(user.address, TOKEN_AMOUNT)
+        ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
       });
 
       it("The caller is not a minter", async () => {
@@ -249,25 +247,23 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The destination address is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(token.connect(minter).mint(ethers.constants.AddressZero, TOKEN_AMOUNT)).to.be.revertedWith(
-          REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT
-        );
+        await expect(
+          token.connect(minter).mint(ethers.constants.AddressZero, TOKEN_AMOUNT)
+        ).to.be.revertedWith(REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
       });
 
       it("The mint amount is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(token.connect(minter).mint(user.address, 0)).to.be.revertedWithCustomError(
-          token,
-          REVERT_ERROR_ZERO_MINT_AMOUNT
-        );
+        await expect(
+          token.connect(minter).mint(user.address, 0)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_MINT_AMOUNT);
       });
 
       it("The mint amount exceeds the mint allowance", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(token.connect(minter).mint(user.address, MINT_ALLOWANCE + 1)).to.be.revertedWithCustomError(
-          token,
-          REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE
-        );
+        await expect(
+          token.connect(minter).mint(user.address, MINT_ALLOWANCE + 1)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE);
       });
     });
   });
@@ -281,7 +277,11 @@ describe("Contract 'ERC20Mintable'", async () => {
       await expect(tx)
         .to.emit(token, EVENT_NAME_TRANSFER)
         .withArgs(minter.address, ethers.constants.AddressZero, TOKEN_AMOUNT);
-      await expect(tx).to.changeTokenBalances(token, [minter, mainMinter, deployer, token], [-TOKEN_AMOUNT, 0, 0, 0]);
+      await expect(tx).to.changeTokenBalances(
+        token,
+        [minter, mainMinter, deployer, token],
+        [-TOKEN_AMOUNT, 0, 0, 0]
+      );
     });
 
     it("Is reverted if the contract is paused", async () => {
@@ -316,9 +316,9 @@ describe("Contract 'ERC20Mintable'", async () => {
     it("Is reverted if the burn amount exceeds the caller token balance", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(minter).mint(minter.address, TOKEN_AMOUNT));
-      await expect(token.connect(minter).burn(TOKEN_AMOUNT + 1)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(minter).burn(TOKEN_AMOUNT + 1)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
     });
   });
 });

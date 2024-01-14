@@ -57,7 +57,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 5)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 5)
+      ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
         [-5, 5]
@@ -70,7 +72,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 10)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 10)
+      ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
         [-10, 10]
@@ -83,10 +87,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 15)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT
-      );
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 15)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
     it("Transfer to purpose account - test 20", async () => {
@@ -94,10 +97,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 20)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT
-      );
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 20)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
     it("Transfer to purpose account - test 25", async () => {
@@ -105,9 +107,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 25)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 25)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Transfer to non-purpose account - test 5", async () => {
@@ -115,10 +117,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 5)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 5)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
     });
 
     it("Transfer to non-purpose account - test 10", async () => {
@@ -126,10 +127,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 10)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 10)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
     });
 
     it("Transfer to non-purpose account - test 15", async () => {
@@ -137,10 +137,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 15)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 15)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
     it("Transfer to non-purpose account - test 20", async () => {
@@ -148,10 +147,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 20)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 20)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
     it("Transfer to non-purpose account - test 25", async () => {
@@ -159,9 +157,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 25)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 25)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
   });
 
@@ -170,90 +168,90 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 5)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 5)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Transfer to purpose account - test 10", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 10)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 10)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Transfer to purpose account - test 15", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 15)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 15)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Transfer to purpose account - test 20", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 20)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 20)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Transfer to purpose account - test 25", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 25)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 25)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Transfer to non-purpose account - test 5", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 5)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 5)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Transfer to non-purpose account - test 10", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 10)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 10)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Transfer to non-purpose account - test 15", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 15)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 15)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Transfer to non-purpose account - test 20", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 20)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 20)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Transfer to non-purpose account - test 25", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 25)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 25)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
   });
 
@@ -262,7 +260,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 5)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 5)
+      ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
         [-5, 5]
@@ -274,7 +274,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 10)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 10)
+      ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
         [-10, 10]
@@ -286,36 +288,36 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 15)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT
-      );
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 15)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
     it("Transfer to purpose account - test 20", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 20)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT
-      );
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 20)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
     it("Transfer to purpose account - test 25", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 25)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 25)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Transfer to non-purpose account - test 5", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 5)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 5)
+      ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
         [-5, 5]
@@ -327,7 +329,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 10)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 10)
+      ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
         [-10, 10]
@@ -339,29 +343,27 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 15)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 15)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
     it("Transfer to non-purpose account - test 20", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 20)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 20)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
     it("Transfer to non-purpose account - test 25", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 25)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 25)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
   });
 
@@ -370,7 +372,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 5)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 5)
+      ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
         [-5, 5]
@@ -382,7 +386,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 10)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 10)
+      ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
         [-10, 10]
@@ -394,7 +400,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 15)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 15)
+      ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
         [-15, 15]
@@ -406,7 +414,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 20)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 20)
+      ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
         [-20, 20]
@@ -418,16 +428,18 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(purposeAccount.address, 25)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 25)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Transfer to non-purpose account - test 5", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 5)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 5)
+      ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
         [-5, 5]
@@ -439,7 +451,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 10)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 10)
+      ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
         [-10, 10]
@@ -451,29 +465,27 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 15)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 15)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
     });
 
     it("Transfer to non-purpose account - test 20", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 20)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 20)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
     });
 
     it("Transfer to non-purpose account - test 25", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
       await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, 10));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 25)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 25)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
   });
 
@@ -481,7 +493,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
     it("Transfer to purpose account - test 5", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
-      await expect(token.connect(user).transfer(purposeAccount.address, 5)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 5)
+      ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
         [-5, 5]
@@ -491,7 +505,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
     it("Transfer to purpose account - test 10", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
-      await expect(token.connect(user).transfer(purposeAccount.address, 10)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 10)
+      ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
         [-10, 10]
@@ -501,7 +517,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
     it("Transfer to purpose account - test 15", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
-      await expect(token.connect(user).transfer(purposeAccount.address, 15)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 15)
+      ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
         [-15, 15]
@@ -511,7 +529,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
     it("Transfer to purpose account - test 20", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
-      await expect(token.connect(user).transfer(purposeAccount.address, 20)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 20)
+      ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
         [-20, 20]
@@ -521,15 +541,17 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
     it("Transfer to purpose account - test 25", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
-      await expect(token.connect(user).transfer(purposeAccount.address, 25)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(purposeAccount.address, 25)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Transfer to non-purpose account - test 5", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 5)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 5)
+      ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
         [-5, 5]
@@ -539,7 +561,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
     it("Transfer to non-purpose account - test 10", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 10)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 10)
+      ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
         [-10, 10]
@@ -549,7 +573,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
     it("Transfer to non-purpose account - test 15", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 15)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 15)
+      ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
         [-15, 15]
@@ -559,7 +585,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
     it("Transfer to non-purpose account - test 20", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 20)).to.changeTokenBalances(
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 20)
+      ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
         [-20, 20]
@@ -569,9 +597,9 @@ describe("Contract 'BRLCToken' - Freezable & Restrictable scenarios", async () =
     it("Transfer to non-purpose account - test 25", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 20));
-      await expect(token.connect(user).transfer(nonPurposeAccount.address, 25)).to.be.revertedWith(
-        REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE
-      );
+      await expect(
+        token.connect(user).transfer(nonPurposeAccount.address, 25)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
   });
 });

@@ -66,31 +66,31 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the contract implementation is called even for the first time", async () => {
       const tokenImplementation: Contract = await tokenFactory.deploy();
       await tokenImplementation.deployed();
-      await expect(tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED
-      );
+      await expect(
+        tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
     it("Is reverted if the internal initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.call_parent_initialize_unchained()).to.be.revertedWith(
-        REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING
-      );
+      await expect(
+        token.call_parent_initialize_unchained()
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -118,9 +118,9 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
     it("Is reverted if the caller is not the owner", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.connect(user1).assignPurposes(purposeAccount1.address, [PURPOSE_1])).to.be.revertedWith(
-        "Ownable: caller is not the owner"
-      );
+      await expect(
+        token.connect(user1).assignPurposes(purposeAccount1.address, [PURPOSE_1])
+      ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
     it("Is reverted if zero purpose is assigned", async () => {
@@ -220,25 +220,26 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
       await proveTx(token.connect(deployer).mint(user1.address, 300));
 
-      await expect(token.connect(user1).transfer(user2.address, 1)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT
-      );
-      await expect(token.connect(user1).transfer(purposeAccount1.address, 101)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT
-      );
-      await expect(token.connect(user1).transfer(purposeAccount2.address, 201)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT
-      );
+      await expect(
+        token.connect(user1).transfer(user2.address, 1)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
+      await expect(
+        token.connect(user1).transfer(purposeAccount1.address, 101)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
+      await expect(
+        token.connect(user1).transfer(purposeAccount2.address, 201)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
 
-      await expect(token.connect(user1).transfer(purposeAccount1.address, 25)).to.changeTokenBalances(
+      await expect(
+        token.connect(user1).transfer(purposeAccount1.address, 25)
+      ).to.changeTokenBalances(
         token,
         [user1, purposeAccount1],
         [-25, 25]
       );
-      await expect(token.connect(user1).transfer(purposeAccount2.address, 25)).to.changeTokenBalances(
+      await expect(
+        token.connect(user1).transfer(purposeAccount2.address, 25)
+      ).to.changeTokenBalances(
         token,
         [user1, purposeAccount2],
         [-25, 25]
@@ -258,12 +259,13 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
       await proveTx(token.connect(deployer).mint(user1.address, 200));
 
-      await expect(token.connect(user1).transfer(user2.address, 1)).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT
-      );
+      await expect(
+        token.connect(user1).transfer(user2.address, 1)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
 
-      await expect(token.connect(user1).transfer(purposeAccount1.address, 50)).to.changeTokenBalances(
+      await expect(
+        token.connect(user1).transfer(purposeAccount1.address, 50)
+      ).to.changeTokenBalances(
         token,
         [user1, purposeAccount1],
         [-50, 50]
@@ -271,7 +273,9 @@ describe("Contract 'ERC20Restrictable'", async () => {
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(50);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(100);
 
-      await expect(token.connect(user1).transfer(purposeAccount1.address, 100)).to.changeTokenBalances(
+      await expect(
+        token.connect(user1).transfer(purposeAccount1.address, 100)
+      ).to.changeTokenBalances(
         token,
         [user1, purposeAccount1],
         [-100, 100]
@@ -279,7 +283,9 @@ describe("Contract 'ERC20Restrictable'", async () => {
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(0);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(50);
 
-      await expect(token.connect(user1).transfer(purposeAccount1.address, 50)).to.changeTokenBalances(
+      await expect(
+        token.connect(user1).transfer(purposeAccount1.address, 50)
+      ).to.changeTokenBalances(
         token,
         [user1, purposeAccount1],
         [-50, 50]
@@ -296,26 +302,34 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
       await proveTx(token.connect(deployer).mint(user1.address, 200));
 
-      await expect(token.connect(user1).transfer(user2.address, 101)).to.be.revertedWithCustomError(
+      await expect(
+        token.connect(user1).transfer(user2.address, 101)
+      ).to.be.revertedWithCustomError(
         token,
         REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT
       );
 
-      await expect(token.connect(user1).transfer(user2.address, 25)).to.changeTokenBalances(
+      await expect(
+        token.connect(user1).transfer(user2.address, 25)
+      ).to.changeTokenBalances(
         token,
         [user1, user2],
         [-25, 25]
       );
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
 
-      await expect(token.connect(user1).transfer(purposeAccount1.address, 25)).to.changeTokenBalances(
+      await expect(
+        token.connect(user1).transfer(purposeAccount1.address, 25)
+      ).to.changeTokenBalances(
         token,
         [user1, purposeAccount1],
         [-25, 25]
       );
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(75);
 
-      await expect(token.connect(user1).transfer(purposeAccount1.address, 100)).to.changeTokenBalances(
+      await expect(
+        token.connect(user1).transfer(purposeAccount1.address, 100)
+      ).to.changeTokenBalances(
         token,
         [user1, purposeAccount1],
         [-100, 100]
