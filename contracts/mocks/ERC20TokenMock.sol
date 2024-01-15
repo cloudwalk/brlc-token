@@ -5,11 +5,11 @@ pragma solidity 0.8.16;
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
 /**
- * @title ERC20TestMock contract
+ * @title ERC20TokenMock contract
  * @author CloudWalk Inc.
  * @notice An implementation of the {ERC20Upgradeable} contract for testing purposes
  */
-contract ERC20TestMock is ERC20Upgradeable {
+contract ERC20TokenMock is ERC20Upgradeable {
     /**
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *

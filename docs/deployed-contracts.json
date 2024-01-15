@@ -28,45 +28,5 @@
     "name": "USJimToken",
     "chainId": 2008,
     "address": "0x6d8Da3C039D1D78622F27D4739e1E00B324aFAAa"
-  },
-  {
-    "name": "InfinitePointsToken",
-    "chainId": 2009,
-    "address": "0x25c6C9b7d02A128234A82AEd3d3D5c5a09958167"
-  },
-  {
-    "name": "InfinitePointsToken",
-    "chainId": 2008,
-    "address": "0x28dC034BE1834F012e294d7093f5700Af1CFC97D"
-  },
-  {
-    "name": "LightningBitcoin",
-    "chainId": 2009,
-    "address": "0xeD3369f946570ae00A34Ff982b6c5Ead3F22ea3f"
-  },
-  {
-    "name": "LightningBitcoin",
-    "chainId": 2008,
-    "address": "0x25a506b9De655Ee80E893102D5CF27F0f2097Fed"
-  },
-  {
-    "name": "BalanceTracker",
-    "chainId": 2009,
-    "address": "0x61a0b4d1a0876BD3861F756198d79a81f01e9c8A"
-  },
-  {
-    "name": "BalanceTracker",
-    "chainId": 2008,
-    "address": "0xB1f571b3254C99A0A562124738f0193dE2B2b2A9"
-  },
-  {
-    "name": "YieldStreamer",
-    "chainId": 2009,
-    "address": "0x88EC3491f763f4cDCF2a8F9Edd4b752AE5B8C9Fb"
-  },
-  {
-    "name": "YieldStreamer",
-    "chainId": 2008,
-    "address": "0xe66681cD29F07c1C4c056B46B7d37007eF493486"
   }
 ]
