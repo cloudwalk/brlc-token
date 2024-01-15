@@ -52,4 +52,11 @@ contract ERC20MintableMock is ERC20Mintable {
     function call_parent_initialize_unchained() public {
         __ERC20Mintable_init_unchained();
     }
+
+    /**
+     * @inheritdoc ERC20Mintable
+     */
+    function _balanceOf_ERC20Mintable(address account, address recipient) internal view virtual override returns (uint256) {
+        return balanceOf(account);
+    }
 }

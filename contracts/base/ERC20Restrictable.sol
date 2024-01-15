@@ -94,12 +94,30 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /**
      * @inheritdoc IERC20Restrictable
      */
-    function balanceOfRestricted(address account, bytes32 purpose) external view returns (uint256) {
+    function balanceOfRestricted(address account, bytes32 purpose) public view returns (uint256) {
         if (purpose == bytes32(0)) {
             return _totalRestrictedBalances[account];
         } else {
             return _restrictedPurposeBalances[account][purpose];
         }
+    }
+
+    /**
+     * TBD
+     */
+    function balanceOfRestrictedByRecipient(address account, address recipient) public view returns (uint256) {
+        bytes32[] memory purposes = _purposeAssignments[recipient];
+        if (purposes.length == 0) {
+            return 0;
+        }
+
+        uint256 balance = 0;
+
+        for (uint256 i = 0; i < purposes.length; i++) {
+            balance += _restrictedPurposeBalances[account][purposes[i]];
+        }
+
+        return balance;
     }
 
     /**

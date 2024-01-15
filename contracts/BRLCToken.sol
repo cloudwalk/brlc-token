@@ -53,6 +53,8 @@ contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictabl
         __ERC20Base_init_unchained();
         __ERC20Mintable_init_unchained();
         __ERC20Freezable_init_unchained();
+        __ERC20Restrictable_init_unchained();
+        __ERC20Hookable_init_unchained();
         __BRLCToken_init_unchained();
     }
 
@@ -92,14 +94,28 @@ contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictabl
         address from,
         address to,
         uint256 amount
-    ) internal virtual override(ERC20Base, ERC20Freezable, ERC20Restrictable, ERC20Hookable) {
+    ) internal virtual override(ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictable, ERC20Hookable) {
         super._afterTokenTransfer(from, to, amount);
+    }
+
+    /**
+     * @inheritdoc ERC20Mintable
+     */
+    function _balanceOf_ERC20Mintable(address account, address recipient) internal view virtual override returns (uint256) {
+        return balanceOf(account) - balanceOfFrozen(account) - (balanceOfRestricted(account, bytes32(0)) - balanceOfRestrictedByRecipient(account, recipient));
+    }
+
+    /**
+     * @inheritdoc ERC20Freezable
+     */
+    function _balanceOf_ERC20Freezable(address account, address recipient) internal view virtual override returns (uint256) {
+        return balanceOf(account); // TBD // - balanceOfPremint(account) - (balanceOfRestricted(account, bytes32(0)) - balanceOfRestrictedByRecipient(account, recipient));
     }
 
     /**
      * @inheritdoc ERC20Restrictable
      */
     function _balanceOf_ERC20Restrictable(address account) internal view virtual override returns (uint256) {
-        return balanceOf(account) - balanceOfFrozen(account);
+        return balanceOf(account) - balanceOfFrozen(account) - balanceOfPremint(account);
     }
 }

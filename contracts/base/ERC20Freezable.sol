@@ -130,13 +130,21 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
+     * @notice Returns the transferable amount of tokens owned by account
+     *
+     * @param account The account to get the balance of
+     * @param recipient The recipient of the tokens during the transfer
+     */
+    function _balanceOf_ERC20Freezable(address account, address recipient) internal view virtual returns (uint256);
+
+    /**
      * @inheritdoc ERC20Base
      */
     function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._afterTokenTransfer(from, to, amount);
         uint256 frozen = _frozenBalances[from];
         if (frozen != 0) {
-            if (balanceOf(from) < frozen) {
+            if (_balanceOf_ERC20Freezable(from, to) < frozen) {
                 revert TransferExceededFrozenAmount();
             }
         }

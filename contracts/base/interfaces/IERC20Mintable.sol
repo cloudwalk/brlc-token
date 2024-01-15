@@ -40,6 +40,16 @@ interface IERC20Mintable {
     event Mint(address indexed minter, address indexed to, uint256 amount);
 
     /**
+     * @notice Emitted when tokens are preminted
+     *
+     * @param minter The address of the minter
+     * @param to The address of the tokens recipient
+     * @param amount The amount of tokens being preminted
+     * @param releaseTime The timestamp when the tokens will be released
+     */
+    event Premint(address indexed minter, address indexed to, uint256 amount, uint256 releaseTime);
+
+    /**
      * @notice Emitted when tokens are burned
      *
      * @param burner The address of the tokens burner
@@ -108,6 +118,17 @@ interface IERC20Mintable {
      * @return True if the operation was successful
      */
     function mint(address account, uint256 amount) external returns (bool);
+
+    /**
+     * @notice Premints tokens
+     *
+     * Emits a {Premint} event
+     *
+     * @param account The address of a tokens recipient
+     * @param amount The amount of tokens to premint
+     * @param releaseTime The timestamp when the tokens will be released
+     */
+    function premint(address account, uint256 amount, uint256 releaseTime) external;
 
     /**
      * @notice Burns tokens

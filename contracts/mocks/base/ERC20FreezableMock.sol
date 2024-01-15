@@ -63,4 +63,11 @@ contract ERC20FreezableMock is ERC20Freezable {
         _mint(account, amount);
         return true;
     }
+
+    /**
+     * @inheritdoc ERC20Freezable
+     */
+    function _balanceOf_ERC20Freezable(address account, address recipient) internal view virtual override returns (uint256) {
+        return balanceOf(account);
+    }
 }
