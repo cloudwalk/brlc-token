@@ -7,13 +7,14 @@ import { ERC20Mintable } from "./base/ERC20Mintable.sol";
 import { ERC20Freezable } from "./base/ERC20Freezable.sol";
 import { ERC20Restrictable } from "./base/ERC20Restrictable.sol";
 import { ERC20Hookable } from "./base/ERC20Hookable.sol";
+import { ERC20Trustable } from "./base/ERC20Trustable.sol";
 
 /**
  * @title BRLCToken contract
  * @author CloudWalk Inc.
  * @notice The BRLC token implementation that supports minting, burning and freezing operations
  */
-contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictable, ERC20Hookable {
+contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictable, ERC20Hookable, ERC20Trustable {
     /**
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *
@@ -55,6 +56,7 @@ contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictabl
         __ERC20Freezable_init_unchained();
         __ERC20Restrictable_init_unchained();
         __ERC20Hookable_init_unchained();
+        __ERC20Trustable_init_unchained();
         __BRLCToken_init_unchained();
     }
 
@@ -96,6 +98,14 @@ contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictabl
         uint256 amount
     ) internal virtual override(ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictable, ERC20Hookable) {
         super._afterTokenTransfer(from, to, amount);
+    }
+
+    /**
+     * @dev See {ERC20Base-allowance}
+     * @dev See {ERC20Trustable-allowance}
+     */
+    function allowance(address owner, address spender) public view override(ERC20Base, ERC20Trustable) returns (uint256) {
+        return super.allowance(owner, spender);
     }
 
     /**

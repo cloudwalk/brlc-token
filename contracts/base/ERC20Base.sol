@@ -56,6 +56,13 @@ abstract contract ERC20Base is
 
     /**
      * @inheritdoc ERC20Upgradeable
+     */
+    function allowance(address owner, address spender) public view virtual override returns (uint256) {
+        return super.allowance(owner, spender);
+    }
+
+    /**
+     * @inheritdoc ERC20Upgradeable
      *
      * @dev The contract must not be paused
      * @dev The `owner` address must not be blocklisted
