@@ -14,4 +14,6 @@ async function main() {
   console.log("Proxy upgraded");
 }
 
-main();
+main().then().catch(err => {
+  throw err;
+});

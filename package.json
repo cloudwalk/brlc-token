@@ -15,6 +15,6 @@
     "prettier-plugin-solidity": "^1.2.0"
   },
   "scripts": {
-    "prettier": "npx prettier --write 'test/**/*.ts'; npx prettier --write --plugin=prettier-plugin-solidity 'contracts/**/*.sol'"
+    "prettier": "npx prettier --write 'scripts/**/*.ts' 'test/**/*.ts' 'test-utils/**/*.ts'; npx prettier --write --plugin=prettier-plugin-solidity 'contracts/**/*.sol'"
   }
 }

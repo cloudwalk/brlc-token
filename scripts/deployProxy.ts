@@ -8,7 +8,9 @@ async function main() {
 
   await proxy.deployed();
 
-  console.log("Proxy deployed to:", await proxy.address);
+  console.log("Proxy deployed to:", proxy.address);
 }
 
-main();
+main().then().catch(err => {
+  throw err;
+});

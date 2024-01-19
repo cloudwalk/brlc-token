@@ -14,4 +14,6 @@ async function main() {
   console.log("Upgrade prepared");
 }
 
-main();
+main().then().catch(err => {
+  throw err;
+});
