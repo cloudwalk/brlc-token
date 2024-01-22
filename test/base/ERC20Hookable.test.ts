@@ -15,7 +15,7 @@ interface HookConfig {
   policy: ErrorHandlingPolicy;
 }
 
-async function setUpFixture(func: any) {
+async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
     return loadFixture(func);
   } else {
@@ -23,15 +23,15 @@ async function setUpFixture(func: any) {
   }
 }
 
-function checkHookConfigEquality(firstConfig: HookConfig, secondConfig: any) {
-  expect(firstConfig.account).to.eq(secondConfig.account);
-  expect(firstConfig.policy).to.eq(secondConfig.policy);
+function checkHookConfigEquality(actualHookConfig: Record<string, unknown>, expectedHookConfig: HookConfig) {
+  expect(actualHookConfig.account).to.eq(expectedHookConfig.account);
+  expect(actualHookConfig.policy).to.eq(expectedHookConfig.policy);
 }
 
-function checkHookConfigsEquality(firstConfigs: HookConfig[], secondConfigs: any[]) {
-  expect(firstConfigs.length).to.eq(secondConfigs.length);
-  for (let i = 0; i < firstConfigs.length; i++) {
-    checkHookConfigEquality(firstConfigs[i], secondConfigs[i]);
+function checkHookConfigsEquality(actualHookConfigs: Record<string, unknown>[], expectedHookConfigs: HookConfig[]) {
+  expect(actualHookConfigs.length).to.eq(expectedHookConfigs.length);
+  for (let i = 0; i < actualHookConfigs.length; i++) {
+    checkHookConfigEquality(actualHookConfigs[i], expectedHookConfigs[i]);
   }
 }
 
