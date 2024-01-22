@@ -281,9 +281,9 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
     it("Is reverted if the caller is blocklisted", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       await proveTx(blocklistable.connect(blocklister).blocklist(user.address));
-      await expect(
-        blocklistable.connect(user).testNotBlocklistedModifier()
-      ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await expect(blocklistable.connect(user).testNotBlocklistedModifier())
+        .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user.address);
     });
   });
 
@@ -319,9 +319,9 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklistEnabled()).to.equal(true);
       await proveTx(blocklistable.connect(blocklister).blocklist(user.address));
-      await expect(
-        blocklistable.connect(user).testNotBlocklistedOrBypassIfBlocklister()
-      ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await expect(blocklistable.connect(user).testNotBlocklistedOrBypassIfBlocklister())
+        .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user.address);
     });
   });
 
