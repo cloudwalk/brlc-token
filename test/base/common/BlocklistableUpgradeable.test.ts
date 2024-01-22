@@ -326,7 +326,7 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
   });
 
   describe("Backward Compatibility functions", async () => {
-    it("Function 'blacklist()' executes as expected and emits the correct event if it is called by the blocklister", async () => {
+    it("Function 'blacklist()' executes as expected if it is called by the blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(false);
       await expect(blocklistable.connect(blocklister).blacklist(user.address))
@@ -352,7 +352,7 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
       ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_ZERO_ADDRESS_BLOCKLISTED);
     });
 
-    it("Function 'unBlacklist()' executes as expected and emits the correct event if it is called by the blocklister", async () => {
+    it("Function 'unBlacklist()' executes as expected if it is called by the blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       await proveTx(blocklistable.connect(blocklister).blacklist(user.address));
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(true);
@@ -372,7 +372,7 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
         .withArgs(user.address);
     });
 
-    it("Function 'selfBlacklist()' executes as expected and emits the correct events if it is called by any account", async () => {
+    it("Function 'selfBlacklist()' executes as expected if it is called by any account", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(false);
       await expect(blocklistable.connect(user).selfBlacklist())
