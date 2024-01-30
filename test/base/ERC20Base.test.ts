@@ -5,7 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { proveTx } from "../../test-utils/eth";
 
-async function setUpFixture(func: any) {
+async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
     return loadFixture(func);
   } else {
@@ -119,18 +119,18 @@ describe("Contract 'ERC20Base'", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
       await proveTx(token.connect(user1).selfBlocklist());
-      await expect(
-        token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await expect(token.connect(user1).transfer(user2.address, TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user1.address);
     });
 
     it("Is reverted if the recipient is blocklisted", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
       await proveTx(token.connect(user2).selfBlocklist());
-      await expect(
-        token.connect(user1).transfer(user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await expect(token.connect(user1).transfer(user2.address, TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user2.address);
     });
   });
 
@@ -157,17 +157,17 @@ describe("Contract 'ERC20Base'", async () => {
     it("Is reverted if the caller is blocklisted", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(user1).selfBlocklist());
-      await expect(
-        token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await expect(token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user1.address);
     });
 
     it("Is reverted if the spender is blocklisted", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(user2).selfBlocklist());
-      await expect(
-        token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await expect(token.connect(user1).approve(user2.address, TOKEN_ALLOWANCE))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user2.address);
     });
   });
 
@@ -196,20 +196,20 @@ describe("Contract 'ERC20Base'", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
       await proveTx(token.connect(user1).approve(user2.address, TOKEN_AMOUNT));
-      await proveTx(token.connect(user2).selfBlocklist());
-      await expect(
-        token.connect(user2).transferFrom(deployer.address, user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await proveTx(token.connect(user1).selfBlocklist());
+      await expect(token.connect(user2).transferFrom(user1.address, user2.address, TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user1.address);
     });
 
     it("Is reverted if the recipient is blocklisted", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(deployer).mintForTest(user1.address, TOKEN_AMOUNT));
       await proveTx(token.connect(user1).approve(user2.address, TOKEN_AMOUNT));
-      await proveTx(token.connect(user1).selfBlocklist());
-      await expect(
-        token.connect(user2).transferFrom(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await proveTx(token.connect(user2).selfBlocklist());
+      await expect(token.connect(user2).transferFrom(user1.address, user2.address, TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user2.address);
     });
   });
 
@@ -240,17 +240,17 @@ describe("Contract 'ERC20Base'", async () => {
     it("Is reverted if the caller is blocklisted", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(user1).selfBlocklist());
-      await expect(
-        token.connect(user1).increaseAllowance(user2.address, allowanceAddedValue)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await expect(token.connect(user1).increaseAllowance(user2.address, allowanceAddedValue))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user1.address);
     });
 
     it("Is reverted if the spender is blocklisted", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(user2).selfBlocklist());
-      await expect(
-        token.connect(user1).increaseAllowance(user2.address, allowanceAddedValue)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await expect(token.connect(user1).increaseAllowance(user2.address, allowanceAddedValue))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user2.address);
     });
   });
 
@@ -283,18 +283,18 @@ describe("Contract 'ERC20Base'", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(user1).approve(user2.address, initialAllowance));
       await proveTx(token.connect(user1).selfBlocklist());
-      await expect(
-        token.connect(user1).decreaseAllowance(user2.address, allowanceSubtractedValue)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await expect(token.connect(user1).decreaseAllowance(user2.address, allowanceSubtractedValue))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user1.address);
     });
 
     it("Is reverted if the spender is blocklisted", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.connect(user1).approve(user2.address, initialAllowance));
-      await proveTx(token.connect(user1).selfBlocklist());
-      await expect(
-        token.connect(user1).decreaseAllowance(user2.address, allowanceSubtractedValue)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await proveTx(token.connect(user2).selfBlocklist());
+      await expect(token.connect(user1).decreaseAllowance(user2.address, allowanceSubtractedValue))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user2.address);
     });
   });
 });

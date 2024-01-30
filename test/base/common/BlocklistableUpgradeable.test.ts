@@ -5,7 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { proveTx } from "../../../test-utils/eth";
 
-async function setUpFixture(func: any) {
+async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
     return loadFixture(func);
   } else {
@@ -281,9 +281,9 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
     it("Is reverted if the caller is blocklisted", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       await proveTx(blocklistable.connect(blocklister).blocklist(user.address));
-      await expect(
-        blocklistable.connect(user).testNotBlocklistedModifier()
-      ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await expect(blocklistable.connect(user).testNotBlocklistedModifier())
+        .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user.address);
     });
   });
 
@@ -319,14 +319,14 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklistEnabled()).to.equal(true);
       await proveTx(blocklistable.connect(blocklister).blocklist(user.address));
-      await expect(
-        blocklistable.connect(user).testNotBlocklistedOrBypassIfBlocklister()
-      ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_BLOCKLISTED_ACCOUNT);
+      await expect(blocklistable.connect(user).testNotBlocklistedOrBypassIfBlocklister())
+        .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(user.address);
     });
   });
 
   describe("Backward Compatibility functions", async () => {
-    it("Function 'blacklist()' executes as expected and emits the correct event if it is called by the blocklister", async () => {
+    it("Function 'blacklist()' executes as expected if it is called by the blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(false);
       await expect(blocklistable.connect(blocklister).blacklist(user.address))
@@ -352,7 +352,7 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
       ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_ZERO_ADDRESS_BLOCKLISTED);
     });
 
-    it("Function 'unBlacklist()' executes as expected and emits the correct event if it is called by the blocklister", async () => {
+    it("Function 'unBlacklist()' executes as expected if it is called by the blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       await proveTx(blocklistable.connect(blocklister).blacklist(user.address));
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(true);
@@ -372,7 +372,7 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
         .withArgs(user.address);
     });
 
-    it("Function 'selfBlacklist()' executes as expected and emits the correct events if it is called by any account", async () => {
+    it("Function 'selfBlacklist()' executes as expected if it is called by any account", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(false);
       await expect(blocklistable.connect(user).selfBlacklist())
