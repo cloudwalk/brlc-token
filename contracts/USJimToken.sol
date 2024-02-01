@@ -83,7 +83,7 @@ contract USJimToken is ERC20Base, ERC20Mintable, ERC20Freezable {
         address from,
         address to,
         uint256 amount
-    ) internal virtual override(ERC20Base, ERC20Freezable, ERC20Mintable) {
+    ) internal virtual override(ERC20Base, ERC20Mintable, ERC20Freezable) {
         super._afterTokenTransfer(from, to, amount);
     }
 
