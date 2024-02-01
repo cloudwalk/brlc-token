@@ -14,20 +14,10 @@ abstract contract ERC20Trustable is ERC20Base, IERC20Trustable {
     /// @notice The mapping of the configured trusted accounts
     mapping(address => bool) private _trusted;
 
-    // -------------------- Events -----------------------------------
-
-    /**
-     * @notice Emitted when the trusted status of the account is configured
-     *
-     * @param account The address of the account
-     * @param status The new trusted status
-     */
-    event ConfigureTrusted(address indexed account, bool status);
-
     // -------------------- Errors -----------------------------------
 
     /// @notice Thrown when the account is already configured with the same trusted status
-    error TrustedAlreadyConfigured();
+    error TrustedAccountAlreadyConfigured();
 
     // -------------------- Functions --------------------------------
 
@@ -54,22 +44,22 @@ abstract contract ERC20Trustable is ERC20Base, IERC20Trustable {
      * @inheritdoc IERC20Trustable
      *
      * @dev Can only be called by the owner
-     * @dev Emits a {ConfigureTrusted} event
+     * @dev Emits a {TrustedAccountConfigured} event
      */
-    function configureTrusted(address account, bool status) external onlyOwner {
+    function configureTrustedAccount(address account, bool status) external onlyOwner {
         if (_trusted[account] == status) {
-            revert TrustedAlreadyConfigured();
+            revert TrustedAccountAlreadyConfigured();
         }
 
         _trusted[account] = status;
 
-        emit ConfigureTrusted(account, status);
+        emit TrustedAccountConfigured(account, status);
     }
 
     /**
      * @inheritdoc IERC20Trustable
      */
-    function isTrusted(address account) external view returns(bool) {
+    function isTrustedAccount(address account) external view returns(bool) {
         return _trusted[account];
     }
 

@@ -9,15 +9,23 @@ pragma solidity 0.8.16;
  */
 interface IERC20Trustable {
     /**
+     * @notice Emitted when the trusted status of the account is configured
+     *
+     * @param account The address of the account
+     * @param status The new trusted status of the account
+     */
+    event TrustedAccountConfigured(address indexed account, bool status);
+
+    /**
      * @notice Updates the trusted status of the account
      *
      * @param account The address of the account
-     * @param status The new trusted status
+     * @param status The new trusted status of the account
      */
-    function configureTrusted(address account, bool status) external;
+    function configureTrustedAccount(address account, bool status) external;
 
     /**
      * @notice Returns the trusted status of the account
      */
-    function isTrusted(address account) external view returns(bool);
+    function isTrustedAccount(address account) external view returns(bool);
 }

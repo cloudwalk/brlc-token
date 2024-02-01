@@ -332,7 +332,7 @@ describe("Contract 'ERC20Mintable'", async () => {
     });
   });
 
-  describe("Function premint()", async () => {
+  describe("Function 'premint()'", async () => {
     let timestamp: number;
     before(async () => {
       timestamp = (await time.latest()) + 100;
