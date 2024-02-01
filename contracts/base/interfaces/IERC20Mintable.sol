@@ -45,9 +45,9 @@ interface IERC20Mintable {
      * @param minter The address of the minter
      * @param to The address of the tokens recipient
      * @param amount The amount of tokens being preminted
-     * @param releaseTime The timestamp when the tokens will be released
+     * @param release The timestamp when the tokens will be released
      */
-    event Premint(address indexed minter, address indexed to, uint256 amount, uint256 releaseTime);
+    event Premint(address indexed minter, address indexed to, uint256 amount, uint256 release);
 
     /**
      * @notice Emitted when tokens are burned
@@ -56,6 +56,13 @@ interface IERC20Mintable {
      * @param amount The amount of tokens being burned
      */
     event Burn(address indexed burner, uint256 amount);
+
+    /**
+     * @notice Emitted when the limit of premints is configured
+     *
+     * @param newLimit The new limit of premints
+     */
+    event MaxPendingPremintsCountConfigured(uint256 newLimit);
 
     /**
      * @notice Returns the main minter address
@@ -109,6 +116,15 @@ interface IERC20Mintable {
     function removeMinter(address minter) external returns (bool);
 
     /**
+     * @notice Configures the max count of pending premints
+     *
+     * Emits a {MaxPendingPremintsCountConfigured} event
+     *
+     * @param newLimit The new max count
+     */
+    function configureMaxPendingPremintsCount(uint16 newLimit) external;
+
+    /**
      * @notice Mints tokens
      *
      * Emits a {Mint} event
@@ -126,9 +142,9 @@ interface IERC20Mintable {
      *
      * @param account The address of a tokens recipient
      * @param amount The amount of tokens to premint
-     * @param releaseTime The timestamp when the tokens will be released
+     * @param release The timestamp when the tokens will be released
      */
-    function premint(address account, uint256 amount, uint256 releaseTime) external;
+    function premint(address account, uint256 amount, uint256 release) external;
 
     /**
      * @notice Burns tokens

@@ -56,7 +56,7 @@ contract ERC20MintableMock is ERC20Mintable {
     /**
      * @inheritdoc ERC20Mintable
      */
-    function _balanceOf_ERC20Mintable(address account, address recipient) internal view virtual override returns (uint256) {
+    function _balanceOf_ERC20Mintable(address account) internal view virtual override returns (uint256) {
         return balanceOf(account);
     }
 }
