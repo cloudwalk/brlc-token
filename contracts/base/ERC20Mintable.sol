@@ -73,10 +73,10 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     error TransferExceededPremintedAmount();
 
     /// @notice The maximum premints count is already configured
-    error MaxPendigPremintsCountAlreadyConfigured();
+    error MaxPendingPremintsCountAlreadyConfigured();
 
     /// @notice The maximum number of premints is reached
-    error MaxPendigPremintsLimitReached();
+    error MaxPendingPremintsLimitReached();
 
     /// @notice The premint release must in the future
     error PremintReleaseTimePassed();
@@ -185,7 +185,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     function configureMaxPendingPremintsCount(uint16 newLimit) external onlyOwner {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
         if (storageSlot.maxPendingPremintsCount == newLimit) {
-            revert MaxPendigPremintsCountAlreadyConfigured();
+            revert MaxPendingPremintsCountAlreadyConfigured();
         }
 
         storageSlot.maxPendingPremintsCount = newLimit;
@@ -242,7 +242,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
                 }
             }
             if (!success) {
-                revert MaxPendigPremintsLimitReached();
+                revert MaxPendingPremintsLimitReached();
             }
         }
 

@@ -2,6 +2,7 @@ import { ethers, network, upgrades } from "hardhat";
 import { expect } from "chai";
 import { BigNumber, Contract, ContractFactory } from "ethers";
 import { TransactionResponse } from "@ethersproject/abstract-provider";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { proveTx } from "../../test-utils/eth";
@@ -20,6 +21,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
   const MINT_ALLOWANCE = 1000;
   const TOKEN_AMOUNT = 100;
+  const MAX_PENDING_PREMINTS_COUNT = 5;
 
   const EVENT_NAME_MAIN_MINTER_CHANGED = "MainMinterChanged";
   const EVENT_NAME_MINTER_CONFIGURED = "MinterConfigured";
@@ -27,13 +29,17 @@ describe("Contract 'ERC20Mintable'", async () => {
   const EVENT_NAME_MINT = "Mint";
   const EVENT_NAME_BURN = "Burn";
   const EVENT_NAME_TRANSFER = "Transfer";
+  const EVENT_NAME_PREMINT = "Premint";
+  const EVENT_NAME_MAX_PENDING_PREMINTS_COUNT_CONFIGURED = "MaxPendingPremintsCountConfigured";
 
-  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
+  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED =
+        "Initializable: contract is already initialized";
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
   const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
   const REVERT_MESSAGE_PAUSABLE_PAUSED = "Pausable: paused";
   const REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT = "ERC20: mint to the zero address";
   const REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE = "ERC20: burn amount exceeds balance";
+  const REVERT_MESSAGE_ERC20MINTABLE_UINT64_OVERFLOW = "ERC20Mintable: uint64 overflow";
 
   const REVERT_ERROR_BLOCKLISTED_ACCOUNT = "BlocklistedAccount";
   const REVERT_ERROR_UNAUTHORIZED_MAIN_MINTER = "UnauthorizedMainMinter";
@@ -41,6 +47,9 @@ describe("Contract 'ERC20Mintable'", async () => {
   const REVERT_ERROR_ZERO_BURN_AMOUNT = "ZeroBurnAmount";
   const REVERT_ERROR_ZERO_MINT_AMOUNT = "ZeroMintAmount";
   const REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE = "ExceededMintAllowance";
+  const REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED = "PremintReleaseTimePassed";
+  const REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED = "MaxPendingPremintsLimitReached";
+  const REVERT_ERROR_MAX_PENDING_PREMINTS_COUNT_ALREADY_CONFIGURED = "MaxPendingPremintsCountAlreadyConfigured";
 
   let tokenFactory: ContractFactory;
   let deployer: SignerWithAddress;
@@ -68,6 +77,7 @@ describe("Contract 'ERC20Mintable'", async () => {
     await proveTx(token.connect(deployer).setMainBlocklister(mainBlocklister.address));
     await proveTx(token.connect(deployer).updateMainMinter(mainMinter.address));
     await proveTx(token.connect(mainMinter).configureMinter(minter.address, MINT_ALLOWANCE));
+    await proveTx(token.connect(deployer).configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
     return { token };
   }
 
@@ -78,6 +88,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
       expect(await token.mainBlocklister()).to.equal(ethers.constants.AddressZero);
       expect(await token.mainMinter()).to.equal(ethers.constants.AddressZero);
+      expect(await token.maxPendingPremintsCount()).to.equal(0);
     });
 
     it("Is reverted if called for the second time", async () => {
@@ -239,7 +250,6 @@ describe("Contract 'ERC20Mintable'", async () => {
       it("The destination address is blocklisted and the caller is not a blocklister", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(token.connect(user).selfBlocklist());
-
         await expect(token.connect(minter).mint(user.address, TOKEN_AMOUNT))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
           .withArgs(user.address);
@@ -288,7 +298,8 @@ describe("Contract 'ERC20Mintable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(minter).mint(minter.address, TOKEN_AMOUNT));
       await proveTx(token.connect(pauser).pause());
-      await expect(token.connect(minter).burn(TOKEN_AMOUNT)).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+      await expect(token.connect(minter).burn(TOKEN_AMOUNT))
+        .to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
     });
 
     it("Is reverted if the caller is not a minter", async () => {
@@ -310,7 +321,8 @@ describe("Contract 'ERC20Mintable'", async () => {
 
     it("Is reverted if the burn amount is zero", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await expect(token.connect(minter).burn(0)).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_BURN_AMOUNT);
+      await expect(token.connect(minter).burn(0))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_BURN_AMOUNT);
     });
 
     it("Is reverted if the burn amount exceeds the caller token balance", async () => {
@@ -319,6 +331,181 @@ describe("Contract 'ERC20Mintable'", async () => {
       await expect(
         token.connect(minter).burn(TOKEN_AMOUNT + 1)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
+    });
+  });
+
+  describe("Function premint()", async () => {
+    let timestamp: number;
+    before(async () => {
+      timestamp = (await time.latest()) + 100;
+    });
+
+    describe("Executes as expected and emits the correct events if", async () => {
+      async function executeAndTestPremint(token: Contract) {
+        const oldMintAllowance: BigNumber = await token.minterAllowance(minter.address);
+        const newMintAllowance: BigNumber = oldMintAllowance.sub(BigNumber.from(TOKEN_AMOUNT));
+
+        const tx: TransactionResponse = await token
+          .connect(minter)
+          .premint(user.address, TOKEN_AMOUNT, timestamp);
+
+        await expect(tx)
+          .to.emit(token, EVENT_NAME_MINT)
+          .withArgs(minter.address, user.address, TOKEN_AMOUNT);
+        await expect(tx)
+          .to.emit(token, EVENT_NAME_PREMINT)
+          .withArgs(minter.address, user.address, TOKEN_AMOUNT, timestamp);
+        await expect(tx)
+          .to.emit(token, EVENT_NAME_TRANSFER)
+          .withArgs(ethers.constants.AddressZero, user.address, TOKEN_AMOUNT);
+
+        await expect(tx).to.changeTokenBalances(token, [user], [TOKEN_AMOUNT]);
+        expect(await token.minterAllowance(minter.address)).to.equal(newMintAllowance);
+        expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT);
+
+        const premints = await token.getPremints(user.address);
+        expect(premints[0].release).to.eq(timestamp);
+        expect(premints[0].amount).to.eq(TOKEN_AMOUNT);
+      }
+
+      it("The caller and destination address are not blocklisted", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await executeAndTestPremint(token);
+      });
+
+      it("The destination address is blocklisted but the caller is a blocklister", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.connect(mainBlocklister).configureBlocklister(minter.address, true));
+        await proveTx(token.connect(user).selfBlocklist());
+        await executeAndTestPremint(token);
+      });
+
+      it("The limit of premints is reached, but some of them are expired", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        for (let i = 0; i < MAX_PENDING_PREMINTS_COUNT; i++) {
+          await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + i));
+        }
+        expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT * MAX_PENDING_PREMINTS_COUNT);
+        await time.increaseTo(timestamp + 1);
+        expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2));
+        await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT + 1, timestamp * 2));
+        expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) + 1);
+      });
+    });
+
+    describe("Is reverted if", async () => {
+      it("The contract is paused", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.connect(pauser).pause());
+        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp))
+          .to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+      });
+
+      it("The premint's release time is passed", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const timestamp = (await time.latest()) - 1;
+        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED);
+      });
+
+      it("The amount of premint overflowed uint64 type limit", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const overflowAmount = ethers.constants.MaxUint256;
+        await expect(token.connect(minter).premint(user.address, overflowAmount, timestamp))
+          .to.be.revertedWith(REVERT_MESSAGE_ERC20MINTABLE_UINT64_OVERFLOW);
+      });
+
+      it("The caller is not a minter", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await expect(token.connect(user).premint(user.address, TOKEN_AMOUNT, timestamp))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MINTER)
+          .withArgs(user.address);
+      });
+
+      it("The caller is blocklisted even if the caller is a blocklister", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.connect(mainBlocklister).configureBlocklister(minter.address, true));
+        await proveTx(token.connect(minter).selfBlocklist());
+        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+          .withArgs(minter.address);
+      });
+
+      it("The destination address is blocklisted and the caller is not a blocklister", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.connect(user).selfBlocklist());
+        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+          .withArgs(user.address);
+      });
+
+      it("The destination address is zero", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await expect(token.connect(minter).premint(ethers.constants.AddressZero, TOKEN_AMOUNT, timestamp))
+          .to.be.revertedWith(REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
+      });
+
+      it("The mint amount is zero", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await expect(token.connect(minter).mint(user.address, 0))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_MINT_AMOUNT);
+      });
+
+      it("The mint amount exceeds the mint allowance", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await expect(token.connect(minter).mint(user.address, MINT_ALLOWANCE + 1))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE);
+      });
+
+      it("The max pending premints limit is reached", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        for (let i = 0; i < MAX_PENDING_PREMINTS_COUNT; i++) {
+          await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + i));
+        }
+        expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + 100))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED);
+      });
+    });
+  });
+
+  describe("Function 'configureMaxPendingPremintsCount()'", async () => {
+    it("Executes as expected and emits the correct event", async () => {
+      const { token } = await setUpFixture(deployToken);
+      expect(await token.maxPendingPremintsCount()).to.eq(0);
+      expect(await token.connect(deployer).configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT))
+        .to.emit(token, EVENT_NAME_MAX_PENDING_PREMINTS_COUNT_CONFIGURED)
+        .withArgs(MAX_PENDING_PREMINTS_COUNT);
+      expect(await token.maxPendingPremintsCount()).to.eq(MAX_PENDING_PREMINTS_COUNT);
+    });
+
+    it("Is reverted if the limit is already configured with the same number", async () => {
+      const { token } = await setUpFixture(deployToken);
+      await proveTx(token.connect(deployer).configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
+      expect(token.connect(deployer).configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_MAX_PENDING_PREMINTS_COUNT_ALREADY_CONFIGURED);
+    });
+
+    it("Is reverted if caller is not an owner", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      expect(token.connect(user).configureMaxPendingPremintsCount(0))
+        .to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+    });
+  });
+
+  describe("Function 'balanceOfPremint()'", async () => {
+    it("Returns the correct balance of premint", async () => {
+      let timestamp = (await time.latest()) + 100;
+      const { token } = await setUpFixture(deployAndConfigureToken);
+
+      await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp));
+      await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT + 1, timestamp + 50));
+      expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT * 2 + 1);
+
+      await time.increaseTo(timestamp);
+      expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT + 1);
+
+      await time.increaseTo(timestamp + 50);
+      expect(await token.balanceOfPremint(user.address)).to.eq(0);
     });
   });
 });
