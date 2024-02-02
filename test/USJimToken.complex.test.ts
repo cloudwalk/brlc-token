@@ -5,7 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { proveTx } from "../test-utils/eth";
 
-async function setUpFixture(func: any) {
+async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
     return loadFixture(func);
   } else {
@@ -59,7 +59,7 @@ describe("Contract 'USJimToken' - Premintable & Freezable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 10));
       await proveTx(token.connect(deployer).premint(user.address, 10, timestamp));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await time.increaseTo(timestamp + 1);
+      await time.increaseTo(timestamp);
       await expect(
         token.connect(user).transfer(reciever.address, 5)
       ).to.changeTokenBalances(
@@ -74,7 +74,7 @@ describe("Contract 'USJimToken' - Premintable & Freezable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 10));
       await proveTx(token.connect(deployer).premint(user.address, 10, timestamp));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await time.increaseTo(timestamp + 1);
+      await time.increaseTo(timestamp);
       await expect(
         token.connect(user).transfer(reciever.address, 10)
       ).to.changeTokenBalances(
@@ -89,7 +89,7 @@ describe("Contract 'USJimToken' - Premintable & Freezable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 10));
       await proveTx(token.connect(deployer).premint(user.address, 10, timestamp));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await time.increaseTo(timestamp + 1);
+      await time.increaseTo(timestamp);
       await expect(
         token.connect(user).transfer(reciever.address, 15)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
@@ -100,7 +100,7 @@ describe("Contract 'USJimToken' - Premintable & Freezable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 10));
       await proveTx(token.connect(deployer).premint(user.address, 10, timestamp));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await time.increaseTo(timestamp + 1);
+      await time.increaseTo(timestamp);
       await expect(
         token.connect(user).transfer(reciever.address, 20)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
@@ -111,56 +111,56 @@ describe("Contract 'USJimToken' - Premintable & Freezable scenarios", async () =
       await proveTx(token.connect(deployer).mint(user.address, 10));
       await proveTx(token.connect(deployer).premint(user.address, 10, timestamp));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
-      await time.increaseTo(timestamp + 1);
+      await time.increaseTo(timestamp);
       await expect(
         token.connect(user).transfer(reciever.address, 25)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
-    it("Transfer - test 5 without release awaiting", async () => {
+    it("Transfer - test 5 with no release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 10));
-      await proveTx(token.connect(deployer).premint(user.address, 10, timestamp + 100));
+      await proveTx(token.connect(deployer).premint(user.address, 10, timestamp));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await expect(
         token.connect(user).transfer(reciever.address, 5)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
-    it("Transfer - test 10 without release awaiting", async () => {
+    it("Transfer - test 10 with no release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 10));
-      await proveTx(token.connect(deployer).premint(user.address, 10, timestamp + 100));
+      await proveTx(token.connect(deployer).premint(user.address, 10, timestamp));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await expect(
         token.connect(user).transfer(reciever.address, 10)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
-    it("Transfer - test 15 without release awaiting", async () => {
+    it("Transfer - test 15 with no release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 10));
-      await proveTx(token.connect(deployer).premint(user.address, 10, timestamp + 100));
+      await proveTx(token.connect(deployer).premint(user.address, 10, timestamp));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await expect(
         token.connect(user).transfer(reciever.address, 15)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT);
     });
 
-    it("Transfer - test 20 without release awaiting", async () => {
+    it("Transfer - test 20 with no release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 10));
-      await proveTx(token.connect(deployer).premint(user.address, 10, timestamp + 100));
+      await proveTx(token.connect(deployer).premint(user.address, 10, timestamp));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await expect(
         token.connect(user).transfer(reciever.address, 20)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT);
     });
 
-    it("Transfer - test 25 without release awaiting", async () => {
+    it("Transfer - test 25 with no release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).mint(user.address, 10));
-      await proveTx(token.connect(deployer).premint(user.address, 10, timestamp + 100));
+      await proveTx(token.connect(deployer).premint(user.address, 10, timestamp));
       await proveTx(token.connect(deployer).freeze(user.address, 10));
       await expect(
         token.connect(user).transfer(reciever.address, 25)
@@ -223,15 +223,25 @@ describe("Contract 'USJimToken' - Premintable & Freezable scenarios", async () =
     });
   });
 
+  describe("Frozen balances with no tokens", async () => {
+    it("Transfer - test 5", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await proveTx(token.connect(deployer).freeze(user.address, 10));
+      await expect(
+        token.connect(user).transfer(reciever.address, 5)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
+    });
+  });
+
   describe("Premint balance only, no frozen balance", async () => {
     let timestamp: number;
     before(async () => {
-      timestamp = await time.latest();
+      timestamp = (await time.latest()) + 100;
     });
     it("Transfer - test 5 with release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).premint(user.address, 20, timestamp));
-      await time.increaseTo(timestamp + 1);
+      await time.increaseTo(timestamp);
       await expect(
         token.connect(user).transfer(reciever.address, 5)
       ).to.changeTokenBalances(
@@ -244,7 +254,7 @@ describe("Contract 'USJimToken' - Premintable & Freezable scenarios", async () =
     it("Transfer - test 10 with release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).premint(user.address, 20, timestamp));
-      await time.increaseTo(timestamp + 1);
+      await time.increaseTo(timestamp);
       await expect(
         token.connect(user).transfer(reciever.address, 10)
       ).to.changeTokenBalances(
@@ -257,7 +267,7 @@ describe("Contract 'USJimToken' - Premintable & Freezable scenarios", async () =
     it("Transfer - test 15 with release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).premint(user.address, 20, timestamp));
-      await time.increaseTo(timestamp + 1);
+      await time.increaseTo(timestamp);
       await expect(
         token.connect(user).transfer(reciever.address, 15)
       ).to.changeTokenBalances(
@@ -270,7 +280,7 @@ describe("Contract 'USJimToken' - Premintable & Freezable scenarios", async () =
     it("Transfer - test 20 with release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).premint(user.address, 20, timestamp));
-      await time.increaseTo(timestamp + 1);
+      await time.increaseTo(timestamp);
       await expect(
         token.connect(user).transfer(reciever.address, 20)
       ).to.changeTokenBalances(
@@ -283,50 +293,47 @@ describe("Contract 'USJimToken' - Premintable & Freezable scenarios", async () =
     it("Transfer - test 25 with release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.connect(deployer).premint(user.address, 20, timestamp));
-      await time.increaseTo(timestamp + 1);
+      await time.increaseTo(timestamp);
       await expect(
         token.connect(user).transfer(reciever.address, 25)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
-    it("Transfer - test 5 without release awaiting", async () => {
+    it("Transfer - test 5 with no release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      const timestamp = (await time.latest()) + 100;
       await proveTx(token.connect(deployer).premint(user.address, 20, timestamp));
       await expect(
         token.connect(user).transfer(reciever.address, 5)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT);
     });
 
-    it("Transfer - test 10 without release awaiting", async () => {
+    it("Transfer - test 10 with no release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      const timestamp = (await time.latest()) + 100;
       await proveTx(token.connect(deployer).premint(user.address, 20, timestamp));
       await expect(
         token.connect(user).transfer(reciever.address, 10)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT);
     });
 
-    it("Transfer - test 15 without release awaiting", async () => {
+    it("Transfer - test 15 with no release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      const timestamp = (await time.latest()) + 100;
       await proveTx(token.connect(deployer).premint(user.address, 20, timestamp));
       await expect(
         token.connect(user).transfer(reciever.address, 15)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT);
     });
 
-    it("Transfer - test 20 without release awaiting", async () => {
+    it("Transfer - test 20 with no release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.connect(deployer).premint(user.address, 20, timestamp + 100));
+      await proveTx(token.connect(deployer).premint(user.address, 20, timestamp));
       await expect(
         token.connect(user).transfer(reciever.address, 20)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT);
     });
 
-    it("Transfer - test 25 without release awaiting", async () => {
+    it("Transfer - test 25 with no release awaiting", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.connect(deployer).premint(user.address, 20, timestamp + 100));
+      await proveTx(token.connect(deployer).premint(user.address, 20, timestamp));
       await expect(
         token.connect(user).transfer(reciever.address, 25)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);

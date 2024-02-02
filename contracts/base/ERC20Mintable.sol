@@ -32,7 +32,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     struct PremintRecord {
         uint64 amount;
         uint64 release;
-        uint128 reserved;
     }
 
     /// @notice The address of the main minter
@@ -69,16 +68,16 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /// @notice The zero amount of tokens is passed during the burn operation
     error ZeroBurnAmount();
 
-    /// @notice The transfer amount exceeded the preminted amount
+    /// @notice The transfer amount exceeded the preminted (not available) amount
     error TransferExceededPremintedAmount();
 
-    /// @notice The maximum premints count is already configured
+    /// @notice The same maximum count of pending premints is already configured
     error MaxPendingPremintsCountAlreadyConfigured();
 
-    /// @notice The maximum number of premints is reached
+    /// @notice The maximum number of pending premints has been reached
     error MaxPendingPremintsLimitReached();
 
-    /// @notice The premint release must in the future
+    /// @notice The premint release time must be in the future
     error PremintReleaseTimePassed();
 
 
@@ -213,9 +212,9 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev Can only be called by a minter account
      * @dev The message sender must not be blocklisted
      * @dev The `account` address must not be blocklisted
-     * @dev The `amount` value must be greater than zero and not
-     * greater than the mint allowance of the minter
-     * @dev The number of pending premints should not reach the limit
+     * @dev the `amount` and `release` values must be less or equal to uint64 max value
+     * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
+     * @dev TThe number of pending premints must be less than the limit
      */
     function premint(
         address account,
@@ -230,13 +229,13 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         PremintRecord[] storage premintRecords = storageSlot.premints[account].premintRecords;
 
         if (premintRecords.length < storageSlot.maxPendingPremintsCount) {
-            premintRecords.push(PremintRecord(_toUint64(amount), _toUint64(release), 0));
+            premintRecords.push(PremintRecord(_toUint64(amount), _toUint64(release)));
         } else {
             bool success = false;
             for (uint256 i = 0; i < premintRecords.length; i++) {
                 if (premintRecords[i].release <= block.timestamp) {
                     // TODO Check if it will be cheaper to update fields
-                    premintRecords[i] = PremintRecord(_toUint64(amount), _toUint64(release), 0);
+                    premintRecords[i] = PremintRecord(_toUint64(amount), _toUint64(release));
                     success = true;
                     break;
                 }
@@ -284,8 +283,8 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @notice Returns the array of premint records
-     * @param account The address to get the premint records for
+     * @notice Returns the array of premint records for a given account
+     * @param account The address of the account to get the premint records for
      */
     function getPremints(address account) external view returns (PremintRecord[] memory) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();

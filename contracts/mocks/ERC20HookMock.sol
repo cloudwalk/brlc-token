@@ -74,7 +74,7 @@ contract ERC20HookMock is IERC20Hook {
         }
 
         if (revertWithReasonMessage) {
-            require(false, "error message");
+            revert("error message");
         }
 
         if (revertWithoutReasonMessage) {
@@ -103,7 +103,7 @@ contract ERC20HookMock is IERC20Hook {
         }
 
         if (revertWithReasonMessage) {
-            require(false, "error message");
+            revert("error message");
         }
 
         if (revertWithoutReasonMessage) {

@@ -32,6 +32,7 @@ contract ERC20MintableMock is ERC20Mintable {
      */
     function initialize(string memory name_, string memory symbol_) public initializer {
         __ERC20Mintable_init(name_, symbol_);
+        _balanceOf_ERC20Mintable(address(0)); // To ensure 100% coverage
     }
 
     /**
