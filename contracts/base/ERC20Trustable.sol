@@ -8,15 +8,15 @@ import { IERC20Trustable } from "./interfaces/IERC20Trustable.sol";
 /**
  * @title ERC20Trustable contract
  * @author CloudWalk Inc.
- * @notice The ERC20 token implementation that supports the trusted transfers
+ * @notice The ERC20 token implementation that supports the `trusted` transfers on behalf
  */
 abstract contract ERC20Trustable is ERC20Base, IERC20Trustable {
-    /// @notice The mapping of the configured trusted accounts
+    /// @notice The mapping of the configured `trusted` status of the accounts
     mapping(address => bool) private _trusted;
 
     // -------------------- Errors -----------------------------------
 
-    /// @notice Thrown when the account is already configured with the same trusted status
+    /// @notice Thrown when the account is already configured with the same `trusted` status
     error TrustedAccountAlreadyConfigured();
 
     // -------------------- Functions --------------------------------
@@ -66,7 +66,7 @@ abstract contract ERC20Trustable is ERC20Base, IERC20Trustable {
     /**
      * @notice Returns the amount of tokens that the spender is allowed to spend on behalf of the owner
      *
-     * @dev Returns {type(uint256).max} if the spender is a trusted account, otherwise the real allowance
+     * @dev Returns {uint256.max} if the spender is a `trusted` account, otherwise the real allowance
      *
      * @param owner The address of the owner of the tokens
      * @param spender The address of the spender of the tokens
