@@ -32,6 +32,7 @@ contract ERC20MintableMock is ERC20Mintable {
      */
     function initialize(string memory name_, string memory symbol_) public initializer {
         __ERC20Mintable_init(name_, symbol_);
+        _balanceOf_ERC20Mintable(address(0)); // To ensure 100% coverage
     }
 
     /**
@@ -51,5 +52,12 @@ contract ERC20MintableMock is ERC20Mintable {
      */
     function call_parent_initialize_unchained() public {
         __ERC20Mintable_init_unchained();
+    }
+
+    /**
+     * @inheritdoc ERC20Mintable
+     */
+    function _balanceOf_ERC20Mintable(address account) internal view virtual override returns (uint256) {
+        return balanceOf(account);
     }
 }

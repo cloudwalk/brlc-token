@@ -40,12 +40,29 @@ interface IERC20Mintable {
     event Mint(address indexed minter, address indexed to, uint256 amount);
 
     /**
+     * @notice Emitted when tokens are preminted
+     *
+     * @param minter The address of the minter
+     * @param to The address of the tokens recipient
+     * @param amount The amount of tokens being preminted
+     * @param release The timestamp when the tokens will be released
+     */
+    event Premint(address indexed minter, address indexed to, uint256 amount, uint256 release);
+
+    /**
      * @notice Emitted when tokens are burned
      *
      * @param burner The address of the tokens burner
      * @param amount The amount of tokens being burned
      */
     event Burn(address indexed burner, uint256 amount);
+
+    /**
+     * @notice Emitted when the limit of premints is configured
+     *
+     * @param newLimit The new limit of premints
+     */
+    event MaxPendingPremintsCountConfigured(uint256 newLimit);
 
     /**
      * @notice Returns the main minter address
@@ -99,6 +116,15 @@ interface IERC20Mintable {
     function removeMinter(address minter) external returns (bool);
 
     /**
+     * @notice Configures the max count of pending premints
+     *
+     * Emits a {MaxPendingPremintsCountConfigured} event
+     *
+     * @param newLimit The new max count
+     */
+    function configureMaxPendingPremintsCount(uint16 newLimit) external;
+
+    /**
      * @notice Mints tokens
      *
      * Emits a {Mint} event
@@ -108,6 +134,17 @@ interface IERC20Mintable {
      * @return True if the operation was successful
      */
     function mint(address account, uint256 amount) external returns (bool);
+
+    /**
+     * @notice Premints tokens
+     *
+     * Emits a {Premint} event
+     *
+     * @param account The address of a tokens recipient
+     * @param amount The amount of tokens to premint
+     * @param release The timestamp when the tokens will be released
+     */
+    function premint(address account, uint256 amount, uint256 release) external;
 
     /**
      * @notice Burns tokens

@@ -9,7 +9,7 @@ import { ERC20Freezable } from "./base/ERC20Freezable.sol";
 /**
  * @title USJimToken contract
  * @author CloudWalk Inc.
- * @notice The USJim token implementation that supports minting, burning and freezing operations
+ * @notice The USJim token implementation that supports minting, preminting, burning and freezing operations
  */
 contract USJimToken is ERC20Base, ERC20Mintable, ERC20Freezable {
     /**
@@ -83,7 +83,21 @@ contract USJimToken is ERC20Base, ERC20Mintable, ERC20Freezable {
         address from,
         address to,
         uint256 amount
-    ) internal virtual override(ERC20Base, ERC20Freezable) {
+    ) internal virtual override(ERC20Base, ERC20Mintable, ERC20Freezable) {
         super._afterTokenTransfer(from, to, amount);
+    }
+
+    /**
+     * @inheritdoc ERC20Mintable
+     */
+    function _balanceOf_ERC20Mintable(address account) internal view virtual override returns (uint256) {
+        return balanceOf(account);
+    }
+
+    /**
+     * @inheritdoc ERC20Freezable
+     */
+    function _balanceOf_ERC20Freezable(address account) internal view virtual override returns (uint256) {
+        return balanceOf(account) - balanceOfPremint(account);
     }
 }

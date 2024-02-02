@@ -8,9 +8,32 @@ import { ERC20Base } from "./ERC20Base.sol";
 /**
  * @title ERC20Mintable contract
  * @author CloudWalk Inc.
- * @notice The ERC20 token implementation that supports the mint and burn operations
+ * @notice The ERC20 token implementation that supports the mint, premint, and burn operations
  */
 abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
+    /// @notice The memory slot used to extend the contract storage with extra variables
+    // keccak256(abi.encode(uint256(keccak256("erc20.mintable.extended.storage")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 private constant _EXTENDED_STORAGE_SLOT =
+        0xcffb5f8035ad3742159fc75053ecd1333a8c2fb755e4113d8e5d284905de8700;
+
+    /// @notice The structure that represents the premintable storage slot
+    //  @custom:storage-location erc7201:erc20.mintable.extended.storage
+    struct ExtendedStorageSlot {
+        mapping(address => PremintState) premints;
+        uint16 maxPendingPremintsCount;
+    }
+
+    /// @notice The structure that represents an array of premint records
+    struct PremintState {
+        PremintRecord[] premintRecords;
+    }
+
+    /// @notice The structure that represents a premint record
+    struct PremintRecord {
+        uint64 amount;
+        uint64 release;
+    }
+
     /// @notice The address of the main minter
     address private _mainMinter;
 
@@ -44,6 +67,19 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
     /// @notice The zero amount of tokens is passed during the burn operation
     error ZeroBurnAmount();
+
+    /// @notice The transfer amount exceeded the preminted (not available) amount
+    error TransferExceededPremintedAmount();
+
+    /// @notice The same maximum count of pending premints is already configured
+    error MaxPendingPremintsCountAlreadyConfigured();
+
+    /// @notice The maximum number of pending premints has been reached
+    error MaxPendingPremintsLimitReached();
+
+    /// @notice The premint release time must be in the future
+    error PremintReleaseTimePassed();
+
 
     // -------------------- Modifiers --------------------------------
 
@@ -142,6 +178,23 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
+     * @dev Can only be called by the contract owner
+     * @dev The same limit cannot be configured twice
+     */
+    function configureMaxPendingPremintsCount(uint16 newLimit) external onlyOwner {
+        ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
+        if (storageSlot.maxPendingPremintsCount == newLimit) {
+            revert MaxPendingPremintsCountAlreadyConfigured();
+        }
+
+        storageSlot.maxPendingPremintsCount = newLimit;
+
+        emit MaxPendingPremintsCountConfigured(newLimit);
+    }
+
+    /**
+     * @inheritdoc IERC20Mintable
+     *
      * @dev The contract must not be paused
      * @dev Can only be called by a minter account
      * @dev The message sender must not be blocklisted
@@ -150,21 +203,51 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * greater than the mint allowance of the minter
      */
     function mint(address account, uint256 amount) external onlyMinter notBlocklisted(_msgSender()) returns (bool) {
-        if (amount == 0) {
-            revert ZeroMintAmount();
+        return _mintInternal(account, amount);
+    }
+
+    /**
+     * @inheritdoc IERC20Mintable
+     *
+     * @dev Can only be called by a minter account
+     * @dev The message sender must not be blocklisted
+     * @dev The `account` address must not be blocklisted
+     * @dev The `amount` and `release` values must be less or equal to uint64 max value
+     * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
+     * @dev The number of pending premints must be less than the limit
+     */
+    function premint(
+        address account,
+        uint256 amount,
+        uint256 release
+    ) external onlyMinter notBlocklisted(_msgSender()) {
+        if (release <= block.timestamp) {
+            revert PremintReleaseTimePassed();
         }
 
-        uint256 mintAllowance = _mintersAllowance[_msgSender()];
-        if (amount > mintAllowance) {
-            revert ExceededMintAllowance();
+        ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
+        PremintRecord[] storage premintRecords = storageSlot.premints[account].premintRecords;
+
+        if (premintRecords.length < storageSlot.maxPendingPremintsCount) {
+            premintRecords.push(PremintRecord(_toUint64(amount), _toUint64(release)));
+        } else {
+            bool success = false;
+            for (uint256 i = 0; i < premintRecords.length; i++) {
+                if (premintRecords[i].release <= block.timestamp) {
+                    // TODO Check if it will be cheaper to update fields
+                    premintRecords[i] = PremintRecord(_toUint64(amount), _toUint64(release));
+                    success = true;
+                    break;
+                }
+            }
+            if (!success) {
+                revert MaxPendingPremintsLimitReached();
+            }
         }
 
-        _mintersAllowance[_msgSender()] = mintAllowance - amount;
-        emit Mint(_msgSender(), account, amount);
+        emit Premint(_msgSender(), account, amount, release);
 
-        _mint(account, amount);
-
-        return true;
+        _mintInternal(account, amount);
     }
 
     /**
@@ -183,6 +266,37 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         _burn(_msgSender(), amount);
 
         emit Burn(_msgSender(), amount);
+    }
+
+    /**
+     * @notice Returns the total amount of preminted tokens
+     * @param account The account to check the preminted balance for
+     */
+    function balanceOfPremint(address account) public view returns (uint256 balance) {
+        ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
+        PremintRecord[] storage premints = storageSlot.premints[account].premintRecords;
+        for (uint256 i = 0; i < premints.length; i++) {
+            if (premints[i].release > block.timestamp) {
+                balance += premints[i].amount;
+            }
+        }
+    }
+
+    /**
+     * @notice Returns the array of premint records for a given account
+     * @param account The address of the account to get the premint records for
+     */
+    function getPremints(address account) external view returns (PremintRecord[] memory) {
+        ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
+        return storageSlot.premints[account].premintRecords;
+    }
+
+    /**
+     * @notice Returns the maximum number of pending premints
+     */
+    function maxPendingPremintsCount() external view returns (uint256) {
+        ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
+        return storageSlot.maxPendingPremintsCount;
     }
 
     /**
@@ -205,4 +319,56 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     function minterAllowance(address minter) external view returns (uint256) {
         return _mintersAllowance[minter];
     }
+
+    function _mintInternal(address account, uint256 amount) internal returns (bool) {
+        if (amount == 0) {
+            revert ZeroMintAmount();
+        }
+
+        uint256 mintAllowance = _mintersAllowance[_msgSender()];
+        if (amount > mintAllowance) {
+            revert ExceededMintAllowance();
+        }
+
+        _mintersAllowance[_msgSender()] = mintAllowance - amount;
+        emit Mint(_msgSender(), account, amount);
+
+        _mint(account, amount);
+
+        return true;
+    }
+
+    /**
+     * @inheritdoc ERC20Base
+     */
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
+        super._afterTokenTransfer(from, to, amount);
+        uint256 preminted = balanceOfPremint(from);
+        if (preminted != 0) {
+            if (_balanceOf_ERC20Mintable(from) < preminted) {
+                revert TransferExceededPremintedAmount();
+            }
+        }
+    }
+
+    function _getExtendedStorageSlot() internal pure returns (ExtendedStorageSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := _EXTENDED_STORAGE_SLOT
+        }
+    }
+
+    function _toUint64(uint256 value) internal pure returns (uint64) {
+        if (value > type(uint64).max) {
+            revert("ERC20Mintable: uint64 overflow");
+        }
+        return uint64(value);
+    }
+
+    /**
+     * @notice Returns the transferable amount of tokens owned by account
+     *
+     * @param account The account to get the balance of
+     */
+    function _balanceOf_ERC20Mintable(address account) internal view virtual returns (uint256);
 }
