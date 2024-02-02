@@ -65,6 +65,9 @@ describe("Contract 'ERC20Freezable'", async () => {
       expect(await token.owner()).to.equal(deployer.address);
       expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
       expect(await token.mainBlocklister()).to.equal(ethers.constants.AddressZero);
+
+      // To ensure 100% coverage even for the deprecated function
+      expect(await token.frozenBalance(user1.address)).to.equal(0);
     });
 
     it("Is reverted if called for the second time", async () => {
