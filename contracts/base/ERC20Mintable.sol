@@ -212,9 +212,9 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev Can only be called by a minter account
      * @dev The message sender must not be blocklisted
      * @dev The `account` address must not be blocklisted
-     * @dev the `amount` and `release` values must be less or equal to uint64 max value
+     * @dev The `amount` and `release` values must be less or equal to uint64 max value
      * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
-     * @dev TThe number of pending premints must be less than the limit
+     * @dev The number of pending premints must be less than the limit
      */
     function premint(
         address account,
