@@ -17,13 +17,13 @@ import { IERC20ComplexBalance } from "./interfaces/IERC20ComplexBalance.sol";
  * @notice The CloudWalk token that extends the standard ERC20 token implementation with additional functionality
  */
 contract CWToken is
-ERC20Base,
-ERC20Mintable,
-ERC20Freezable,
-ERC20Restrictable,
-ERC20Hookable,
-ERC20Trustable,
-IERC20ComplexBalance
+    ERC20Base,
+    ERC20Mintable,
+    ERC20Freezable,
+    ERC20Restrictable,
+    ERC20Hookable,
+    ERC20Trustable,
+    IERC20ComplexBalance
 {
     /**
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
