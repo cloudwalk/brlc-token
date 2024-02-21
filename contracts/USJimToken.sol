@@ -2,16 +2,14 @@
 
 pragma solidity 0.8.16;
 
-import { ERC20Base } from "./base/ERC20Base.sol";
-import { ERC20Mintable } from "./base/ERC20Mintable.sol";
-import { ERC20Freezable } from "./base/ERC20Freezable.sol";
+import { CWToken } from "./base/CWToken.sol";
 
 /**
  * @title USJimToken contract
  * @author CloudWalk Inc.
- * @notice The USJim token implementation that supports minting, preminting, burning and freezing operations
+ * @notice The USJim token implementation
  */
-contract USJimToken is ERC20Base, ERC20Mintable, ERC20Freezable {
+contract USJimToken is CWToken {
     /**
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *
@@ -32,7 +30,7 @@ contract USJimToken is ERC20Base, ERC20Mintable, ERC20Freezable {
      * @param name_ The name of the token
      * @param symbol_ The symbol of the token
      */
-    function initialize(string memory name_, string memory symbol_) external virtual initializer {
+    function initialize(string memory name_, string memory symbol_) external override initializer {
         __USJimToken_init(name_, symbol_);
     }
 
@@ -42,15 +40,7 @@ contract USJimToken is ERC20Base, ERC20Mintable, ERC20Freezable {
      * See {USJimToken-initialize}
      */
     function __USJimToken_init(string memory name_, string memory symbol_) internal onlyInitializing {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
-        __Pausable_init_unchained();
-        __PausableExt_init_unchained();
-        __Blocklistable_init_unchained();
-        __ERC20_init_unchained(name_, symbol_);
-        __ERC20Base_init_unchained();
-        __ERC20Mintable_init_unchained();
-        __ERC20Freezable_init_unchained();
+        __CWToken_init(name_, symbol_);
         __USJimToken_init_unchained();
     }
 
@@ -66,38 +56,5 @@ contract USJimToken is ERC20Base, ERC20Mintable, ERC20Freezable {
      */
     function isUSJim() external pure returns (bool) {
         return true;
-    }
-
-    /**
-     * @dev See {ERC20Base-_beforeTokenTransfer}
-     */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override(ERC20Base) {
-        super._beforeTokenTransfer(from, to, amount);
-    }
-
-    /**
-     * @dev See {ERC20Base-_afterTokenTransfer}
-     * @dev See {ERC20Freezable-_afterTokenTransfer}
-     */
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual override(ERC20Base, ERC20Mintable, ERC20Freezable) {
-        super._afterTokenTransfer(from, to, amount);
-    }
-
-    /**
-     * @inheritdoc ERC20Mintable
-     */
-    function _balanceOf_ERC20Mintable(address account) internal view virtual override returns (uint256) {
-        return balanceOf(account);
-    }
-
-    /**
-     * @inheritdoc ERC20Freezable
-     */
-    function _balanceOf_ERC20Freezable(address account) internal view virtual override returns (uint256) {
-        return balanceOf(account) - balanceOfPremint(account);
     }
 }

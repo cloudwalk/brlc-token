@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx } from "../test-utils/eth";
+import { proveTx } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -13,15 +13,16 @@ async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   }
 }
 
-describe("Contract 'BRLCToken' - Premintable, Freezable & Restrictable scenarios", async () => {
-  const TOKEN_NAME = "BRL Coin";
-  const TOKEN_SYMBOL = "BRLC";
+describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios", async () => {
+  const TOKEN_NAME = "CW Token";
+  const TOKEN_SYMBOL = "CWT";
   const MAX_PENDING_PREMINTS_COUNT = 5;
 
   const REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT = "TransferExceededFrozenAmount";
   const REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT = "TransferExceededRestrictedAmount";
   const REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT = "TransferExceededPremintedAmount";
   const REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
+  const REVERT_MESSAGE_INSUFFICIENT_ALLOWANCE = "ERC20: insufficient allowance";
 
   const PURPOSE = "0x0000000000000000000000000000000000000000000000000000000000000001";
 
@@ -33,7 +34,7 @@ describe("Contract 'BRLCToken' - Premintable, Freezable & Restrictable scenarios
 
   before(async () => {
     [deployer, user, purposeAccount, nonPurposeAccount] = await ethers.getSigners();
-    tokenFactory = await ethers.getContractFactory("BRLCToken");
+    tokenFactory = await ethers.getContractFactory("CWToken");
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
@@ -53,6 +54,28 @@ describe("Contract 'BRLCToken' - Premintable, Freezable & Restrictable scenarios
     await proveTx(token.connect(user).approveFreezing());
     return { token };
   }
+
+  describe("Function 'transferFrom()'", async () => {
+    it("Executes as expected for non-trusted and trusted accounts", async () => {
+      const maxAmount = ethers.constants.MaxUint256;
+      const userBalance = 123;
+
+      const { token } = await setUpFixture(deployToken);
+      await proveTx(token.updateMainMinter(deployer.address));
+      await proveTx(token.configureMinter(deployer.address, maxAmount));
+      await proveTx(token.mint(user.address, userBalance));
+
+      await expect(
+        token.connect(deployer).transferFrom(user.address, deployer.address, userBalance)
+      ).to.be.revertedWith(REVERT_MESSAGE_INSUFFICIENT_ALLOWANCE);
+
+      await proveTx(token.configureTrustedAccount(deployer.address, true));
+
+      await expect(
+        token.connect(deployer).transferFrom(user.address, deployer.address, userBalance)
+      ).to.be.changeTokenBalances(token, [user, deployer], [-userBalance, +userBalance]);
+    });
+  });
 
   describe("Frozen and restricted balances", async () => {
     it("Transfer to purpose account - test 5", async () => {

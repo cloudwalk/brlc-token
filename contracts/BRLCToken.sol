@@ -2,19 +2,14 @@
 
 pragma solidity 0.8.16;
 
-import { ERC20Base } from "./base/ERC20Base.sol";
-import { ERC20Mintable } from "./base/ERC20Mintable.sol";
-import { ERC20Freezable } from "./base/ERC20Freezable.sol";
-import { ERC20Restrictable } from "./base/ERC20Restrictable.sol";
-import { ERC20Hookable } from "./base/ERC20Hookable.sol";
-import { ERC20Trustable } from "./base/ERC20Trustable.sol";
+import { CWToken } from "./base/CWToken.sol";
 
 /**
  * @title BRLCToken contract
  * @author CloudWalk Inc.
- * @notice The BRLC token implementation that supports minting, burning and freezing operations
+ * @notice The BRLC token implementation
  */
-contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictable, ERC20Hookable, ERC20Trustable {
+contract BRLCToken is CWToken {
     /**
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *
@@ -35,7 +30,7 @@ contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictabl
      * @param name_ The name of the token
      * @param symbol_ The symbol of the token
      */
-    function initialize(string memory name_, string memory symbol_) external virtual initializer {
+    function initialize(string memory name_, string memory symbol_) external override initializer {
         __BRLCToken_init(name_, symbol_);
     }
 
@@ -45,18 +40,7 @@ contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictabl
      * See {BRLCToken-initialize}
      */
     function __BRLCToken_init(string memory name_, string memory symbol_) internal onlyInitializing {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
-        __Pausable_init_unchained();
-        __PausableExt_init_unchained();
-        __Blocklistable_init_unchained();
-        __ERC20_init_unchained(name_, symbol_);
-        __ERC20Base_init_unchained();
-        __ERC20Mintable_init_unchained();
-        __ERC20Freezable_init_unchained();
-        __ERC20Restrictable_init_unchained();
-        __ERC20Hookable_init_unchained();
-        __ERC20Trustable_init_unchained();
+        __CWToken_init(name_, symbol_);
         __BRLCToken_init_unchained();
     }
 
@@ -72,60 +56,5 @@ contract BRLCToken is ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictabl
      */
     function isBRLCoin() external pure returns (bool) {
         return true;
-    }
-
-    /**
-     * @dev See {ERC20Base-_beforeTokenTransfer}
-     * @dev See {ERC20Hookable-_beforeTokenTransfer}
-     */
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual override(ERC20Base, ERC20Hookable) {
-        super._beforeTokenTransfer(from, to, amount);
-    }
-
-    /**
-     * @dev See {ERC20Base-_afterTokenTransfer}
-     * @dev See {ERC20Freezable-_afterTokenTransfer}
-     * @dev See {ERC20Restrictable-_afterTokenTransfer}
-     * @dev See {ERC20Hookable-_afterTokenTransfer}
-     */
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual override(ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictable, ERC20Hookable) {
-        super._afterTokenTransfer(from, to, amount);
-    }
-
-    /**
-     * @dev See {ERC20Base-allowance}
-     * @dev See {ERC20Trustable-allowance}
-     */
-    function allowance(address owner, address spender) public view override(ERC20Base, ERC20Trustable) returns (uint256) {
-        return super.allowance(owner, spender);
-    }
-
-    /**
-     * @inheritdoc ERC20Mintable
-     */
-    function _balanceOf_ERC20Mintable(address account) internal view virtual override returns (uint256) {
-        return balanceOf(account);
-    }
-
-    /**
-     * @inheritdoc ERC20Freezable
-     */
-    function _balanceOf_ERC20Freezable(address account) internal view virtual override returns (uint256) {
-        return balanceOf(account) - balanceOfPremint(account);
-    }
-
-    /**
-     * @inheritdoc ERC20Restrictable
-     */
-    function _balanceOf_ERC20Restrictable(address account) internal view virtual override returns (uint256) {
-        return balanceOf(account) - balanceOfPremint(account) - balanceOfFrozen(account);
     }
 }
