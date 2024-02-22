@@ -94,7 +94,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /**
      * @inheritdoc IERC20Restrictable
      */
-    function balanceOfRestricted(address account, bytes32 purpose) external view returns (uint256) {
+    function balanceOfRestricted(address account, bytes32 purpose) public view returns (uint256) {
         if (purpose == bytes32(0)) {
             return _totalRestrictedBalances[account];
         } else {

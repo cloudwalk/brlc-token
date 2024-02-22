@@ -9,18 +9,21 @@ import { ERC20Restrictable } from "./ERC20Restrictable.sol";
 import { ERC20Hookable } from "./ERC20Hookable.sol";
 import { ERC20Trustable } from "./ERC20Trustable.sol";
 
+import { IERC20ComplexBalance } from "./interfaces/IERC20ComplexBalance.sol";
+
 /**
  * @title CWToken contract
  * @author CloudWalk Inc.
  * @notice The CloudWalk token that extends the standard ERC20 token implementation with additional functionality
  */
 contract CWToken is
-ERC20Base,
-ERC20Mintable,
-ERC20Freezable,
-ERC20Restrictable,
-ERC20Hookable,
-ERC20Trustable
+    ERC20Base,
+    ERC20Mintable,
+    ERC20Freezable,
+    ERC20Restrictable,
+    ERC20Hookable,
+    ERC20Trustable,
+    IERC20ComplexBalance
 {
     /**
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
@@ -71,6 +74,29 @@ ERC20Trustable
      * See {CWToken-initialize}
      */
     function __CWToken_init_unchained() internal onlyInitializing {}
+
+    /**
+     * @inheritdoc IERC20ComplexBalance
+     */
+    function balanceOfComplex(address account) external view returns (ComplexBalance memory) {
+        return _calculateComplexBalance(account);
+    }
+
+    /**
+     * @dev Returns the current state of the account`s balances
+     */
+    function _calculateComplexBalance(address account) internal view returns (ComplexBalance memory) {
+        ComplexBalance memory balance;
+
+        balance.total = balanceOf(account);
+        balance.premint = balanceOfPremint(account);
+        balance.frozen = balanceOfFrozen(account);
+        balance.restricted = balanceOfRestricted(account, bytes32(0));
+
+        uint256 detained = balance.premint + balance.frozen + balance.restricted;
+        balance.free = balance.total > detained ? balance.total - detained : 0;
+        return balance;
+    }
 
     /**
      * @dev See {ERC20Base-_beforeTokenTransfer}

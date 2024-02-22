@@ -55,6 +55,44 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
     return { token };
   }
 
+  async function checkComplexBalanceGetter(
+    props: {
+      token: Contract;
+      amounts: {
+        mint: number;
+        premint: number;
+        frozen: number;
+        restricted: number;
+      };
+    }
+  ) {
+    const timestamp = (await time.latest()) + 100;
+    const { token, amounts } = props;
+    if (amounts.mint > 0) {
+      await proveTx(token.connect(deployer).mint(user.address, amounts.mint));
+    }
+    if (amounts.premint > 0) {
+      await proveTx(token.connect(deployer).premint(user.address, amounts.premint, timestamp));
+    }
+    if (amounts.frozen > 0) {
+      await proveTx(token.connect(deployer).freeze(user.address, amounts.frozen));
+    }
+    if (amounts.restricted > 0) {
+      await proveTx(token.connect(deployer).updateRestriction(user.address, PURPOSE, amounts.restricted));
+    }
+
+    const total = amounts.mint + amounts.premint;
+    const detained = amounts.premint + amounts.frozen + amounts.restricted;
+    const free = total > detained ? total - detained : 0;
+    const complexBalance = await token.balanceOfComplex(user.address);
+
+    expect(complexBalance.total).to.eq(total);
+    expect(complexBalance.free).to.eq(free);
+    expect(complexBalance.premint).to.eq(amounts.premint);
+    expect(complexBalance.frozen).to.eq(amounts.frozen);
+    expect(complexBalance.restricted).to.eq(amounts.restricted);
+  }
+
   describe("Function 'transferFrom()'", async () => {
     it("Executes as expected for non-trusted and trusted accounts", async () => {
       const maxAmount = ethers.constants.MaxUint256;
@@ -74,6 +112,48 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await expect(
         token.connect(deployer).transferFrom(user.address, deployer.address, userBalance)
       ).to.be.changeTokenBalances(token, [user, deployer], [-userBalance, +userBalance]);
+    });
+  });
+
+  describe("Function 'balancesOfComplex()'", async () => {
+    it("Returns correct values if detained balance is less than total balance", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await checkComplexBalanceGetter({ token, amounts: { mint: 15, premint: 5, frozen: 5, restricted: 5 } });
+    });
+
+    it("Returns correct values if detained balance is bigger than total balance", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await checkComplexBalanceGetter({ token, amounts: { mint: 15, premint: 5, frozen: 10, restricted: 5 } });
+    });
+
+    it("Returns correct values with no limited balances", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await checkComplexBalanceGetter({ token, amounts: { mint: 15, premint: 0, frozen: 0, restricted: 0 } });
+    });
+
+    it("Returns correct values with no free balance", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await checkComplexBalanceGetter({ token, amounts: { mint: 0, premint: 5, frozen: 5, restricted: 5 } });
+    });
+
+    it("Returns correct values with only premint balance", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await checkComplexBalanceGetter({ token, amounts: { mint: 0, premint: 5, frozen: 0, restricted: 0 } });
+    });
+
+    it("Returns correct values with only frozen balance", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await checkComplexBalanceGetter({ token, amounts: { mint: 0, premint: 0, frozen: 5, restricted: 0 } });
+    });
+
+    it("Returns correct values with only restricted balance", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await checkComplexBalanceGetter({ token, amounts: { mint: 0, premint: 0, frozen: 0, restricted: 5 } });
+    });
+
+    it("Returns correct values with no balances at all", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await checkComplexBalanceGetter({ token, amounts: { mint: 0, premint: 0, frozen: 0, restricted: 0 } });
     });
   });
 
