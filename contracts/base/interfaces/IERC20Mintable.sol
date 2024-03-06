@@ -44,10 +44,11 @@ interface IERC20Mintable {
      *
      * @param minter The address of the minter
      * @param to The address of the tokens recipient
-     * @param amount The amount of tokens being preminted
-     * @param release The timestamp when the tokens will be released
+     * @param newAmount The new amount of tokens being preminted
+     * @param oldAmount The old amount of tokens being preminted
+     * @param releaseTime The timestamp when the tokens will be released
      */
-    event Premint(address indexed minter, address indexed to, uint256 amount, uint256 release);
+    event Premint(address indexed minter, address indexed to, uint256 newAmount, uint256 oldAmount, uint256 releaseTime);
 
     /**
      * @notice Emitted when tokens are burned
