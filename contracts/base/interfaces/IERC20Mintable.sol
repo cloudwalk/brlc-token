@@ -8,6 +8,13 @@ pragma solidity 0.8.16;
  * @notice The interface of a token that supports mint and burn operations
  */
 interface IERC20Mintable {
+    /// @notice An enum describing action with premints
+    enum PremintFlag {
+        Add,
+        Remove,
+        Update
+    }
+
     /**
      * @notice Emitted when the main minter is changed
      *
