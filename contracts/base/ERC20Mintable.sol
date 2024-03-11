@@ -83,6 +83,9 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /// @notice The premint release time must be in the future
     error PremintReleaseTimePassed();
 
+    /// @notice The premint restrictions are not fit to the operation
+    error PremintRestrictionFailure();
+
     /// @notice The existing premint has not been changed during the operation
     error PremintUnchanged();
 
@@ -219,14 +222,14 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The `account` address must not be blocklisted
      * @dev The `amount` and `release` values must be less or equal to uint64 max value
      * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
-     * @dev The `premintFlag` value must be one of PremintFlag enum values
+     * @dev The `restriction` value must be one of PremintRestriction enum values
      * @dev The number of pending premints must be less than the limit
      */
     function premint(
         address account,
         uint256 amount,
         uint256 release,
-        PremintFlag premintFlag
+        PremintRestriction restriction
     ) external onlyMinter notBlocklisted(_msgSender()) {
         if (release <= block.timestamp) {
             revert PremintReleaseTimePassed();
@@ -263,7 +266,14 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             ++i;
         }
 
-        if (oldAmount == 0 && premintFlag == PremintFlag.Add) { // Mint on a new premint after some checks
+        if (
+            (restriction == PremintRestriction.Update && oldAmount == 0) ||
+            (restriction == PremintRestriction.Create && (burnAmount > 0 || mintAmount > 0))
+        ) {
+            revert PremintRestrictionFailure();
+        }
+
+        if (oldAmount == 0) {
             if (amount == 0) {
                 revert ZeroPremintAmount();
             }
@@ -273,13 +283,10 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
             _mintInternal(account, _toUint64(amount));
             premintRecords.push(PremintRecord(_toUint64(amount), _toUint64(release)));
-        } else if (
-            (burnAmount > 0 && premintFlag == PremintFlag.Update) ||
-            (burnAmount == oldAmount && premintFlag == PremintFlag.Remove)
-        ) { // Burn on premint update
+        } else if (burnAmount > 0) { // Burn on premint update
             _burnInternal(account, _toUint64(burnAmount));
             amount = oldAmount - burnAmount;
-        } else if (mintAmount > 0 && premintFlag == PremintFlag.Update) { // Mint on premint update
+        } else if (mintAmount > 0) { // Mint on premint update
             _mintInternal(account, _toUint64(mintAmount));
             amount = oldAmount + mintAmount;
         } else {
