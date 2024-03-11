@@ -250,7 +250,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             }
 
             if (premintRecords[i].release == release) {
-                if (restriction != PremintRestriction.Update && restriction != PremintRestriction.None) {
+                if (restriction == PremintRestriction.Update) {
                     revert PremintRestrictionFailure();
                 }
 
@@ -271,15 +271,14 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         }
 
         if (oldAmount == 0) {
-            if (restriction != PremintRestriction.Create && restriction != PremintRestriction.None) {
-                revert PremintRestrictionFailure();
-            }
-
             if (amount == 0) {
                 revert ZeroPremintAmount();
             }
             if (premintRecords.length >= storageSlot.maxPendingPremintsCount) {
                 revert MaxPendingPremintsLimitReached();
+            }
+            if (restriction == PremintRestriction.Create) {
+                revert PremintRestrictionFailure();
             }
 
             _mintInternal(account, _toUint64(amount));
