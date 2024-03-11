@@ -250,6 +250,10 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             }
 
             if (premintRecords[i].release == release) {
+                if (restriction != PremintRestriction.Update && restriction != PremintRestriction.None) {
+                    revert PremintRestrictionFailure();
+                }
+
                 oldAmount = premintRecords[i].amount;
                 if (amount == 0) { // Cancel pending premint
                     burnAmount = oldAmount;
@@ -266,14 +270,11 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             ++i;
         }
 
-        if (
-            (restriction == PremintRestriction.Update && oldAmount == 0) ||
-            (restriction == PremintRestriction.Create && (burnAmount > 0 || mintAmount > 0))
-        ) {
-            revert PremintRestrictionFailure();
-        }
-
         if (oldAmount == 0) {
+            if (restriction != PremintRestriction.Create && restriction != PremintRestriction.None) {
+                revert PremintRestrictionFailure();
+            }
+
             if (amount == 0) {
                 revert ZeroPremintAmount();
             }
