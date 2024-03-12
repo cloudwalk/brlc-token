@@ -223,6 +223,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The `amount` and `release` values must be less or equal to uint64 max value
      * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
      * @dev The `restriction` value must be one of PremintRestriction enum values
+     * @dev The executing actions must follow the provided restriction if any
      * @dev The number of pending premints must be less than the limit
      */
     function premint(
