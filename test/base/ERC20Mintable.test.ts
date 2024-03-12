@@ -504,7 +504,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const timestamps: number[] = Array.from(
           { length: MAX_PENDING_PREMINTS_COUNT },
-          (v, i) => timestamp + (i + 1) * 10
+          (_v, i) => timestamp + (i + 1) * 10
         );
         for (let i = 0; i < timestamps.length; i++) {
           await proveTx(
@@ -529,7 +529,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const timestamps: number[] = Array.from(
           { length: MAX_PENDING_PREMINTS_COUNT },
-          (v, i) => timestamp + (i + 1) * 10
+          (_v, i) => timestamp + (i + 1) * 10
         );
         timestamps[2] = timestamp + 1;
         timestamps[3] = timestamp + 2;
@@ -558,7 +558,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const timestamps: number[] = Array.from(
           { length: MAX_PENDING_PREMINTS_COUNT },
-          (v, i) => timestamp + (i + 1) * 10
+          (_v, i) => timestamp + (i + 1) * 10
         );
         timestamps[MAX_PENDING_PREMINTS_COUNT - 1] = timestamp + 2;
         timestamps[MAX_PENDING_PREMINTS_COUNT - 2] = timestamp + 1;
@@ -660,7 +660,7 @@ describe("Contract 'ERC20Mintable'", async () => {
           );
         }
         await expect(
-          token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + i++ * 10, PremintRestriction.None)
+          token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + (i + 1) * 10, PremintRestriction.None)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED);
       });
 
