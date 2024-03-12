@@ -46,10 +46,17 @@ describe("Contract 'ERC20Mintable'", async () => {
   const REVERT_ERROR_ZERO_MINT_AMOUNT = "ZeroMintAmount";
   const REVERT_ERROR_ZERO_PREMINT_AMOUNT = "ZeroPremintAmount";
   const REVERT_ERROR_SAME_PREMINT_UNCHANGED = "PremintUnchanged";
+  const REVERT_ERROR_SAME_PREMINT_RESTRICTION_FAILURE = "PremintRestrictionFailure";
   const REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE = "ExceededMintAllowance";
   const REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED = "PremintReleaseTimePassed";
   const REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED = "MaxPendingPremintsLimitReached";
   const REVERT_ERROR_MAX_PENDING_PREMINTS_COUNT_ALREADY_CONFIGURED = "MaxPendingPremintsCountAlreadyConfigured";
+
+  enum PremintRestriction {
+    None = 0,
+    Create = 1,
+    Update = 2
+  }
 
   let tokenFactory: ContractFactory;
   let deployer: SignerWithAddress;
@@ -348,6 +355,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         premintCount?: number;
         premintIndex?: number;
         balanceOfPremint?: number;
+        premintRestriction?: PremintRestriction;
       } = {}) {
         const newAmount = props.newAmount ?? TOKEN_AMOUNT;
         const release = props.release ?? timestamp;
@@ -355,6 +363,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const premintIndex = props.premintIndex ?? 0;
         const oldAmount = props.oldAmount ?? 0;
         const balanceOfPremint = props.balanceOfPremint ?? newAmount;
+        const premintRestriction = props.premintRestriction ?? PremintRestriction.None;
 
         const oldMintAllowance: BigNumber = await token.minterAllowance(minter.address);
         let newMintAllowance: BigNumber = oldMintAllowance;
@@ -364,7 +373,12 @@ describe("Contract 'ERC20Mintable'", async () => {
           );
         }
 
-        const tx: TransactionResponse = await token.connect(minter).premint(user.address, newAmount, release);
+        const tx: TransactionResponse = await token.connect(minter).premint(
+          user.address,
+          newAmount,
+          release,
+          premintRestriction
+        );
 
         if (newAmount > oldAmount) {
           const expectedAmount = newAmount - oldAmount;
@@ -416,26 +430,41 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The caller increases amount of an existing premint", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp);
-        await executeAndCheckPremint(token, { newAmount: TOKEN_AMOUNT + 1, oldAmount: TOKEN_AMOUNT });
+        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.None);
+        await executeAndCheckPremint(token, {
+          newAmount: TOKEN_AMOUNT + 1,
+          oldAmount: TOKEN_AMOUNT,
+          premintRestriction: PremintRestriction.Create
+        });
       });
 
       it("The caller decreases amount of an existing premint", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp);
-        await executeAndCheckPremint(token, { newAmount: TOKEN_AMOUNT - 1, oldAmount: TOKEN_AMOUNT });
+        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.None);
+        await executeAndCheckPremint(token, {
+          newAmount: TOKEN_AMOUNT - 1,
+          oldAmount: TOKEN_AMOUNT,
+          premintRestriction: PremintRestriction.Create
+        });
       });
 
       it("The caller deletes an existing premint", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp);
-        await executeAndCheckPremint(token, { premintCount: 0, newAmount: 0, oldAmount: TOKEN_AMOUNT });
+        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.None);
+        await executeAndCheckPremint(token, {
+          premintCount: 0,
+          newAmount: 0,
+          oldAmount: TOKEN_AMOUNT,
+          premintRestriction: PremintRestriction.Create
+        });
       });
 
       it("The limit of premints is reached, but some of them are expired", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         for (let i = 0; i < MAX_PENDING_PREMINTS_COUNT; i++) {
-          await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + i * 10));
+          await proveTx(
+            token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + i * 10, PremintRestriction.None)
+          );
         }
         expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT * MAX_PENDING_PREMINTS_COUNT);
         await time.increaseTo(timestamp + 1);
@@ -446,7 +475,8 @@ describe("Contract 'ERC20Mintable'", async () => {
           premintCount: MAX_PENDING_PREMINTS_COUNT,
           premintIndex: MAX_PENDING_PREMINTS_COUNT - 1,
           oldAmount: 0,
-          balanceOfPremint: TOKEN_AMOUNT * MAX_PENDING_PREMINTS_COUNT + 1
+          balanceOfPremint: TOKEN_AMOUNT * MAX_PENDING_PREMINTS_COUNT + 1,
+          premintRestriction: PremintRestriction.Update
         });
       });
 
@@ -454,7 +484,9 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         let i = 0;
         for (; i < MAX_PENDING_PREMINTS_COUNT; i++) {
-          await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + i * 10));
+          await proveTx(
+            token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + i * 10, PremintRestriction.None)
+          );
         }
 
         // set time to expire all premints
@@ -475,7 +507,9 @@ describe("Contract 'ERC20Mintable'", async () => {
           (v, i) => timestamp + (i + 1) * 10
         );
         for (let i = 0; i < timestamps.length; i++) {
-          await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamps[i]));
+          await proveTx(
+            token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamps[i], PremintRestriction.None)
+          );
         }
         // set time to expire premints in the beginning of array
         await time.increaseTo(timestamps[1] + 1);
@@ -486,7 +520,8 @@ describe("Contract 'ERC20Mintable'", async () => {
           release: timestamps[2],
           premintCount: MAX_PENDING_PREMINTS_COUNT - 2,
           premintIndex: 2,
-          balanceOfPremint: TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) + 1
+          balanceOfPremint: TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) + 1,
+          premintRestriction: PremintRestriction.Create
         });
       });
 
@@ -499,7 +534,9 @@ describe("Contract 'ERC20Mintable'", async () => {
         timestamps[2] = timestamp + 1;
         timestamps[3] = timestamp + 2;
         for (let i = 0; i < MAX_PENDING_PREMINTS_COUNT; i++) {
-          await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamps[i]));
+          await proveTx(
+            token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamps[i], PremintRestriction.None)
+          );
         }
 
         // set time to expire premints in the middle of array
@@ -512,7 +549,8 @@ describe("Contract 'ERC20Mintable'", async () => {
           release: timestamps[1],
           premintCount: MAX_PENDING_PREMINTS_COUNT - 2,
           premintIndex: 1,
-          balanceOfPremint: TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) - 1
+          balanceOfPremint: TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) - 1,
+          premintRestriction: PremintRestriction.Create
         });
       });
 
@@ -526,7 +564,9 @@ describe("Contract 'ERC20Mintable'", async () => {
         timestamps[MAX_PENDING_PREMINTS_COUNT - 2] = timestamp + 1;
 
         for (let i = 0; i < MAX_PENDING_PREMINTS_COUNT; i++) {
-          await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamps[i]));
+          await proveTx(
+            token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamps[i], PremintRestriction.None)
+          );
         }
 
         // set time to expire premints in the end of array
@@ -539,7 +579,8 @@ describe("Contract 'ERC20Mintable'", async () => {
           release: timestamps[1],
           premintCount: MAX_PENDING_PREMINTS_COUNT - 2,
           premintIndex: 1,
-          balanceOfPremint: TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) + 1
+          balanceOfPremint: TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) + 1,
+          premintRestriction: PremintRestriction.Create
         });
       });
     });
@@ -548,27 +589,27 @@ describe("Contract 'ERC20Mintable'", async () => {
       it("The contract is paused", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(token.connect(pauser).pause());
-        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp))
+        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.None))
           .to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
       });
 
       it("The premint's release time is passed", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const timestamp = (await time.latest()) - 1;
-        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp))
+        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.None))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED);
       });
 
       it("The amount of premint is greater than 64-bit unsigned integer", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const overflowAmount = BigNumber.from("18446744073709551616"); // uint64 max + 1
-        await expect(token.connect(minter).premint(user.address, overflowAmount, timestamp))
+        await expect(token.connect(minter).premint(user.address, overflowAmount, timestamp, PremintRestriction.None))
           .to.be.revertedWith(REVERT_MESSAGE_ERC20MINTABLE_UINT64_OVERFLOW);
       });
 
       it("The caller is not a minter", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(token.connect(user).premint(user.address, TOKEN_AMOUNT, timestamp))
+        await expect(token.connect(user).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.None))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MINTER)
           .withArgs(user.address);
       });
@@ -577,7 +618,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(token.connect(mainBlocklister).configureBlocklister(minter.address, true));
         await proveTx(token.connect(minter).selfBlocklist());
-        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp))
+        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.None))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
           .withArgs(minter.address);
       });
@@ -585,44 +626,62 @@ describe("Contract 'ERC20Mintable'", async () => {
       it("The destination address is blocklisted and the caller is not a blocklister", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(token.connect(user).selfBlocklist());
-        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp))
+        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.None))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
           .withArgs(user.address);
       });
 
       it("The destination address is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(token.connect(minter).premint(ethers.constants.AddressZero, TOKEN_AMOUNT, timestamp))
-          .to.be.revertedWith(REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
+        await expect(
+          token.connect(minter).premint(ethers.constants.AddressZero, TOKEN_AMOUNT, timestamp, PremintRestriction.None)
+        ).to.be.revertedWith(REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
       });
 
       it("The premint amount is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(token.connect(minter).premint(user.address, 0, timestamp))
+        await expect(token.connect(minter).premint(user.address, 0, timestamp, PremintRestriction.None))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_PREMINT_AMOUNT);
       });
 
       it("The premint amount exceeds the mint allowance", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(token.connect(minter).premint(user.address, MINT_ALLOWANCE + 1, timestamp))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE);
+        await expect(
+          token.connect(minter).premint(user.address, MINT_ALLOWANCE + 1, timestamp, PremintRestriction.None)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE);
       });
 
       it("The max pending premints limit is reached", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         let i = 0;
         for (; i < MAX_PENDING_PREMINTS_COUNT; i++) {
-          await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + i * 10));
+          await proveTx(
+            token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + i * 10, PremintRestriction.None)
+          );
         }
-        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + i++ * 10))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED);
+        await expect(
+          token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + i++ * 10, PremintRestriction.None)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED);
       });
 
       it("The caller updates an existing premint with the same amount", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp);
-        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp))
+        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.None);
+        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.Create))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_SAME_PREMINT_UNCHANGED);
+      });
+
+      it("The caller tries to create premint with `Create` restriction", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.Create))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_SAME_PREMINT_RESTRICTION_FAILURE);
+      });
+      it("The caller tries to update premint with `Update` restriction", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.None);
+        await expect(
+          token.connect(minter).premint(user.address, TOKEN_AMOUNT + 1, timestamp, PremintRestriction.Update)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_SAME_PREMINT_RESTRICTION_FAILURE);
       });
     });
   });
@@ -656,8 +715,10 @@ describe("Contract 'ERC20Mintable'", async () => {
       const timestamp = (await time.latest()) + 100;
       const { token } = await setUpFixture(deployAndConfigureToken);
 
-      await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp));
-      await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT + 1, timestamp + 50));
+      await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.None));
+      await proveTx(
+        token.connect(minter).premint(user.address, TOKEN_AMOUNT + 1, timestamp + 50, PremintRestriction.Update)
+      );
       expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT * 2 + 1);
 
       await time.increaseTo(timestamp);
