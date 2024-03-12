@@ -671,12 +671,12 @@ describe("Contract 'ERC20Mintable'", async () => {
           .to.be.revertedWithCustomError(token, REVERT_ERROR_SAME_PREMINT_UNCHANGED);
       });
 
-      it("The caller tries to create premint with `Create` restriction", async () => {
+      it("The caller tries to create a premint with the `Create` restriction", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.Create))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_SAME_PREMINT_RESTRICTION_FAILURE);
       });
-      it("The caller tries to update premint with `Update` restriction", async () => {
+      it("The caller tries to update a premint with the `Update` restriction", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintRestriction.None);
         await expect(

@@ -27,9 +27,9 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
   const PURPOSE = "0x0000000000000000000000000000000000000000000000000000000000000001";
 
   enum PremintRestriction {
-    None = 0,
-    Create = 1,
-    Update = 2
+    None = 0
+    // Create = 1 -- not used in this test file
+    // Update = 2 -- not used in this test file
   }
 
   let tokenFactory: ContractFactory;
