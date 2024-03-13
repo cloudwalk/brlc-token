@@ -244,7 +244,8 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint256 burnAmount = 0;
 
         for (uint256 i = 0; i < premintRecords.length;) {
-            if (premintRecords[i].release < block.timestamp) { // Delete released premint
+            if (premintRecords[i].release < block.timestamp) {
+                // Delete premint record with release time in the past
                 premintRecords[i] = premintRecords[premintRecords.length - 1];
                 premintRecords.pop();
                 continue;
@@ -256,18 +257,22 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
                 }
 
                 oldAmount = premintRecords[i].amount;
-                if (amount == 0) { // Cancel pending premint
+                if (amount == 0) {
+                    // Revoke the premint: remember the burn amount and remove the record
                     burnAmount = oldAmount;
                     premintRecords[i] = premintRecords[premintRecords.length - 1];
                     premintRecords.pop();
-                } else if (oldAmount < amount) { // Update pending premint - increase
+                } else if (oldAmount < amount) {
+                    // Update the premint: remember the mint amount and update the record with the new amount
                     mintAmount = amount - oldAmount;
                     premintRecords[i].amount = _toUint64(amount);
-                } else if (oldAmount > amount) { // Update pending premint - decrease
+                } else if (oldAmount > amount) {
+                    // Update the premint: remember the burn amount and update the record with the new amount
                     burnAmount = oldAmount - amount;
                     premintRecords[i].amount = _toUint64(amount);
                 }
             }
+
             ++i;
         }
 
@@ -282,17 +287,21 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
                 revert PremintRestrictionFailure();
             }
 
+            // Create a new premint record
             _mintInternal(account, _toUint64(amount));
             premintRecords.push(PremintRecord(_toUint64(amount), _toUint64(release)));
-        } else if (burnAmount > 0) { // Burn on premint update
+        } else if (burnAmount > 0) {
+            // Perform the burn on the premint update
             _burnInternal(account, _toUint64(burnAmount));
             amount = oldAmount - burnAmount;
-        } else if (mintAmount > 0) { // Mint on premint update
+        } else if (mintAmount > 0) {
+            // Perform the mint on the premint update
             _mintInternal(account, _toUint64(mintAmount));
             amount = oldAmount + mintAmount;
         } else {
             revert PremintUnchanged();
         }
+
         emit Premint(_msgSender(), account, amount, oldAmount, release);
     }
 
