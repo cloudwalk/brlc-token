@@ -11,7 +11,7 @@ interface IERC20Mintable {
     /// @notice An enum describing restrictions for premint operation
     enum PremintRestriction {
         None,   // No restriction
-        Create, // Creting a new premint is disallowed
+        Create, // Creating a new premint is disallowed
         Update  // Updating an existing premint is disallowed
     }
 
