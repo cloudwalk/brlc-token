@@ -68,6 +68,9 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /// @notice The zero amount of tokens is passed during the burn operation
     error ZeroBurnAmount();
 
+    /// @notice The zero amount of tokens is passed during the premint operation
+    error ZeroPremintAmount();
+
     /// @notice The transfer amount exceeded the preminted (not available) amount
     error TransferExceededPremintedAmount();
 
@@ -80,6 +83,11 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /// @notice The premint release time must be in the future
     error PremintReleaseTimePassed();
 
+    /// @notice The premint restrictions are not fit to the operation
+    error PremintRestrictionFailure();
+
+    /// @notice The existing premint has not been changed during the operation
+    error PremintUnchanged();
 
     // -------------------- Modifiers --------------------------------
 
@@ -214,12 +222,15 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The `account` address must not be blocklisted
      * @dev The `amount` and `release` values must be less or equal to uint64 max value
      * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
+     * @dev The `restriction` value must be one of PremintRestriction enum values
+     * @dev The executing actions must follow the provided restriction if any
      * @dev The number of pending premints must be less than the limit
      */
     function premint(
         address account,
         uint256 amount,
-        uint256 release
+        uint256 release,
+        PremintRestriction restriction
     ) external onlyMinter notBlocklisted(_msgSender()) {
         if (release <= block.timestamp) {
             revert PremintReleaseTimePassed();
@@ -228,26 +239,70 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
         PremintRecord[] storage premintRecords = storageSlot.premints[account].premintRecords;
 
-        if (premintRecords.length < storageSlot.maxPendingPremintsCount) {
-            premintRecords.push(PremintRecord(_toUint64(amount), _toUint64(release)));
-        } else {
-            bool success = false;
-            for (uint256 i = 0; i < premintRecords.length; i++) {
-                if (premintRecords[i].release <= block.timestamp) {
-                    // TODO Check if it will be cheaper to update fields
-                    premintRecords[i] = PremintRecord(_toUint64(amount), _toUint64(release));
-                    success = true;
-                    break;
+        uint256 oldAmount = 0;
+        uint256 mintAmount = 0;
+        uint256 burnAmount = 0;
+
+        for (uint256 i = 0; i < premintRecords.length;) {
+            if (premintRecords[i].release < block.timestamp) {
+                // Delete premint record with release time in the past
+                premintRecords[i] = premintRecords[premintRecords.length - 1];
+                premintRecords.pop();
+                continue;
+            }
+
+            if (premintRecords[i].release == release) {
+                if (restriction == PremintRestriction.Update) {
+                    revert PremintRestrictionFailure();
+                }
+
+                oldAmount = premintRecords[i].amount;
+                if (amount == 0) {
+                    // Revoke the premint: remember the burn amount and remove the record
+                    burnAmount = oldAmount;
+                    premintRecords[i] = premintRecords[premintRecords.length - 1];
+                    premintRecords.pop();
+                } else if (oldAmount < amount) {
+                    // Update the premint: remember the mint amount and update the record with the new amount
+                    mintAmount = amount - oldAmount;
+                    premintRecords[i].amount = _toUint64(amount);
+                } else if (oldAmount > amount) {
+                    // Update the premint: remember the burn amount and update the record with the new amount
+                    burnAmount = oldAmount - amount;
+                    premintRecords[i].amount = _toUint64(amount);
                 }
             }
-            if (!success) {
-                revert MaxPendingPremintsLimitReached();
-            }
+
+            ++i;
         }
 
-        emit Premint(_msgSender(), account, amount, release);
+        if (oldAmount == 0) {
+            if (amount == 0) {
+                revert ZeroPremintAmount();
+            }
+            if (premintRecords.length >= storageSlot.maxPendingPremintsCount) {
+                revert MaxPendingPremintsLimitReached();
+            }
+            if (restriction == PremintRestriction.Create) {
+                revert PremintRestrictionFailure();
+            }
 
-        _mintInternal(account, amount);
+            // Create a new premint record
+            _mintInternal(account, _toUint64(amount));
+            premintRecords.push(PremintRecord(_toUint64(amount), _toUint64(release)));
+        } else if (burnAmount > 0) {
+            // Perform the burn on the premint update
+            _burnInternal(account, _toUint64(burnAmount));
+            amount = oldAmount - burnAmount;
+        } else if (mintAmount > 0) {
+            // Perform the mint on the premint update
+            _mintInternal(account, _toUint64(mintAmount));
+            amount = oldAmount + mintAmount;
+        } else {
+            revert PremintUnchanged();
+        }
+
+        emit Premint(_msgSender(), account, amount, oldAmount, release);
     }
 
     /**
@@ -259,13 +314,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The `amount` value must be greater than zero
      */
     function burn(uint256 amount) external onlyMinter notBlocklisted(_msgSender()) {
-        if (amount == 0) {
-            revert ZeroBurnAmount();
-        }
-
-        _burn(_msgSender(), amount);
-
-        emit Burn(_msgSender(), amount);
+        _burnInternal(_msgSender(), amount);
     }
 
     /**
@@ -334,6 +383,18 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         emit Mint(_msgSender(), account, amount);
 
         _mint(account, amount);
+
+        return true;
+    }
+
+    function _burnInternal(address account, uint256 amount) internal returns (bool) {
+        if (amount == 0) {
+            revert ZeroBurnAmount();
+        }
+
+        _burn(account, amount);
+
+        emit Burn(_msgSender(), amount);
 
         return true;
     }
