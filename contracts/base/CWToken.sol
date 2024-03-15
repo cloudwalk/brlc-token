@@ -151,6 +151,12 @@ contract CWToken is
      * @inheritdoc ERC20Restrictable
      */
     function _balanceOf_ERC20Restrictable(address account) internal view virtual override returns (uint256) {
-        return balanceOf(account) - balanceOfPremint(account) - balanceOfFrozen(account);
+        uint256 frozenBalance = balanceOfFrozen(account);
+        uint256 restBalance = balanceOf(account) - balanceOfPremint(account);
+        if (frozenBalance < restBalance) {
+            return restBalance - frozenBalance;
+        } else {
+            return 0;
+        }
     }
 }
