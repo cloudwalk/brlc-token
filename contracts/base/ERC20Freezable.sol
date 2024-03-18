@@ -92,19 +92,21 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @dev The frozen balance must be greater than the `amount`
      */
     function transferFrozen(address from, address to, uint256 amount) public virtual whenNotPaused onlyBlocklister {
-        uint256 balance = _frozenBalances[from];
+        uint256 oldFrozenBalance = _frozenBalances[from];
 
-        if (amount > balance) {
+        if (amount > oldFrozenBalance) {
             revert LackOfFrozenBalance();
         }
 
+        uint256 newFrozenBalance;
         unchecked {
-            _frozenBalances[from] -= amount;
+            newFrozenBalance = oldFrozenBalance - amount;
         }
 
         emit FreezeTransfer(from, amount);
-        emit Freeze(from, _frozenBalances[from], balance);
+        emit Freeze(from, newFrozenBalance, oldFrozenBalance);
 
+        _frozenBalances[from] = newFrozenBalance;
         _transfer(from, to, amount);
     }
 
@@ -142,7 +144,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._afterTokenTransfer(from, to, amount);
         uint256 frozen = _frozenBalances[from];
-        if (frozen != 0) {
+        if (frozen != 0 && msg.sig != this.transferFrozen.selector) {
             if (_balanceOf_ERC20Freezable(from) < frozen) {
                 revert TransferExceededFrozenAmount();
             }
