@@ -8,6 +8,7 @@
     "@stylistic/eslint-plugin": "^1.5.4",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
+    "dotenv": "^16.4.5",
     "eslint": "^8.56.0",
     "hardhat-contract-sizer": "^2.10.0",
     "prettier": "^3.2.4",
