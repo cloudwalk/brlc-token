@@ -12,7 +12,7 @@ const config: HardhatUserConfig = {
     version: process.env.SOLIDITY_VERSION ?? "",
     settings: {
       optimizer: {
-        enabled: process.env.OPTIMIZER_ENABLED ? process.env.OPTIMIZER_ENABLED === "true" : false,
+        enabled: process.env.OPTIMIZER_ENABLED === "true",
         runs: Number(process.env.OPTIMIZER_RUNS)
       }
     }
@@ -47,7 +47,7 @@ const config: HardhatUserConfig = {
     }
   },
   gasReporter: {
-    enabled: process.env.GAS_REPORTER_ENABLED ? process.env.GAS_REPORTER_ENABLED === "true" : false
+    enabled: process.env.GAS_REPORTER_ENABLED === "true"
   }
 };
 
