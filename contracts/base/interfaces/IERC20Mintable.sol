@@ -11,18 +11,23 @@ interface IERC20Mintable {
     /** @notice Scenarios of premint operations
      *
      * @dev The possible values:
-     * - Augment -- Creates a premint with the provided parameters or increases its amount if
-     *              the premint with the provided account and release time already exists.
+     * - Increase - Increases the amount of an existing premint by the provided value or
+     *              creates a new premint with the provided parameters if it does not exist.
      *              The default scenario.
      * - Create --- Creates a new premint or fails if the premint with the provided account and release time
      *              already exists.
      * - Update --- Updates the amount of an existing premint with the new provided value or
      *              fails if the premint with the provided account and release time does not exist.
+     *              If the provided amount is zero the premint is completely removed.
+     * - Decrease - Decreasing the amount of an existing premint by the provided value or
+     *              fails if the premint with the provided account and release time does not exist.
+     *              If during the decreasing the premint amount becomes zero it is completely removed.
      */
     enum PremintScenario {
-        Augment, // 0
+        Increase,// 0
         Create,  // 1
-        Update   // 2
+        Update,  // 2
+        Decrease // 3
     }
 
     /**

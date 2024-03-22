@@ -89,6 +89,9 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /// @notice The premint operation scenario assumes updating of an existing premint, but it is not found
     error PremintNonExistent();
 
+    /// @notice The premint operation scenario assumes decreasing an existing premint amount but it is too small
+    error PremintInsufficientAmount();
+
     /// @notice The existing premint has not been changed during the operation
     error PremintUnchanged();
 
@@ -260,7 +263,17 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
                 oldAmount = premintRecords[i].amount;
                 if (scenario != PremintScenario.Update) {
-                    newAmount = oldAmount + amount;
+                    if (scenario == PremintScenario.Decrease) {
+                        if (oldAmount >= amount) {
+                            unchecked {
+                                newAmount = oldAmount - amount;
+                            }
+                        } else {
+                            revert PremintInsufficientAmount();
+                        }
+                    } else {
+                        newAmount = oldAmount + amount;
+                    }
                 }
                 if (newAmount == 0) {
                     // Revoke the premint: remember the burn amount and remove the record
@@ -282,7 +295,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             if (premintRecords.length >= storageSlot.maxPendingPremintsCount) {
                 revert MaxPendingPremintsLimitReached();
             }
-            if (scenario == PremintScenario.Update) {
+            if (scenario == PremintScenario.Update || scenario == PremintScenario.Decrease) {
                 revert PremintNonExistent();
             }
 
