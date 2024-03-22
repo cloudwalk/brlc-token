@@ -8,11 +8,21 @@ pragma solidity 0.8.16;
  * @notice The interface of a token that supports mint and burn operations
  */
 interface IERC20Mintable {
-    /// @notice An enum describing restrictions for premint operation
-    enum PremintRestriction {
-        None,   // No restriction
-        Create, // Creating a new premint is disallowed
-        Update  // Updating an existing premint is disallowed
+    /** @notice Scenarios of premint operations
+     *
+     * @dev The possible values:
+     * - Augment -- Creates a premint with the provided parameters or increases its amount if
+     *              the premint with the provided account and release time already exists.
+     *              The default scenario.
+     * - Create --- Creates a new premint or fails if the premint with the provided account and release time
+     *              already exists.
+     * - Update --- Updates the amount of an existing premint with the new provided value or
+     *              fails if the premint with the provided account and release time does not exist.
+     */
+    enum PremintScenario {
+        Augment, // 0
+        Create,  // 1
+        Update   // 2
     }
 
     /**
@@ -151,9 +161,9 @@ interface IERC20Mintable {
      * @param account The address of a tokens recipient
      * @param amount The amount of tokens to premint
      * @param release The timestamp when the tokens will be released
-     * @param restriction The restriction for the premint operation
+     * @param scenario The scenario for the premint operation
      */
-    function premint(address account, uint256 amount, uint256 release, PremintRestriction restriction) external;
+    function premint(address account, uint256 amount, uint256 release, PremintScenario scenario) external;
 
     /**
      * @notice Burns tokens
