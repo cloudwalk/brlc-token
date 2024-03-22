@@ -1,0 +1,51 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: coverage
+
+on:
+  pull_request:
+    branches: "**"
+
+permissions:
+  pull-requests: write
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    name: Coverage report
+    strategy:
+      matrix:
+        node-version: [20.10]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - run: npm install
+    
+    - name: Run npx hardhat coverage 
+      run: |
+        npx hardhat coverage | tee coverage_execution.log
+        grep "|$" coverage_execution.log > coverage_table.txt
+
+    - name: Report coverage as a comment
+      uses: actions/github-script@v7
+      env:
+        report: $(cat coverage_table.txt)
+      with:
+        script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '${{ env.report }}'
+            })
+    
