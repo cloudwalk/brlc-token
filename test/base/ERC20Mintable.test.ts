@@ -37,7 +37,6 @@ describe("Contract 'ERC20Mintable'", async () => {
   const REVERT_MESSAGE_PAUSABLE_PAUSED = "Pausable: paused";
   const REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT = "ERC20: mint to the zero address";
   const REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE = "ERC20: burn amount exceeds balance";
-  const REVERT_MESSAGE_ERC20MINTABLE_UINT64_OVERFLOW = "ERC20Mintable: uint64 overflow";
 
   const REVERT_ERROR_BLOCKLISTED_ACCOUNT = "BlocklistedAccount";
   const REVERT_ERROR_UNAUTHORIZED_MAIN_MINTER = "UnauthorizedMainMinter";
@@ -45,14 +44,15 @@ describe("Contract 'ERC20Mintable'", async () => {
   const REVERT_ERROR_ZERO_BURN_AMOUNT = "ZeroBurnAmount";
   const REVERT_ERROR_ZERO_MINT_AMOUNT = "ZeroMintAmount";
   const REVERT_ERROR_ZERO_PREMINT_AMOUNT = "ZeroPremintAmount";
-  const REVERT_ERROR_SAME_PREMINT_ALREADY_EXISTENT = "PremintAlreadyExistent";
-  const REVERT_ERROR_SAME_PREMINT_INSUFFICIENT_AMOUNT = "PremintInsufficientAmount";
-  const REVERT_ERROR_SAME_PREMINT_NON_EXISTENT = "PremintNonExistent";
-  const REVERT_ERROR_SAME_PREMINT_UNCHANGED = "PremintUnchanged";
+  const REVERT_ERROR_PREMINT_ALREADY_EXISTENT = "PremintAlreadyExistent";
+  const REVERT_ERROR_PREMINT_INSUFFICIENT_AMOUNT = "PremintInsufficientAmount";
+  const REVERT_ERROR_PREMINT_NON_EXISTENT = "PremintNonExistent";
+  const REVERT_ERROR_PREMINT_UNCHANGED = "PremintUnchanged";
   const REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE = "ExceededMintAllowance";
   const REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED = "PremintReleaseTimePassed";
   const REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED = "MaxPendingPremintsLimitReached";
   const REVERT_ERROR_MAX_PENDING_PREMINTS_COUNT_ALREADY_CONFIGURED = "MaxPendingPremintsCountAlreadyConfigured";
+  const REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE = "InappropriateUint64Value";
 
   enum PremintScenario {
     Increase = 0,
@@ -645,7 +645,8 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const overflowAmount = BigNumber.from("18446744073709551616"); // uint64 max + 1
         await expect(token.connect(minter).premint(user.address, overflowAmount, timestamp, PremintScenario.Increase))
-          .to.be.revertedWith(REVERT_MESSAGE_ERC20MINTABLE_UINT64_OVERFLOW);
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE)
+          .withArgs(overflowAmount);
       });
 
       it("The caller is not a minter", async () => {
@@ -709,15 +710,17 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create);
         await expect(token.connect(minter).premint(user.address, 0, timestamp, PremintScenario.Increase))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_SAME_PREMINT_UNCHANGED);
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_UNCHANGED);
+        await expect(token.connect(minter).premint(user.address, 0, timestamp, PremintScenario.Decrease))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_UNCHANGED);
         await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Update))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_SAME_PREMINT_UNCHANGED);
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_UNCHANGED);
       });
 
       it("The caller tries to create a premint with the `Update` scenario", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Update))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_SAME_PREMINT_NON_EXISTENT);
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_NON_EXISTENT);
       });
 
       it("The caller tries to update a premint with the `CreateOny` scenario", async () => {
@@ -725,7 +728,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create);
         await expect(
           token.connect(minter).premint(user.address, TOKEN_AMOUNT + 1, timestamp, PremintScenario.Create)
-        ).to.be.revertedWithCustomError(token, REVERT_ERROR_SAME_PREMINT_ALREADY_EXISTENT);
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_ALREADY_EXISTENT);
       });
 
       it("The caller tries to decrease the amount of a premint below the existing amount", async () => {
@@ -733,7 +736,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create);
         await expect(
           token.connect(minter).premint(user.address, TOKEN_AMOUNT + 1, timestamp, PremintScenario.Decrease)
-        ).to.be.revertedWithCustomError(token, REVERT_ERROR_SAME_PREMINT_INSUFFICIENT_AMOUNT);
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_INSUFFICIENT_AMOUNT);
       });
     });
   });

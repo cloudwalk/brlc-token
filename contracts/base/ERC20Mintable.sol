@@ -95,6 +95,9 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /// @notice The existing premint has not been changed during the operation
     error PremintUnchanged();
 
+    /// @notice The provided value cannot be cast to uint64 type
+    error InappropriateUint64Value(uint256 value);
+
     // -------------------- Modifiers --------------------------------
 
     /**
@@ -249,19 +252,18 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint256 newAmount = amount;
 
         for (uint256 i = 0; i < premintRecords.length; ) {
-            if (premintRecords[i].release < block.timestamp) {
-                // Delete premint record with release time in the past
-                premintRecords[i] = premintRecords[premintRecords.length - 1];
-                premintRecords.pop();
+            PremintRecord storage premintRecord = premintRecords[i];
+            if (premintRecord.release < block.timestamp) {
+                _deletePremintRecord(premintRecords, i);
                 continue;
             }
 
-            if (premintRecords[i].release == release) {
+            if (premintRecord.release == release) {
                 if (scenario == PremintScenario.Create) {
                     revert PremintAlreadyExistent();
                 }
 
-                oldAmount = premintRecords[i].amount;
+                oldAmount = premintRecord.amount;
                 if (scenario != PremintScenario.Update) {
                     if (scenario == PremintScenario.Decrease) {
                         if (oldAmount >= amount) {
@@ -276,12 +278,10 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
                     }
                 }
                 if (newAmount == 0) {
-                    // Revoke the premint: remember the burn amount and remove the record
-                    premintRecords[i] = premintRecords[premintRecords.length - 1];
-                    premintRecords.pop();
+                    _deletePremintRecord(premintRecords, i);
+                    continue;
                 } else {
-                    // Update the premint amount
-                    premintRecords[i].amount = _toUint64(newAmount);
+                    premintRecord.amount = _toUint64(newAmount);
                 }
             }
 
@@ -300,14 +300,12 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             }
 
             // Create a new premint record
-            _mintInternal(account, _toUint64(newAmount));
             premintRecords.push(PremintRecord(_toUint64(newAmount), _toUint64(release)));
+            _mintInternal(account, newAmount);
         } else if (newAmount < oldAmount) {
-            // Perform the burn on the premint update
-            _burnInternal(account, _toUint64(oldAmount - newAmount));
+            _burnInternal(account, oldAmount - newAmount);
         } else if (newAmount > oldAmount) {
-            // Perform the mint on the premint update
-            _mintInternal(account, _toUint64(newAmount - oldAmount));
+            _mintInternal(account, newAmount - oldAmount);
         } else {
             revert PremintUnchanged();
         }
@@ -431,9 +429,17 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
     function _toUint64(uint256 value) internal pure returns (uint64) {
         if (value > type(uint64).max) {
-            revert("ERC20Mintable: uint64 overflow");
+            revert InappropriateUint64Value(value);
         }
         return uint64(value);
+    }
+
+    function _deletePremintRecord(PremintRecord[] storage premintRecords, uint256 index) internal {
+        uint256 lastIndex = premintRecords.length - 1;
+        if (index < lastIndex) {
+            premintRecords[index] = premintRecords[lastIndex];
+        }
+        premintRecords.pop();
     }
 
     /**

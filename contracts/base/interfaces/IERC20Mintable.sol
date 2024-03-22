@@ -24,10 +24,10 @@ interface IERC20Mintable {
      *              If during the decreasing the premint amount becomes zero it is completely removed.
      */
     enum PremintScenario {
-        Increase,// 0
-        Create,  // 1
-        Update,  // 2
-        Decrease // 3
+        Increase, // 0
+        Create,   // 1
+        Update,   // 2
+        Decrease  // 3
     }
 
     /**
