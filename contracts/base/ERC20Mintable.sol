@@ -231,86 +231,68 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The `account` address must not be blocklisted
      * @dev The `amount` and `release` values must be less or equal to uint64 max value
      * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
-     * @dev The `scenario` value must be one of PremintScenario enum values
-     * @dev The executing actions must follow the provided scenario
      * @dev The number of pending premints must be less than the limit
      */
-    function premint(
+    function premintIncrease(
         address account,
         uint256 amount,
-        uint256 release,
-        PremintScenario scenario
+        uint256 release
     ) external onlyMinter notBlocklisted(_msgSender()) {
-        if (release <= block.timestamp) {
-            revert PremintReleaseTimePassed();
-        }
+        _premint(account, amount, release, PremintScenario.Increase);
+    }
 
-        ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
-        PremintRecord[] storage premintRecords = storageSlot.premints[account].premintRecords;
+    /**
+     * @inheritdoc IERC20Mintable
+     *
+     * @dev Can only be called by a minter account
+     * @dev The message sender must not be blocklisted
+     * @dev The `account` address must not be blocklisted
+     * @dev The `amount` and `release` values must be less or equal to uint64 max value
+     * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
+     * @dev The number of pending premints must be less than the limit
+     */
+    function premintDecrease(
+        address account,
+        uint256 amount,
+        uint256 release
+    ) external onlyMinter notBlocklisted(_msgSender()) {
+        _premint(account, amount, release, PremintScenario.Decrease);
+    }
 
-        uint256 oldAmount = 0;
-        uint256 newAmount = amount;
+    /**
+     * @inheritdoc IERC20Mintable
+     *
+     * @dev Can only be called by a minter account
+     * @dev The message sender must not be blocklisted
+     * @dev The `account` address must not be blocklisted
+     * @dev The `amount` and `release` values must be less or equal to uint64 max value
+     * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
+     * @dev The number of pending premints must be less than the limit
+     */
+    function premintCreate(
+        address account,
+        uint256 amount,
+        uint256 release
+    ) external onlyMinter notBlocklisted(_msgSender()) {
+        _premint(account, amount, release, PremintScenario.Create);
+    }
 
-        for (uint256 i = 0; i < premintRecords.length; ) {
-            PremintRecord storage premintRecord = premintRecords[i];
-            if (premintRecord.release < block.timestamp) {
-                _deletePremintRecord(premintRecords, i);
-                continue;
-            }
-
-            if (premintRecord.release == release) {
-                if (scenario == PremintScenario.Create) {
-                    revert PremintAlreadyExistent();
-                }
-
-                oldAmount = premintRecord.amount;
-                if (scenario != PremintScenario.Update) {
-                    if (scenario == PremintScenario.Decrease) {
-                        if (oldAmount >= amount) {
-                            unchecked {
-                                newAmount = oldAmount - amount;
-                            }
-                        } else {
-                            revert PremintInsufficientAmount();
-                        }
-                    } else {
-                        newAmount = oldAmount + amount;
-                    }
-                }
-                if (newAmount == 0) {
-                    _deletePremintRecord(premintRecords, i);
-                    continue;
-                } else {
-                    premintRecord.amount = _toUint64(newAmount);
-                }
-            }
-
-            ++i;
-        }
-
-        if (oldAmount == 0) {
-            if (newAmount == 0) {
-                revert ZeroPremintAmount();
-            }
-            if (premintRecords.length >= storageSlot.maxPendingPremintsCount) {
-                revert MaxPendingPremintsLimitReached();
-            }
-            if (scenario == PremintScenario.Update || scenario == PremintScenario.Decrease) {
-                revert PremintNonExistent();
-            }
-
-            // Create a new premint record
-            premintRecords.push(PremintRecord(_toUint64(newAmount), _toUint64(release)));
-            _mintInternal(account, newAmount);
-        } else if (newAmount < oldAmount) {
-            _burnInternal(account, oldAmount - newAmount);
-        } else if (newAmount > oldAmount) {
-            _mintInternal(account, newAmount - oldAmount);
-        } else {
-            revert PremintUnchanged();
-        }
-
-        emit Premint(_msgSender(), account, newAmount, oldAmount, release);
+    /**
+     * @inheritdoc IERC20Mintable
+     *
+     * @dev Can only be called by a minter account
+     * @dev The message sender must not be blocklisted
+     * @dev The `account` address must not be blocklisted
+     * @dev The `amount` and `release` values must be less or equal to uint64 max value
+     * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
+     * @dev The number of pending premints must be less than the limit
+     */
+    function premintUpdate(
+        address account,
+        uint256 amount,
+        uint256 release
+    ) external onlyMinter notBlocklisted(_msgSender()) {
+        _premint(account, amount, release, PremintScenario.Update);
     }
 
     /**
@@ -425,6 +407,106 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         assembly {
             r.slot := _EXTENDED_STORAGE_SLOT
         }
+    }
+
+    /** @notice Scenarios of internal premint operations
+     *
+     * @dev The possible values:
+     * - Increase - Increases the amount of an existing premint by the provided value or
+     *              creates a new premint with the provided parameters if it does not exist.
+     *              The default scenario.
+     * - Create --- Creates a new premint or fails if the premint with the provided account and release time
+     *              already exists.
+     * - Update --- Updates the amount of an existing premint with the new provided value or
+     *              fails if the premint with the provided account and release time does not exist.
+     *              If the provided amount is zero the premint is completely removed.
+     * - Decrease - Decreasing the amount of an existing premint by the provided value or
+     *              fails if the premint with the provided account and release time does not exist.
+     *              If during the decreasing the premint amount becomes zero it is completely removed.
+     */
+    enum PremintScenario {
+        Increase, // 0
+        Create,   // 1
+        Update,   // 2
+        Decrease  // 3
+    }
+
+    function _premint(
+        address account,
+        uint256 amount,
+        uint256 release,
+        PremintScenario scenario
+    ) internal {
+        if (release <= block.timestamp) {
+            revert PremintReleaseTimePassed();
+        }
+
+        ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
+        PremintRecord[] storage premintRecords = storageSlot.premints[account].premintRecords;
+
+        uint256 oldAmount = 0;
+        uint256 newAmount = amount;
+
+        for (uint256 i = 0; i < premintRecords.length; ) {
+            PremintRecord storage premintRecord = premintRecords[i];
+            if (premintRecord.release < block.timestamp) {
+                _deletePremintRecord(premintRecords, i);
+                continue;
+            }
+
+            if (premintRecord.release == release) {
+                if (scenario == PremintScenario.Create) {
+                    revert PremintAlreadyExistent();
+                }
+
+                oldAmount = premintRecord.amount;
+                if (scenario != PremintScenario.Update) {
+                    if (scenario == PremintScenario.Decrease) {
+                        if (oldAmount >= amount) {
+                            unchecked {
+                                newAmount = oldAmount - amount;
+                            }
+                        } else {
+                            revert PremintInsufficientAmount();
+                        }
+                    } else {
+                        newAmount = oldAmount + amount;
+                    }
+                }
+                if (newAmount == 0) {
+                    _deletePremintRecord(premintRecords, i);
+                    continue;
+                } else {
+                    premintRecord.amount = _toUint64(newAmount);
+                }
+            }
+
+            ++i;
+        }
+
+        if (oldAmount == 0) {
+            if (newAmount == 0) {
+                revert ZeroPremintAmount();
+            }
+            if (premintRecords.length >= storageSlot.maxPendingPremintsCount) {
+                revert MaxPendingPremintsLimitReached();
+            }
+            if (scenario == PremintScenario.Update || scenario == PremintScenario.Decrease) {
+                revert PremintNonExistent();
+            }
+
+            // Create a new premint record
+            premintRecords.push(PremintRecord(_toUint64(newAmount), _toUint64(release)));
+            _mintInternal(account, newAmount);
+        } else if (newAmount < oldAmount) {
+            _burnInternal(account, oldAmount - newAmount);
+        } else if (newAmount > oldAmount) {
+            _mintInternal(account, newAmount - oldAmount);
+        } else {
+            revert PremintUnchanged();
+        }
+
+        emit Premint(_msgSender(), account, newAmount, oldAmount, release);
     }
 
     function _toUint64(uint256 value) internal pure returns (uint64) {

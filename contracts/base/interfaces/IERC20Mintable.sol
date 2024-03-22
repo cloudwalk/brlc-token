@@ -8,28 +8,6 @@ pragma solidity 0.8.16;
  * @notice The interface of a token that supports mint and burn operations
  */
 interface IERC20Mintable {
-    /** @notice Scenarios of premint operations
-     *
-     * @dev The possible values:
-     * - Increase - Increases the amount of an existing premint by the provided value or
-     *              creates a new premint with the provided parameters if it does not exist.
-     *              The default scenario.
-     * - Create --- Creates a new premint or fails if the premint with the provided account and release time
-     *              already exists.
-     * - Update --- Updates the amount of an existing premint with the new provided value or
-     *              fails if the premint with the provided account and release time does not exist.
-     *              If the provided amount is zero the premint is completely removed.
-     * - Decrease - Decreasing the amount of an existing premint by the provided value or
-     *              fails if the premint with the provided account and release time does not exist.
-     *              If during the decreasing the premint amount becomes zero it is completely removed.
-     */
-    enum PremintScenario {
-        Increase, // 0
-        Create,   // 1
-        Update,   // 2
-        Decrease  // 3
-    }
-
     /**
      * @notice Emitted when the main minter is changed
      *
@@ -159,16 +137,48 @@ interface IERC20Mintable {
     function mint(address account, uint256 amount) external returns (bool);
 
     /**
-     * @notice Premints tokens
+     * @notice Increases the amount of an existing premint or creates a new one if it does not exist
+     *
+     * Emits a {Premint} event
+     *
+     * @param account The address of a tokens recipient
+     * @param amount The amount of tokens to increase
+     * @param release The timestamp when the tokens will be released
+     */
+    function premintIncrease(address account, uint256 amount, uint256 release) external;
+
+    /**
+     * @notice Decreases the amount of an existing premint or fails if it does not exist
+     *
+     * Emits a {Premint} event
+     *
+     * @param account The address of a tokens recipient
+     * @param amount The amount of tokens to decrease
+     * @param release The timestamp when the tokens will be released
+     */
+    function premintDecrease(address account, uint256 amount, uint256 release) external;
+
+    /**
+     * @notice Creates a new token premint
      *
      * Emits a {Premint} event
      *
      * @param account The address of a tokens recipient
      * @param amount The amount of tokens to premint
      * @param release The timestamp when the tokens will be released
-     * @param scenario The scenario for the premint operation
      */
-    function premint(address account, uint256 amount, uint256 release, PremintScenario scenario) external;
+    function premintCreate(address account, uint256 amount, uint256 release) external;
+
+    /**
+     * @notice Updates the amount of an existing premint or fails if it does not exist
+     *
+     * Emits a {Premint} event
+     *
+     * @param account The address of a tokens recipient
+     * @param amount The new amount of tokens for the premint
+     * @param release The timestamp when the tokens will be released
+     */
+    function premintUpdate(address account, uint256 amount, uint256 release) external;
 
     /**
      * @notice Burns tokens
