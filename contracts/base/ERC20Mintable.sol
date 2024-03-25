@@ -83,9 +83,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /// @notice The premint release time must be in the future
     error PremintReleaseTimePassed();
 
-    /// @notice The premint operation scenario assumes creation of a new premint, but it already exists
-    error PremintAlreadyExistent();
-
     /// @notice The premint operation scenario assumes updating of an existing premint, but it is not found
     error PremintNonExistent();
 
@@ -262,42 +259,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @dev Can only be called by a minter account
-     * @dev The message sender must not be blocklisted
-     * @dev The `account` address must not be blocklisted
-     * @dev The `amount` and `release` values must be less or equal to uint64 max value
-     * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
-     * @dev The number of pending premints must be less than the limit
-     */
-    function premintCreate(
-        address account,
-        uint256 amount,
-        uint256 release
-    ) external onlyMinter notBlocklisted(_msgSender()) {
-        _premint(account, amount, release, PREMINT_FLAG_CREATION_ONLY);
-    }
-
-    /**
-     * @inheritdoc IERC20Mintable
-     *
-     * @dev Can only be called by a minter account
-     * @dev The message sender must not be blocklisted
-     * @dev The `account` address must not be blocklisted
-     * @dev The `amount` and `release` values must be less or equal to uint64 max value
-     * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
-     * @dev The number of pending premints must be less than the limit
-     */
-    function premintUpdate(
-        address account,
-        uint256 amount,
-        uint256 release
-    ) external onlyMinter notBlocklisted(_msgSender()) {
-        _premint(account, amount, release, PREMINT_FLAG_UPDATE_ONLY + PREMINT_FLAG_ABSOLUT_AMOUNT);
-    }
-
-    /**
-     * @inheritdoc IERC20Mintable
-     *
      * @dev The contract must not be paused
      * @dev Can only be called by a minter account
      * @dev The message sender must not be blocklisted
@@ -409,17 +370,11 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         }
     }
 
-    /// @dev The `_premint()` function flag that enables only a new premint creation but, otherwise fails
-    uint256 private constant PREMINT_FLAG_CREATION_ONLY = 1;
-
     /// @dev The `_premint()` function flag that enables only updating of an existing premint, otherwise fails
-    uint256 private constant PREMINT_FLAG_UPDATE_ONLY = 2;
-
-    /// @dev The `_premint()` function flag that denotes that the provided amount is absolute, otherwise it is relative
-    uint256 private constant PREMINT_FLAG_ABSOLUT_AMOUNT = 4;
+    uint256 private constant PREMINT_FLAG_UPDATE_ONLY = 1;
 
     /// @dev The `_premint()` function flag that denotes that the provided relative amount is for decreasing
-    uint256 private constant PREMINT_FLAG_AMOUNT_DECREASING = 8;
+    uint256 private constant PREMINT_FLAG_AMOUNT_DECREASING = 2;
 
     /// @dev The default value of the premint operation flags for the `_premint()` function
     uint256 private constant PREMINT_FLAGS_DEFAULT = 0;
@@ -448,23 +403,17 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             }
 
             if (premintRecord.release == release) {
-                if (flags & PREMINT_FLAG_CREATION_ONLY != 0) {
-                    revert PremintAlreadyExistent();
-                }
-
                 oldAmount = premintRecord.amount;
-                if (flags & PREMINT_FLAG_ABSOLUT_AMOUNT == 0) {
-                    if (flags & PREMINT_FLAG_AMOUNT_DECREASING != 0) {
-                        if (oldAmount >= amount) {
-                            unchecked {
-                                newAmount = oldAmount - amount;
-                            }
-                        } else {
-                            revert PremintInsufficientAmount();
+                if (flags & PREMINT_FLAG_AMOUNT_DECREASING != 0) {
+                    if (oldAmount >= amount) {
+                        unchecked {
+                            newAmount = oldAmount - amount;
                         }
                     } else {
-                        newAmount = oldAmount + amount;
+                        revert PremintInsufficientAmount();
                     }
+                } else {
+                    newAmount = oldAmount + amount;
                 }
                 if (newAmount == 0) {
                     _deletePremintRecord(premintRecords, i);

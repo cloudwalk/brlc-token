@@ -159,28 +159,6 @@ interface IERC20Mintable {
     function premintDecrease(address account, uint256 amount, uint256 release) external;
 
     /**
-     * @notice Creates a new token premint
-     *
-     * Emits a {Premint} event
-     *
-     * @param account The address of a tokens recipient
-     * @param amount The amount of tokens to premint
-     * @param release The timestamp when the tokens will be released
-     */
-    function premintCreate(address account, uint256 amount, uint256 release) external;
-
-    /**
-     * @notice Updates the amount of an existing premint or fails if it does not exist
-     *
-     * Emits a {Premint} event
-     *
-     * @param account The address of a tokens recipient
-     * @param amount The new amount of tokens for the premint
-     * @param release The timestamp when the tokens will be released
-     */
-    function premintUpdate(address account, uint256 amount, uint256 release) external;
-
-    /**
      * @notice Burns tokens
      *
      * Emits a {Burn} event
