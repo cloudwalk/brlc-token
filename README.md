@@ -11,7 +11,7 @@
 This repository contains [BRLC](https://infinitepay.io/brlc) token smart contracts.</br>
 [BRLC](https://infinitepay.io/brlc) is a stablecoin created and issued by [Infinitepay](https://infinitepay.io).
 
-## Build and test
+## Setup project
 
 Copy `.env.example` file to create `.env` file:
 
@@ -23,6 +23,9 @@ MacOS/linux:
 ```sh
 cp .env.example .env
 ```
+
+
+## Build and test
 
 ```sh
 # Install all dependencies
