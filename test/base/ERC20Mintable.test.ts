@@ -55,10 +55,10 @@ describe("Contract 'ERC20Mintable'", async () => {
   const REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE = "InappropriateUint64Value";
 
   enum PremintScenario {
-    Increase = 0,
-    Create = 1,
-    Update = 2,
-    Decrease = 3,
+    Create = 0,
+    Increase = 1,
+    Decrease = 2,
+    Update = 3
   }
 
   let tokenFactory: ContractFactory;
@@ -374,7 +374,7 @@ describe("Contract 'ERC20Mintable'", async () => {
           }
         }
         const balanceOfPremint = props.balanceOfPremint ?? newAmount;
-        const premintScenario = props.premintScenario ?? PremintScenario.Increase;
+        const premintScenario = props.premintScenario ?? PremintScenario.Create;
 
         const oldMintAllowance: BigNumber = await token.minterAllowance(minter.address);
         let newMintAllowance: BigNumber = oldMintAllowance;
@@ -439,18 +439,19 @@ describe("Contract 'ERC20Mintable'", async () => {
         await executeAndCheckPremint(token);
       });
 
-      it("The caller increases amount of an existing premint using the default scenario", async () => {
+      it("The caller increases amount of an existing premint using the increasing scenario", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create);
+        await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create));
         await executeAndCheckPremint(token, {
           amount: 1,
-          oldAmount: TOKEN_AMOUNT
+          oldAmount: TOKEN_AMOUNT,
+          premintScenario: PremintScenario.Increase
         });
       });
 
       it("The caller increases amount of an existing premint using the updating scenario", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create);
+        await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create));
         await executeAndCheckPremint(token, {
           amount: TOKEN_AMOUNT + 1,
           oldAmount: TOKEN_AMOUNT,
@@ -460,7 +461,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The caller decreases amount of an existing premint using the updating scenario", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create);
+        await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create));
         await executeAndCheckPremint(token, {
           amount: TOKEN_AMOUNT - 1,
           oldAmount: TOKEN_AMOUNT,
@@ -470,7 +471,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The caller decreases amount of an existing premint using the decreasing scenario", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create);
+        await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create));
         await executeAndCheckPremint(token, {
           amount: 1,
           oldAmount: TOKEN_AMOUNT,
@@ -480,7 +481,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The caller removes an existing premint using the updating scenario", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create);
+        await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create));
         await executeAndCheckPremint(token, {
           amount: 0,
           oldAmount: TOKEN_AMOUNT,
@@ -491,7 +492,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The caller removes an existing premint using the decreasing scenario", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create);
+        await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create));
         await executeAndCheckPremint(token, {
           amount: TOKEN_AMOUNT,
           oldAmount: TOKEN_AMOUNT,
@@ -537,7 +538,8 @@ describe("Contract 'ERC20Mintable'", async () => {
         await executeAndCheckPremint(token, {
           release: newTimestamp + 10,
           premintCount: 1,
-          premintIndex: 0
+          premintIndex: 0,
+          premintScenario: PremintScenario.Increase
         });
       });
 
@@ -585,13 +587,13 @@ describe("Contract 'ERC20Mintable'", async () => {
 
         // update premint in the beginning of array before expired premints
         await executeAndCheckPremint(token, {
-          amount: TOKEN_AMOUNT - 1,
+          amount: 1,
           oldAmount: TOKEN_AMOUNT,
           release: timestamps[1],
           premintCount: MAX_PENDING_PREMINTS_COUNT - 2,
           premintIndex: 1,
-          balanceOfPremint: TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) - 1,
-          premintScenario: PremintScenario.Update
+          balanceOfPremint: TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) + 1,
+          premintScenario: PremintScenario.Increase
         });
       });
 
@@ -615,13 +617,13 @@ describe("Contract 'ERC20Mintable'", async () => {
 
         // update premint in array before expired premints
         await executeAndCheckPremint(token, {
-          amount: TOKEN_AMOUNT + 1,
+          amount: 1,
           oldAmount: TOKEN_AMOUNT,
           release: timestamps[1],
           premintCount: MAX_PENDING_PREMINTS_COUNT - 2,
           premintIndex: 1,
-          balanceOfPremint: TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) + 1,
-          premintScenario: PremintScenario.Update
+          balanceOfPremint: TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) - 1,
+          premintScenario: PremintScenario.Decrease
         });
       });
     });
@@ -673,21 +675,29 @@ describe("Contract 'ERC20Mintable'", async () => {
           .withArgs(user.address);
       });
 
-      it("The destination address is zero", async () => {
+      it("The recipient address is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
+        await expect(
+          token.connect(minter).premint(ethers.constants.AddressZero, TOKEN_AMOUNT, timestamp, PremintScenario.Create)
+        ).to.be.revertedWith(REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
         await expect(
           token.connect(minter).premint(ethers.constants.AddressZero, TOKEN_AMOUNT, timestamp, PremintScenario.Increase)
         ).to.be.revertedWith(REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
       });
 
-      it("The premint amount is zero", async () => {
+      it("The premint amount is zero during the creation", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
+        await expect(token.connect(minter).premint(user.address, 0, timestamp, PremintScenario.Create))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_PREMINT_AMOUNT);
         await expect(token.connect(minter).premint(user.address, 0, timestamp, PremintScenario.Increase))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_PREMINT_AMOUNT);
       });
 
       it("The premint amount exceeds the mint allowance", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
+        await expect(
+          token.connect(minter).premint(user.address, MINT_ALLOWANCE + 1, timestamp, PremintScenario.Create)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE);
         await expect(
           token.connect(minter).premint(user.address, MINT_ALLOWANCE + 1, timestamp, PremintScenario.Increase)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE);
@@ -704,11 +714,14 @@ describe("Contract 'ERC20Mintable'", async () => {
         await expect(
           token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + i * 10, PremintScenario.Create)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED);
+        await expect(
+          token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp + i * 10, PremintScenario.Increase)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED);
       });
 
       it("The caller updates an existing premint with the same amount", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create);
+        await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create));
         await expect(token.connect(minter).premint(user.address, 0, timestamp, PremintScenario.Increase))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_UNCHANGED);
         await expect(token.connect(minter).premint(user.address, 0, timestamp, PremintScenario.Decrease))
@@ -717,15 +730,17 @@ describe("Contract 'ERC20Mintable'", async () => {
           .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_UNCHANGED);
       });
 
-      it("The caller tries to create a premint with the `Update` scenario", async () => {
+      it("The caller tries to update a non-existent premint", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Update))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_NON_EXISTENT);
+        await expect(token.connect(minter).premint(user.address, 1, timestamp, PremintScenario.Decrease))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_NON_EXISTENT);
       });
 
-      it("The caller tries to update a premint with the `CreateOny` scenario", async () => {
+      it("The caller tries to create a premint that already exists", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create);
+        await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create));
         await expect(
           token.connect(minter).premint(user.address, TOKEN_AMOUNT + 1, timestamp, PremintScenario.Create)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_ALREADY_EXISTENT);
@@ -733,7 +748,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The caller tries to decrease the amount of a premint below the existing amount", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create);
+        await proveTx(token.connect(minter).premint(user.address, TOKEN_AMOUNT, timestamp, PremintScenario.Create));
         await expect(
           token.connect(minter).premint(user.address, TOKEN_AMOUNT + 1, timestamp, PremintScenario.Decrease)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_INSUFFICIENT_AMOUNT);
