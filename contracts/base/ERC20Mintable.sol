@@ -238,7 +238,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint256 amount,
         uint256 release
     ) external onlyMinter notBlocklisted(_msgSender()) {
-        _premint(account, amount, release, PremintScenario.Increase);
+        _premint(account, amount, release, PREMINT_FLAGS_DEFAULT);
     }
 
     /**
@@ -256,7 +256,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint256 amount,
         uint256 release
     ) external onlyMinter notBlocklisted(_msgSender()) {
-        _premint(account, amount, release, PremintScenario.Decrease);
+        _premint(account, amount, release, PREMINT_FLAG_UPDATE_ONLY + PREMINT_FLAG_AMOUNT_DECREASING);
     }
 
     /**
@@ -274,7 +274,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint256 amount,
         uint256 release
     ) external onlyMinter notBlocklisted(_msgSender()) {
-        _premint(account, amount, release, PremintScenario.Create);
+        _premint(account, amount, release, PREMINT_FLAG_CREATION_ONLY);
     }
 
     /**
@@ -292,7 +292,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint256 amount,
         uint256 release
     ) external onlyMinter notBlocklisted(_msgSender()) {
-        _premint(account, amount, release, PremintScenario.Update);
+        _premint(account, amount, release, PREMINT_FLAG_UPDATE_ONLY + PREMINT_FLAG_ABSOLUT_AMOUNT);
     }
 
     /**
@@ -409,33 +409,26 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         }
     }
 
-    /** @notice Scenarios of internal premint operations
-     *
-     * @dev The possible values:
-     * - Increase - Increases the amount of an existing premint by the provided value or
-     *              creates a new premint with the provided parameters if it does not exist.
-     *              The default scenario.
-     * - Create --- Creates a new premint or fails if the premint with the provided account and release time
-     *              already exists.
-     * - Update --- Updates the amount of an existing premint with the new provided value or
-     *              fails if the premint with the provided account and release time does not exist.
-     *              If the provided amount is zero the premint is completely removed.
-     * - Decrease - Decreasing the amount of an existing premint by the provided value or
-     *              fails if the premint with the provided account and release time does not exist.
-     *              If during the decreasing the premint amount becomes zero it is completely removed.
-     */
-    enum PremintScenario {
-        Increase, // 0
-        Create,   // 1
-        Update,   // 2
-        Decrease  // 3
-    }
+    /// @dev The `_premint()` function flag that enables only a new premint creation but, otherwise fails
+    uint256 private constant PREMINT_FLAG_CREATION_ONLY = 1;
+
+    /// @dev The `_premint()` function flag that enables only updating of an existing premint, otherwise fails
+    uint256 private constant PREMINT_FLAG_UPDATE_ONLY = 2;
+
+    /// @dev The `_premint()` function flag that denotes that the provided amount is absolute, otherwise it is relative
+    uint256 private constant PREMINT_FLAG_ABSOLUT_AMOUNT = 4;
+
+    /// @dev The `_premint()` function flag that denotes that the provided relative amount is for decreasing
+    uint256 private constant PREMINT_FLAG_AMOUNT_DECREASING = 8;
+
+    /// @dev The default value of the premint operation flags for the `_premint()` function
+    uint256 private constant PREMINT_FLAGS_DEFAULT = 0;
 
     function _premint(
         address account,
         uint256 amount,
         uint256 release,
-        PremintScenario scenario
+        uint256 flags
     ) internal {
         if (release <= block.timestamp) {
             revert PremintReleaseTimePassed();
@@ -455,13 +448,13 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             }
 
             if (premintRecord.release == release) {
-                if (scenario == PremintScenario.Create) {
+                if (flags & PREMINT_FLAG_CREATION_ONLY != 0) {
                     revert PremintAlreadyExistent();
                 }
 
                 oldAmount = premintRecord.amount;
-                if (scenario != PremintScenario.Update) {
-                    if (scenario == PremintScenario.Decrease) {
+                if (flags & PREMINT_FLAG_ABSOLUT_AMOUNT == 0) {
+                    if (flags & PREMINT_FLAG_AMOUNT_DECREASING != 0) {
                         if (oldAmount >= amount) {
                             unchecked {
                                 newAmount = oldAmount - amount;
@@ -491,7 +484,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             if (premintRecords.length >= storageSlot.maxPendingPremintsCount) {
                 revert MaxPendingPremintsLimitReached();
             }
-            if (scenario == PremintScenario.Update || scenario == PremintScenario.Decrease) {
+            if (flags & PREMINT_FLAG_UPDATE_ONLY != 0) {
                 revert PremintNonExistent();
             }
 
