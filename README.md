@@ -13,6 +13,17 @@ This repository contains [BRLC](https://infinitepay.io/brlc) token smart contrac
 
 ## Build and test
 
+Copy `.env.example` file to create `.env` file:
+
+Windows:
+```sh
+copy .env.example .env
+```
+MacOS/linux:
+```sh
+cp .env.example .env
+```
+
 ```sh
 # Install all dependencies
 npm install
