@@ -253,7 +253,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint256 amount,
         uint256 release
     ) external onlyMinter notBlocklisted(_msgSender()) {
-        _premint(account, amount, release, PREMINT_FLAG_UPDATE_ONLY + PREMINT_FLAG_AMOUNT_DECREASING);
+        _premint(account, amount, release, PREMINT_FLAG_AMOUNT_DECREASING);
     }
 
     /**
@@ -370,11 +370,8 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         }
     }
 
-    /// @dev The `_premint()` function flag that enables only updating of an existing premint, otherwise fails
-    uint256 private constant PREMINT_FLAG_UPDATE_ONLY = 1;
-
     /// @dev The `_premint()` function flag that denotes that the provided relative amount is for decreasing
-    uint256 private constant PREMINT_FLAG_AMOUNT_DECREASING = 2;
+    uint256 private constant PREMINT_FLAG_AMOUNT_DECREASING = 1;
 
     /// @dev The default value of the premint operation flags for the `_premint()` function
     uint256 private constant PREMINT_FLAGS_DEFAULT = 0;
@@ -433,7 +430,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             if (premintRecords.length >= storageSlot.maxPendingPremintsCount) {
                 revert MaxPendingPremintsLimitReached();
             }
-            if (flags & PREMINT_FLAG_UPDATE_ONLY != 0) {
+            if (flags & PREMINT_FLAG_AMOUNT_DECREASING != 0) {
                 revert PremintNonExistent();
             }
 
