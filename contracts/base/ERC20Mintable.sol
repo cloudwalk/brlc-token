@@ -235,7 +235,12 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint256 amount,
         uint256 release
     ) external onlyMinter notBlocklisted(_msgSender()) {
-        _premint(account, amount, release, PREMINT_FLAGS_DEFAULT);
+        _premint(
+            account,
+            amount,
+            release,
+            false // decreasing
+        );
     }
 
     /**
@@ -253,7 +258,12 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint256 amount,
         uint256 release
     ) external onlyMinter notBlocklisted(_msgSender()) {
-        _premint(account, amount, release, PREMINT_FLAG_AMOUNT_DECREASING);
+        _premint(
+            account,
+            amount,
+            release,
+            true // decreasing
+        );
     }
 
     /**
@@ -370,17 +380,11 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         }
     }
 
-    /// @dev The `_premint()` function flag that denotes that the provided relative amount is for decreasing
-    uint256 private constant PREMINT_FLAG_AMOUNT_DECREASING = 1;
-
-    /// @dev The default value of the premint operation flags for the `_premint()` function
-    uint256 private constant PREMINT_FLAGS_DEFAULT = 0;
-
     function _premint(
         address account,
         uint256 amount,
         uint256 release,
-        uint256 flags
+        bool decreasing
     ) internal {
         if (release <= block.timestamp) {
             revert PremintReleaseTimePassed();
@@ -401,7 +405,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
             if (premintRecord.release == release) {
                 oldAmount = premintRecord.amount;
-                if (flags & PREMINT_FLAG_AMOUNT_DECREASING != 0) {
+                if (decreasing) {
                     if (oldAmount >= amount) {
                         unchecked {
                             newAmount = oldAmount - amount;
@@ -430,7 +434,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             if (premintRecords.length >= storageSlot.maxPendingPremintsCount) {
                 revert MaxPendingPremintsLimitReached();
             }
-            if (flags & PREMINT_FLAG_AMOUNT_DECREASING != 0) {
+            if (decreasing) {
                 revert PremintNonExistent();
             }
 
