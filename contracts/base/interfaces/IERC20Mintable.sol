@@ -51,6 +51,15 @@ interface IERC20Mintable {
     event Premint(address indexed minter, address indexed to, uint256 newAmount, uint256 oldAmount, uint256 release);
 
     /**
+     * @notice Emitted when one release time for all existing or future premints has been substituted with another time
+     *
+     * @param minter The address of the minter who initiated the release substitution
+     * @param newRelease The new premint release time that is set during the substitution
+     * @param substitutedRelease The premint release time that has been substituted
+     */
+    event PremintSubstituted(address indexed minter, uint256 indexed newRelease, uint256 indexed substitutedRelease);
+
+    /**
      * @notice Emitted when tokens are burned
      *
      * @param burner The address of the tokens burner
@@ -157,6 +166,16 @@ interface IERC20Mintable {
      * @param release The timestamp when the tokens will be released
      */
     function premintDecrease(address account, uint256 amount, uint256 release) external;
+
+    /**
+     * @notice Substitutes one release time for all existing or future premints with another release time
+     *
+     * Emits a {PremintSubstituted} event
+     *
+     * @param substitutedRelease The premint release time to be substituted
+     * @param newRelease The new premint release time to be set during the substitution
+     */
+    function premintSubstitute(uint256 substitutedRelease, uint256 newRelease) external;
 
     /**
      * @notice Burns tokens
