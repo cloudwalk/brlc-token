@@ -319,7 +319,13 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      */
     function getPremints(address account) external view returns (PremintRecord[] memory) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
-        return storageSlot.premints[account].premintRecords;
+        PremintRecord[] memory records = storageSlot.premints[account].premintRecords;
+        for (uint256 i = 0; i < records.length; ++i) {
+            records[i].release = _toUint64(
+                _resolvePremintRelease(storageSlot.substitutions, records[i].release)
+            );
+        }
+        return records;
     }
 
     /**
