@@ -22,7 +22,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         mapping(address => PremintState) premints;
         uint16 maxPendingPremintsCount;
         mapping(uint256 => uint256) substitutions;
-        mapping(uint256 => uint256[]) originalReleases;
+        mapping(uint256 => uint256) origins;
     }
 
     /// @notice The structure that represents an array of premint records
@@ -35,9 +35,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint64 amount;
         uint64 release;
     }
-
-    /// @notice The limit of original release times that can be substituted to a given release time
-    uint256 private constant _MAX_PREMINT_ORIGINAL_RELEASES = 30;
 
     /// @notice The address of the main minter
     address private _mainMinter;
@@ -94,8 +91,8 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /// @notice The attempt of premint release substitution that leads to a substitution chain like A => B => C
     error PremintSubstitutionChaining();
 
-    /// @notice The limit of original premint releases is reached for substitutions to the provided target release time
-    error PremintSubstitutionOriginalReleasesLimit();
+    /// @notice The provided target release time is already used in another substitution
+    error PremintSubstitutionTargetReleaseAlreadyUsed();
 
     /// @notice The target premint release time for substitution must be in the future
     error PremintSubstitutionTimePassed();
@@ -359,12 +356,12 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @notice Returns all premint release times that have been substituted to a provided target release time
-     * @param release The premint release time to check for use as target one in some substitutions
+     * @notice Returns original premint release times that have been substituted to a provided target release time
+     * @param release The premint release time to check for use as target one in a substitution
      */
-    function getPremintOriginalReleases(uint256 release) external view returns (uint256[] memory) {
+    function getPremintOriginalRelease(uint256 release) external view returns (uint256) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
-        return storageSlot.originalReleases[release];
+        return storageSlot.origins[release];
     }
 
     /**
@@ -511,36 +508,36 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         emit Premint(_msgSender(), account, newAmount, oldAmount, release);
     }
 
-    function _substitutePremintRelease(uint256 originalRelease, uint256 targetRelease) internal {
-        if (targetRelease <= block.timestamp) {
+    function _substitutePremintRelease(uint256 originalRelease, uint256 newTargetRelease) internal {
+        if (newTargetRelease <= block.timestamp) {
             revert PremintSubstitutionTimePassed();
         }
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
-        uint256 currentTargetRelease = _resolvePremintRelease(storageSlot.substitutions, originalRelease);
-        if (currentTargetRelease <= block.timestamp) {
+        uint256 oldTargetRelease = _resolvePremintRelease(storageSlot.substitutions, originalRelease);
+        if (oldTargetRelease <= block.timestamp) {
             revert PremintReleaseTimePassed();
         }
-        if (currentTargetRelease == targetRelease) {
+        if (oldTargetRelease == newTargetRelease) {
             revert PremintSubstitutionAlreadyConfigured();
         }
-        uint256[] storage precedingOriginalReleases = storageSlot.originalReleases[originalRelease];
-        if (precedingOriginalReleases.length != 0) {
+        uint256 precedingOriginalRelease = storageSlot.origins[originalRelease];
+        if (precedingOriginalRelease != 0) {
             revert PremintSubstitutionChaining();
         }
-        uint256[] storage originalReleases = storageSlot.originalReleases[targetRelease];
-        if (originalReleases.length >= _MAX_PREMINT_ORIGINAL_RELEASES) {
-            revert PremintSubstitutionOriginalReleasesLimit();
+        uint256 existingOriginalRelease = storageSlot.origins[newTargetRelease];
+        if (existingOriginalRelease != 0) {
+            revert PremintSubstitutionTargetReleaseAlreadyUsed();
         }
-        if (currentTargetRelease != originalRelease) {
-            _removeOriginalRelease(storageSlot.originalReleases[currentTargetRelease], originalRelease);
+        if (oldTargetRelease != originalRelease) {
+            storageSlot.origins[oldTargetRelease] = 0;
         }
-        if (targetRelease == originalRelease) {
+        if (newTargetRelease == originalRelease) {
             storageSlot.substitutions[originalRelease] = 0;
         } else {
-            storageSlot.substitutions[originalRelease] = _toUint64(targetRelease);
-            originalReleases.push(originalRelease);
+            storageSlot.substitutions[originalRelease] = _toUint64(newTargetRelease);
+            storageSlot.origins[newTargetRelease] = originalRelease;
         }
-        emit PremintReleaseSubstituted(_msgSender(), originalRelease, targetRelease);
+        emit PremintReleaseSubstituted(_msgSender(), originalRelease, newTargetRelease);
     }
 
     function _resolvePremintRelease(
@@ -552,23 +549,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             return release;
         } else {
             return targetRelease;
-        }
-    }
-
-    function _removeOriginalRelease(
-        uint256[] storage originalReleases,
-        uint256 release
-    ) internal {
-        uint256 len = originalReleases.length;
-        for (uint256 i = 0; i < len; ++i) {
-            if (originalReleases[i] == release) {
-                uint256 lastIndex = len - 1;
-                if (i != lastIndex) {
-                    originalReleases[i] = originalReleases[lastIndex];
-                }
-                originalReleases.pop();
-                return;
-            }
         }
     }
 
