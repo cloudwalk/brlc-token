@@ -37,7 +37,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /// @notice The limit of original release times that can be substituted to a given release time
-    uint256 private constant _MAX_PREMINT_ORIGINAL_RELEASES = 100;
+    uint256 private constant _MAX_PREMINT_ORIGINAL_RELEASES = 30;
 
     /// @notice The address of the main minter
     address private _mainMinter;

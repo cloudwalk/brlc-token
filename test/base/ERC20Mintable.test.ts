@@ -21,7 +21,7 @@ describe("Contract 'ERC20Mintable'", async () => {
   const MINT_ALLOWANCE = 1000;
   const TOKEN_AMOUNT = 100;
   const MAX_PENDING_PREMINTS_COUNT = 5;
-  const MAX_PREMINT_ORIGINAL_RELEASES = 100;
+  const MAX_PREMINT_ORIGINAL_RELEASES = 30;
 
   const EVENT_NAME_MAIN_MINTER_CHANGED = "MainMinterChanged";
   const EVENT_NAME_MINTER_CONFIGURED = "MinterConfigured";
