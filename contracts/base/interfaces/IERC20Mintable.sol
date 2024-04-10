@@ -55,12 +55,12 @@ interface IERC20Mintable {
      *
      * @param minter The address of the minter who initiated the release substitution
      * @param originalRelease The premint release time that has been substituted
-     * @param actualRelease The actual premint release time that is set during the substitution
+     * @param targetRelease The target premint release time that is set during the substitution
      */
     event PremintReleaseSubstituted(
         address indexed minter,
         uint256 indexed originalRelease,
-        uint256 indexed actualRelease
+        uint256 indexed targetRelease
     );
 
     /**
@@ -177,9 +177,9 @@ interface IERC20Mintable {
      * Emits a {PremintReleaseSubstituted} event
      *
      * @param originalRelease The premint release time to be substituted
-     * @param actualRelease The actual premint release time to be set during the substitution
+     * @param targetRelease The target premint release time to be set during the substitution
      */
-    function substitutePremintRelease(uint256 originalRelease, uint256 actualRelease) external;
+    function substitutePremintRelease(uint256 originalRelease, uint256 targetRelease) external;
 
     /**
      * @notice Burns tokens
