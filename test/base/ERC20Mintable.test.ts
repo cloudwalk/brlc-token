@@ -743,9 +743,10 @@ describe("Contract 'ERC20Mintable'", async () => {
       expect(contractActualRelease).to.be.eq(actualRelease);
     }
 
-    async function checkPremintOriginalReleaseCounter(token: Contract, actualRelease: number, expectedCounter: number) {
-      const actualCounter = await token.connect(minter).getPremintOriginalReleaseCounter(actualRelease);
-      expect(actualCounter).to.be.eq(expectedCounter);
+    async function checkPremintOriginalReleases(token: Contract, actualRelease: number, expectedOriginalReleases: number[]) {
+      const actualOriginalReleases = await token.connect(minter).getPremintOriginalReleases(actualRelease);
+      const expectedOriginalReleasesBN: BigNumber[] = expectedOriginalReleases.map(release => BigNumber.from(release));
+      expect(actualOriginalReleases).to.be.deep.eq(expectedOriginalReleasesBN);
     }
 
     async function substitutePremintReleaseAndCheckEvents(
@@ -783,21 +784,21 @@ describe("Contract 'ERC20Mintable'", async () => {
         await checkPremints(token, expectedPremints);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], originalReleaseTimestamps[0]);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], originalReleaseTimestamps[1]);
-        await checkPremintOriginalReleaseCounter(token, actualReleaseTimestamp, 0);
+        await checkPremintOriginalReleases(token, actualReleaseTimestamp, []);
 
         await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[0], actualReleaseTimestamp);
         expectedPremints[0].release = actualReleaseTimestamp;
         await checkPremints(token, expectedPremints);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], actualReleaseTimestamp);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], originalReleaseTimestamps[1]);
-        await checkPremintOriginalReleaseCounter(token, actualReleaseTimestamp, 1);
+        await checkPremintOriginalReleases(token, actualReleaseTimestamp, [originalReleaseTimestamps[0]]);
 
         await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[1], actualReleaseTimestamp);
         expectedPremints[1].release = actualReleaseTimestamp;
         await checkPremints(token, expectedPremints);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], actualReleaseTimestamp);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], actualReleaseTimestamp);
-        await checkPremintOriginalReleaseCounter(token, actualReleaseTimestamp, 2);
+        await checkPremintOriginalReleases(token, actualReleaseTimestamp, originalReleaseTimestamps);
 
         const premintBalances: BigNumber[] = [];
         premintBalances.push(await token.balanceOfPremint(user.address));
@@ -825,7 +826,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         expectedPremint.release = actualReleaseTimestamp;
         await checkPremints(token, [expectedPremint]);
         await checkPremintReleaseResolving(token, originalReleaseTimestamp, actualReleaseTimestamp);
-        await checkPremintOriginalReleaseCounter(token, actualReleaseTimestamp, 1);
+        await checkPremintOriginalReleases(token, actualReleaseTimestamp, [originalReleaseTimestamp]);
 
         const premintBalances: BigNumber[] = [];
         premintBalances.push(await token.balanceOfPremint(user.address));
@@ -839,18 +840,26 @@ describe("Contract 'ERC20Mintable'", async () => {
         expect(premintBalances[2]).to.be.eq(0);
       });
 
-      it("The substitution is removed", async () => {
+      it("The substitutions are removed", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        const originalReleaseTimestamp = timestamp;
-        const actualReleaseTimestamp = timestamp + 10;
+        const originalReleaseTimestamps: number[] = [timestamp, timestamp + 10];
+        const actualReleaseTimestamp = timestamp + 20;
 
-        await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamp, actualReleaseTimestamp);
-        await checkPremintReleaseResolving(token, originalReleaseTimestamp, actualReleaseTimestamp);
-        await checkPremintOriginalReleaseCounter(token, actualReleaseTimestamp, 1);
+        await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[0], actualReleaseTimestamp);
+        await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[1], actualReleaseTimestamp);
+        await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], actualReleaseTimestamp);
+        await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], actualReleaseTimestamp);
+        await checkPremintOriginalReleases(token, actualReleaseTimestamp, originalReleaseTimestamps);
 
-        await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamp, 0);
-        await checkPremintReleaseResolving(token, originalReleaseTimestamp, originalReleaseTimestamp);
-        await checkPremintOriginalReleaseCounter(token, actualReleaseTimestamp, 0);
+        await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[0], 0);
+        await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], originalReleaseTimestamps[0]);
+        await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], actualReleaseTimestamp);
+        await checkPremintOriginalReleases(token, actualReleaseTimestamp, [originalReleaseTimestamps[1]]);
+
+        await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[1], 0);
+        await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], originalReleaseTimestamps[0]);
+        await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], originalReleaseTimestamps[1]);
+        await checkPremintOriginalReleases(token, actualReleaseTimestamp, []);
       });
     });
 

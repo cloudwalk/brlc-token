@@ -22,7 +22,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         mapping(address => PremintState) premints;
         uint16 maxPendingPremintsCount;
         mapping(uint256 => uint256) substitutions;
-        mapping(uint256 => uint256) originCounters;
+        mapping(uint256 => uint256[]) originalReleases;
     }
 
     /// @notice The structure that represents an array of premint records
@@ -35,6 +35,9 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint64 amount;
         uint64 release;
     }
+
+    /// @notice The limit of original release times that can be substituted to a given release time
+    uint256 private constant _MAX_PREMINT_ORIGINAL_RELEASES = 100;
 
     /// @notice The address of the main minter
     address private _mainMinter;
@@ -90,6 +93,9 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
     /// @notice The attempt of premint release substitution that leads to a substitution chain like A => B => C
     error PremintSubstitutionChaining();
+
+    /// @notice The limit of original premint releases is reached for substitutions to the provided actual release time
+    error PremintSubstitutionOriginalReleasesLimit();
 
     /// @notice The actual premint release time for substitution must be in the future
     error PremintSubstitutionTimePassed();
@@ -353,12 +359,12 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @notice Returns the number of premint release times that have been substituted to a provided release time
+     * @notice Returns all premint release times that have been substituted to a provided release time
      * @param release The premint release time to check for use as actual one in some substitutions
      */
-    function getPremintOriginalReleaseCounter(uint256 release) external view returns (uint256) {
+    function getPremintOriginalReleases(uint256 release) external view returns (uint256[] memory) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
-        return storageSlot.originCounters[release];
+        return storageSlot.originalReleases[release];
     }
 
     /**
@@ -517,15 +523,19 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         if (currentActualRelease == actualRelease) {
             revert PremintSubstitutionAlreadyConfigured();
         }
-        uint256 originCounter = storageSlot.originCounters[originalRelease];
-        if (originCounter != 0) {
+        uint256[] storage precedingOriginalReleases = storageSlot.originalReleases[originalRelease];
+        if (precedingOriginalReleases.length != 0) {
             revert PremintSubstitutionChaining();
         }
+        uint256[] storage originalReleases = storageSlot.originalReleases[actualRelease];
+        if (originalReleases.length >= _MAX_PREMINT_ORIGINAL_RELEASES) {
+            revert PremintSubstitutionOriginalReleasesLimit();
+        }
         if (currentActualRelease != originalRelease) {
-            storageSlot.originCounters[currentActualRelease] -= 1;
+            _removeOriginalRelease(storageSlot.originalReleases[currentActualRelease], originalRelease);
         }
         storageSlot.substitutions[originalRelease] = _toUint64(actualRelease);
-        storageSlot.originCounters[actualRelease] += 1;
+        originalReleases.push(originalRelease);
         emit PremintReleaseSubstituted(_msgSender(), originalRelease, actualRelease);
     }
 
@@ -538,6 +548,23 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             return release;
         } else {
             return actualRelease;
+        }
+    }
+
+    function _removeOriginalRelease(
+        uint256[] storage originalReleases,
+        uint256 release
+    ) internal {
+        uint256 len = originalReleases.length;
+        for (uint256 i = 0; i < len; ++i) {
+            if (originalReleases[i] == release) {
+                uint256 lastIndex = len - 1;
+                if (i != lastIndex) {
+                    originalReleases[i] = originalReleases[lastIndex];
+                }
+                originalReleases.pop();
+                return;
+            }
         }
     }
 
