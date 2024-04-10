@@ -512,7 +512,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     function _substitutePremintRelease(uint256 originalRelease, uint256 actualRelease) internal {
-        if (actualRelease <= block.timestamp && actualRelease != 0) {
+        if (actualRelease <= block.timestamp) {
             revert PremintSubstitutionTimePassed();
         }
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
@@ -534,8 +534,12 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         if (currentActualRelease != originalRelease) {
             _removeOriginalRelease(storageSlot.originalReleases[currentActualRelease], originalRelease);
         }
-        storageSlot.substitutions[originalRelease] = _toUint64(actualRelease);
-        originalReleases.push(originalRelease);
+        if (actualRelease == originalRelease) {
+            storageSlot.substitutions[originalRelease] = 0;
+        } else {
+            storageSlot.substitutions[originalRelease] = _toUint64(actualRelease);
+            originalReleases.push(originalRelease);
+        }
         emit PremintReleaseSubstituted(_msgSender(), originalRelease, actualRelease);
     }
 

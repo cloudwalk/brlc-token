@@ -21,6 +21,7 @@ describe("Contract 'ERC20Mintable'", async () => {
   const MINT_ALLOWANCE = 1000;
   const TOKEN_AMOUNT = 100;
   const MAX_PENDING_PREMINTS_COUNT = 5;
+  const MAX_PREMINT_ORIGINAL_RELEASES = 100;
 
   const EVENT_NAME_MAIN_MINTER_CHANGED = "MainMinterChanged";
   const EVENT_NAME_MINTER_CONFIGURED = "MinterConfigured";
@@ -52,6 +53,7 @@ describe("Contract 'ERC20Mintable'", async () => {
   const REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED = "PremintReleaseTimePassed";
   const REVERT_ERROR_PREMINT_SUBSTITUTION_ALREADY_CONFIGURED = "PremintSubstitutionAlreadyConfigured";
   const REVERT_ERROR_PREMINT_SUBSTITUTION_CHAINING = "PremintSubstitutionChaining";
+  const REVERT_ERROR_PREMINT_SUBSTITUTION_ORIGINAL_RELEASES_LIMIT = "PremintSubstitutionOriginalReleasesLimit";
   const REVERT_ERROR_PREMINT_SUBSTITUTION_TIME_PASSED = "PremintSubstitutionTimePassed";
   const REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED = "MaxPendingPremintsLimitReached";
   const REVERT_ERROR_MAX_PENDING_PREMINTS_COUNT_ALREADY_CONFIGURED = "MaxPendingPremintsCountAlreadyConfigured";
@@ -851,15 +853,19 @@ describe("Contract 'ERC20Mintable'", async () => {
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], actualReleaseTimestamp);
         await checkPremintOriginalReleases(token, actualReleaseTimestamp, originalReleaseTimestamps);
 
-        await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[0], 0);
+        await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[0], originalReleaseTimestamps[0]);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], originalReleaseTimestamps[0]);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], actualReleaseTimestamp);
         await checkPremintOriginalReleases(token, actualReleaseTimestamp, [originalReleaseTimestamps[1]]);
 
-        await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[1], 0);
+        await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[1], originalReleaseTimestamps[1]);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], originalReleaseTimestamps[0]);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], originalReleaseTimestamps[1]);
         await checkPremintOriginalReleases(token, actualReleaseTimestamp, []);
+
+        await checkPremintOriginalReleases(token, 0, []);
+        await checkPremintOriginalReleases(token, originalReleaseTimestamps[0], []);
+        await checkPremintOriginalReleases(token, originalReleaseTimestamps[1], []);
       });
     });
 
@@ -950,6 +956,22 @@ describe("Contract 'ERC20Mintable'", async () => {
         await expect(
           token.connect(minter).substitutePremintRelease(actualRelease1, actualRelease2)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_SUBSTITUTION_CHAINING);
+      });
+
+      it("The limit of original releases is reached", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const originalReleases: number[] =
+          Array.from(Array(MAX_PREMINT_ORIGINAL_RELEASES + 1), (_v, i) => timestamp + i);
+        const actualRelease = timestamp + MAX_PREMINT_ORIGINAL_RELEASES + 1;
+        for (let i = 0; i < MAX_PREMINT_ORIGINAL_RELEASES; ++i) {
+          await proveTx(token.connect(minter).substitutePremintRelease(originalReleases[i], actualRelease));
+        }
+        await expect(
+          token.connect(minter).substitutePremintRelease(
+            originalReleases[MAX_PREMINT_ORIGINAL_RELEASES],
+            actualRelease
+          )
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_SUBSTITUTION_ORIGINAL_RELEASES_LIMIT);
       });
 
       it("The provided actual release time is greater than 64-bit unsigned integer", async () => {
