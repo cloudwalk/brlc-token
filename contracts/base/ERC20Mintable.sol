@@ -22,7 +22,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         mapping(address => PremintState) premints;
         uint16 maxPendingPremintsCount;
         mapping(uint256 => uint256) substitutions;
-        mapping(uint256 => uint256) origins;
+        mapping(uint256 => uint256) premintOriginalReleaseCounters;
     }
 
     /// @notice The structure that represents an array of premint records
@@ -90,9 +90,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
     /// @notice The attempt of premint release substitution that leads to a substitution chain like A => B => C
     error PremintSubstitutionChaining();
-
-    /// @notice The provided target release time is already used in another substitution
-    error PremintSubstitutionTargetReleaseAlreadyUsed();
 
     /// @notice The target premint release time for substitution must be in the future
     error PremintSubstitutionTimePassed();
@@ -356,12 +353,12 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @notice Returns original premint release times that have been substituted to a provided target release time
-     * @param release The premint release time to check for use as target one in a substitution
+     * @notice Returns the number of original premint releases that have been substituted with a provided release time
+     * @param release The premint release time to check for usage as a target one in substitutions
      */
-    function getPremintOriginalRelease(uint256 release) external view returns (uint256) {
+    function getPremintOriginalReleaseCounter(uint256 release) external view returns (uint256) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
-        return storageSlot.origins[release];
+        return storageSlot.premintOriginalReleaseCounters[release];
     }
 
     /**
@@ -520,22 +517,18 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         if (oldTargetRelease == newTargetRelease) {
             revert PremintSubstitutionAlreadyConfigured();
         }
-        uint256 precedingOriginalRelease = storageSlot.origins[originalRelease];
-        if (precedingOriginalRelease != 0) {
+        uint256 precedingOriginalReleaseCounter = storageSlot.premintOriginalReleaseCounters[originalRelease];
+        if (precedingOriginalReleaseCounter != 0) {
             revert PremintSubstitutionChaining();
         }
-        uint256 existingOriginalRelease = storageSlot.origins[newTargetRelease];
-        if (existingOriginalRelease != 0) {
-            revert PremintSubstitutionTargetReleaseAlreadyUsed();
-        }
         if (oldTargetRelease != originalRelease) {
-            storageSlot.origins[oldTargetRelease] = 0;
+            storageSlot.premintOriginalReleaseCounters[oldTargetRelease] -= 1;
         }
         if (newTargetRelease == originalRelease) {
             storageSlot.substitutions[originalRelease] = 0;
         } else {
             storageSlot.substitutions[originalRelease] = _toUint64(newTargetRelease);
-            storageSlot.origins[newTargetRelease] = originalRelease;
+            storageSlot.premintOriginalReleaseCounters[newTargetRelease] += 1;
         }
         emit PremintReleaseSubstituted(_msgSender(), originalRelease, newTargetRelease);
     }
