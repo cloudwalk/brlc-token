@@ -51,13 +51,13 @@ interface IERC20Mintable {
     event Premint(address indexed minter, address indexed to, uint256 newAmount, uint256 oldAmount, uint256 release);
 
     /**
-     * @notice Emitted when one release time for all existing or future premints has been substituted with another time
+     * @notice Emitted when one release for all existing or future premints has been rescheduled to another release
      *
-     * @param minter The address of the minter who initiated the release substitution
-     * @param originalRelease The premint release time that has been substituted
-     * @param targetRelease The target premint release time that is set during the substitution
+     * @param minter The address of the minter who initiated the rescheduling
+     * @param originalRelease The premint release timestamp that has been rescheduled
+     * @param targetRelease The target premint release timestamp that is set during the rescheduling
      */
-    event PremintReleaseSubstituted(
+    event PremintsRescheduled(
         address indexed minter,
         uint256 indexed originalRelease,
         uint256 indexed targetRelease
@@ -172,14 +172,14 @@ interface IERC20Mintable {
     function premintDecrease(address account, uint256 amount, uint256 release) external;
 
     /**
-     * @notice Substitutes one release time for all existing or future premints with another release time
+     * @notice Reschedules one release timestamp for all existing or future premints with another release timestamp
      *
-     * Emits a {PremintReleaseSubstituted} event
+     * Emits a {PremintsRescheduled} event
      *
-     * @param originalRelease The premint release time to be substituted
-     * @param targetRelease The target premint release time to be set during the substitution
+     * @param originalRelease The premint release timestamp to be rescheduled
+     * @param targetRelease The target premint release timestamp to be set during the rescheduling
      */
-    function substitutePremintRelease(uint256 originalRelease, uint256 targetRelease) external;
+    function reschedulePremints(uint256 originalRelease, uint256 targetRelease) external;
 
     /**
      * @notice Burns tokens
