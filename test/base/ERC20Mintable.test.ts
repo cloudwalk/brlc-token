@@ -801,39 +801,75 @@ describe("Contract 'ERC20Mintable'", async () => {
 
         const premintBalances: BigNumber[] = [];
         premintBalances.push(await token.balanceOfPremint(user.address));
-        for (const releaseTimestamp of [...originalReleaseTimestamps, targetReleaseTimestamp]) {
-          await time.increaseTo(releaseTimestamp);
-          premintBalances.push(await token.balanceOfPremint(user.address));
-        }
+        const newPremint: Premint = ({ amount: TOKEN_AMOUNT, release: timestamp + 1000 });
 
+        // Shift the block time to the first original release timestamp
+        await time.increaseTo(originalReleaseTimestamps[0]);
+
+        // Check that the premints are still here after adding and removing a new one
+        await proveTx(token.connect(minter).premintIncrease(user.address, newPremint.amount, newPremint.release));
+        await proveTx(token.connect(minter).premintDecrease(user.address, newPremint.amount, newPremint.release));
+        await checkPremints(token, expectedPremints);
+        premintBalances.push(await token.balanceOfPremint(user.address));
+
+        // Shift the block time to the next original release timestamp
+        await time.increaseTo(originalReleaseTimestamps[1]);
+
+        // Check that the premints are still here after adding and removing a new one
+        await proveTx(token.connect(minter).premintIncrease(user.address, newPremint.amount, newPremint.release));
+        await proveTx(token.connect(minter).premintDecrease(user.address, newPremint.amount, newPremint.release));
+        await checkPremints(token, expectedPremints);
+        premintBalances.push(await token.balanceOfPremint(user.address));
+
+        // Shift the block time to the target release timestamp
+        await time.increaseTo(targetReleaseTimestamp);
+
+        // Check that the premints disappeared after adding a new one
+        await proveTx(token.connect(minter).premintIncrease(user.address, newPremint.amount, newPremint.release));
+        await checkPremints(token, [newPremint]);
+        await proveTx(token.connect(minter).premintDecrease(user.address, newPremint.amount, newPremint.release));
+        premintBalances.push(await token.balanceOfPremint(user.address));
+
+        // Check premint balances at each timestamp
         expect(premintBalances[0]).to.be.eq(TOKEN_AMOUNT * expectedPremints.length);
         expect(premintBalances[1]).to.be.eq(premintBalances[0]);
         expect(premintBalances[2]).to.be.eq(premintBalances[0]);
         expect(premintBalances[3]).to.be.eq(0);
       });
 
-      it("The configured actual release timestamp is before the original timestamp", async () => {
+      it("The configured target release timestamp is before the original timestamp", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalReleaseTimestamp = timestamp;
-        const actualReleaseTimestamp = timestamp - 10;
+        const targetReleaseTimestamp = timestamp - 10;
         const expectedPremint: Premint = { amount: TOKEN_AMOUNT, release: timestamp };
 
         await proveTx(
           token.connect(minter).premintIncrease(user.address, expectedPremint.amount, expectedPremint.release)
         );
-        await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamp, actualReleaseTimestamp);
-        expectedPremint.release = actualReleaseTimestamp;
+        await substitutePremintReleaseAndCheckEvents(token, originalReleaseTimestamp, targetReleaseTimestamp);
+        expectedPremint.release = targetReleaseTimestamp;
         await checkPremints(token, [expectedPremint]);
-        await checkPremintReleaseResolving(token, originalReleaseTimestamp, actualReleaseTimestamp);
-        await checkPremintOriginalReleaseCounter(token, actualReleaseTimestamp, 1);
+        await checkPremintReleaseResolving(token, originalReleaseTimestamp, targetReleaseTimestamp);
+        await checkPremintOriginalReleaseCounter(token, targetReleaseTimestamp, 1);
 
         const premintBalances: BigNumber[] = [];
         premintBalances.push(await token.balanceOfPremint(user.address));
-        for (const releaseTimestamp of [actualReleaseTimestamp, originalReleaseTimestamp]) {
-          await time.increaseTo(releaseTimestamp);
-          premintBalances.push(await token.balanceOfPremint(user.address));
-        }
+        const newPremint: Premint = ({ amount: TOKEN_AMOUNT, release: timestamp + 1000 });
 
+        // Shift the block time to the target release timestamp
+        await time.increaseTo(targetReleaseTimestamp);
+
+        // Check that the premints disappeared after adding a new one
+        await proveTx(token.connect(minter).premintIncrease(user.address, newPremint.amount, newPremint.release));
+        await checkPremints(token, [newPremint]);
+        await proveTx(token.connect(minter).premintDecrease(user.address, newPremint.amount, newPremint.release));
+        premintBalances.push(await token.balanceOfPremint(user.address));
+
+        // Shift the block time to the original release timestamp
+        await time.increaseTo(originalReleaseTimestamp);
+        premintBalances.push(await token.balanceOfPremint(user.address));
+
+        // Check premint balances at each timestamp
         expect(premintBalances[0]).to.be.eq(TOKEN_AMOUNT);
         expect(premintBalances[1]).to.be.eq(0);
         expect(premintBalances[2]).to.be.eq(0);
