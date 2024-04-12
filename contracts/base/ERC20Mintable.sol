@@ -316,7 +316,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
         PremintRecord[] storage premints = storageSlot.premints[account].premintRecords;
         for (uint256 i = 0; i < premints.length; i++) {
-            uint256 targetRelease = _resolvePremintRelease(storageSlot.premintReschedulings, premints[i].release);
+            uint256 targetRelease = _resolvePremintRelease(premints[i].release, storageSlot.premintReschedulings);
             if (targetRelease > block.timestamp) {
                 balance += premints[i].amount;
             }
@@ -332,7 +332,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         PremintRecord[] memory records = storageSlot.premints[account].premintRecords;
         for (uint256 i = 0; i < records.length; ++i) {
             records[i].release = _toUint64(
-                _resolvePremintRelease(storageSlot.premintReschedulings, records[i].release)
+                _resolvePremintRelease(records[i].release, storageSlot.premintReschedulings)
             );
         }
         return records;
@@ -352,7 +352,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      */
     function resolvePremintRelease(uint256 release) external view returns (uint256) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
-        return _resolvePremintRelease(storageSlot.premintReschedulings, release);
+        return _resolvePremintRelease(release, storageSlot.premintReschedulings);
     }
 
     /**
@@ -453,7 +453,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
         for (uint256 i = 0; i < premintRecords.length; ) {
             PremintRecord storage premintRecord = premintRecords[i];
-            uint256 targetRelease = _resolvePremintRelease(storageSlot.premintReschedulings, premintRecord.release);
+            uint256 targetRelease = _resolvePremintRelease(premintRecord.release, storageSlot.premintReschedulings);
             if (targetRelease < block.timestamp) {
                 _deletePremintRecord(premintRecords, i);
                 continue;
@@ -514,7 +514,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         }
         originalRelease = _toUint64(originalRelease);
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
-        uint256 oldTargetRelease = _resolvePremintRelease(storageSlot.premintReschedulings, originalRelease);
+        uint256 oldTargetRelease = _resolvePremintRelease(originalRelease, storageSlot.premintReschedulings);
         if (oldTargetRelease <= block.timestamp) {
             revert PremintReleaseTimePassed();
         }
@@ -538,8 +538,8 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     function _resolvePremintRelease(
-        mapping(uint256 => uint256) storage reschedulings,
-        uint256 release
+        uint256 release,
+        mapping(uint256 => uint256) storage reschedulings
     ) internal view returns (uint256) {
         uint256 targetRelease = reschedulings[release];
         if (targetRelease == 0) {
