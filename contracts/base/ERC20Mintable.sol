@@ -286,7 +286,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The being rescheduled release must be in the future taking into account existing reschedulings if any
      * @dev The rescheduling with the provided parameters must not be already configured
      * @dev The rescheduling must not make a chain of reschedulings, like A => B => C
-     * @dev The target release timestamp must be not greater than uint64 max value
+     * @dev The original and target release timestamps must be not greater than uint64 max value
      */
     function reschedulePremints(
         uint256 originalRelease,
@@ -511,6 +511,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         if (newTargetRelease <= block.timestamp) {
             revert PremintsReschedulingTimePassed();
         }
+        originalRelease = _toUint64(originalRelease);
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
         uint256 oldTargetRelease = _resolvePremintRelease(storageSlot.premintReschedulings, originalRelease);
         if (oldTargetRelease <= block.timestamp) {

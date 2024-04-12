@@ -494,7 +494,7 @@ describe("Contract 'ERC20Mintable'", async () => {
           release: timestamp * 2,
           premintCount: MAX_PENDING_PREMINTS_COUNT,
           premintIndex: MAX_PENDING_PREMINTS_COUNT - 1,
-          balanceOfPremint: TOKEN_AMOUNT * MAX_PENDING_PREMINTS_COUNT + 1,
+          balanceOfPremint: TOKEN_AMOUNT * MAX_PENDING_PREMINTS_COUNT + 1
         });
       });
 
@@ -979,6 +979,15 @@ describe("Contract 'ERC20Mintable'", async () => {
         await expect(
           token.connect(minter).reschedulePremints(targetRelease1, targetRelease2)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINTS_RESCHEDULING_CHAIN);
+      });
+
+      it("The provided original release time is greater than 64-bit unsigned integer", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const originalRelease = BigNumber.from("18446744073709551616"); // uint64 max + 1
+        const targetRelease = timestamp + 1;
+        await expect(token.connect(minter).reschedulePremints(originalRelease, targetRelease))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE)
+          .withArgs(originalRelease);
       });
 
       it("The provided target release time is greater than 64-bit unsigned integer", async () => {
