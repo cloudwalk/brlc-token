@@ -753,6 +753,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       originalRelease: number,
       targetRelease: number
     ) {
+      const oldTargetRelease = await token.resolvePremintRelease(originalRelease);
       await expect(
         token.connect(minter).reschedulePremints(
           originalRelease,
@@ -764,7 +765,8 @@ describe("Contract 'ERC20Mintable'", async () => {
       ).withArgs(
         minter.address,
         originalRelease,
-        targetRelease
+        targetRelease,
+        oldTargetRelease
       );
     }
 

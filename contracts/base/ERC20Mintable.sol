@@ -534,7 +534,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             storageSlot.premintReschedulings[originalRelease] = _toUint64(newTargetRelease);
             storageSlot.premintOriginalReleaseCounters[newTargetRelease] += 1;
         }
-        emit PremintsRescheduled(_msgSender(), originalRelease, newTargetRelease);
+        emit PremintsRescheduled(_msgSender(), originalRelease, newTargetRelease, oldTargetRelease);
     }
 
     function _resolvePremintRelease(
