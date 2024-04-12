@@ -283,6 +283,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The contract must not be paused
      * @dev Can only be called by a minter account
      * @dev The message sender must not be blocklisted
+     * @dev The provided target release timestamp must be in the future
      * @dev The being rescheduled release must be in the future taking into account existing reschedulings if any
      * @dev The rescheduling with the provided parameters must not be already configured
      * @dev The rescheduling must not make a chain of reschedulings, like A => B => C
