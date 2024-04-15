@@ -21,6 +21,8 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     struct ExtendedStorageSlot {
         mapping(address => PremintState) premints;
         uint16 maxPendingPremintsCount;
+        mapping(uint256 => uint256) premintReschedulings;
+        mapping(uint256 => uint256) premintReschedulingCounters;
     }
 
     /// @notice The structure that represents an array of premint records
@@ -80,8 +82,17 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /// @notice The maximum number of pending premints has been reached
     error MaxPendingPremintsLimitReached();
 
-    /// @notice The premint release time must be in the future
+    /// @notice The premint release timestamp must be in the future
     error PremintReleaseTimePassed();
+
+    /// @notice The premint rescheduling with the provided parameters is already configured
+    error PremintReschedulingAlreadyConfigured();
+
+    /// @notice The target premint release timestamp for the premint rescheduling must be in the future
+    error PremintReschedulingTimePassed();
+
+    /// @notice The premint rescheduling leads to a rescheduling chain like A => B => C that is prohibited
+    error PremintReschedulingChain();
 
     /// @notice The premint operation assumes changing of an existing premint, but it is not found
     error PremintNonExistent();
@@ -272,6 +283,25 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The contract must not be paused
      * @dev Can only be called by a minter account
      * @dev The message sender must not be blocklisted
+     * @dev The provided target release timestamp must be in the future
+     * @dev The being rescheduled release must be in the future taking into account existing reschedulings if any
+     * @dev The rescheduling with the provided parameters must not be already configured
+     * @dev The rescheduling must not make a chain of reschedulings, like A => B => C
+     * @dev The original and target release timestamps must be not greater than uint64 max value
+     */
+    function reschedulePremintRelease(
+        uint256 originalRelease,
+        uint256 targetRelease
+    ) external whenNotPaused onlyMinter notBlocklisted(_msgSender()) {
+        _reschedulePremintRelease(originalRelease, targetRelease);
+    }
+
+    /**
+     * @inheritdoc IERC20Mintable
+     *
+     * @dev The contract must not be paused
+     * @dev Can only be called by a minter account
+     * @dev The message sender must not be blocklisted
      * @dev The `amount` value must be greater than zero
      */
     function burn(uint256 amount) external onlyMinter notBlocklisted(_msgSender()) {
@@ -286,19 +316,26 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
         PremintRecord[] storage premints = storageSlot.premints[account].premintRecords;
         for (uint256 i = 0; i < premints.length; i++) {
-            if (premints[i].release > block.timestamp) {
+            uint256 targetRelease = _resolvePremintRelease(premints[i].release, storageSlot.premintReschedulings);
+            if (targetRelease > block.timestamp) {
                 balance += premints[i].amount;
             }
         }
     }
 
     /**
-     * @notice Returns the array of premint records for a given account
+     * @notice Returns the array of premint records for a given account including release reschedulings
      * @param account The address of the account to get the premint records for
      */
     function getPremints(address account) external view returns (PremintRecord[] memory) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
-        return storageSlot.premints[account].premintRecords;
+        PremintRecord[] memory records = storageSlot.premints[account].premintRecords;
+        for (uint256 i = 0; i < records.length; ++i) {
+            records[i].release = _toUint64(
+                _resolvePremintRelease(records[i].release, storageSlot.premintReschedulings)
+            );
+        }
+        return records;
     }
 
     /**
@@ -307,6 +344,24 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     function maxPendingPremintsCount() external view returns (uint256) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
         return storageSlot.maxPendingPremintsCount;
+    }
+
+    /**
+     * @notice Returns the target premint release timestamp corresponding to a provided one with possible reschedulings
+     * @param release The original premint release timestamp to check
+     */
+    function resolvePremintRelease(uint256 release) external view returns (uint256) {
+        ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
+        return _resolvePremintRelease(release, storageSlot.premintReschedulings);
+    }
+
+    /**
+     * @notice Returns the number of original premint releases that have been rescheduled to a provided release
+     * @param release The premint release timestamp to check for usage as a target release in existing reschedulings
+     */
+    function getPremintReschedulingCounter(uint256 release) external view returns (uint256) {
+        ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
+        return storageSlot.premintReschedulingCounters[release];
     }
 
     /**
@@ -398,7 +453,8 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
         for (uint256 i = 0; i < premintRecords.length; ) {
             PremintRecord storage premintRecord = premintRecords[i];
-            if (premintRecord.release < block.timestamp) {
+            uint256 targetRelease = _resolvePremintRelease(premintRecord.release, storageSlot.premintReschedulings);
+            if (targetRelease < block.timestamp) {
                 _deletePremintRecord(premintRecords, i);
                 continue;
             }
@@ -450,6 +506,47 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         }
 
         emit Premint(_msgSender(), account, newAmount, oldAmount, release);
+    }
+
+    function _reschedulePremintRelease(uint256 originalRelease, uint256 newTargetRelease) internal {
+        if (newTargetRelease <= block.timestamp) {
+            revert PremintReschedulingTimePassed();
+        }
+        originalRelease = _toUint64(originalRelease);
+        ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
+        uint256 oldTargetRelease = _resolvePremintRelease(originalRelease, storageSlot.premintReschedulings);
+        if (oldTargetRelease <= block.timestamp) {
+            revert PremintReleaseTimePassed();
+        }
+        if (oldTargetRelease == newTargetRelease) {
+            revert PremintReschedulingAlreadyConfigured();
+        }
+        uint256 precedingOriginalReleaseCounter = storageSlot.premintReschedulingCounters[originalRelease];
+        if (precedingOriginalReleaseCounter != 0) {
+            revert PremintReschedulingChain();
+        }
+        if (oldTargetRelease != originalRelease) {
+            storageSlot.premintReschedulingCounters[oldTargetRelease] -= 1;
+        }
+        if (newTargetRelease == originalRelease) {
+            storageSlot.premintReschedulings[originalRelease] = 0;
+        } else {
+            storageSlot.premintReschedulings[originalRelease] = _toUint64(newTargetRelease);
+            storageSlot.premintReschedulingCounters[newTargetRelease] += 1;
+        }
+        emit PremintReleaseRescheduled(_msgSender(), originalRelease, newTargetRelease, oldTargetRelease);
+    }
+
+    function _resolvePremintRelease(
+        uint256 release,
+        mapping(uint256 => uint256) storage reschedulings
+    ) internal view returns (uint256) {
+        uint256 targetRelease = reschedulings[release];
+        if (targetRelease == 0) {
+            return release;
+        } else {
+            return targetRelease;
+        }
     }
 
     function _toUint64(uint256 value) internal pure returns (uint64) {
