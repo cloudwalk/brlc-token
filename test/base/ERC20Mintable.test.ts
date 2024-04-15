@@ -30,7 +30,7 @@ describe("Contract 'ERC20Mintable'", async () => {
   const EVENT_NAME_TRANSFER = "Transfer";
   const EVENT_NAME_PREMINT = "Premint";
   const EVENT_NAME_MAX_PENDING_PREMINTS_COUNT_CONFIGURED = "MaxPendingPremintsCountConfigured";
-  const EVENT_NAME_PREMINTS_RESCHEDULED = "PremintsRescheduled";
+  const EVENT_NAME_PREMINT_RELEASE_RESCHEDULED = "PremintReleaseRescheduled";
 
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
@@ -50,9 +50,9 @@ describe("Contract 'ERC20Mintable'", async () => {
   const REVERT_ERROR_PREMINT_UNCHANGED = "PremintUnchanged";
   const REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE = "ExceededMintAllowance";
   const REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED = "PremintReleaseTimePassed";
-  const REVERT_ERROR_PREMINTS_RESCHEDULING_ALREADY_CONFIGURED = "PremintsReschedulingAlreadyConfigured";
-  const REVERT_ERROR_PREMINTS_RESCHEDULING_CHAIN = "PremintsReschedulingChain";
-  const REVERT_ERROR_PREMINTS_RESCHEDULING_TIME_PASSED = "PremintsReschedulingTimePassed";
+  const REVERT_ERROR_PREMINT_RESCHEDULING_ALREADY_CONFIGURED = "PremintReschedulingAlreadyConfigured";
+  const REVERT_ERROR_PREMINT_RESCHEDULING_TIME_PASSED = "PremintReschedulingTimePassed";
+  const REVERT_ERROR_PREMINT_RESCHEDULING_CHAIN = "PremintReschedulingChain";
   const REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED = "MaxPendingPremintsLimitReached";
   const REVERT_ERROR_MAX_PENDING_PREMINTS_COUNT_ALREADY_CONFIGURED = "MaxPendingPremintsCountAlreadyConfigured";
   const REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE = "InappropriateUint64Value";
@@ -723,7 +723,7 @@ describe("Contract 'ERC20Mintable'", async () => {
     });
   });
 
-  describe("Function 'reschedulePremints()'", async () => {
+  describe("Function 'reschedulePremintRelease()'", async () => {
     let timestamp: number;
     before(async () => {
       timestamp = (await time.latest()) + 100;
@@ -744,24 +744,24 @@ describe("Contract 'ERC20Mintable'", async () => {
     }
 
     async function checkPremintOriginalReleaseCounter(token: Contract, targetRelease: number, expectedCounter: number) {
-      const actualCounter = await token.connect(minter).getPremintOriginalReleaseCounter(targetRelease);
+      const actualCounter = await token.connect(minter).getPremintReschedulingCounter(targetRelease);
       expect(actualCounter).to.eq(expectedCounter);
     }
 
-    async function reschedulePremintsAndCheckEvents(
+    async function reschedulePremintReleaseAndCheckEvents(
       token: Contract,
       originalRelease: number,
       targetRelease: number
     ) {
       const oldTargetRelease = await token.resolvePremintRelease(originalRelease);
       await expect(
-        token.connect(minter).reschedulePremints(
+        token.connect(minter).reschedulePremintRelease(
           originalRelease,
           targetRelease
         )
       ).to.emit(
         token,
-        EVENT_NAME_PREMINTS_RESCHEDULED
+        EVENT_NAME_PREMINT_RELEASE_RESCHEDULED
       ).withArgs(
         minter.address,
         originalRelease,
@@ -787,14 +787,14 @@ describe("Contract 'ERC20Mintable'", async () => {
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], originalReleaseTimestamps[1]);
         await checkPremintOriginalReleaseCounter(token, targetReleaseTimestamp, 0);
 
-        await reschedulePremintsAndCheckEvents(token, originalReleaseTimestamps[0], targetReleaseTimestamp);
+        await reschedulePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[0], targetReleaseTimestamp);
         expectedPremints[0].release = targetReleaseTimestamp;
         await checkPremints(token, expectedPremints);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], targetReleaseTimestamp);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], originalReleaseTimestamps[1]);
         await checkPremintOriginalReleaseCounter(token, targetReleaseTimestamp, 1);
 
-        await reschedulePremintsAndCheckEvents(token, originalReleaseTimestamps[1], targetReleaseTimestamp);
+        await reschedulePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[1], targetReleaseTimestamp);
         expectedPremints[1].release = targetReleaseTimestamp;
         await checkPremints(token, expectedPremints);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], targetReleaseTimestamp);
@@ -842,7 +842,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         await proveTx(
           token.connect(minter).premintIncrease(user.address, expectedPremint.amount, expectedPremint.release)
         );
-        await reschedulePremintsAndCheckEvents(token, originalReleaseTimestamp, targetReleaseTimestamp);
+        await reschedulePremintReleaseAndCheckEvents(token, originalReleaseTimestamp, targetReleaseTimestamp);
         expectedPremint.release = targetReleaseTimestamp;
         await checkPremints(token, [expectedPremint]);
         await checkPremintReleaseResolving(token, originalReleaseTimestamp, targetReleaseTimestamp);
@@ -870,20 +870,20 @@ describe("Contract 'ERC20Mintable'", async () => {
         const originalReleaseTimestamps: number[] = [timestamp, timestamp + 10];
         const targetReleaseTimestamp = timestamp + 20;
 
-        await reschedulePremintsAndCheckEvents(token, originalReleaseTimestamps[0], targetReleaseTimestamp);
-        await reschedulePremintsAndCheckEvents(token, originalReleaseTimestamps[1], targetReleaseTimestamp);
+        await reschedulePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[0], targetReleaseTimestamp);
+        await reschedulePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[1], targetReleaseTimestamp);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], targetReleaseTimestamp);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], targetReleaseTimestamp);
         await checkPremintOriginalReleaseCounter(token, targetReleaseTimestamp, 2);
         await checkPremintOriginalReleaseCounter(token, originalReleaseTimestamps[0], 0);
         await checkPremintOriginalReleaseCounter(token, originalReleaseTimestamps[1], 0);
 
-        await reschedulePremintsAndCheckEvents(token, originalReleaseTimestamps[0], originalReleaseTimestamps[0]);
+        await reschedulePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[0], originalReleaseTimestamps[0]);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], originalReleaseTimestamps[0]);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], targetReleaseTimestamp);
         await checkPremintOriginalReleaseCounter(token, targetReleaseTimestamp, 1);
 
-        await reschedulePremintsAndCheckEvents(token, originalReleaseTimestamps[1], originalReleaseTimestamps[1]);
+        await reschedulePremintReleaseAndCheckEvents(token, originalReleaseTimestamps[1], originalReleaseTimestamps[1]);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], originalReleaseTimestamps[0]);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[1], originalReleaseTimestamps[1]);
         await checkPremintOriginalReleaseCounter(token, targetReleaseTimestamp, 0);
@@ -901,7 +901,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const targetRelease = timestamp + 1;
         await proveTx(token.connect(pauser).pause());
         await expect(
-          token.connect(minter).reschedulePremints(originalRelease, targetRelease)
+          token.connect(minter).reschedulePremintRelease(originalRelease, targetRelease)
         ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
       });
 
@@ -909,7 +909,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalRelease = timestamp;
         const targetRelease = timestamp + 1;
-        await expect(token.connect(user).reschedulePremints(originalRelease, targetRelease))
+        await expect(token.connect(user).reschedulePremintRelease(originalRelease, targetRelease))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MINTER)
           .withArgs(user.address);
       });
@@ -920,7 +920,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const targetRelease = timestamp + 1;
         await proveTx(token.connect(mainBlocklister).configureBlocklister(minter.address, true));
         await proveTx(token.connect(minter).selfBlocklist());
-        await expect(token.connect(minter).reschedulePremints(originalRelease, targetRelease))
+        await expect(token.connect(minter).reschedulePremintRelease(originalRelease, targetRelease))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
           .withArgs(minter.address);
       });
@@ -930,8 +930,8 @@ describe("Contract 'ERC20Mintable'", async () => {
         const originalRelease = timestamp;
         const targetRelease = await time.latest() - 1;
         await expect(
-          token.connect(minter).reschedulePremints(originalRelease, targetRelease)
-        ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINTS_RESCHEDULING_TIME_PASSED);
+          token.connect(minter).reschedulePremintRelease(originalRelease, targetRelease)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RESCHEDULING_TIME_PASSED);
       });
 
       it("The provided original release time has passed", async () => {
@@ -939,7 +939,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const originalRelease = await time.latest() - 1;
         const targetRelease = originalRelease + 1000;
         await expect(
-          token.connect(minter).reschedulePremints(originalRelease, targetRelease)
+          token.connect(minter).reschedulePremintRelease(originalRelease, targetRelease)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED);
       });
 
@@ -948,28 +948,28 @@ describe("Contract 'ERC20Mintable'", async () => {
         const originalRelease = timestamp;
         const targetRelease1 = originalRelease + 1;
         const targetRelease2 = originalRelease + 1000;
-        await proveTx(token.connect(minter).reschedulePremints(originalRelease, targetRelease1));
+        await proveTx(token.connect(minter).reschedulePremintRelease(originalRelease, targetRelease1));
         await time.increaseTo(targetRelease1);
         await expect(
-          token.connect(minter).reschedulePremints(originalRelease, targetRelease2)
+          token.connect(minter).reschedulePremintRelease(originalRelease, targetRelease2)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED);
       });
 
       it("The provided original release time equals the provided target release time", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(
-          token.connect(minter).reschedulePremints(timestamp, timestamp)
-        ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINTS_RESCHEDULING_ALREADY_CONFIGURED);
+          token.connect(minter).reschedulePremintRelease(timestamp, timestamp)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RESCHEDULING_ALREADY_CONFIGURED);
       });
 
       it("The provided target release time is already configured", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalRelease = timestamp;
         const targetRelease = timestamp + 1;
-        await proveTx(token.connect(minter).reschedulePremints(originalRelease, targetRelease));
+        await proveTx(token.connect(minter).reschedulePremintRelease(originalRelease, targetRelease));
         await expect(
-          token.connect(minter).reschedulePremints(originalRelease, targetRelease)
-        ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINTS_RESCHEDULING_ALREADY_CONFIGURED);
+          token.connect(minter).reschedulePremintRelease(originalRelease, targetRelease)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RESCHEDULING_ALREADY_CONFIGURED);
       });
 
       it("A rescheduling chain will be made in result", async () => {
@@ -977,17 +977,17 @@ describe("Contract 'ERC20Mintable'", async () => {
         const originalRelease = timestamp;
         const targetRelease1 = timestamp + 1;
         const targetRelease2 = timestamp + 2;
-        await proveTx(token.connect(minter).reschedulePremints(originalRelease, targetRelease1));
+        await proveTx(token.connect(minter).reschedulePremintRelease(originalRelease, targetRelease1));
         await expect(
-          token.connect(minter).reschedulePremints(targetRelease1, targetRelease2)
-        ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINTS_RESCHEDULING_CHAIN);
+          token.connect(minter).reschedulePremintRelease(targetRelease1, targetRelease2)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RESCHEDULING_CHAIN);
       });
 
       it("The provided original release time is greater than 64-bit unsigned integer", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalRelease = BigNumber.from("18446744073709551616"); // uint64 max + 1
         const targetRelease = timestamp + 1;
-        await expect(token.connect(minter).reschedulePremints(originalRelease, targetRelease))
+        await expect(token.connect(minter).reschedulePremintRelease(originalRelease, targetRelease))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE)
           .withArgs(originalRelease);
       });
@@ -996,7 +996,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalRelease = timestamp;
         const targetRelease = BigNumber.from("18446744073709551616"); // uint64 max + 1
-        await expect(token.connect(minter).reschedulePremints(originalRelease, targetRelease))
+        await expect(token.connect(minter).reschedulePremintRelease(originalRelease, targetRelease))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE)
           .withArgs(targetRelease);
       });

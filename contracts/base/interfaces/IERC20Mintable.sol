@@ -57,14 +57,14 @@ interface IERC20Mintable {
     );
 
     /**
-     * @notice Emitted when one release for all existing or future premints has been rescheduled to another release
+     * @notice Emitted when premint release is rescheduled
      *
      * @param minter The address of the minter who initiated the rescheduling
      * @param originalRelease The premint release timestamp that has been rescheduled
-     * @param newTargetRelease The new target premint release timestamp that is set during the rescheduling
+     * @param newTargetRelease The new target premint release timestamp set during the rescheduling
      * @param oldTargetRelease The old target premint release timestamp before the rescheduling
      */
-    event PremintsRescheduled(
+    event PremintReleaseRescheduled(
         address indexed minter,
         uint256 indexed originalRelease,
         uint256 indexed newTargetRelease,
@@ -180,14 +180,14 @@ interface IERC20Mintable {
     function premintDecrease(address account, uint256 amount, uint256 release) external;
 
     /**
-     * @notice Reschedules one release timestamp for all existing or future premints with another release timestamp
+     * @notice Reschedules original premint release to a new target release
      *
-     * Emits a {PremintsRescheduled} event
+     * Emits a {PremintReleaseRescheduled} event
      *
-     * @param originalRelease The premint release timestamp to be rescheduled
-     * @param targetRelease The target premint release timestamp to be set during the rescheduling
+     * @param originalRelease The timestamp of the original premint release to be rescheduled
+     * @param targetRelease The new timestamp of the premint release to set during the rescheduling
      */
-    function reschedulePremints(uint256 originalRelease, uint256 targetRelease) external;
+    function reschedulePremintRelease(uint256 originalRelease, uint256 targetRelease) external;
 
     /**
      * @notice Burns tokens
