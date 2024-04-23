@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.16;
+ pragma solidity ^0.8.8;
 
 import { IERC20Bridgeable } from "./interfaces/IERC20Bridgeable.sol";
 import { IERC20Freezable } from "./interfaces/IERC20Freezable.sol";
