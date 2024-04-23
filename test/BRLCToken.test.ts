@@ -1,7 +1,7 @@
 import { ethers, network, upgrades } from "hardhat";
 import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
@@ -20,7 +20,7 @@ describe("Contract 'BRLCToken'", async () => {
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
 
   let tokenFactory: ContractFactory;
-  let deployer: SignerWithAddress;
+  let deployer: HardhatEthersSigner;
 
   before(async () => {
     [deployer] = await ethers.getSigners();
@@ -29,7 +29,7 @@ describe("Contract 'BRLCToken'", async () => {
 
   async function deployToken(): Promise<{ token: Contract }> {
     const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
-    await token.deployed();
+    await token.waitForDeployment();
     return { token };
   }
 
@@ -40,10 +40,10 @@ describe("Contract 'BRLCToken'", async () => {
       expect(await token.symbol()).to.equal(TOKEN_SYMBOL);
       expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
       expect(await token.owner()).to.equal(deployer.address);
-      expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
-      expect(await token.rescuer()).to.equal(ethers.constants.AddressZero);
-      expect(await token.mainBlocklister()).to.equal(ethers.constants.AddressZero);
-      expect(await token.mainMinter()).to.equal(ethers.constants.AddressZero);
+      expect(await token.pauser()).to.equal(ethers.ZeroAddress);
+      expect(await token.rescuer()).to.equal(ethers.ZeroAddress);
+      expect(await token.mainBlocklister()).to.equal(ethers.ZeroAddress);
+      expect(await token.mainMinter()).to.equal(ethers.ZeroAddress);
     });
 
     it("Is reverted if called for the second time", async () => {
@@ -54,8 +54,8 @@ describe("Contract 'BRLCToken'", async () => {
     });
 
     it("Is reverted if the contract implementation is called even for the first time", async () => {
-      const tokenImplementation: Contract = await tokenFactory.deploy();
-      await tokenImplementation.deployed();
+      const tokenImplementation: Contract = await (tokenFactory.deploy()) as Contract;
+      await tokenImplementation.waitForDeployment();
       await expect(
         tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);

@@ -1,7 +1,7 @@
 import { ethers, network, upgrades } from "hardhat";
 import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { proveTx } from "../../test-utils/eth";
 
@@ -18,7 +18,7 @@ describe("Contract 'ERC20Trustable'", async () => {
   const TOKEN_SYMBOL = "BRLC";
 
   const APPROVE_AMOUNT = 123;
-  const MAX_APPROVE_AMOUNT = ethers.constants.MaxUint256;
+  const MAX_APPROVE_AMOUNT = ethers.MaxUint256;
 
   const EVENT_NAME_TRUSTED_ACCOUNT_CONFIGURED = "TrustedAccountConfigured";
 
@@ -29,9 +29,9 @@ describe("Contract 'ERC20Trustable'", async () => {
   const REVERT_ERROR_TRUSTED_ACCOUNT_ALREADY_CONFIGURED = "TrustedAccountAlreadyConfigured";
 
   let tokenFactory: ContractFactory;
-  let deployer: SignerWithAddress;
-  let user: SignerWithAddress;
-  let trustedAccount: SignerWithAddress;
+  let deployer: HardhatEthersSigner;
+  let user: HardhatEthersSigner;
+  let trustedAccount: HardhatEthersSigner;
 
   before(async () => {
     [deployer, user, trustedAccount] = await ethers.getSigners();
@@ -40,7 +40,7 @@ describe("Contract 'ERC20Trustable'", async () => {
 
   async function deployToken(): Promise<{ token: Contract }> {
     const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
-    await token.deployed();
+    await token.waitForDeployment();
     return { token };
   }
 
@@ -48,8 +48,8 @@ describe("Contract 'ERC20Trustable'", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.owner()).to.equal(deployer.address);
-      expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
-      expect(await token.mainBlocklister()).to.equal(ethers.constants.AddressZero);
+      expect(await token.pauser()).to.equal(ethers.ZeroAddress);
+      expect(await token.mainBlocklister()).to.equal(ethers.ZeroAddress);
     });
 
     it("Is reverted if called for the second time", async () => {
@@ -59,8 +59,8 @@ describe("Contract 'ERC20Trustable'", async () => {
     });
 
     it("Is reverted if the contract implementation is called even for the first time", async () => {
-      const tokenImplementation: Contract = await tokenFactory.deploy();
-      await tokenImplementation.deployed();
+      const tokenImplementation = (await tokenFactory.deploy()) as Contract;
+      await tokenImplementation.waitForDeployment();
       await expect(tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL))
         .to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
@@ -109,7 +109,7 @@ describe("Contract 'ERC20Trustable'", async () => {
 
     it("Is reverted if the caller is not an owner", async () => {
       const { token } = await setUpFixture(deployToken);
-      expect(token.connect(user).configureTrustedAccount(trustedAccount.address, true))
+      expect((token.connect(user) as Contract).configureTrustedAccount(trustedAccount.address, true))
         .to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
   });
@@ -121,7 +121,7 @@ describe("Contract 'ERC20Trustable'", async () => {
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(0);
 
-      await proveTx(token.connect(user).approve(trustedAccount.address, APPROVE_AMOUNT));
+      await proveTx((token.connect(user) as Contract).approve(trustedAccount.address, APPROVE_AMOUNT));
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(APPROVE_AMOUNT);
 
@@ -129,7 +129,7 @@ describe("Contract 'ERC20Trustable'", async () => {
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(MAX_APPROVE_AMOUNT);
 
-      await proveTx(token.connect(user).approve(trustedAccount.address, APPROVE_AMOUNT * 2));
+      await proveTx((token.connect(user) as Contract).approve(trustedAccount.address, APPROVE_AMOUNT * 2));
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(MAX_APPROVE_AMOUNT);
 

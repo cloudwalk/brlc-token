@@ -1,7 +1,7 @@
 import { ethers, network, upgrades } from "hardhat";
 import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
@@ -20,8 +20,8 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
 
   let tokenFactory: ContractFactory;
-  let deployer: SignerWithAddress;
-  let bridge: SignerWithAddress;
+  let deployer: HardhatEthersSigner;
+  let bridge: HardhatEthersSigner;
 
   before(async () => {
     [deployer, bridge] = await ethers.getSigners();
@@ -30,7 +30,7 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
 
   async function deployToken(): Promise<{ token: Contract }> {
     const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL, bridge.address]);
-    await token.deployed();
+    await token.waitForDeployment();
     return { token };
   }
 
@@ -41,9 +41,9 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
       expect(await token.symbol()).to.equal(TOKEN_SYMBOL);
       expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
       expect(await token.owner()).to.equal(deployer.address);
-      expect(await token.pauser()).to.equal(ethers.constants.AddressZero);
-      expect(await token.rescuer()).to.equal(ethers.constants.AddressZero);
-      expect(await token.mainBlocklister()).to.equal(ethers.constants.AddressZero);
+      expect(await token.pauser()).to.equal(ethers.ZeroAddress);
+      expect(await token.rescuer()).to.equal(ethers.ZeroAddress);
+      expect(await token.mainBlocklister()).to.equal(ethers.ZeroAddress);
       expect(await token.isBridgeSupported(bridge.address)).to.equal(true);
       expect(await token.isIERC20Bridgeable()).to.equal(true);
       expect(await token.bridge()).to.equal(bridge.address);
@@ -57,8 +57,8 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
     });
 
     it("Is reverted if the contract implementation is called even for the first time", async () => {
-      const tokenImplementation: Contract = await tokenFactory.deploy();
-      await tokenImplementation.deployed();
+      const tokenImplementation: Contract = (await tokenFactory.deploy()) as Contract;
+      await tokenImplementation.waitForDeployment();
       await expect(
         tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge.address)
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
