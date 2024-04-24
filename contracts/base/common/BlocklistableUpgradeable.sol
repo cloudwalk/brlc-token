@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
- pragma solidity ^0.8.4;
+pragma solidity ^0.8.4;
 
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 

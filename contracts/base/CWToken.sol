@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
- pragma solidity ^0.8.20;
+pragma solidity ^0.8.20;
 
 import { ERC20Base } from "./ERC20Base.sol";
 import { ERC20Mintable } from "./ERC20Mintable.sol";
@@ -129,7 +129,10 @@ contract CWToken is
      * @dev See {ERC20Base-allowance}
      * @dev See {ERC20Trustable-allowance}
      */
-    function allowance(address owner, address spender) public view override(ERC20Base, ERC20Trustable) returns (uint256) {
+    function allowance(
+        address owner,
+        address spender
+    ) public view override(ERC20Base, ERC20Trustable) returns (uint256) {
         return super.allowance(owner, spender);
     }
 

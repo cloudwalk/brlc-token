@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
- pragma solidity ^0.8.4;
+
+pragma solidity ^0.8.0;
 
 /**
  * @title IERC20ComplexBalance interface
@@ -9,15 +10,15 @@
 interface IERC20ComplexBalance {
     /// @notice A struct that defines the current state of the complex balance of the account
     struct ComplexBalance {
-        /// The total amount of tokens that is equal the value returned by the usual `ERC20.balanceOf()` function
+        // The total amount of tokens that is equal the value returned by the usual `ERC20.balanceOf()` function
         uint256 total;
-        /// The amount of tokens that are available without any limitations described in the subsequent fields
+        // The amount of tokens that are available without any limitations described in the subsequent fields
         uint256 free;
-        /// The total amount of pre-minted tokens of the account that have not been released yet
+        // The total amount of pre-minted tokens of the account that have not been released yet
         uint256 premint;
-        /// The amount of tokens that are frozen
+        // The amount of tokens that are frozen
         uint256 frozen;
-        /// The total amount of tokens that are restricted (Sum of all restricted balances regardless of purpose)
+        // The total amount of tokens that are restricted (Sum of all restricted balances regardless of purpose)
         uint256 restricted;
     }
 
