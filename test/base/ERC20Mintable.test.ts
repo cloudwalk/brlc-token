@@ -78,6 +78,7 @@ describe("Contract 'ERC20Mintable'", async () => {
   before(async () => {
     [deployer, pauser, mainBlocklister, mainMinter, minter, user] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20MintableMock");
+    tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployToken(): Promise<{ token: Contract }> {

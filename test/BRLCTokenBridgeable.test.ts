@@ -26,11 +26,13 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
   before(async () => {
     [deployer, bridge] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("BRLCTokenBridgeable");
+    tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL, bridge.address]);
+    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL, bridge.address]);
     await token.waitForDeployment();
+    token = token.connect(deployer) as Contract; // Explicitly specifying the initial account
     return { token };
   }
 

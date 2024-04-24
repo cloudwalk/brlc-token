@@ -39,6 +39,7 @@ describe("Contract 'ERC20Base'", async () => {
   before(async () => {
     [deployer, pauser, user1, user2] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20BaseMock");
+    tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployToken(): Promise<{ token: Contract }> {

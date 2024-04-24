@@ -25,11 +25,13 @@ describe("Contract 'USJimToken'", async () => {
   before(async () => {
     [deployer] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("USJimToken");
+    tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
+    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
     await token.waitForDeployment();
+    token = token.connect(deployer) as Contract; // Explicitly specifying the initial account
     return { token };
   }
 

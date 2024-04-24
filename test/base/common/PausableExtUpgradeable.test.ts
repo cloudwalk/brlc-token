@@ -32,6 +32,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
   before(async () => {
     [deployer, pauser, user] = await ethers.getSigners();
     pausableExtFactory = await ethers.getContractFactory("PausableExtUpgradeableMock");
+    pausableExtFactory = pausableExtFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployPausableExt(): Promise<{ pausableExt: Contract }> {

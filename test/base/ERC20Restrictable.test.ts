@@ -41,6 +41,7 @@ describe("Contract 'ERC20Restrictable'", async () => {
   before(async () => {
     [deployer, pauser, blocklister, user1, user2, purposeAccount1, purposeAccount2] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20RestrictableMock");
+    tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployToken(): Promise<{ token: Contract }> {

@@ -45,6 +45,7 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
   before(async () => {
     [deployer, blocklister, user] = await ethers.getSigners();
     blocklistableFactory = await ethers.getContractFactory("BlocklistableUpgradeableMock");
+    blocklistableFactory = blocklistableFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployBlocklistable(): Promise<{ blocklistable: Contract }> {

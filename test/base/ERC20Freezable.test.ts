@@ -44,6 +44,7 @@ describe("Contract 'ERC20Freezable'", async () => {
   before(async () => {
     [deployer, pauser, blocklister, user1, user2] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20FreezableMock");
+    tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployToken(): Promise<{ token: Contract }> {

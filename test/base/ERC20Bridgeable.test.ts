@@ -43,6 +43,7 @@ describe("Contract 'ERC20Bridgeable'", async () => {
   before(async () => {
     [deployer, bridge1, bridge2, user] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20BridgeableMock");
+    tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployToken(): Promise<{ token: Contract }> {

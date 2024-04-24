@@ -33,9 +33,11 @@ describe("Contract 'RescuableUpgradeable'", async () => {
   let user: HardhatEthersSigner;
 
   before(async () => {
+    [deployer, rescuer, user] = await ethers.getSigners();
     rescuableFactory = await ethers.getContractFactory("RescuableUpgradeableMock");
     tokenFactory = await ethers.getContractFactory("ERC20TokenMock");
-    [deployer, rescuer, user] = await ethers.getSigners();
+    rescuableFactory = rescuableFactory.connect(deployer); // Explicitly specifying the deployer account
+    tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
@@ -46,7 +48,8 @@ describe("Contract 'RescuableUpgradeable'", async () => {
   }
 
   async function deployRescuable(): Promise<{ rescuable: Contract }> {
-    const rescuable: Contract = await upgrades.deployProxy(rescuableFactory);
+    let rescuable: Contract = await upgrades.deployProxy(rescuableFactory);
+    rescuable = rescuable.connect(deployer) as Contract; // Explicitly specifying the initial account
     await rescuable.waitForDeployment();
     return { rescuable };
   }

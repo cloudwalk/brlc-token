@@ -33,6 +33,7 @@ describe("Contract 'ERC20HookMock'", async () => {
   before(async () => {
     [deployer, user1, user2] = await ethers.getSigners();
     hookFactory = await ethers.getContractFactory("ERC20HookMock");
+    hookFactory = hookFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployHookable(): Promise<{ hookable: Contract }> {

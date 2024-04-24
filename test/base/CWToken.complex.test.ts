@@ -35,6 +35,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
   before(async () => {
     [deployer, user, purposeAccount, nonPurposeAccount] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("CWToken");
+    tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
