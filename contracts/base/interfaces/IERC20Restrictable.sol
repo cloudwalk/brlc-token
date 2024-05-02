@@ -43,15 +43,6 @@ interface IERC20Restrictable {
     function assignedPurposes(address account) external view returns (bytes32[] memory);
 
     /**
-     * @notice Updates the restriction balance for an account
-     *
-     * @param account The account to update restriction for
-     * @param purpose The restriction purpose
-     * @param balance The new restricted balance
-     */
-    function updateRestriction(address account, bytes32 purpose, uint256 balance) external;
-
-    /**
      * @notice Increases the restriction balance for an account
      *
      * @param account The account to increase restriction for

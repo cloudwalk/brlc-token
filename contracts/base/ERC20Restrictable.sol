@@ -67,26 +67,6 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /**
      * @inheritdoc IERC20Restrictable
      */
-    function updateRestriction(address account, bytes32 purpose, uint256 balance) external onlyBlocklister {
-        if (purpose == bytes32(0)) {
-            revert ZeroPurpose();
-        }
-
-        uint256 oldBalance = _restrictedPurposeBalances[account][purpose];
-        _restrictedPurposeBalances[account][purpose] = balance;
-
-        if (oldBalance > balance) {
-            _totalRestrictedBalances[account] -= oldBalance - balance;
-        } else {
-            _totalRestrictedBalances[account] += balance - oldBalance;
-        }
-
-        emit UpdateRestriction(account, purpose, balance, oldBalance);
-    }
-
-    /**
-     * @inheritdoc IERC20Restrictable
-     */
     function restrictionIncrease(address account, bytes32 purpose, uint256 amount) external onlyBlocklister {
         if (account == address(0)) {
             revert ZeroAddress();
