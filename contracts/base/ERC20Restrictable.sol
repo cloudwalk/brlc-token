@@ -87,6 +87,52 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /**
      * @inheritdoc IERC20Restrictable
      */
+    function restrictionIncrease(address account, bytes32 purpose, uint256 amount) external onlyBlocklister {
+        if (account == address(0)) {
+            revert ZeroAddress();
+        }
+        if (purpose == bytes32(0)) {
+            revert ZeroPurpose();
+        }
+        if (amount == 0) {
+            revert ZeroAmount();
+        }
+
+        uint256 oldBalance = _restrictedPurposeBalances[account][purpose];
+        uint256 newBalance = oldBalance + amount;
+
+        _restrictedPurposeBalances[account][purpose] = newBalance;
+        _totalRestrictedBalances[account] += amount;
+
+        emit UpdateRestriction(account, purpose, newBalance, oldBalance);
+    }
+
+    /**
+     * @inheritdoc IERC20Restrictable
+     */
+    function restrictionDecrease(address account, bytes32 purpose, uint256 amount) external onlyBlocklister {
+        if (account == address(0)) {
+            revert ZeroAddress();
+        }
+        if (purpose == bytes32(0)) {
+            revert ZeroPurpose();
+        }
+        if (amount == 0) {
+            revert ZeroAmount();
+        }
+
+        uint256 oldBalance = _restrictedPurposeBalances[account][purpose];
+        uint256 newBalance = oldBalance - amount;
+
+        _restrictedPurposeBalances[account][purpose] = newBalance;
+        _totalRestrictedBalances[account] -= amount;
+
+        emit UpdateRestriction(account, purpose, newBalance, oldBalance);
+    }
+
+    /**
+     * @inheritdoc IERC20Restrictable
+     */
     function assignedPurposes(address account) external view returns (bytes32[] memory) {
         return _purposeAssignments[account];
     }

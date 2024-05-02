@@ -21,6 +21,12 @@ abstract contract ERC20Base is
     BlocklistableUpgradeable,
     ERC20Upgradeable
 {
+    /// @dev Throws if the zero address is passed to the function
+    error ZeroAddress();
+
+    /// @dev Throws if the zero amount is passed to the function
+    error ZeroAmount();
+
     /**
      * @notice The internal initializer of the upgradable contract
      *
