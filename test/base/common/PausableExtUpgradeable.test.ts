@@ -64,7 +64,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
     });
 
     it("Is reverted if the implementation contract is called even for the first time", async () => {
-      const pausableExtImplementation: Contract = (await pausableExtFactory.deploy()) as Contract;
+      const pausableExtImplementation: Contract = await pausableExtFactory.deploy() as Contract;
       await pausableExtImplementation.waitForDeployment();
       await expect(
         pausableExtImplementation.initialize()

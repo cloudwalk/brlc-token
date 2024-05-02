@@ -80,7 +80,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
     });
 
     it("Is reverted if the implementation contract is called even for the first time", async () => {
-      const rescuableImplementation: Contract = (await rescuableFactory.deploy()) as Contract;
+      const rescuableImplementation: Contract = await rescuableFactory.deploy() as Contract;
       await rescuableImplementation.waitForDeployment();
       await expect(
         rescuableImplementation.initialize()

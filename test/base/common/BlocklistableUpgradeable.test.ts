@@ -80,7 +80,7 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
     });
 
     it("Is reverted if the implementation contract is called even for the first time", async () => {
-      const blocklistableImplementation: Contract = (await blocklistableFactory.deploy()) as Contract;
+      const blocklistableImplementation: Contract = await blocklistableFactory.deploy() as Contract;
       await blocklistableImplementation.waitForDeployment();
       await expect(
         blocklistableImplementation.initialize()

@@ -60,7 +60,7 @@ describe("Contract 'ERC20Trustable'", async () => {
     });
 
     it("Is reverted if the contract implementation is called even for the first time", async () => {
-      const tokenImplementation = (await tokenFactory.deploy()) as Contract;
+      const tokenImplementation = await tokenFactory.deploy() as Contract;
       await tokenImplementation.waitForDeployment();
       await expect(tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL))
         .to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);

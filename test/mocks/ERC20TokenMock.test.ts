@@ -56,7 +56,7 @@ describe("Contract 'ERC20TokenMock'", async () => {
     });
 
     it("Is reverted if the implementation contract is called even for the first time", async () => {
-      const tokenImplementation: Contract = (await tokenFactory.deploy()) as Contract;
+      const tokenImplementation: Contract = await tokenFactory.deploy() as Contract;
       await tokenImplementation.waitForDeployment();
       await expect(
         tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)

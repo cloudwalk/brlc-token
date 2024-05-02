@@ -57,7 +57,7 @@ describe("Contract 'BRLCToken'", async () => {
     });
 
     it("Is reverted if the contract implementation is called even for the first time", async () => {
-      const tokenImplementation: Contract = await (tokenFactory.deploy()) as Contract;
+      const tokenImplementation: Contract = await tokenFactory.deploy() as Contract;
       await tokenImplementation.waitForDeployment();
       await expect(
         tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)

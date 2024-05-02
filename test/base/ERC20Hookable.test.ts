@@ -89,7 +89,7 @@ describe("Contract 'ERC20Hookable'", async () => {
     hook2: Contract;
   }> {
     const { token } = await deployToken();
-    const hook1: Contract = (await hookFactory.deploy()) as Contract;
+    const hook1: Contract = await hookFactory.deploy() as Contract;
     const hook2: Contract = await hookFactory.deploy() as Contract;
     await proveTx(token.setPauser(pauser.address));
 
@@ -115,7 +115,7 @@ describe("Contract 'ERC20Hookable'", async () => {
     });
 
     it("Is reverted if the contract implementation is called even for the first time", async () => {
-      const tokenImplementation: Contract = (await tokenFactory.deploy()) as Contract;
+      const tokenImplementation: Contract = await tokenFactory.deploy() as Contract;
       await tokenImplementation.waitForDeployment();
       await expect(
         tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
