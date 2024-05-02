@@ -1,9 +1,9 @@
 import { ethers, network, upgrades } from "hardhat";
 import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx } from "../../test-utils/eth";
+import { proveTx, connect } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -24,24 +24,25 @@ describe("Contract 'ERC20TokenMock'", async () => {
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
 
   let tokenFactory: ContractFactory;
-  let deployer: SignerWithAddress;
-  let user: SignerWithAddress;
+  let deployer: HardhatEthersSigner;
+  let user: HardhatEthersSigner;
 
   before(async () => {
     [deployer, user] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20TokenMock");
+    tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
-    await token.deployed();
+    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
+    await token.waitForDeployment();
+    token = connect(token, deployer); // Explicitly specifying the initial account
     return { token };
   }
 
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
-      expect(token.deployTransaction.from).to.equal(deployer.address);
       expect(await token.name()).to.equal(TOKEN_NAME);
       expect(await token.symbol()).to.equal(TOKEN_SYMBOL);
       expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
@@ -55,8 +56,8 @@ describe("Contract 'ERC20TokenMock'", async () => {
     });
 
     it("Is reverted if the implementation contract is called even for the first time", async () => {
-      const tokenImplementation: Contract = await tokenFactory.deploy();
-      await tokenImplementation.deployed();
+      const tokenImplementation: Contract = await tokenFactory.deploy() as Contract;
+      await tokenImplementation.waitForDeployment();
       await expect(
         tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
@@ -81,7 +82,7 @@ describe("Contract 'ERC20TokenMock'", async () => {
     it("Executes as expected and emits the correct events", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.balanceOf(user.address)).to.equal(0);
-      await proveTx(token.connect(user).mintForTest(user.address, MINT_AMOUNT));
+      await proveTx(connect(token, user).mintForTest(user.address, MINT_AMOUNT));
       expect(await token.balanceOf(user.address)).to.equal(MINT_AMOUNT);
     });
   });

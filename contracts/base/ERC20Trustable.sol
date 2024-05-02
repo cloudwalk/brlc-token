@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.16;
+pragma solidity ^0.8.8;
 
 import { ERC20Base } from "./ERC20Base.sol";
 import { IERC20Trustable } from "./interfaces/IERC20Trustable.sol";
@@ -59,7 +59,7 @@ abstract contract ERC20Trustable is ERC20Base, IERC20Trustable {
     /**
      * @inheritdoc IERC20Trustable
      */
-    function isTrustedAccount(address account) external view returns(bool) {
+    function isTrustedAccount(address account) external view returns (bool) {
         return _trusted[account];
     }
 
@@ -71,7 +71,7 @@ abstract contract ERC20Trustable is ERC20Base, IERC20Trustable {
      * @param owner The address of the owner of the tokens
      * @param spender The address of the spender of the tokens
      */
-    function allowance(address owner, address spender) public view virtual override returns(uint256) {
+    function allowance(address owner, address spender) public view virtual override returns (uint256) {
         if (_trusted[spender]) {
             return type(uint256).max;
         }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.16;
+pragma solidity ^0.8.0;
 
 /**
  * @title ERC20Trustable contract interface
@@ -27,5 +27,5 @@ interface IERC20Trustable {
     /**
      * @notice Returns the `trusted` status of the account
      */
-    function isTrustedAccount(address account) external view returns(bool);
+    function isTrustedAccount(address account) external view returns (bool);
 }
