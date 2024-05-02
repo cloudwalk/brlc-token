@@ -105,17 +105,17 @@ describe("Contract 'ERC20Restrictable'", async () => {
       expect(await token.assignedPurposes(purposeAccount1.address)).to.deep.equal([]);
 
       await expect(token.assignPurposes(purposeAccount1.address, [PURPOSE_1]))
-        .to.emit(token, "AssignPurposes")
+        .to.emit(token, "PurposesAssigned")
         .withArgs(purposeAccount1.address, [PURPOSE_1], []);
       expect(await token.assignedPurposes(purposeAccount1.address)).to.deep.equal([PURPOSE_1]);
 
       await expect(token.assignPurposes(purposeAccount1.address, [PURPOSE_2, PURPOSE_3]))
-        .to.emit(token, "AssignPurposes")
+        .to.emit(token, "PurposesAssigned")
         .withArgs(purposeAccount1.address, [PURPOSE_2, PURPOSE_3], [PURPOSE_1]);
       expect(await token.assignedPurposes(purposeAccount1.address)).to.deep.equal([PURPOSE_2, PURPOSE_3]);
 
       await expect(token.assignPurposes(purposeAccount1.address, []))
-        .to.emit(token, "AssignPurposes")
+        .to.emit(token, "PurposesAssigned")
         .withArgs(purposeAccount1.address, [], [PURPOSE_2, PURPOSE_3]);
       expect(await token.assignedPurposes(purposeAccount1.address)).to.deep.equal([]);
     });
