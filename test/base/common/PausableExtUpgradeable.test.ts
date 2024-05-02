@@ -109,7 +109,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
   describe("Function 'pause()'", async () => {
     it("Executes successfully and emits the correct event", async () => {
       const { pausableExt } = await setUpFixture(deployAndConfigurePausableExt);
-      await expect((connect(pausableExt, pauser)).pause())
+      await expect(connect(pausableExt, pauser).pause())
         .to.emit(pausableExt, EVENT_NAME_PAUSED)
         .withArgs(pauser.address);
       expect(await pausableExt.paused()).to.equal(true);
@@ -126,8 +126,8 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
   describe("Function 'unpause()'", async () => {
     it("Executes successfully and emits the correct event", async () => {
       const { pausableExt } = await setUpFixture(deployAndConfigurePausableExt);
-      await proveTx((connect(pausableExt, pauser)).pause());
-      await expect((connect(pausableExt, pauser)).unpause())
+      await proveTx(connect(pausableExt, pauser).pause());
+      await expect(connect(pausableExt, pauser).unpause())
         .to.emit(pausableExt, EVENT_NAME_UNPAUSED)
         .withArgs(pauser.address);
       expect(await pausableExt.paused()).to.equal(false);

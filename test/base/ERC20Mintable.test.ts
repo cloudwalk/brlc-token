@@ -4,7 +4,7 @@ import { Contract, ContractFactory } from "ethers";
 import { TransactionResponse } from "@ethersproject/abstract-provider";
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { proveTx, connect } from "../../test-utils/eth";
+import { connect, proveTx } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -95,7 +95,7 @@ describe("Contract 'ERC20Mintable'", async () => {
     await proveTx(token.setMainBlocklister(mainBlocklister.address));
     await proveTx(token.updateMainMinter(mainMinter.address));
     await proveTx(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
-    await proveTx((connect(token, mainMinter)).configureMinter(minter.address, MINT_ALLOWANCE));
+    await proveTx(connect(token, mainMinter).configureMinter(minter.address, MINT_ALLOWANCE));
     return { token };
   }
 
@@ -162,10 +162,10 @@ describe("Contract 'ERC20Mintable'", async () => {
   describe("Function 'configureMinter()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx((connect(token, mainMinter)).removeMinter(minter.address));
+      await proveTx(connect(token, mainMinter).removeMinter(minter.address));
       expect(await token.isMinter(minter.address)).to.eq(false);
       expect(await token.minterAllowance(minter.address)).to.eq(0);
-      await expect((connect(token, mainMinter)).configureMinter(minter.address, MINT_ALLOWANCE))
+      await expect(connect(token, mainMinter).configureMinter(minter.address, MINT_ALLOWANCE))
         .to.emit(token, EVENT_NAME_MINTER_CONFIGURED)
         .withArgs(minter.address, MINT_ALLOWANCE);
       expect(await token.isMinter(minter.address)).to.eq(true);
@@ -174,16 +174,16 @@ describe("Contract 'ERC20Mintable'", async () => {
 
     it("Is reverted if the contract is paused", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx((connect(token, mainMinter)).removeMinter(minter.address));
+      await proveTx(connect(token, mainMinter).removeMinter(minter.address));
       await proveTx(connect(token, pauser).pause());
       await expect(
-        (connect(token, mainMinter)).configureMinter(minter.address, MINT_ALLOWANCE)
+        connect(token, mainMinter).configureMinter(minter.address, MINT_ALLOWANCE)
       ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
     });
 
     it("Is reverted if called not by the main minter", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx((connect(token, mainMinter)).removeMinter(minter.address));
+      await proveTx(connect(token, mainMinter).removeMinter(minter.address));
       await expect(connect(token, user).configureMinter(minter.address, MINT_ALLOWANCE))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MAIN_MINTER)
         .withArgs(user.address);
@@ -195,13 +195,13 @@ describe("Contract 'ERC20Mintable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       expect(await token.isMinter(minter.address)).to.eq(true);
       expect(await token.minterAllowance(minter.address)).to.eq(MINT_ALLOWANCE);
-      await expect((connect(token, mainMinter)).removeMinter(minter.address))
+      await expect(connect(token, mainMinter).removeMinter(minter.address))
         .to.emit(token, EVENT_NAME_MINTER_REMOVED)
         .withArgs(minter.address);
       expect(await token.isMinter(minter.address)).to.eq(false);
       expect(await token.minterAllowance(minter.address)).to.eq(0);
       await expect(
-        (connect(token, mainMinter)).removeMinter(minter.address)
+        connect(token, mainMinter).removeMinter(minter.address)
       ).not.to.emit(token, EVENT_NAME_MINTER_REMOVED);
     });
 
@@ -218,7 +218,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       async function checkMinting(token: Contract) {
         const oldMintAllowance: bigint = await token.minterAllowance(minter.address);
         const newExpectedMintAllowance: bigint = oldMintAllowance - BigInt(TOKEN_AMOUNT);
-        const tx: TransactionResponse = await (connect(token, minter)).mint(user.address, TOKEN_AMOUNT);
+        const tx: TransactionResponse = await connect(token, minter).mint(user.address, TOKEN_AMOUNT);
         await expect(tx).to.emit(token, EVENT_NAME_MINT).withArgs(minter.address, user.address, TOKEN_AMOUNT);
         await expect(tx)
           .to.emit(token, EVENT_NAME_TRANSFER)
@@ -234,7 +234,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The destination address is blocklisted but the caller is a blocklister", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx((connect(token, mainBlocklister)).configureBlocklister(minter.address, true));
+        await proveTx(connect(token, mainBlocklister).configureBlocklister(minter.address, true));
         await proveTx(connect(token, user).selfBlocklist());
         await checkMinting(token);
       });
@@ -245,7 +245,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(connect(token, pauser).pause());
         await expect(
-          (connect(token, minter)).mint(user.address, TOKEN_AMOUNT)
+          connect(token, minter).mint(user.address, TOKEN_AMOUNT)
         ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
       });
 
@@ -258,9 +258,9 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The caller is blocklisted even if the caller is a blocklister", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx((connect(token, mainBlocklister)).configureBlocklister(minter.address, true));
-        await proveTx((connect(token, minter)).selfBlocklist());
-        await expect((connect(token, minter)).mint(user.address, TOKEN_AMOUNT))
+        await proveTx(connect(token, mainBlocklister).configureBlocklister(minter.address, true));
+        await proveTx(connect(token, minter).selfBlocklist());
+        await expect(connect(token, minter).mint(user.address, TOKEN_AMOUNT))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
           .withArgs(minter.address);
       });
@@ -268,7 +268,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       it("The destination address is blocklisted and the caller is not a blocklister", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(connect(token, user).selfBlocklist());
-        await expect((connect(token, minter)).mint(user.address, TOKEN_AMOUNT))
+        await expect(connect(token, minter).mint(user.address, TOKEN_AMOUNT))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
           .withArgs(user.address);
       });
@@ -276,21 +276,21 @@ describe("Contract 'ERC20Mintable'", async () => {
       it("The destination address is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(
-          (connect(token, minter)).mint(ethers.ZeroAddress, TOKEN_AMOUNT)
+          connect(token, minter).mint(ethers.ZeroAddress, TOKEN_AMOUNT)
         ).to.be.revertedWith(REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
       });
 
       it("The mint amount is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(
-          (connect(token, minter)).mint(user.address, 0)
+          connect(token, minter).mint(user.address, 0)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_MINT_AMOUNT);
       });
 
       it("The mint amount exceeds the mint allowance", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(
-          (connect(token, minter)).mint(user.address, MINT_ALLOWANCE + 1)
+          connect(token, minter).mint(user.address, MINT_ALLOWANCE + 1)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE);
       });
     });
@@ -299,8 +299,8 @@ describe("Contract 'ERC20Mintable'", async () => {
   describe("Function 'burn()'", async () => {
     it("Executes as expected and emits the correct events", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx((connect(token, minter)).mint(minter.address, TOKEN_AMOUNT));
-      const tx: TransactionResponse = await (connect(token, minter)).burn(TOKEN_AMOUNT);
+      await proveTx(connect(token, minter).mint(minter.address, TOKEN_AMOUNT));
+      const tx: TransactionResponse = await connect(token, minter).burn(TOKEN_AMOUNT);
       await expect(tx).to.emit(token, EVENT_NAME_BURN).withArgs(minter.address, TOKEN_AMOUNT);
       await expect(tx)
         .to.emit(token, EVENT_NAME_TRANSFER)
@@ -314,15 +314,15 @@ describe("Contract 'ERC20Mintable'", async () => {
 
     it("Is reverted if the contract is paused", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx((connect(token, minter)).mint(minter.address, TOKEN_AMOUNT));
+      await proveTx(connect(token, minter).mint(minter.address, TOKEN_AMOUNT));
       await proveTx(connect(token, pauser).pause());
-      await expect((connect(token, minter)).burn(TOKEN_AMOUNT))
+      await expect(connect(token, minter).burn(TOKEN_AMOUNT))
         .to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
     });
 
     it("Is reverted if the caller is not a minter", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx((connect(token, minter)).mint(user.address, TOKEN_AMOUNT));
+      await proveTx(connect(token, minter).mint(user.address, TOKEN_AMOUNT));
       await expect(connect(token, user).burn(TOKEN_AMOUNT))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MINTER)
         .withArgs(user.address);
@@ -330,24 +330,24 @@ describe("Contract 'ERC20Mintable'", async () => {
 
     it("Is reverted if the caller is blocklisted", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx((connect(token, minter)).mint(minter.address, TOKEN_AMOUNT));
-      await proveTx((connect(token, minter)).selfBlocklist());
-      await expect((connect(token, minter)).burn(TOKEN_AMOUNT))
+      await proveTx(connect(token, minter).mint(minter.address, TOKEN_AMOUNT));
+      await proveTx(connect(token, minter).selfBlocklist());
+      await expect(connect(token, minter).burn(TOKEN_AMOUNT))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
         .withArgs(minter.address);
     });
 
     it("Is reverted if the burn amount is zero", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await expect((connect(token, minter)).burn(0))
+      await expect(connect(token, minter).burn(0))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_BURN_AMOUNT);
     });
 
     it("Is reverted if the burn amount exceeds the caller token balance", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx((connect(token, minter)).mint(minter.address, TOKEN_AMOUNT));
+      await proveTx(connect(token, minter).mint(minter.address, TOKEN_AMOUNT));
       await expect(
-        (connect(token, minter)).burn(TOKEN_AMOUNT + 1)
+        connect(token, minter).burn(TOKEN_AMOUNT + 1)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
     });
   });
@@ -387,13 +387,13 @@ describe("Contract 'ERC20Mintable'", async () => {
 
         let tx: TransactionResponse;
         if (premintFunction === PremintFunction.Decrease) {
-          tx = await (connect(token, minter)).premintDecrease(
+          tx = await connect(token, minter).premintDecrease(
             user.address,
             amount,
             release
           );
         } else {
-          tx = await (connect(token, minter)).premintIncrease(
+          tx = await connect(token, minter).premintIncrease(
             user.address,
             amount,
             release
@@ -443,14 +443,14 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("A new premint is created and the recipient is blocklisted but the caller is a blocklister", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx((connect(token, mainBlocklister)).configureBlocklister(minter.address, true));
+        await proveTx(connect(token, mainBlocklister).configureBlocklister(minter.address, true));
         await proveTx(connect(token, user).selfBlocklist());
         await executeAndCheckPremint(token);
       });
 
       it("The caller increases the amount of an existing premint", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx((connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
+        await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
         await executeAndCheckPremint(token, {
           amount: 1,
           oldAmount: TOKEN_AMOUNT
@@ -459,7 +459,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The caller decreases the amount of an existing premint", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx((connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
+        await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
         await executeAndCheckPremint(token, {
           amount: 1,
           oldAmount: TOKEN_AMOUNT,
@@ -469,7 +469,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The caller removes an existing premint using the decreasing function", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx((connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
+        await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
         await executeAndCheckPremint(token, {
           amount: TOKEN_AMOUNT,
           oldAmount: TOKEN_AMOUNT,
@@ -481,9 +481,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       it("The limit of premint number is reached, but some of them are expired", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         for (let i = 0; i < MAX_PENDING_PREMINTS_COUNT; i++) {
-          await proveTx(
-            (connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp + i * 10)
-          );
+          await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp + i * 10));
         }
         expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT * MAX_PENDING_PREMINTS_COUNT);
         await time.increaseTo(timestamp + 1);
@@ -502,9 +500,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         let i = 0;
         for (; i < MAX_PENDING_PREMINTS_COUNT; i++) {
-          await proveTx(
-            (connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp + i * 10)
-          );
+          await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp + i * 10));
         }
 
         // set time to expire all premints
@@ -525,9 +521,7 @@ describe("Contract 'ERC20Mintable'", async () => {
           (_v, i) => timestamp + (i + 1) * 10
         );
         for (let i = 0; i < timestamps.length; i++) {
-          await proveTx(
-            (connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamps[i])
-          );
+          await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamps[i]));
         }
         // set time to expire premints in the beginning of array
         await time.increaseTo(timestamps[1] + 1);
@@ -552,9 +546,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         timestamps[2] = timestamp + 1;
         timestamps[3] = timestamp + 2;
         for (let i = 0; i < MAX_PENDING_PREMINTS_COUNT; i++) {
-          await proveTx(
-            (connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamps[i])
-          );
+          await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamps[i]));
         }
 
         // set time to expire premints in the middle of array
@@ -582,9 +574,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         timestamps[MAX_PENDING_PREMINTS_COUNT - 2] = timestamp + 1;
 
         for (let i = 0; i < MAX_PENDING_PREMINTS_COUNT; i++) {
-          await proveTx(
-            (connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamps[i])
-          );
+          await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamps[i]));
         }
 
         // set time to expire premints in the end of array
@@ -606,27 +596,27 @@ describe("Contract 'ERC20Mintable'", async () => {
     describe("Are reverted if", async () => {
       it("The contract is paused", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx((connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
+        await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
         await proveTx(connect(token, pauser).pause());
-        await expect((connect(token, minter)).premintIncrease(user.address, 1, timestamp))
+        await expect(connect(token, minter).premintIncrease(user.address, 1, timestamp))
           .to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
-        await expect((connect(token, minter)).premintDecrease(user.address, 1, timestamp))
+        await expect(connect(token, minter).premintDecrease(user.address, 1, timestamp))
           .to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
       });
 
       it("The provided release time has passed", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const timestamp = (await time.latest()) - 1;
-        await expect((connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp))
+        await expect(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED);
-        await expect((connect(token, minter)).premintDecrease(user.address, TOKEN_AMOUNT, timestamp))
+        await expect(connect(token, minter).premintDecrease(user.address, TOKEN_AMOUNT, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED);
       });
 
       it("The amount of premint is greater than 64-bit unsigned integer", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const overflowAmount = BigInt("18446744073709551616"); // uint64 max + 1
-        await expect((connect(token, minter)).premintIncrease(user.address, overflowAmount, timestamp))
+        await expect(connect(token, minter).premintIncrease(user.address, overflowAmount, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE)
           .withArgs(overflowAmount);
       });
@@ -643,24 +633,24 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The caller is blocklisted even if the caller is a blocklister", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx((connect(token, mainBlocklister)).configureBlocklister(minter.address, true));
-        await proveTx((connect(token, minter)).selfBlocklist());
-        await expect((connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp))
+        await proveTx(connect(token, mainBlocklister).configureBlocklister(minter.address, true));
+        await proveTx(connect(token, minter).selfBlocklist());
+        await expect(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
           .withArgs(minter.address);
-        await expect((connect(token, minter)).premintDecrease(user.address, TOKEN_AMOUNT, timestamp))
+        await expect(connect(token, minter).premintDecrease(user.address, TOKEN_AMOUNT, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
           .withArgs(minter.address);
       });
 
       it("The recipient is blocklisted and the caller is not a blocklister", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx((connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
+        await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
         await proveTx(connect(token, user).selfBlocklist());
-        await expect((connect(token, minter)).premintIncrease(user.address, 1, timestamp))
+        await expect(connect(token, minter).premintIncrease(user.address, 1, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
           .withArgs(user.address);
-        await expect((connect(token, minter)).premintDecrease(user.address, 1, timestamp))
+        await expect(connect(token, minter).premintDecrease(user.address, 1, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
           .withArgs(user.address);
       });
@@ -668,20 +658,20 @@ describe("Contract 'ERC20Mintable'", async () => {
       it("The recipient address is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(
-          (connect(token, minter)).premintIncrease(ethers.ZeroAddress, TOKEN_AMOUNT, timestamp)
+          connect(token, minter).premintIncrease(ethers.ZeroAddress, TOKEN_AMOUNT, timestamp)
         ).to.be.revertedWith(REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
       });
 
       it("The amount of a new premint is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect((connect(token, minter)).premintIncrease(user.address, 0, timestamp))
+        await expect(connect(token, minter).premintIncrease(user.address, 0, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_PREMINT_AMOUNT);
       });
 
       it("The amount of a new premint exceeds the mint allowance", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(
-          (connect(token, minter)).premintIncrease(user.address, MINT_ALLOWANCE + 1, timestamp)
+          connect(token, minter).premintIncrease(user.address, MINT_ALLOWANCE + 1, timestamp)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE);
       });
 
@@ -689,35 +679,33 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         let i = 0;
         for (; i < MAX_PENDING_PREMINTS_COUNT; i++) {
-          await proveTx(
-            (connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp + i * 10)
-          );
+          await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp + i * 10));
         }
         await expect(
-          (connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp + i * 10)
+          connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp + i * 10)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED);
       });
 
       it("The caller changes an existing premint with the same amount", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx((connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
-        await expect((connect(token, minter)).premintIncrease(user.address, 0, timestamp))
+        await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
+        await expect(connect(token, minter).premintIncrease(user.address, 0, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_UNCHANGED);
-        await expect((connect(token, minter)).premintDecrease(user.address, 0, timestamp))
+        await expect(connect(token, minter).premintDecrease(user.address, 0, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_UNCHANGED);
       });
 
       it("The caller tries to change a non-existing premint", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect((connect(token, minter)).premintDecrease(user.address, TOKEN_AMOUNT, timestamp))
+        await expect(connect(token, minter).premintDecrease(user.address, TOKEN_AMOUNT, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_NON_EXISTENT);
       });
 
       it("The caller tries to decrease the amount of a premint below the existing amount", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx((connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
+        await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
         await expect(
-          (connect(token, minter)).premintDecrease(user.address, TOKEN_AMOUNT + 1, timestamp)
+          connect(token, minter).premintDecrease(user.address, TOKEN_AMOUNT + 1, timestamp)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_INSUFFICIENT_AMOUNT);
       });
     });
@@ -754,12 +742,10 @@ describe("Contract 'ERC20Mintable'", async () => {
       targetRelease: number
     ) {
       const oldTargetRelease = await token.resolvePremintRelease(originalRelease);
-      await expect(
-        (connect(token, minter)).reschedulePremintRelease(
-          originalRelease,
-          targetRelease
-        )
-      ).to.emit(
+      await expect(connect(token, minter).reschedulePremintRelease(
+        originalRelease,
+        targetRelease
+      )).to.emit(
         token,
         EVENT_NAME_PREMINT_RELEASE_RESCHEDULED
       ).withArgs(
@@ -780,9 +766,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         );
 
         for (const premint of expectedPremints) {
-          await proveTx(
-            (connect(token, minter)).premintIncrease(user.address, premint.amount, premint.release)
-          );
+          await proveTx(connect(token, minter).premintIncrease(user.address, premint.amount, premint.release));
         }
         await checkPremints(token, expectedPremints);
         await checkPremintReleaseResolving(token, originalReleaseTimestamps[0], originalReleaseTimestamps[0]);
@@ -811,12 +795,8 @@ describe("Contract 'ERC20Mintable'", async () => {
         await time.increaseTo(originalReleaseTimestamps[0]);
 
         // Check that the premints are still here after adding and removing a new one
-        await proveTx(
-          (connect(token, minter)).premintIncrease(user.address, newPremint.amount, newPremint.release)
-        );
-        await proveTx(
-          (connect(token, minter)).premintDecrease(user.address, newPremint.amount, newPremint.release)
-        );
+        await proveTx(connect(token, minter).premintIncrease(user.address, newPremint.amount, newPremint.release));
+        await proveTx(connect(token, minter).premintDecrease(user.address, newPremint.amount, newPremint.release));
         await checkPremints(token, expectedPremints);
         expect(await token.balanceOfPremint(user.address)).to.eq(expectedPremintBalance);
 
@@ -824,12 +804,8 @@ describe("Contract 'ERC20Mintable'", async () => {
         await time.increaseTo(originalReleaseTimestamps[1]);
 
         // Check that the premints are still here after adding and removing a new one
-        await proveTx(
-          (connect(token, minter)).premintIncrease(user.address, newPremint.amount, newPremint.release)
-        );
-        await proveTx(
-          (connect(token, minter)).premintDecrease(user.address, newPremint.amount, newPremint.release)
-        );
+        await proveTx(connect(token, minter).premintIncrease(user.address, newPremint.amount, newPremint.release));
+        await proveTx(connect(token, minter).premintDecrease(user.address, newPremint.amount, newPremint.release));
         await checkPremints(token, expectedPremints);
         expect(await token.balanceOfPremint(user.address)).to.eq(expectedPremintBalance);
 
@@ -837,13 +813,9 @@ describe("Contract 'ERC20Mintable'", async () => {
         await time.increaseTo(targetReleaseTimestamp);
 
         // Check that the premints disappeared after adding a new one
-        await proveTx(
-          (connect(token, minter)).premintIncrease(user.address, newPremint.amount, newPremint.release)
-        );
+        await proveTx(connect(token, minter).premintIncrease(user.address, newPremint.amount, newPremint.release));
         await checkPremints(token, [newPremint]);
-        await proveTx(
-          (connect(token, minter)).premintDecrease(user.address, newPremint.amount, newPremint.release)
-        );
+        await proveTx(connect(token, minter).premintDecrease(user.address, newPremint.amount, newPremint.release));
         expect(await token.balanceOfPremint(user.address)).to.eq(0);
       });
 
@@ -853,13 +825,11 @@ describe("Contract 'ERC20Mintable'", async () => {
         const targetReleaseTimestamp = timestamp - 10;
         const expectedPremint: Premint = { amount: TOKEN_AMOUNT, release: timestamp };
 
-        await proveTx(
-          (connect(token, minter)).premintIncrease(
-            user.address,
-            expectedPremint.amount,
-            expectedPremint.release
-          )
-        );
+        await proveTx(connect(token, minter).premintIncrease(
+          user.address,
+          expectedPremint.amount,
+          expectedPremint.release
+        ));
         await reschedulePremintReleaseAndCheckEvents(token, originalReleaseTimestamp, targetReleaseTimestamp);
         expectedPremint.release = targetReleaseTimestamp;
         await checkPremints(token, [expectedPremint]);
@@ -873,13 +843,9 @@ describe("Contract 'ERC20Mintable'", async () => {
         await time.increaseTo(targetReleaseTimestamp);
 
         // Check that the premints disappeared after adding a new one
-        await proveTx(
-          (connect(token, minter)).premintIncrease(user.address, newPremint.amount, newPremint.release)
-        );
+        await proveTx(connect(token, minter).premintIncrease(user.address, newPremint.amount, newPremint.release));
         await checkPremints(token, [newPremint]);
-        await proveTx(
-          (connect(token, minter)).premintDecrease(user.address, newPremint.amount, newPremint.release)
-        );
+        await proveTx(connect(token, minter).premintDecrease(user.address, newPremint.amount, newPremint.release));
         expect(await token.balanceOfPremint(user.address)).to.eq(0);
 
         // Shift the block time to the original release timestamp
@@ -923,7 +889,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const targetRelease = timestamp + 1;
         await proveTx(connect(token, pauser).pause());
         await expect(
-          (connect(token, minter)).reschedulePremintRelease(originalRelease, targetRelease)
+          connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease)
         ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
       });
 
@@ -940,9 +906,9 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalRelease = timestamp;
         const targetRelease = timestamp + 1;
-        await proveTx((connect(token, mainBlocklister)).configureBlocklister(minter.address, true));
-        await proveTx((connect(token, minter)).selfBlocklist());
-        await expect((connect(token, minter)).reschedulePremintRelease(originalRelease, targetRelease))
+        await proveTx(connect(token, mainBlocklister).configureBlocklister(minter.address, true));
+        await proveTx(connect(token, minter).selfBlocklist());
+        await expect(connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
           .withArgs(minter.address);
       });
@@ -952,7 +918,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const originalRelease = timestamp;
         const targetRelease = await time.latest() - 1;
         await expect(
-          (connect(token, minter)).reschedulePremintRelease(originalRelease, targetRelease)
+          connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RESCHEDULING_TIME_PASSED);
       });
 
@@ -961,7 +927,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const originalRelease = await time.latest() - 1;
         const targetRelease = originalRelease + 1000;
         await expect(
-          (connect(token, minter)).reschedulePremintRelease(originalRelease, targetRelease)
+          connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED);
       });
 
@@ -970,17 +936,17 @@ describe("Contract 'ERC20Mintable'", async () => {
         const originalRelease = timestamp;
         const targetRelease1 = originalRelease + 1;
         const targetRelease2 = originalRelease + 1000;
-        await proveTx((connect(token, minter)).reschedulePremintRelease(originalRelease, targetRelease1));
+        await proveTx(connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease1));
         await time.increaseTo(targetRelease1);
         await expect(
-          (connect(token, minter)).reschedulePremintRelease(originalRelease, targetRelease2)
+          connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease2)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED);
       });
 
       it("The provided original release time equals the provided target release time", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(
-          (connect(token, minter)).reschedulePremintRelease(timestamp, timestamp)
+          connect(token, minter).reschedulePremintRelease(timestamp, timestamp)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RESCHEDULING_ALREADY_CONFIGURED);
       });
 
@@ -988,9 +954,9 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalRelease = timestamp;
         const targetRelease = timestamp + 1;
-        await proveTx((connect(token, minter)).reschedulePremintRelease(originalRelease, targetRelease));
+        await proveTx(connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease));
         await expect(
-          (connect(token, minter)).reschedulePremintRelease(originalRelease, targetRelease)
+          connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RESCHEDULING_ALREADY_CONFIGURED);
       });
 
@@ -999,9 +965,9 @@ describe("Contract 'ERC20Mintable'", async () => {
         const originalRelease = timestamp;
         const targetRelease1 = timestamp + 1;
         const targetRelease2 = timestamp + 2;
-        await proveTx((connect(token, minter)).reschedulePremintRelease(originalRelease, targetRelease1));
+        await proveTx(connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease1));
         await expect(
-          (connect(token, minter)).reschedulePremintRelease(targetRelease1, targetRelease2)
+          connect(token, minter).reschedulePremintRelease(targetRelease1, targetRelease2)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RESCHEDULING_CHAIN);
       });
 
@@ -1009,7 +975,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalRelease = BigInt("18446744073709551616"); // uint64 max + 1
         const targetRelease = timestamp + 1;
-        await expect((connect(token, minter)).reschedulePremintRelease(originalRelease, targetRelease))
+        await expect(connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE)
           .withArgs(originalRelease);
       });
@@ -1018,7 +984,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalRelease = timestamp;
         const targetRelease = BigInt("18446744073709551616"); // uint64 max + 1
-        await expect((connect(token, minter)).reschedulePremintRelease(originalRelease, targetRelease))
+        await expect(connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE)
           .withArgs(targetRelease);
       });
@@ -1054,10 +1020,8 @@ describe("Contract 'ERC20Mintable'", async () => {
       const timestamp = (await time.latest()) + 100;
       const { token } = await setUpFixture(deployAndConfigureToken);
 
-      await proveTx((connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
-      await proveTx(
-        (connect(token, minter)).premintIncrease(user.address, TOKEN_AMOUNT + 1, timestamp + 50)
-      );
+      await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
+      await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT + 1, timestamp + 50));
       expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT * 2 + 1);
 
       await time.increaseTo(timestamp);
