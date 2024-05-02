@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx } from "../../../test-utils/eth";
+import { proveTx, connect } from "../../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -36,9 +36,9 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
   });
 
   async function deployPausableExt(): Promise<{ pausableExt: Contract }> {
-    let pausableExt: Contract = await upgrades.deployProxy(pausableExtFactory);
+    const pausableExt: Contract = await upgrades.deployProxy(pausableExtFactory);
     await pausableExt.waitForDeployment();
-    pausableExt = pausableExt.connect(deployer) as Contract; // Explicitly specifying the initial account
+    connect(pausableExt, deployer); // Explicitly specifying the initial account
     return { pausableExt };
   }
 
@@ -101,7 +101,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
     it("Is reverted if called not by the owner", async () => {
       const { pausableExt } = await setUpFixture(deployPausableExt);
       await expect(
-        (pausableExt.connect(user) as Contract).setPauser(pauser.address)
+        connect(pausableExt, user).setPauser(pauser.address)
       ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
   });
@@ -109,7 +109,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
   describe("Function 'pause()'", async () => {
     it("Executes successfully and emits the correct event", async () => {
       const { pausableExt } = await setUpFixture(deployAndConfigurePausableExt);
-      await expect((pausableExt.connect(pauser) as Contract).pause())
+      await expect((connect(pausableExt, pauser)).pause())
         .to.emit(pausableExt, EVENT_NAME_PAUSED)
         .withArgs(pauser.address);
       expect(await pausableExt.paused()).to.equal(true);
@@ -118,7 +118,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
     it("Is reverted if called not by the pauser", async () => {
       const { pausableExt } = await setUpFixture(deployAndConfigurePausableExt);
       await expect(
-        (pausableExt.connect(user) as Contract).pause()
+        connect(pausableExt, user).pause()
       ).to.be.revertedWithCustomError(pausableExt, REVERT_ERROR_UNAUTHORIZED_PAUSER);
     });
   });
@@ -126,8 +126,8 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
   describe("Function 'unpause()'", async () => {
     it("Executes successfully and emits the correct event", async () => {
       const { pausableExt } = await setUpFixture(deployAndConfigurePausableExt);
-      await proveTx((pausableExt.connect(pauser) as Contract).pause());
-      await expect((pausableExt.connect(pauser) as Contract).unpause())
+      await proveTx((connect(pausableExt, pauser)).pause());
+      await expect((connect(pausableExt, pauser)).unpause())
         .to.emit(pausableExt, EVENT_NAME_UNPAUSED)
         .withArgs(pauser.address);
       expect(await pausableExt.paused()).to.equal(false);
@@ -136,7 +136,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
     it("Is reverted if called not by the pauser", async () => {
       const { pausableExt } = await setUpFixture(deployAndConfigurePausableExt);
       await expect(
-        (pausableExt.connect(user) as Contract).unpause()
+        connect(pausableExt, user).unpause()
       ).to.be.revertedWithCustomError(pausableExt, REVERT_ERROR_UNAUTHORIZED_PAUSER);
     });
   });

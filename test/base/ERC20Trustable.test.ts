@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx } from "../../test-utils/eth";
+import { proveTx, connect } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -110,7 +110,7 @@ describe("Contract 'ERC20Trustable'", async () => {
 
     it("Is reverted if the caller is not an owner", async () => {
       const { token } = await setUpFixture(deployToken);
-      expect((token.connect(user) as Contract).configureTrustedAccount(trustedAccount.address, true))
+      expect(connect(token, user).configureTrustedAccount(trustedAccount.address, true))
         .to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
   });
@@ -122,7 +122,7 @@ describe("Contract 'ERC20Trustable'", async () => {
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(0);
 
-      await proveTx((token.connect(user) as Contract).approve(trustedAccount.address, APPROVE_AMOUNT));
+      await proveTx(connect(token, user).approve(trustedAccount.address, APPROVE_AMOUNT));
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(APPROVE_AMOUNT);
 
@@ -130,7 +130,7 @@ describe("Contract 'ERC20Trustable'", async () => {
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(MAX_APPROVE_AMOUNT);
 
-      await proveTx((token.connect(user) as Contract).approve(trustedAccount.address, APPROVE_AMOUNT * 2));
+      await proveTx(connect(token, user).approve(trustedAccount.address, APPROVE_AMOUNT * 2));
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(MAX_APPROVE_AMOUNT);
 

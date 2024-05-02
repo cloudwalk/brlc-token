@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx } from "../../test-utils/eth";
+import { proveTx, connect } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -37,9 +37,9 @@ describe("Contract 'ERC20HookMock'", async () => {
   });
 
   async function deployHookable(): Promise<{ hookable: Contract }> {
-    let hookable: Contract = (await hookFactory.deploy()) as Contract;
+    const hookable: Contract = (await hookFactory.deploy()) as Contract;
     await hookable.waitForDeployment();
-    hookable = hookable.connect(deployer) as Contract; // Explicitly specifying the initial account
+    connect(hookable, deployer); // Explicitly specifying the initial account
     return { hookable };
   }
 

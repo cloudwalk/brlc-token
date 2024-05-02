@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx } from "../../../test-utils/eth";
+import { proveTx, connect } from "../../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -49,9 +49,9 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
   });
 
   async function deployBlocklistable(): Promise<{ blocklistable: Contract }> {
-    let blocklistable: Contract = await upgrades.deployProxy(blocklistableFactory);
+    const blocklistable: Contract = await upgrades.deployProxy(blocklistableFactory);
     await blocklistable.waitForDeployment();
-    blocklistable = blocklistable.connect(deployer) as Contract; // Explicitly specifying the initial account
+    connect(blocklistable, deployer); // Explicitly specifying the initial account
     await proveTx(blocklistable.enableBlocklist(true));
     return { blocklistable };
   }
@@ -136,7 +136,7 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
     it("Is reverted if called not by the owner", async () => {
       const { blocklistable } = await setUpFixture(deployBlocklistable);
       await expect(
-        (blocklistable.connect(user) as Contract).enableBlocklist(true)
+        connect(blocklistable, user).enableBlocklist(true)
       ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
   });
@@ -154,7 +154,7 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
     it("Is reverted if called not by the owner", async () => {
       const { blocklistable } = await setUpFixture(deployBlocklistable);
       await expect(
-        (blocklistable.connect(user) as Contract).setMainBlocklister(user.address)
+        connect(blocklistable, user).setMainBlocklister(user.address)
       ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
 
@@ -171,18 +171,18 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
     it("Executes as expected and emits the correct event if it is called by the blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(false);
-      await expect((blocklistable.connect(blocklister) as Contract).blocklist(user.address))
+      await expect(connect(blocklistable, blocklister).blocklist(user.address))
         .to.emit(blocklistable, EVENT_NAME_BLOCKLISTED)
         .withArgs(user.address);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(true);
       await expect(
-        (blocklistable.connect(blocklister) as Contract).blocklist(user.address)
+        connect(blocklistable, blocklister).blocklist(user.address)
       ).not.to.emit(blocklistable, EVENT_NAME_BLOCKLISTED);
     });
 
     it("Is reverted if called not by the blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
-      await expect((blocklistable.connect(user) as Contract).blocklist(user.address))
+      await expect(connect(blocklistable, user).blocklist(user.address))
         .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER)
         .withArgs(user.address);
     });
@@ -190,7 +190,7 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
     it("Is reverted if blocklisted address is zero", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       await expect(
-        (blocklistable.connect(blocklister) as Contract).blocklist(ZERO_ADDRESS)
+        connect(blocklistable, blocklister).blocklist(ZERO_ADDRESS)
       ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_ZERO_ADDRESS_BLOCKLISTED);
     });
   });
@@ -198,20 +198,20 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
   describe("Function 'unBlocklist()'", async () => {
     it("Executes as expected and emits the correct event if it is called by the blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
-      await proveTx((blocklistable.connect(blocklister) as Contract).blocklist(user.address));
+      await proveTx(connect(blocklistable, blocklister).blocklist(user.address));
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(true);
-      await expect((blocklistable.connect(blocklister) as Contract).unBlocklist(user.address))
+      await expect(connect(blocklistable, blocklister).unBlocklist(user.address))
         .to.emit(blocklistable, EVENT_NAME_UNBLOCKLISTED)
         .withArgs(user.address);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(false);
       await expect(
-        (blocklistable.connect(blocklister) as Contract).unBlocklist(user.address)
+        connect(blocklistable, blocklister).unBlocklist(user.address)
       ).not.to.emit(blocklistable, EVENT_NAME_UNBLOCKLISTED);
     });
 
     it("Is reverted if called not by the blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
-      await expect((blocklistable.connect(user) as Contract).unBlocklist(user.address))
+      await expect(connect(blocklistable, user).unBlocklist(user.address))
         .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER)
         .withArgs(user.address);
     });
@@ -221,14 +221,14 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
     it("Executes as expected and emits the correct events if it is called by any account", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(false);
-      await expect((blocklistable.connect(user) as Contract).selfBlocklist())
+      await expect(connect(blocklistable, user).selfBlocklist())
         .to.emit(blocklistable, EVENT_NAME_BLOCKLISTED)
         .withArgs(user.address)
         .and.to.emit(blocklistable, EVENT_NAME_SELFBLOCKLISTED)
         .withArgs(user.address);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(true);
       await expect(
-        (blocklistable.connect(user) as Contract).selfBlocklist()
+        connect(blocklistable, user).selfBlocklist()
       ).not.to.emit(blocklistable, EVENT_NAME_SELFBLOCKLISTED);
     });
   });
@@ -248,7 +248,7 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
 
     it("Is reverted if called not by the main blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
-      await expect((blocklistable.connect(user) as Contract).configureBlocklister(user.address, true))
+      await expect(connect(blocklistable, user).configureBlocklister(user.address, true))
         .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_UNAUTHORIZED_MAIN_BLOCKLISTER)
         .withArgs(user.address);
     });
@@ -269,7 +269,7 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklistEnabled()).to.equal(true);
       await expect(
-        (blocklistable.connect(user) as Contract).testNotBlocklistedModifier()
+        connect(blocklistable, user).testNotBlocklistedModifier()
       ).to.emit(blocklistable, EVENT_NAME_TEST_NOT_BLOCKLISTED_MODIFIER_SUCCEEDED);
     });
 
@@ -278,14 +278,14 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
       await proveTx(blocklistable.blocklist(user.address));
       await proveTx(blocklistable.enableBlocklist(false));
       await expect(
-        (blocklistable.connect(user) as Contract).testNotBlocklistedModifier()
+        connect(blocklistable, user).testNotBlocklistedModifier()
       ).to.emit(blocklistable, EVENT_NAME_TEST_NOT_BLOCKLISTED_MODIFIER_SUCCEEDED);
     });
 
     it("Is reverted if the caller is blocklisted", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
-      await proveTx((blocklistable.connect(blocklister) as Contract).blocklist(user.address));
-      await expect((blocklistable.connect(user) as Contract).testNotBlocklistedModifier())
+      await proveTx(connect(blocklistable, blocklister).blocklist(user.address));
+      await expect(connect(blocklistable, user).testNotBlocklistedModifier())
         .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
         .withArgs(user.address);
     });
@@ -296,34 +296,34 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklistEnabled()).to.equal(true);
       await expect(
-        (blocklistable.connect(user) as Contract).testNotBlocklistedOrBypassIfBlocklister()
+        connect(blocklistable, user).testNotBlocklistedOrBypassIfBlocklister()
       ).to.emit(blocklistable, EVENT_NAME_TEST_NOT_BLOCKLISTED_OR_BYPASS_IF_BLOCKLISTER_MODIFIER_SUCCEEDED);
     });
 
     it("Is not reverted if the caller is blocklisted and is blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklistEnabled()).to.equal(true);
-      await proveTx((blocklistable.connect(blocklister) as Contract).blocklist(user.address));
+      await proveTx(connect(blocklistable, blocklister).blocklist(user.address));
       await proveTx(blocklistable.configureBlocklister(user.address, true));
       await expect(
-        (blocklistable.connect(user) as Contract).testNotBlocklistedOrBypassIfBlocklister()
+        connect(blocklistable, user).testNotBlocklistedOrBypassIfBlocklister()
       ).to.emit(blocklistable, EVENT_NAME_TEST_NOT_BLOCKLISTED_OR_BYPASS_IF_BLOCKLISTER_MODIFIER_SUCCEEDED);
     });
 
     it("Is not reverted if the caller is blocklisted and blocklist is disabled", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
-      await proveTx((blocklistable.connect(blocklister) as Contract).blocklist(user.address));
+      await proveTx(connect(blocklistable, blocklister).blocklist(user.address));
       await proveTx(blocklistable.enableBlocklist(false));
       await expect(
-        (blocklistable.connect(user) as Contract).testNotBlocklistedOrBypassIfBlocklister()
+        connect(blocklistable, user).testNotBlocklistedOrBypassIfBlocklister()
       ).to.emit(blocklistable, EVENT_NAME_TEST_NOT_BLOCKLISTED_OR_BYPASS_IF_BLOCKLISTER_MODIFIER_SUCCEEDED);
     });
 
     it("Is reverted if the caller is blocklisted and isn't blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklistEnabled()).to.equal(true);
-      await proveTx((blocklistable.connect(blocklister) as Contract).blocklist(user.address));
-      await expect((blocklistable.connect(user) as Contract).testNotBlocklistedOrBypassIfBlocklister())
+      await proveTx(connect(blocklistable, blocklister).blocklist(user.address));
+      await expect(connect(blocklistable, user).testNotBlocklistedOrBypassIfBlocklister())
         .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
         .withArgs(user.address);
     });
@@ -333,18 +333,18 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
     it("Function 'blacklist()' executes as expected if it is called by the blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(false);
-      await expect((blocklistable.connect(blocklister) as Contract).blacklist(user.address))
+      await expect(connect(blocklistable, blocklister).blacklist(user.address))
         .to.emit(blocklistable, EVENT_NAME_BLOCKLISTED)
         .withArgs(user.address);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(true);
       await expect(
-        (blocklistable.connect(blocklister) as Contract).blacklist(user.address)
+        connect(blocklistable, blocklister).blacklist(user.address)
       ).not.to.emit(blocklistable, EVENT_NAME_BLOCKLISTED);
     });
 
     it("Function 'blacklist()' is reverted if called not by the blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
-      await expect((blocklistable.connect(user) as Contract).blacklist(user.address))
+      await expect(connect(blocklistable, user).blacklist(user.address))
         .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER)
         .withArgs(user.address);
     });
@@ -352,26 +352,26 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
     it("Function 'blacklist()' is reverted if blocklisted address is zero", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       await expect(
-        (blocklistable.connect(blocklister) as Contract).blacklist(ZERO_ADDRESS)
+        connect(blocklistable, blocklister).blacklist(ZERO_ADDRESS)
       ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_ZERO_ADDRESS_BLOCKLISTED);
     });
 
     it("Function 'unBlacklist()' executes as expected if it is called by the blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
-      await proveTx((blocklistable.connect(blocklister) as Contract).blacklist(user.address));
+      await proveTx(connect(blocklistable, blocklister).blacklist(user.address));
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(true);
-      await expect((blocklistable.connect(blocklister) as Contract).unBlacklist(user.address))
+      await expect(connect(blocklistable, blocklister).unBlacklist(user.address))
         .to.emit(blocklistable, EVENT_NAME_UNBLOCKLISTED)
         .withArgs(user.address);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(false);
       await expect(
-        (blocklistable.connect(blocklister) as Contract).unBlacklist(user.address)
+        connect(blocklistable, blocklister).unBlacklist(user.address)
       ).not.to.emit(blocklistable, EVENT_NAME_UNBLOCKLISTED);
     });
 
     it("Function 'unBlacklist()' is reverted if called not by the blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
-      await expect((blocklistable.connect(user) as Contract).unBlacklist(user.address))
+      await expect(connect(blocklistable, user).unBlacklist(user.address))
         .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER)
         .withArgs(user.address);
     });
@@ -379,21 +379,21 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
     it("Function 'selfBlacklist()' executes as expected if it is called by any account", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(false);
-      await expect((blocklistable.connect(user) as Contract).selfBlacklist())
+      await expect(connect(blocklistable, user).selfBlacklist())
         .to.emit(blocklistable, EVENT_NAME_BLOCKLISTED)
         .withArgs(user.address)
         .and.to.emit(blocklistable, EVENT_NAME_SELFBLOCKLISTED)
         .withArgs(user.address);
       expect(await blocklistable.isBlocklisted(user.address)).to.equal(true);
       await expect(
-        (blocklistable.connect(user) as Contract).selfBlacklist()
+        connect(blocklistable, user).selfBlacklist()
       ).not.to.emit(blocklistable, EVENT_NAME_SELFBLOCKLISTED);
     });
 
     it("Function 'isBlacklisted' executes as expected", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       expect(await blocklistable.isBlacklisted(user.address)).to.equal(false);
-      await proveTx((blocklistable.connect(user) as Contract).selfBlocklist());
+      await proveTx(connect(blocklistable, user).selfBlocklist());
       expect(await blocklistable.isBlacklisted(user.address)).to.equal(true);
     });
   });

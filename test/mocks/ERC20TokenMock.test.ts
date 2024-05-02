@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx } from "../../test-utils/eth";
+import { proveTx, connect } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -34,9 +34,9 @@ describe("Contract 'ERC20TokenMock'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
+    const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
     await token.waitForDeployment();
-    token = token.connect(deployer) as Contract; // Explicitly specifying the initial account
+    connect(token, deployer); // Explicitly specifying the initial account
     return { token };
   }
 
@@ -82,7 +82,7 @@ describe("Contract 'ERC20TokenMock'", async () => {
     it("Executes as expected and emits the correct events", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.balanceOf(user.address)).to.equal(0);
-      await proveTx((token.connect(user) as Contract).mintForTest(user.address, MINT_AMOUNT));
+      await proveTx(connect(token, user).mintForTest(user.address, MINT_AMOUNT));
       expect(await token.balanceOf(user.address)).to.equal(MINT_AMOUNT);
     });
   });

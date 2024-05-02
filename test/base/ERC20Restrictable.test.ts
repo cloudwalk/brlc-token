@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx } from "../../test-utils/eth";
+import { proveTx, connect } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -45,9 +45,9 @@ describe("Contract 'ERC20Restrictable'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
+    const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
     await token.waitForDeployment();
-    token = token.connect(deployer) as Contract; // Explicitly specifying the initial account
+    connect(token, deployer); // Explicitly specifying the initial account
     return { token };
   }
 
@@ -121,7 +121,7 @@ describe("Contract 'ERC20Restrictable'", async () => {
     it("Is reverted if the caller is not the owner", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
-        (token.connect(user1) as Contract).assignPurposes(purposeAccount1.address, [PURPOSE_1])
+        connect(token, user1).assignPurposes(purposeAccount1.address, [PURPOSE_1])
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
@@ -139,37 +139,37 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(0);
 
-      await expect((token.connect(blocklister) as Contract).updateRestriction(user1.address, PURPOSE_1, 100))
+      await expect(connect(token, blocklister).updateRestriction(user1.address, PURPOSE_1, 100))
         .to.emit(token, "UpdateRestriction")
         .withArgs(user1.address, PURPOSE_1, 100, 0);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(100);
 
-      await expect((token.connect(blocklister) as Contract).updateRestriction(user1.address, PURPOSE_2, 100))
+      await expect(connect(token, blocklister).updateRestriction(user1.address, PURPOSE_2, 100))
         .to.emit(token, "UpdateRestriction")
         .withArgs(user1.address, PURPOSE_2, 100, 0);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(100);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(200);
 
-      await expect((token.connect(blocklister) as Contract).updateRestriction(user1.address, PURPOSE_1, 200))
+      await expect(connect(token, blocklister).updateRestriction(user1.address, PURPOSE_1, 200))
         .to.emit(token, "UpdateRestriction")
         .withArgs(user1.address, PURPOSE_1, 200, 100);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(200);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(300);
 
-      await expect((token.connect(blocklister) as Contract).updateRestriction(user1.address, PURPOSE_1, 100))
+      await expect(connect(token, blocklister).updateRestriction(user1.address, PURPOSE_1, 100))
         .to.emit(token, "UpdateRestriction")
         .withArgs(user1.address, PURPOSE_1, 100, 200);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(200);
 
-      await expect((token.connect(blocklister) as Contract).updateRestriction(user1.address, PURPOSE_1, 0))
+      await expect(connect(token, blocklister).updateRestriction(user1.address, PURPOSE_1, 0))
         .to.emit(token, "UpdateRestriction")
         .withArgs(user1.address, PURPOSE_1, 0, 100);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(0);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(100);
 
-      await expect((token.connect(blocklister) as Contract).updateRestriction(user1.address, PURPOSE_2, 0))
+      await expect(connect(token, blocklister).updateRestriction(user1.address, PURPOSE_2, 0))
         .to.emit(token, "UpdateRestriction")
         .withArgs(user1.address, PURPOSE_2, 0, 100);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(0);
@@ -182,14 +182,14 @@ describe("Contract 'ERC20Restrictable'", async () => {
         token.updateRestriction(purposeAccount1.address, PURPOSE_1, 100)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
       await expect(
-        (token.connect(user1) as Contract).updateRestriction(purposeAccount1.address, PURPOSE_1, 100)
+        connect(token, user1).updateRestriction(purposeAccount1.address, PURPOSE_1, 100)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
     });
 
     it("Is reverted if the provided purpose is zero", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await expect(
-        (token.connect(blocklister) as Contract).updateRestriction(purposeAccount1.address, PURPOSE_ZERO, 100)
+        connect(token, blocklister).updateRestriction(purposeAccount1.address, PURPOSE_ZERO, 100)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_PURPOSE);
     });
   });
@@ -200,10 +200,10 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(0);
 
-      await proveTx((token.connect(blocklister) as Contract).updateRestriction(user1.address, PURPOSE_1, 100));
+      await proveTx(connect(token, blocklister).updateRestriction(user1.address, PURPOSE_1, 100));
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
 
-      await proveTx((token.connect(blocklister) as Contract).updateRestriction(user1.address, PURPOSE_2, 200));
+      await proveTx(connect(token, blocklister).updateRestriction(user1.address, PURPOSE_2, 200));
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(200);
 
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(300);
@@ -216,31 +216,31 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
       await proveTx(token.assignPurposes(purposeAccount1.address, [PURPOSE_1]));
       await proveTx(token.assignPurposes(purposeAccount2.address, [PURPOSE_2]));
-      await proveTx((token.connect(blocklister) as Contract).updateRestriction(user1.address, PURPOSE_1, 100));
-      await proveTx((token.connect(blocklister) as Contract).updateRestriction(user1.address, PURPOSE_2, 200));
+      await proveTx(connect(token, blocklister).updateRestriction(user1.address, PURPOSE_1, 100));
+      await proveTx(connect(token, blocklister).updateRestriction(user1.address, PURPOSE_2, 200));
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(300);
 
       await proveTx(token.mint(user1.address, 300));
 
       await expect(
-        (token.connect(user1) as Contract).transfer(user2.address, 1)
+        connect(token, user1).transfer(user2.address, 1)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
       await expect(
-        (token.connect(user1) as Contract).transfer(purposeAccount1.address, 101)
+        connect(token, user1).transfer(purposeAccount1.address, 101)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
       await expect(
-        (token.connect(user1) as Contract).transfer(purposeAccount2.address, 201)
+        connect(token, user1).transfer(purposeAccount2.address, 201)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
 
       await expect(
-        (token.connect(user1) as Contract).transfer(purposeAccount1.address, 25)
+        connect(token, user1).transfer(purposeAccount1.address, 25)
       ).to.changeTokenBalances(
         token,
         [user1, purposeAccount1],
         [-25, 25]
       );
       await expect(
-        (token.connect(user1) as Contract).transfer(purposeAccount2.address, 25)
+        connect(token, user1).transfer(purposeAccount2.address, 25)
       ).to.changeTokenBalances(
         token,
         [user1, purposeAccount2],
@@ -255,18 +255,18 @@ describe("Contract 'ERC20Restrictable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
       await proveTx(token.assignPurposes(purposeAccount1.address, [PURPOSE_1, PURPOSE_2]));
-      await proveTx((token.connect(blocklister) as Contract).updateRestriction(user1.address, PURPOSE_1, 100));
-      await proveTx((token.connect(blocklister) as Contract).updateRestriction(user1.address, PURPOSE_2, 100));
+      await proveTx(connect(token, blocklister).updateRestriction(user1.address, PURPOSE_1, 100));
+      await proveTx(connect(token, blocklister).updateRestriction(user1.address, PURPOSE_2, 100));
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(200);
 
       await proveTx(token.mint(user1.address, 200));
 
       await expect(
-        (token.connect(user1) as Contract).transfer(user2.address, 1)
+        connect(token, user1).transfer(user2.address, 1)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
 
       await expect(
-        (token.connect(user1) as Contract).transfer(purposeAccount1.address, 50)
+        connect(token, user1).transfer(purposeAccount1.address, 50)
       ).to.changeTokenBalances(
         token,
         [user1, purposeAccount1],
@@ -276,7 +276,7 @@ describe("Contract 'ERC20Restrictable'", async () => {
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(100);
 
       await expect(
-        (token.connect(user1) as Contract).transfer(purposeAccount1.address, 100)
+        connect(token, user1).transfer(purposeAccount1.address, 100)
       ).to.changeTokenBalances(
         token,
         [user1, purposeAccount1],
@@ -286,7 +286,7 @@ describe("Contract 'ERC20Restrictable'", async () => {
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(50);
 
       await expect(
-        (token.connect(user1) as Contract).transfer(purposeAccount1.address, 50)
+        connect(token, user1).transfer(purposeAccount1.address, 50)
       ).to.changeTokenBalances(
         token,
         [user1, purposeAccount1],
@@ -300,19 +300,19 @@ describe("Contract 'ERC20Restrictable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
       await proveTx(token.assignPurposes(purposeAccount1.address, [PURPOSE_1]));
-      await proveTx((token.connect(blocklister) as Contract).updateRestriction(user1.address, PURPOSE_1, 100));
+      await proveTx(connect(token, blocklister).updateRestriction(user1.address, PURPOSE_1, 100));
 
       await proveTx(token.mint(user1.address, 200));
 
       await expect(
-        (token.connect(user1) as Contract).transfer(user2.address, 101)
+        connect(token, user1).transfer(user2.address, 101)
       ).to.be.revertedWithCustomError(
         token,
         REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT
       );
 
       await expect(
-        (token.connect(user1) as Contract).transfer(user2.address, 25)
+        connect(token, user1).transfer(user2.address, 25)
       ).to.changeTokenBalances(
         token,
         [user1, user2],
@@ -321,7 +321,7 @@ describe("Contract 'ERC20Restrictable'", async () => {
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
 
       await expect(
-        (token.connect(user1) as Contract).transfer(purposeAccount1.address, 25)
+        connect(token, user1).transfer(purposeAccount1.address, 25)
       ).to.changeTokenBalances(
         token,
         [user1, purposeAccount1],
@@ -330,7 +330,7 @@ describe("Contract 'ERC20Restrictable'", async () => {
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(75);
 
       await expect(
-        (token.connect(user1) as Contract).transfer(purposeAccount1.address, 100)
+        connect(token, user1).transfer(purposeAccount1.address, 100)
       ).to.changeTokenBalances(
         token,
         [user1, purposeAccount1],

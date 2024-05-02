@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx } from "../../../test-utils/eth";
+import { proveTx, connect } from "../../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -41,16 +41,16 @@ describe("Contract 'RescuableUpgradeable'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(tokenFactory, ["ERC20 Test", "TEST"]);
-    token = token.connect(deployer) as Contract; // Explicitly specifying the initial account
+    const token: Contract = await upgrades.deployProxy(tokenFactory, ["ERC20 Test", "TEST"]);
     await token.waitForDeployment();
+    connect(token, deployer); // Explicitly specifying the initial account
     return { token };
   }
 
   async function deployRescuable(): Promise<{ rescuable: Contract }> {
-    let rescuable: Contract = await upgrades.deployProxy(rescuableFactory);
-    rescuable = rescuable.connect(deployer) as Contract; // Explicitly specifying the initial account
+    const rescuable: Contract = await upgrades.deployProxy(rescuableFactory);
     await rescuable.waitForDeployment();
+    connect(rescuable, deployer); // Explicitly specifying the initial account
     return { rescuable };
   }
 
@@ -117,7 +117,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
     it("Is reverted if called not by the owner", async () => {
       const { rescuable } = await setUpFixture(deployRescuable);
       await expect(
-        (rescuable.connect(rescuer) as Contract).setRescuer(rescuer.address)
+        connect(rescuable, rescuer).setRescuer(rescuer.address)
       ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
   });
@@ -125,7 +125,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
   describe("Function 'rescueERC20()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
       const { rescuable, token } = await setUpFixture(deployAndConfigure);
-      const tx = (rescuable.connect(rescuer) as Contract).rescueERC20(
+      const tx = connect(rescuable, rescuer).rescueERC20(
         await token.getAddress(),
         deployer.address,
         TOKEN_AMOUNT
@@ -143,7 +143,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
     it("Is reverted if called not by the rescuer", async () => {
       const { rescuable, token } = await setUpFixture(deployAndConfigure);
       await expect(
-        (rescuable.connect(user) as Contract).rescueERC20(await token.getAddress(), deployer.address, TOKEN_AMOUNT)
+        connect(rescuable, user).rescueERC20(await token.getAddress(), deployer.address, TOKEN_AMOUNT)
       ).to.be.revertedWithCustomError(rescuable, REVERT_ERROR_UNAUTHORIZED_RESCUER);
     });
   });
