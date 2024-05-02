@@ -10,7 +10,3 @@ export async function proveTx(txResponsePromise: Promise<TransactionResponse>): 
 export function connect(contract: BaseContract, signer: HardhatEthersSigner): Contract {
   return contract.connect(signer) as Contract;
 }
-
-export function asContract(contract: BaseContract): Contract {
-  return contract as Contract;
-}

@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx, asContract, connect } from "../../test-utils/eth";
+import { proveTx, connect } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -70,7 +70,7 @@ describe("Contract 'ERC20Bridgeable'", async () => {
     });
 
     it("Is reverted if the implementation contract is called even for the first time", async () => {
-      const tokenImplementation: Contract = asContract(await tokenFactory.deploy());
+      const tokenImplementation: Contract = (await tokenFactory.deploy()) as Contract;
       await tokenImplementation.waitForDeployment();
       await expect(
         tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge1.address)
