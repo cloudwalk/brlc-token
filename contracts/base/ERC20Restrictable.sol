@@ -84,7 +84,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
         _restrictedPurposeBalances[account][purpose] = newBalance;
         _totalRestrictedBalances[account] += amount;
 
-        emit UpdateRestriction(account, purpose, newBalance, oldBalance);
+        emit RestrictionUpdated(account, purpose, newBalance, oldBalance);
     }
 
     /**
@@ -107,7 +107,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
         _restrictedPurposeBalances[account][purpose] = newBalance;
         _totalRestrictedBalances[account] -= amount;
 
-        emit UpdateRestriction(account, purpose, newBalance, oldBalance);
+        emit RestrictionUpdated(account, purpose, newBalance, oldBalance);
     }
 
     /**
