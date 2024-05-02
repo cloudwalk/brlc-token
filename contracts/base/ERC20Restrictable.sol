@@ -59,7 +59,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
             }
         }
 
-        emit AssignPurposes(account, purposes, _purposeAssignments[account]);
+        emit PurposesAssigned(account, purposes, _purposeAssignments[account]);
 
         _purposeAssignments[account] = purposes;
     }
