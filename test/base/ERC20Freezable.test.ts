@@ -48,9 +48,9 @@ describe("Contract 'ERC20Freezable'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
+    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
     await token.waitForDeployment();
-    connect(token, deployer); // Explicitly specifying the initial account
+    token = connect(token, deployer); // Explicitly specifying the initial account
     return { token };
   }
 

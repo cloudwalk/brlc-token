@@ -77,9 +77,9 @@ describe("Contract 'ERC20Hookable'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
+    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
     await token.waitForDeployment();
-    connect(token, deployer); // Explicitly specifying the initial account
+    token = connect(token, deployer); // Explicitly specifying the initial account
     return { token };
   }
 
@@ -89,12 +89,12 @@ describe("Contract 'ERC20Hookable'", async () => {
     hook2: Contract;
   }> {
     const { token } = await deployToken();
-    const hook1: Contract = await hookFactory.deploy() as Contract;
-    const hook2: Contract = await hookFactory.deploy() as Contract;
+    let hook1: Contract = await hookFactory.deploy() as Contract;
+    let hook2: Contract = await hookFactory.deploy() as Contract;
     await proveTx(token.setPauser(pauser.address));
 
-    connect(hook1, deployer); // Explicitly specifying the initial account
-    connect(hook2, deployer); // Explicitly specifying the initial account
+    hook1 = connect(hook1, deployer); // Explicitly specifying the initial account
+    hook2 = connect(hook2, deployer); // Explicitly specifying the initial account
 
     return { token, hook1, hook2 };
   }

@@ -31,9 +31,9 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL, bridge.address]);
+    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL, bridge.address]);
     await token.waitForDeployment();
-    connect(token, deployer); // Explicitly specifying the initial account
+    token = connect(token, deployer); // Explicitly specifying the initial account
     return { token };
   }
 

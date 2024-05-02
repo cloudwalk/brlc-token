@@ -47,9 +47,9 @@ describe("Contract 'ERC20Bridgeable'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    const token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL, bridge1.address]);
+    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL, bridge1.address]);
     await token.waitForDeployment();
-    connect(token, deployer); // Explicitly specifying the initial account
+    token = connect(token, deployer); // Explicitly specifying the initial account
     return { token };
   }
 

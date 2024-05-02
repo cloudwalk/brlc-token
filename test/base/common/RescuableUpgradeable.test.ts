@@ -41,16 +41,16 @@ describe("Contract 'RescuableUpgradeable'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    const token: Contract = await upgrades.deployProxy(tokenFactory, ["ERC20 Test", "TEST"]);
+    let token: Contract = await upgrades.deployProxy(tokenFactory, ["ERC20 Test", "TEST"]);
     await token.waitForDeployment();
-    connect(token, deployer); // Explicitly specifying the initial account
+    token = connect(token, deployer); // Explicitly specifying the initial account
     return { token };
   }
 
   async function deployRescuable(): Promise<{ rescuable: Contract }> {
-    const rescuable: Contract = await upgrades.deployProxy(rescuableFactory);
+    let rescuable: Contract = await upgrades.deployProxy(rescuableFactory);
     await rescuable.waitForDeployment();
-    connect(rescuable, deployer); // Explicitly specifying the initial account
+    rescuable = connect(rescuable, deployer); // Explicitly specifying the initial account
     return { rescuable };
   }
 

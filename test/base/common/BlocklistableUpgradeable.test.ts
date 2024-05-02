@@ -49,9 +49,9 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
   });
 
   async function deployBlocklistable(): Promise<{ blocklistable: Contract }> {
-    const blocklistable: Contract = await upgrades.deployProxy(blocklistableFactory);
+    let blocklistable: Contract = await upgrades.deployProxy(blocklistableFactory);
     await blocklistable.waitForDeployment();
-    connect(blocklistable, deployer); // Explicitly specifying the initial account
+    blocklistable = connect(blocklistable, deployer); // Explicitly specifying the initial account
     await proveTx(blocklistable.enableBlocklist(true));
     return { blocklistable };
   }
