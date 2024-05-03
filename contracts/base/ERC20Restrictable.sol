@@ -67,21 +67,47 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /**
      * @inheritdoc IERC20Restrictable
      */
-    function updateRestriction(address account, bytes32 purpose, uint256 balance) external onlyBlocklister {
+    function restrictionIncrease(address account, bytes32 purpose, uint256 amount) external onlyBlocklister {
+        if (account == address(0)) {
+            revert ZeroAddress();
+        }
         if (purpose == bytes32(0)) {
             revert ZeroPurpose();
         }
-
-        uint256 oldBalance = _restrictedPurposeBalances[account][purpose];
-        _restrictedPurposeBalances[account][purpose] = balance;
-
-        if (oldBalance > balance) {
-            _totalRestrictedBalances[account] -= oldBalance - balance;
-        } else {
-            _totalRestrictedBalances[account] += balance - oldBalance;
+        if (amount == 0) {
+            revert ZeroAmount();
         }
 
-        emit UpdateRestriction(account, purpose, balance, oldBalance);
+        uint256 oldBalance = _restrictedPurposeBalances[account][purpose];
+        uint256 newBalance = oldBalance + amount;
+
+        _restrictedPurposeBalances[account][purpose] = newBalance;
+        _totalRestrictedBalances[account] += amount;
+
+        emit UpdateRestriction(account, purpose, newBalance, oldBalance);
+    }
+
+    /**
+     * @inheritdoc IERC20Restrictable
+     */
+    function restrictionDecrease(address account, bytes32 purpose, uint256 amount) external onlyBlocklister {
+        if (account == address(0)) {
+            revert ZeroAddress();
+        }
+        if (purpose == bytes32(0)) {
+            revert ZeroPurpose();
+        }
+        if (amount == 0) {
+            revert ZeroAmount();
+        }
+
+        uint256 oldBalance = _restrictedPurposeBalances[account][purpose];
+        uint256 newBalance = oldBalance - amount;
+
+        _restrictedPurposeBalances[account][purpose] = newBalance;
+        _totalRestrictedBalances[account] -= amount;
+
+        emit UpdateRestriction(account, purpose, newBalance, oldBalance);
     }
 
     /**
