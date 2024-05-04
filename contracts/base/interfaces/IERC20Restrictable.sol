@@ -15,7 +15,7 @@ interface IERC20Restrictable {
      * @param newPurposes The array of the new restriction purposes
      * @param oldPurposes The array of the old restriction purposes
      */
-    event AssignPurposes(address indexed account, bytes32[] newPurposes, bytes32[] oldPurposes);
+    event PurposesAssigned(address indexed account, bytes32[] newPurposes, bytes32[] oldPurposes);
 
     /**
      * @notice Emitted when the restriction is updated for an account
@@ -25,7 +25,7 @@ interface IERC20Restrictable {
      * @param newBalance The new restricted balance
      * @param oldBalance The old restricted balance
      */
-    event UpdateRestriction(address indexed account, bytes32 indexed purpose, uint256 newBalance, uint256 oldBalance);
+    event RestrictionUpdated(address indexed account, bytes32 indexed purpose, uint256 newBalance, uint256 oldBalance);
 
     /**
      * @notice Assigns the restriction purposes to an account

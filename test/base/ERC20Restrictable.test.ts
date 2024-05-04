@@ -105,17 +105,17 @@ describe("Contract 'ERC20Restrictable'", async () => {
       expect(await token.assignedPurposes(purposeAccount1.address)).to.deep.equal([]);
 
       await expect(token.assignPurposes(purposeAccount1.address, [PURPOSE_1]))
-        .to.emit(token, "AssignPurposes")
+        .to.emit(token, "PurposesAssigned")
         .withArgs(purposeAccount1.address, [PURPOSE_1], []);
       expect(await token.assignedPurposes(purposeAccount1.address)).to.deep.equal([PURPOSE_1]);
 
       await expect(token.assignPurposes(purposeAccount1.address, [PURPOSE_2, PURPOSE_3]))
-        .to.emit(token, "AssignPurposes")
+        .to.emit(token, "PurposesAssigned")
         .withArgs(purposeAccount1.address, [PURPOSE_2, PURPOSE_3], [PURPOSE_1]);
       expect(await token.assignedPurposes(purposeAccount1.address)).to.deep.equal([PURPOSE_2, PURPOSE_3]);
 
       await expect(token.assignPurposes(purposeAccount1.address, []))
-        .to.emit(token, "AssignPurposes")
+        .to.emit(token, "PurposesAssigned")
         .withArgs(purposeAccount1.address, [], [PURPOSE_2, PURPOSE_3]);
       expect(await token.assignedPurposes(purposeAccount1.address)).to.deep.equal([]);
     });
@@ -143,21 +143,21 @@ describe("Contract 'ERC20Restrictable'", async () => {
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(0);
 
       await expect(connect(token, blocklister).restrictionIncrease(user1.address, PURPOSE_1, 100))
-        .to.emit(token, "UpdateRestriction")
+        .to.emit(token, "RestrictionUpdated")
         .withArgs(user1.address, PURPOSE_1, 100, 0);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(0);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(100);
 
       await expect(connect(token, blocklister).restrictionIncrease(user1.address, PURPOSE_2, 200))
-        .to.emit(token, "UpdateRestriction")
+        .to.emit(token, "RestrictionUpdated")
         .withArgs(user1.address, PURPOSE_2, 200, 0);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(200);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(300);
 
       await expect(connect(token, blocklister).restrictionIncrease(user1.address, PURPOSE_1, 100))
-        .to.emit(token, "UpdateRestriction")
+        .to.emit(token, "RestrictionUpdated")
         .withArgs(user1.address, PURPOSE_1, 200, 100);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(200);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(200);
@@ -201,21 +201,21 @@ describe("Contract 'ERC20Restrictable'", async () => {
       await proveTx(connect(token, blocklister).restrictionIncrease(user1.address, PURPOSE_2, 200));
 
       await expect(connect(token, blocklister).restrictionDecrease(user1.address, PURPOSE_1, 100))
-        .to.emit(token, "UpdateRestriction")
+        .to.emit(token, "RestrictionUpdated")
         .withArgs(user1.address, PURPOSE_1, 100, 200);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(200);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(300);
 
       await expect(connect(token, blocklister).restrictionDecrease(user1.address, PURPOSE_2, 200))
-        .to.emit(token, "UpdateRestriction")
+        .to.emit(token, "RestrictionUpdated")
         .withArgs(user1.address, PURPOSE_2, 0, 200);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(100);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(0);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(100);
 
       await expect(connect(token, blocklister).restrictionDecrease(user1.address, PURPOSE_1, 100))
-        .to.emit(token, "UpdateRestriction")
+        .to.emit(token, "RestrictionUpdated")
         .withArgs(user1.address, PURPOSE_1, 0, 100);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(0);
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_2)).to.eq(0);
