@@ -2,9 +2,9 @@ import { ethers, network, upgrades } from "hardhat";
 import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { TransactionResponse } from "@ethersproject/abstract-provider";
-import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { connect, proveTx } from "../../test-utils/eth";
+import { connect, getLatestBlockTimestamp, increaseBlockTimestampTo, proveTx } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -355,7 +355,7 @@ describe("Contract 'ERC20Mintable'", async () => {
   describe("Premint functions", async () => {
     let timestamp: number;
     before(async () => {
-      timestamp = (await time.latest()) + 100;
+      timestamp = (await getLatestBlockTimestamp()) + 100;
     });
 
     describe("Execute as expected and emits the correct events if", async () => {
@@ -484,7 +484,7 @@ describe("Contract 'ERC20Mintable'", async () => {
           await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp + i * 10));
         }
         expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT * MAX_PENDING_PREMINTS_COUNT);
-        await time.increaseTo(timestamp + 1);
+        await increaseBlockTimestampTo(timestamp + 1);
         expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 1));
         await executeAndCheckPremint(token, {
           amount: TOKEN_AMOUNT + 1,
@@ -505,7 +505,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
         // set time to expire all premints
         const newTimestamp = timestamp + (i - 1) * 10 + 1;
-        await time.increaseTo(newTimestamp);
+        await increaseBlockTimestampTo(newTimestamp);
 
         await executeAndCheckPremint(token, {
           release: newTimestamp + 10,
@@ -524,7 +524,7 @@ describe("Contract 'ERC20Mintable'", async () => {
           await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamps[i]));
         }
         // set time to expire premints in the beginning of array
-        await time.increaseTo(timestamps[1] + 1);
+        await increaseBlockTimestampTo(timestamps[1] + 1);
 
         await executeAndCheckPremint(token, {
           amount: 1,
@@ -550,7 +550,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         }
 
         // set time to expire premints in the middle of array
-        await time.increaseTo(timestamp + 3);
+        await increaseBlockTimestampTo(timestamp + 3);
 
         // update premint in the beginning of array before expired premints
         await executeAndCheckPremint(token, {
@@ -578,7 +578,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         }
 
         // set time to expire premints in the end of array
-        await time.increaseTo(timestamp + 3);
+        await increaseBlockTimestampTo(timestamp + 3);
 
         // update premint in array before expired premints
         await executeAndCheckPremint(token, {
@@ -606,7 +606,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The provided release time has passed", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        const timestamp = (await time.latest()) - 1;
+        const timestamp = (await getLatestBlockTimestamp()) - 1;
         await expect(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED);
         await expect(connect(token, minter).premintDecrease(user.address, TOKEN_AMOUNT, timestamp))
@@ -714,7 +714,7 @@ describe("Contract 'ERC20Mintable'", async () => {
   describe("Function 'reschedulePremintRelease()'", async () => {
     let timestamp: number;
     before(async () => {
-      timestamp = (await time.latest()) + 100;
+      timestamp = (await getLatestBlockTimestamp()) + 100;
     });
 
     async function checkPremints(token: Contract, expectedPremints: Premint[]) {
@@ -792,7 +792,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const newPremint: Premint = ({ amount: TOKEN_AMOUNT, release: timestamp + 1000 });
 
         // Shift the block time to the first original release timestamp
-        await time.increaseTo(originalReleaseTimestamps[0]);
+        await increaseBlockTimestampTo(originalReleaseTimestamps[0]);
 
         // Check that the premints are still here after adding and removing a new one
         await proveTx(connect(token, minter).premintIncrease(user.address, newPremint.amount, newPremint.release));
@@ -801,7 +801,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         expect(await token.balanceOfPremint(user.address)).to.eq(expectedPremintBalance);
 
         // Shift the block time to the next original release timestamp
-        await time.increaseTo(originalReleaseTimestamps[1]);
+        await increaseBlockTimestampTo(originalReleaseTimestamps[1]);
 
         // Check that the premints are still here after adding and removing a new one
         await proveTx(connect(token, minter).premintIncrease(user.address, newPremint.amount, newPremint.release));
@@ -810,7 +810,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         expect(await token.balanceOfPremint(user.address)).to.eq(expectedPremintBalance);
 
         // Shift the block time to the target release timestamp
-        await time.increaseTo(targetReleaseTimestamp);
+        await increaseBlockTimestampTo(targetReleaseTimestamp);
 
         // Check that the premints disappeared after adding a new one
         await proveTx(connect(token, minter).premintIncrease(user.address, newPremint.amount, newPremint.release));
@@ -840,7 +840,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const newPremint: Premint = ({ amount: TOKEN_AMOUNT, release: timestamp + 1000 });
 
         // Shift the block time to the target release timestamp
-        await time.increaseTo(targetReleaseTimestamp);
+        await increaseBlockTimestampTo(targetReleaseTimestamp);
 
         // Check that the premints disappeared after adding a new one
         await proveTx(connect(token, minter).premintIncrease(user.address, newPremint.amount, newPremint.release));
@@ -849,7 +849,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         expect(await token.balanceOfPremint(user.address)).to.eq(0);
 
         // Shift the block time to the original release timestamp
-        await time.increaseTo(originalReleaseTimestamp);
+        await increaseBlockTimestampTo(originalReleaseTimestamp);
         expect(await token.balanceOfPremint(user.address)).to.eq(0);
       });
 
@@ -916,7 +916,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       it("The provided target release timestamp for the rescheduling is passed", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalRelease = timestamp;
-        const targetRelease = await time.latest() - 1;
+        const targetRelease = await getLatestBlockTimestamp() - 1;
         await expect(
           connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RESCHEDULING_TIME_PASSED);
@@ -924,7 +924,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The provided original release time has passed", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        const originalRelease = await time.latest() - 1;
+        const originalRelease = await getLatestBlockTimestamp() - 1;
         const targetRelease = originalRelease + 1000;
         await expect(
           connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease)
@@ -937,7 +937,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const targetRelease1 = originalRelease + 1;
         const targetRelease2 = originalRelease + 1000;
         await proveTx(connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease1));
-        await time.increaseTo(targetRelease1);
+        await increaseBlockTimestampTo(targetRelease1);
         await expect(
           connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease2)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED);
@@ -1017,17 +1017,17 @@ describe("Contract 'ERC20Mintable'", async () => {
 
   describe("Function 'balanceOfPremint()'", async () => {
     it("Returns the correct balance of premint", async () => {
-      const timestamp = (await time.latest()) + 100;
+      const timestamp = (await getLatestBlockTimestamp()) + 100;
       const { token } = await setUpFixture(deployAndConfigureToken);
 
       await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
       await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT + 1, timestamp + 50));
       expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT * 2 + 1);
 
-      await time.increaseTo(timestamp);
+      await increaseBlockTimestampTo(timestamp);
       expect(await token.balanceOfPremint(user.address)).to.eq(TOKEN_AMOUNT + 1);
 
-      await time.increaseTo(timestamp + 50);
+      await increaseBlockTimestampTo(timestamp + 50);
       expect(await token.balanceOfPremint(user.address)).to.eq(0);
     });
   });
