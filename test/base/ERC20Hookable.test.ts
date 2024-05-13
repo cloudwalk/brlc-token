@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx, connect } from "../../test-utils/eth";
+import { proveTx, connect, getAddress } from "../../test-utils/eth";
 
 enum ErrorHandlingPolicy {
   Revert = 0,
@@ -142,11 +142,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Revert
         }
       ];
@@ -161,11 +161,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Revert
         }
       ];
@@ -180,11 +180,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Revert
         }
       ];
@@ -199,11 +199,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Revert
         }
       ];
@@ -218,11 +218,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Revert
         }
       ];
@@ -239,11 +239,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Revert
         }
       ];
@@ -260,11 +260,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Revert
         }
       ];
@@ -283,11 +283,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Event
         }
       ];
@@ -300,23 +300,23 @@ describe("Contract 'ERC20Hookable'", async () => {
       await proveTx(hook2.setRevertWithPanic(true));
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook1.getAddress(), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook1), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .to.emit(token, EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook2.getAddress(), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook2), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .not.to.emit(hook1, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
         .not.to.emit(hook2, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
       await proveTx(hook1.setRevertWithPanic(true));
       await proveTx(hook2.setRevertWithPanic(false));
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook1.getAddress(), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook1), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .to.emit(hook2, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
         .not.to.emit(hook1, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
       await proveTx(hook1.setRevertWithPanic(false));
       await proveTx(hook2.setRevertWithPanic(true));
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook2.getAddress(), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook2), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .to.emit(hook1, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
         .not.to.emit(hook2, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
     });
@@ -325,11 +325,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Event
         }
       ];
@@ -342,23 +342,23 @@ describe("Contract 'ERC20Hookable'", async () => {
       await proveTx(hook2.setRevertWithReasonMessage(true));
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook1.getAddress(), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook1), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .to.emit(token, EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook2.getAddress(), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook2), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .not.to.emit(hook1, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
         .not.to.emit(hook2, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
       await proveTx(hook1.setRevertWithReasonMessage(true));
       await proveTx(hook2.setRevertWithReasonMessage(false));
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook1.getAddress(), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook1), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .to.emit(hook2, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
         .not.to.emit(hook1, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
       await proveTx(hook1.setRevertWithReasonMessage(false));
       await proveTx(hook2.setRevertWithReasonMessage(true));
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook2.getAddress(), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook2), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .to.emit(hook1, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK)
         .not.to.emit(hook2, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
     });
@@ -367,11 +367,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Event
         }
       ];
@@ -385,14 +385,14 @@ describe("Contract 'ERC20Hookable'", async () => {
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOK_FAILURE)
         .withArgs(
-          await hook1.getAddress(),
+          getAddress(hook1),
           ZERO_REVERT_REASON_MESSAGE,
           ZERO_PANIC_ERROR_CODE,
           REVERT_LOW_LEVEL_DATA_BEFORE
         )
         .to.emit(token, EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOK_FAILURE)
         .withArgs(
-          await hook2.getAddress(),
+          getAddress(hook2),
           ZERO_REVERT_REASON_MESSAGE,
           ZERO_PANIC_ERROR_CODE,
           REVERT_LOW_LEVEL_DATA_BEFORE
@@ -407,11 +407,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Revert
         }
       ];
@@ -428,11 +428,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Revert
         }
       ];
@@ -449,11 +449,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Revert
         }
       ];
@@ -473,11 +473,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Event
         }
       ];
@@ -490,23 +490,23 @@ describe("Contract 'ERC20Hookable'", async () => {
       await proveTx(hook2.setRevertWithPanic(true));
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook1.getAddress(), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook1), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .to.emit(token, EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook2.getAddress(), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook2), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .not.to.emit(hook1, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
         .not.to.emit(hook2, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK);
       await proveTx(hook1.setRevertWithPanic(true));
       await proveTx(hook2.setRevertWithPanic(false));
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook1.getAddress(), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook1), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .to.emit(hook2, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
         .not.to.emit(hook1, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK);
       await proveTx(hook1.setRevertWithPanic(false));
       await proveTx(hook2.setRevertWithPanic(true));
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook2.getAddress(), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook2), ZERO_REVERT_REASON_MESSAGE, PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .to.emit(hook1, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
         .not.to.emit(hook2, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK);
     });
@@ -515,11 +515,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Event
         }
       ];
@@ -532,23 +532,23 @@ describe("Contract 'ERC20Hookable'", async () => {
       await proveTx(hook2.setRevertWithReasonMessage(true));
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook1.getAddress(), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook1), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .to.emit(token, EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook2.getAddress(), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook2), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .not.to.emit(hook1, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
         .not.to.emit(hook2, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK);
       await proveTx(hook1.setRevertWithReasonMessage(true));
       await proveTx(hook2.setRevertWithReasonMessage(false));
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook1.getAddress(), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook1), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .to.emit(hook2, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
         .not.to.emit(hook1, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK);
       await proveTx(hook1.setRevertWithReasonMessage(false));
       await proveTx(hook2.setRevertWithReasonMessage(true));
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOK_FAILURE)
-        .withArgs(await hook2.getAddress(), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
+        .withArgs(getAddress(hook2), REVERT_REASON_MESSAGE, ZERO_PANIC_ERROR_CODE, ZERO_REVERT_LOW_LEVEL_DATA)
         .to.emit(hook1, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK)
         .not.to.emit(hook2, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK);
     });
@@ -557,11 +557,11 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
-          account: await hook1.getAddress(),
+          account: getAddress(hook1),
           policy: ErrorHandlingPolicy.Event
         },
         {
-          account: await hook2.getAddress(),
+          account: getAddress(hook2),
           policy: ErrorHandlingPolicy.Event
         }
       ];
@@ -575,14 +575,14 @@ describe("Contract 'ERC20Hookable'", async () => {
       await expect(connect(token, user).transfer(user.address, 0))
         .to.emit(token, EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOK_FAILURE)
         .withArgs(
-          await hook1.getAddress(),
+          getAddress(hook1),
           ZERO_REVERT_REASON_MESSAGE,
           ZERO_PANIC_ERROR_CODE,
           REVERT_LOW_LEVEL_DATA_AFTER
         )
         .to.emit(token, EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOK_FAILURE)
         .withArgs(
-          await hook2.getAddress(),
+          getAddress(hook2),
           ZERO_REVERT_REASON_MESSAGE,
           ZERO_PANIC_ERROR_CODE,
           REVERT_LOW_LEVEL_DATA_AFTER

@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx, connect } from "../../../test-utils/eth";
+import { connect, getAddress, proveTx } from "../../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -60,7 +60,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
   }> {
     const { rescuable } = await deployRescuable();
     const { token } = await deployToken();
-    await proveTx(token.mintForTest(await rescuable.getAddress(), TOKEN_AMOUNT));
+    await proveTx(token.mintForTest(getAddress(rescuable), TOKEN_AMOUNT));
     await proveTx(rescuable.setRescuer(rescuer.address));
     return { rescuable, token };
   }
@@ -126,7 +126,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
     it("Executes as expected and emits the correct event", async () => {
       const { rescuable, token } = await setUpFixture(deployAndConfigure);
       const tx = connect(rescuable, rescuer).rescueERC20(
-        await token.getAddress(),
+        getAddress(token),
         deployer.address,
         TOKEN_AMOUNT
       );
@@ -137,13 +137,13 @@ describe("Contract 'RescuableUpgradeable'", async () => {
       );
       await expect(tx)
         .to.emit(token, EVENT_NAME_TRANSFER)
-        .withArgs(await rescuable.getAddress(), deployer.address, TOKEN_AMOUNT);
+        .withArgs(getAddress(rescuable), deployer.address, TOKEN_AMOUNT);
     });
 
     it("Is reverted if called not by the rescuer", async () => {
       const { rescuable, token } = await setUpFixture(deployAndConfigure);
       await expect(
-        connect(rescuable, user).rescueERC20(await token.getAddress(), deployer.address, TOKEN_AMOUNT)
+        connect(rescuable, user).rescueERC20(getAddress(token), deployer.address, TOKEN_AMOUNT)
       ).to.be.revertedWithCustomError(rescuable, REVERT_ERROR_UNAUTHORIZED_RESCUER);
     });
   });
