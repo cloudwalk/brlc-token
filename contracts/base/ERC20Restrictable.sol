@@ -20,13 +20,31 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /// @notice The mapping of the restricted purpose balances: account => purpose => balance
     mapping(address => mapping(bytes32 => uint256)) private _restrictedPurposeBalances;
 
+    /// @notice The mapping of the restricters: account => restricter status
+    mapping(address => bool) private _restricters;
+
     // -------------------- Errors -----------------------------------
 
     /// @notice Thrown when the zero restriction purpose is passed to the function
     error ZeroPurpose();
 
+    /// @notice Thrown when the caller is not a restricter
+    error UnauthorizedRestricter();
+
     /// @notice Thrown when the transfer amount exceeds the restricted balance
     error TransferExceededRestrictedAmount();
+
+    // -------------------- Modifiers --------------------------------
+
+    /**
+     * @notice Throws if called by any account other than the restricter
+     */
+    modifier onlyRestricter() {
+        if (!_restricters[msg.sender]) {
+            revert UnauthorizedRestricter();
+        }
+        _;
+    }
 
     // -------------------- Functions --------------------------------
 
@@ -66,8 +84,28 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
 
     /**
      * @inheritdoc IERC20Restrictable
+     *
+     * @dev Can only be called by the restricter account
+     * @dev The account must not be already configured
+     * @dev The account must not be zero address
      */
-    function restrictionIncrease(address account, bytes32 purpose, uint256 amount) external onlyBlocklister {
+    function configureRestricter(address account, bool status) external onlyOwner {
+        if (account == address (0)) {
+            revert ZeroAddress();
+        }
+        if (_restricters[account] == status) {
+            revert AlreadyConfigured();
+        }
+
+        _restricters[account] = status;
+
+        emit RestricterConfigured(account, status);
+    }
+
+    /**
+     * @inheritdoc IERC20Restrictable
+     */
+    function restrictionIncrease(address account, bytes32 purpose, uint256 amount) external onlyRestricter {
         if (account == address(0)) {
             revert ZeroAddress();
         }
@@ -90,7 +128,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /**
      * @inheritdoc IERC20Restrictable
      */
-    function restrictionDecrease(address account, bytes32 purpose, uint256 amount) external onlyBlocklister {
+    function restrictionDecrease(address account, bytes32 purpose, uint256 amount) external onlyRestricter {
         if (account == address(0)) {
             revert ZeroAddress();
         }
@@ -115,6 +153,13 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
      */
     function assignedPurposes(address account) external view returns (bytes32[] memory) {
         return _purposeAssignments[account];
+    }
+
+    /**
+     * @inheritdoc IERC20Restrictable
+     */
+    function isRestricter(address account) external view returns (bool) {
+        return _restricters[account];
     }
 
     /**
@@ -182,5 +227,5 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
      * @dev This empty reserved space is put in place to allow future versions
      * to add new variables without shifting down storage in the inheritance chain
      */
-    uint256[47] private __gap;
+    uint256[46] private __gap;
 }

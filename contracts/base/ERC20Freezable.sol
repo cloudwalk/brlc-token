@@ -17,6 +17,9 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /// @notice The mapping of the frozen balances
     mapping(address => uint256) private _frozenBalances;
 
+    /// @notice The mapping of the configured freezers
+    mapping(address => bool) private _freezers;
+
     // -------------------- Errors -----------------------------------
 
     /// @notice The token freezing operation is not approved by the account
@@ -30,6 +33,21 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
 
     /// @notice The transfer amount exceeded the frozen amount
     error TransferExceededFrozenAmount();
+
+    /// @notice The caller is not a freezer
+    error UnauthorizedFreezer();
+
+    // -------------------- Modifiers --------------------------------
+
+    /**
+     * @notice Throws if called by any account other than the freezer
+     */
+    modifier onlyFreezer() {
+        if (!_freezers[msg.sender]) {
+            revert UnauthorizedFreezer();
+        }
+        _;
+    }
 
     // -------------------- Functions --------------------------------
 
@@ -55,6 +73,26 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @inheritdoc IERC20Freezable
      *
+     * @dev Can only be called by the freezer account
+     * @dev The account must not be already configured
+     * @dev The account must not be zero address
+     */
+    function configureFreezer(address account, bool status) external onlyOwner {
+        if (account == address (0)) {
+            revert ZeroAddress();
+        }
+        if (_freezers[account] == status) {
+            revert AlreadyConfigured();
+        }
+
+        _freezers[account] = status;
+
+        emit FreezerConfigured(account, status);
+    }
+
+    /**
+     * @inheritdoc IERC20Freezable
+     *
      * @notice The contract must not be paused
      */
     function approveFreezing() external whenNotPaused {
@@ -71,10 +109,10 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @inheritdoc IERC20Freezable
      *
      * @dev The contract must not be paused
-     * @dev Can only be called by the blocklister account
+     * @dev Can only be called by the freezer account
      * @dev The token freezing must be approved by the `account`
      */
-    function freeze(address account, uint256 amount) external whenNotPaused onlyBlocklister {
+    function freeze(address account, uint256 amount) external whenNotPaused onlyFreezer {
         if (!_freezeApprovals[account]) {
             revert FreezingNotApproved();
         }
@@ -88,10 +126,10 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @inheritdoc IERC20Freezable
      *
      * @dev The contract must not be paused
-     * @dev Can only be called by the blocklister account
+     * @dev Can only be called by the freezer account
      * @dev The frozen balance must be greater than the `amount`
      */
-    function transferFrozen(address from, address to, uint256 amount) public virtual whenNotPaused onlyBlocklister {
+    function transferFrozen(address from, address to, uint256 amount) public virtual whenNotPaused onlyFreezer {
         uint256 oldFrozenBalance = _frozenBalances[from];
 
         if (amount > oldFrozenBalance) {
@@ -108,6 +146,13 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
 
         _frozenBalances[from] = newFrozenBalance;
         _transfer(from, to, amount);
+    }
+
+    /**
+     * @inheritdoc IERC20Freezable
+     */
+    function isFreezer(address account) external view returns (bool) {
+        return _freezers[account];
     }
 
     /**
@@ -155,5 +200,5 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @dev This empty reserved space is put in place to allow future versions
      * to add new variables without shifting down storage in the inheritance chain
      */
-    uint256[48] private __gap;
+    uint256[47] private __gap;
 }
