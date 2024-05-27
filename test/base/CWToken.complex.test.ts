@@ -49,6 +49,8 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
     const { token } = await deployToken();
     await proveTx(token.setMainBlocklister(deployer.address));
     await proveTx(token.configureBlocklister(deployer.address, true));
+    await proveTx(token.configureRestricter(deployer.address, true));
+    await proveTx(token.configureFreezer(deployer.address, true));
     await proveTx(token.assignPurposes(purposeAccount.address, [PURPOSE]));
     await proveTx(token.updateMainMinter(deployer.address));
     await proveTx(token.configureMinter(deployer.address, 20));

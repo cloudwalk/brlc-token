@@ -22,27 +22,31 @@ describe("Contract 'ERC20Freezable'", async () => {
   const EVENT_NAME_FREEZE = "Freeze";
   const EVENT_NAME_FREEZE_APPROVAL = "FreezeApproval";
   const EVENT_NAME_FREEZE_TRANSFER = "FreezeTransfer";
+  const EVENT_NAME_FREEZER_CONFIGURED = "FreezerConfigured";
 
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
   const REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
   const REVERT_MESSAGE_PAUSABLE_PAUSED = "Pausable: paused";
+  const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
 
-  const REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER = "UnauthorizedBlocklister";
+  const REVERT_ERROR_UNAUTHORIZED_FREEZER = "UnauthorizedFreezer";
   const REVERT_ERROR_FREEZING_ALREADY_APPROVED = "FreezingAlreadyApproved";
   const REVERT_ERROR_FREEZING_NOT_APPROVED = "FreezingNotApproved";
   const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
   const REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT = "TransferExceededFrozenAmount";
+  const REVERT_ERROR_ZERO_ADDRESS = "ZeroAddress";
+  const REVERT_ERROR_ALREADY_CONFIGURED = "AlreadyConfigured";
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
   let pauser: HardhatEthersSigner;
-  let blocklister: HardhatEthersSigner;
+  let freezer: HardhatEthersSigner;
   let user1: HardhatEthersSigner;
   let user2: HardhatEthersSigner;
 
   before(async () => {
-    [deployer, pauser, blocklister, user1, user2] = await ethers.getSigners();
+    [deployer, pauser, freezer, user1, user2] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20FreezableMock");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
@@ -57,7 +61,7 @@ describe("Contract 'ERC20Freezable'", async () => {
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
     await proveTx(token.setPauser(pauser.address));
-    await proveTx(token.setMainBlocklister(blocklister.address));
+    await proveTx(token.configureFreezer(freezer.address, true));
     return { token };
   }
 
@@ -66,7 +70,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.owner()).to.equal(deployer.address);
       expect(await token.pauser()).to.equal(ethers.ZeroAddress);
-      expect(await token.mainBlocklister()).to.equal(ethers.ZeroAddress);
+      expect(await token.isFreezer(freezer.address)).to.equal(false);
 
       // To ensure 100% coverage even for the deprecated function
       expect(await token.frozenBalance(user1.address)).to.equal(0);
@@ -102,6 +106,48 @@ describe("Contract 'ERC20Freezable'", async () => {
     });
   });
 
+  describe("Function configureFreezer", async () => {
+    it("Configures freezer and emits correct event", async () => {
+      const { token } = await setUpFixture(deployToken);
+
+      expect(await token.isFreezer(freezer.address)).to.eq(false);
+
+      await expect(token.configureFreezer(freezer.address, true))
+        .to.emit(token, EVENT_NAME_FREEZER_CONFIGURED)
+        .withArgs(freezer.address, true);
+
+      expect(await token.isFreezer(freezer.address)).to.eq(true);
+
+      await expect(token.configureFreezer(freezer.address, false))
+        .to.emit(token, EVENT_NAME_FREEZER_CONFIGURED)
+        .withArgs(freezer.address, false);
+
+      expect(await token.isFreezer(freezer.address)).to.eq(false);
+    });
+
+    it("Is reverted if caller is not the owner", async () => {
+      const { token } = await setUpFixture(deployToken);
+
+      await expect(connect(token, user1).configureFreezer(user1.address, true))
+        .to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+    });
+
+    it("Is reverted if account address is zero", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+
+      await expect(token.configureFreezer(ethers.ZeroAddress, true))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
+    });
+
+    it("Is reverted if the account is already configured", async () => {
+      const { token } = await setUpFixture(deployToken);
+      await proveTx(token.configureFreezer(freezer.address, true));
+
+      await expect(token.configureFreezer(freezer.address, true))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_ALREADY_CONFIGURED);
+    });
+  });
+
   describe("Function 'approveFreezing()'", async () => {
     it("Approves freezing and emits the correct event", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
@@ -134,17 +180,17 @@ describe("Contract 'ERC20Freezable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, user1).approveFreezing());
       expect(await token.balanceOf(user1.address)).to.eq(0);
-      await expect(connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT))
+      await expect(connect(token, freezer).freeze(user1.address, TOKEN_AMOUNT))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNT, 0);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT);
       await proveTx(token.mint(user1.address, TOKEN_AMOUNT));
       expect(await token.balanceOf(user1.address)).to.eq(TOKEN_AMOUNT);
-      await expect(connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT + 1))
+      await expect(connect(token, freezer).freeze(user1.address, TOKEN_AMOUNT + 1))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNT + 1, TOKEN_AMOUNT);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT + 1);
-      await expect(connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT - 2))
+      await expect(connect(token, freezer).freeze(user1.address, TOKEN_AMOUNT - 2))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNT - 2, TOKEN_AMOUNT + 1);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT - 2);
@@ -154,7 +200,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       expect(await token.freezeApproval(user1.address)).to.eq(false);
       await expect(
-        connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT)
+        connect(token, freezer).freeze(user1.address, TOKEN_AMOUNT)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_FREEZING_NOT_APPROVED);
     });
 
@@ -162,15 +208,14 @@ describe("Contract 'ERC20Freezable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, pauser).pause());
       await expect(
-        connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT)
+        connect(token, freezer).freeze(user1.address, TOKEN_AMOUNT)
       ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
     });
 
-    it("Is reverted if the caller is not a blocklister", async () => {
+    it("Is reverted if the caller is not a freezer", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await expect(connect(token, user1).freeze(user2.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER)
-        .withArgs(user1.address);
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_FREEZER);
     });
   });
 
@@ -194,8 +239,8 @@ describe("Contract 'ERC20Freezable'", async () => {
 
         await proveTx(token.mint(user1.address, props.balance));
         await proveTx(connect(token, user1).approveFreezing());
-        await proveTx(connect(token, blocklister).freeze(user1.address, oldFrozenAmount));
-        const tx = connect(token, blocklister).transferFrozen(
+        await proveTx(connect(token, freezer).freeze(user1.address, oldFrozenAmount));
+        const tx = connect(token, freezer).transferFrozen(
           user1.address,
           user2.address,
           transferAmount
@@ -227,13 +272,12 @@ describe("Contract 'ERC20Freezable'", async () => {
     });
 
     describe("Is reverted if", async () => {
-      it("The caller is not a blocklister", async () => {
+      it("The caller is not a freezer", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(token.mint(user1.address, TOKEN_AMOUNT));
         await proveTx(connect(token, user1).approveFreezing());
         await expect(connect(token, user2).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER)
-          .withArgs(user2.address);
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_FREEZER);
       });
 
       it("The contract is paused", async () => {
@@ -242,7 +286,7 @@ describe("Contract 'ERC20Freezable'", async () => {
         await proveTx(connect(token, user1).approveFreezing());
         await proveTx(connect(token, pauser).pause());
         await expect(
-          connect(token, blocklister).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT)
+          connect(token, freezer).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT)
         ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
       });
 
@@ -250,9 +294,9 @@ describe("Contract 'ERC20Freezable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(token.mint(user1.address, TOKEN_AMOUNT));
         await proveTx(connect(token, user1).approveFreezing());
-        await proveTx(connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT));
+        await proveTx(connect(token, freezer).freeze(user1.address, TOKEN_AMOUNT));
         await expect(
-          connect(token, blocklister).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT + 1)
+          connect(token, freezer).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT + 1)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_LACK_OF_FROZEN_BALANCE);
       });
 
@@ -260,9 +304,9 @@ describe("Contract 'ERC20Freezable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(token.mint(user1.address, TOKEN_AMOUNT));
         await proveTx(connect(token, user1).approveFreezing());
-        await proveTx(connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT + 1));
+        await proveTx(connect(token, freezer).freeze(user1.address, TOKEN_AMOUNT + 1));
         await expect(
-          connect(token, blocklister).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT + 1)
+          connect(token, freezer).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT + 1)
         ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
       });
     });
@@ -273,7 +317,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.mint(user1.address, TOKEN_AMOUNT + 1));
       await proveTx(connect(token, user1).approveFreezing());
-      await proveTx(connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT));
+      await proveTx(connect(token, freezer).freeze(user1.address, TOKEN_AMOUNT));
       await expect(
         connect(token, user1).transfer(user2.address, 1)
       ).to.changeTokenBalances(
@@ -287,7 +331,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.mint(user1.address, TOKEN_AMOUNT + 1));
       await proveTx(connect(token, user1).approveFreezing());
-      await proveTx(connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT));
+      await proveTx(connect(token, freezer).freeze(user1.address, TOKEN_AMOUNT));
       await expect(
         connect(token, user1).transfer(user2.address, 2)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
