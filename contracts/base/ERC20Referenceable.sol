@@ -10,12 +10,18 @@ import { ERC20Base } from "./ERC20Base.sol";
  * @notice The ERC20 token implementation that supports referenced operations
  */
 abstract contract ERC20Referenceable is ERC20Base {
+    enum ReferenceStatus {
+        Pending,
+        Executed
+    }
+
     struct Reference {
+        ReferenceStatus status;
         address receiver;
         uint256 amount;
     }
 
-    // user => id => amount
+    // id => reference data
     mapping(bytes32 => Reference) internal _accountReferences;
 
     // user => total amount on all references
@@ -25,7 +31,8 @@ abstract contract ERC20Referenceable is ERC20Base {
     event AccountReferenceDecrease(bytes32 id, address account, uint256 amount);
 
     error InvalidAmount();
-    error UnsupportedReferenceId();
+    error InvalidReferenceId();
+    error AlreadyExecuted();
     error TransferExceededReferencedAmount();
 
     function increaseAccountReference(bytes32 id, address account, uint256 amount) external {
@@ -35,8 +42,11 @@ abstract contract ERC20Referenceable is ERC20Base {
         if (amount == 0) {
             revert ZeroAmount();
         }
+        if(_accountReferences[id].status == ReferenceStatus.Executed) {
+            revert AlreadyExecuted();
+        }
 
-        _accountReferences[account][id] += amount;
+        _accountReferences[account].amount += amount;
         _totalReferencedFromAccount[account] += amount;
 
         emit AccountReferenceIncrease(id, account, amount);
@@ -49,17 +59,49 @@ abstract contract ERC20Referenceable is ERC20Base {
         if (amount == 0) {
             revert ZeroAmount();
         }
-        if (_accountReferences[account][id] < amount) {
+        if(_accountReferences[id].status == ReferenceStatus.Executed) {
+            revert AlreadyExecuted();
+        }
+        if (_accountReferences[account].amount < amount) {
             revert InvalidAmount();
         }
-        _accountReferences[account][id] -= amount;
+
+        _accountReferences[account].amount -= amount;
         _totalReferencedFromAccount[account] -= amount;
 
         emit AccountReferenceDecrease(id, account, amount);
     }
 
-    function getAccountReferencesById(address account, bytes32 id) external view returns (uint256) {
-        return _accountReferences[account][id];
+    function transferWithId(address account, uint256 amount, bytes32 id) external {
+        Reference storage ref = _accountReferences[id];
+        if (ref.status == ReferenceStatus.Executed) {
+            revert AlreadyExecuted();
+        }
+        if (ref.amount != amount) {
+            revert InvalidReferenceId();
+        }
+
+        ref.amount -= amount;
+        transfer(account, amount);
+        ref.status = ReferenceStatus.Executed;
+    }
+
+    function transferFromWithId(address sender, address receiver, uint256 amount, bytes32 id) external {
+        Reference storage ref = _accountReferences[id];
+        if (ref.status == ReferenceStatus.Executed) {
+            revert AlreadyExecuted();
+        }
+        if (ref.amount != amount) {
+            revert InvalidReferenceId();
+        }
+
+        ref.amount -= amount;
+        transferFrom(sender, receiver, amount);
+        ref.status = ReferenceStatus.Executed;
+    }
+
+    function getAccountReferencesById(address account, bytes32 id) external view returns (Reference memory) {
+        return _accountReferences[id];
     }
 
     function balanceOfReferenced(address account) public view returns (uint256) {
@@ -75,34 +117,8 @@ abstract contract ERC20Referenceable is ERC20Base {
 
         // if there are some referenced funds
         if (totalReferencedBalance != 0) {
-            // get all configured references array
-            bytes32[] memory references = _referencedId[to];
-
-            for (uint256 i = 0; i < references.length; i++) {
-                // get reference for iteration
-                bytes32 referenceId = references[i];
-                // get configured amount for this reference
-                uint256 referencedBalance = _accountReferences[from][referenceId];
-
-                // if some balance is referenced
-                if (referencedBalance != 0) {
-                    // if transfer to referenced receiver and referenced balance is bigger than transfer amount
-                    if (_references[referenceId].receiver == to && amount < referencedBalance) {
-                        referencedBalance -= amount;
-                        totalReferencedBalance -= amount;
-                        // if transfer to referenced receiver and referenced balance is less than transfer amount
-                    } else if (_references[referenceId].receiver == to && amount >= referencedBalance) {
-                        totalReferencedBalance -= referencedBalance;
-                        referencedBalance = 0;
-                    }
-
-                    // check reference flag and perform additional actions if needed
-                    if (_references[referenceId].flag == ReferenceFlag.One) {
-                        // do something
-                    }
-                }
-
-            }
+            // Execute basic transfer logic
+            super._afterTokenTransfer(from, to, amount);
 
             // revert if transfer exceeded referenced amount
             if (_balanceOf_ERC20Referenceable(from) < totalReferencedBalance) {
@@ -113,5 +129,5 @@ abstract contract ERC20Referenceable is ERC20Base {
 
     function _balanceOf_ERC20Referenceable(address account) internal view virtual returns (uint256);
 
-    uint256[45] private __gap;
+    uint256[48] private __gap;
 }
