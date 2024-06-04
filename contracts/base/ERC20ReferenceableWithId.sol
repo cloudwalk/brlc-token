@@ -67,7 +67,8 @@ abstract contract ERC20Referenceable is ERC20Base {
             revert AlreadyExecuted();
         }
 
-        ref.amount -= amount;
+        ref.status = ReferenceStatus.Executed;
+        _totalReferencedFromAccount[ref.sender] -= ref.amount;
         transferFrom(ref.sender, ref.receiver, ref.amount);
     }
 
