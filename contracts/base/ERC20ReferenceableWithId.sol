@@ -10,7 +10,14 @@ import { ERC20Base } from "./ERC20Base.sol";
  * @notice The ERC20 token implementation that supports referenced operations
  */
 abstract contract ERC20Referenceable is ERC20Base {
+    enum ReferenceStatus {
+        Pending,
+        Executed
+    }
+
     struct Reference {
+        ReferenceStatus status;
+        address sender;
         address receiver;
         uint256 amount;
     }
@@ -22,52 +29,46 @@ abstract contract ERC20Referenceable is ERC20Base {
     mapping(address => uint256) internal _totalReferencedFromAccount;
 
     event ReferenceCreated(bytes32 id, address sender, address receiver, uint256 amount);
-    event ReferenceUpdated(bytes32 id, uint256 amount);
+    event ReferenceUpdated(bytes32 id);
 
+    error InvalidAmount();
     error InvalidReferenceId();
+    error AlreadyExecuted();
     error TransferExceededReferencedAmount();
 
-    function createReference(bytes32 id, address sender, address receiver, uint256 amount) external {
+    function configureReference(bytes32 id, address sender, address receiver, uint256 amount) external {
         if (sender == address(0) || receiver == address(0)) {
             revert ZeroAddress();
         }
         if (amount == 0) {
             revert ZeroAmount();
         }
-        if (_accountReferences[id].receiver != address(0)) {
-            revert AlreadyConfigured();
+        if (_accountReferences[id].status == ReferenceStatus.Executed) {
+            revert AlreadyExecuted();
         }
 
-        _accountReferences[id].amount = amount;
-        _accountReferences[id].receiver = receiver;
-        _totalReferencedFromAccount[sender] += amount;
+        uint256 oldAmount = _accountReferences[id].amount;
+
+        _accountReferences[id] = Reference({
+            status : ReferenceStatus.Pending,
+            sender : sender,
+            receiver : receiver,
+            amount : amount
+        });
+
+        _totalReferencedFromAccount[sender] = _totalReferencedFromAccount[sender] - oldAmount + amount;
 
         emit ReferenceCreated(id, sender, receiver, amount);
     }
 
-    function updateReference(bytes32 id, uint256 amount) external {
-        if (amount == 0) {
-            revert ZeroAmount();
-        }
-        if (_accountReferences[id].receiver == address(0)) {
-            revert InvalidReferenceId();
-        }
-
-        _totalReferencedFromAccount[_accountReferences[id].receiver] -= _accountReferences[id].amount;
-        _accountReferences[id].amount = amount;
-        _totalReferencedFromAccount[_accountReferences[id].receiver] += amount;
-
-        emit ReferenceUpdated(id, amount);
-    }
-
-    function transferFromWithId(address sender, address receiver, uint256 amount, bytes32 id) external {
+    function transferFromWithId(bytes32 id) external {
         Reference storage ref = _accountReferences[id];
-        if (ref.amount != amount || ref.receiver != receiver) {
-            revert InvalidReferenceId();
+        if (ref.status == ReferenceStatus.Executed) {
+            revert AlreadyExecuted();
         }
 
         ref.amount -= amount;
-        transferFrom(sender, receiver, amount);
+        transferFrom(ref.sender, ref.receiver, ref.amount);
     }
 
     function getAccountReferencesById(address account, bytes32 id) external view returns (Reference memory) {
