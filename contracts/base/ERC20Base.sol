@@ -27,6 +27,9 @@ abstract contract ERC20Base is
     /// @dev Throws if the zero amount is passed to the function
     error ZeroAmount();
 
+    /// @notice The provided value cannot be cast to uint64 type
+    error InappropriateUint64Value(uint256 value);
+
     /**
      * @notice The internal initializer of the upgradable contract
      *

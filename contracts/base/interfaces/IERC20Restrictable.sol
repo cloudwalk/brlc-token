@@ -28,6 +28,23 @@ interface IERC20Restrictable {
     event RestrictionUpdated(address indexed account, bytes32 indexed purpose, uint256 newBalance, uint256 oldBalance);
 
     /**
+     * @notice Emitted when the restriction with specific id is updated for an account
+     *
+     * @param account The account the restriction is updated for
+     * @param purpose The restriction purpose
+     * @param id The id for the restriction purpose
+     * @param newBalance The new restricted balance
+     * @param oldBalance The old restricted balance
+     */
+    event IdSpecificRestrictionUpdated(
+        address indexed account,
+        bytes32 indexed purpose,
+        bytes32 indexed id,
+        uint256 newBalance,
+        uint256 oldBalance
+    );
+
+    /**
      * @notice Assigns the restriction purposes to an account
      *
      * @param account The account to assign purposes to

@@ -103,9 +103,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /// @notice The existing premint has not been changed during the operation
     error PremintUnchanged();
 
-    /// @notice The provided value cannot be cast to uint64 type
-    error InappropriateUint64Value(uint256 value);
-
     // -------------------- Modifiers --------------------------------
 
     /**
