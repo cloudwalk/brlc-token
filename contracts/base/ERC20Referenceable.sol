@@ -10,68 +10,54 @@ import { ERC20Base } from "./ERC20Base.sol";
  * @notice The ERC20 token implementation that supports referenced operations
  */
 abstract contract ERC20Referenceable is ERC20Base {
-    struct Reference {
-        address receiver;
-        uint256 amount;
-    }
-
-    // id => reference data
-    mapping(bytes32 => Reference) internal _accountReferences;
+    // account => id => amount
+    mapping(address => mapping(bytes32 => uint64)) internal _referencedAmounts;
 
     // user => total amount on all references
     mapping(address => uint256) internal _totalReferencedFromAccount;
 
-    event ReferenceCreated(bytes32 id, address sender, address receiver, uint256 amount);
-    event ReferenceUpdated(bytes32 id, uint256 amount);
+    event ReferenceCreated(bytes32 id, address sender, uint256 amount);
+    event ReferenceUpdated(bytes32 id, uint256 newAmount, uint256 oldAmount);
 
     error InvalidReferenceId();
     error TransferExceededReferencedAmount();
 
-    function createReference(bytes32 id, address sender, address receiver, uint256 amount) external {
-        if (sender == address(0) || receiver == address(0)) {
+    function createReference(bytes32 id, address account, uint256 amount) external {
+        if (account == address(0)) {
             revert ZeroAddress();
         }
         if (amount == 0) {
             revert ZeroAmount();
         }
-        if (_accountReferences[id].receiver != address(0)) {
-            revert AlreadyConfigured();
-        }
 
-        _accountReferences[id].amount = amount;
-        _accountReferences[id].receiver = receiver;
-        _totalReferencedFromAccount[sender] += amount;
+        _referencedAmounts[account][id] = uint64(amount);
+        _totalReferencedFromAccount[account] += amount;
 
-        emit ReferenceCreated(id, sender, receiver, amount);
+        emit ReferenceCreated(id, account, amount);
     }
 
-    function updateReference(bytes32 id, uint256 amount) external {
-        if (amount == 0) {
+    function updateReference(bytes32 id, address account, uint256 newAmount) external {
+        if (newAmount == 0) {
             revert ZeroAmount();
         }
-        if (_accountReferences[id].receiver == address(0)) {
-            revert InvalidReferenceId();
-        }
 
-        _totalReferencedFromAccount[_accountReferences[id].receiver] -= _accountReferences[id].amount;
-        _accountReferences[id].amount = amount;
-        _totalReferencedFromAccount[_accountReferences[id].receiver] += amount;
+        uint64 oldAmount = _referencedAmounts[account][id];
+        _totalReferencedFromAccount[account] -= oldAmount;
+        _referencedAmounts[account][id] = uint64(newAmount);
+        _totalReferencedFromAccount[account] += newAmount;
 
-        emit ReferenceUpdated(id, amount);
+        emit ReferenceUpdated(id, newAmount, oldAmount);
     }
 
     function transferFromWithId(address sender, address receiver, uint256 amount, bytes32 id) external {
-        Reference storage ref = _accountReferences[id];
-        if (ref.amount != amount || ref.receiver != receiver) {
-            revert InvalidReferenceId();
-        }
+        // todo add checks
 
-        ref.amount -= amount;
+        _referencedAmounts[sender][id] -= uint64(amount); // todo add safecast in future
         transferFrom(sender, receiver, amount);
     }
 
-    function getAccountReferencesById(address account, bytes32 id) external view returns (Reference memory) {
-        return _accountReferences[id];
+    function getAccountReferencesById(address account, bytes32 id) external view returns (uint256) {
+        return _referencedAmounts[account][id];
     }
 
     function balanceOfReferenced(address account) public view returns (uint256) {
