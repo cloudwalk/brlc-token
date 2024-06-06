@@ -93,6 +93,9 @@ abstract contract ERC20Referenceable is ERC20Base, IERC20Referenceable {
         if (id == bytes32(0)) {
             revert ZeroReferenceId();
         }
+        if (_referencedAmounts[account][id] != 0) {
+            revert InvalidReferenceId();
+        }
 
         _referencedAmounts[account][id] = toUint64(amount);
         _totalReferencedFromAccount[account] += amount;
@@ -109,8 +112,8 @@ abstract contract ERC20Referenceable is ERC20Base, IERC20Referenceable {
      * @dev The amount must not be zero
      */
     function updateReference(bytes32 id, address account, uint256 newAmount) external onlyReferenceAdmin {
-        if (newAmount == 0) {
-            revert ZeroAmount();
+        if (account == address(0)) {
+            revert ZeroAddress();
         }
         if (id == bytes32(0)) {
             revert ZeroReferenceId();
@@ -145,12 +148,12 @@ abstract contract ERC20Referenceable is ERC20Base, IERC20Referenceable {
             revert ZeroAmount();
         }
         if (id == bytes32(0)) {
-            revert ZeroReferenceId();
+            transferFrom(sender, receiver, amount);
+        } else {
+            _referencedAmounts[sender][id] -= toUint64(amount);
+            transferFrom(sender, receiver, amount);
+            emit TransferWithId(id, sender, receiver, amount);
         }
-
-        _referencedAmounts[sender][id] -= toUint64(amount);
-        transferFrom(sender, receiver, amount);
-        emit TransferWithId(id, sender, receiver, amount);
     }
 
     /**
