@@ -9,31 +9,25 @@ pragma solidity ^0.8.0;
  */
 interface IERC20Restrictable {
     /**
-     * @notice Emitted when the restriction purposes are assigned to an account
+     * @notice Emitted when a restriction is changed internally or externally
      *
-     * @param account The account the restriction purposes are assigned to
-     * @param newPurposes The array of the new restriction purposes
-     * @param oldPurposes The array of the old restriction purposes
+     * @param from TODO
+     * @param to TODO
+     * @param id TODO
+     * @param newBalanceSpecific TODO
+     * @param oldBalanceSpecific TODO
+     * @param newBalanceTotal TODO
+     * @param oldBalanceTotal TODO
      */
-    event PurposesAssigned(address indexed account, bytes32[] newPurposes, bytes32[] oldPurposes);
-
-    /**
-     * @notice Emitted when the restriction is updated for an account
-     *
-     * @param account The account the restriction is updated for
-     * @param purpose The restriction purpose
-     * @param newBalance The new restricted balance
-     * @param oldBalance The old restricted balance
-     */
-    event RestrictionUpdated(address indexed account, bytes32 indexed purpose, uint256 newBalance, uint256 oldBalance);
-
-    /**
-     * @notice Assigns the restriction purposes to an account
-     *
-     * @param account The account to assign purposes to
-     * @param purposes The purposes to assign
-     */
-    function assignPurposes(address account, bytes32[] memory purposes) external;
+    event RestrictionChanged(
+        address indexed from,
+        address indexed to,
+        bytes32 indexed id,
+        uint256 newBalanceSpecific,
+        uint256 oldBalanceSpecific,
+        uint256 newBalanceTotal,
+        uint256 oldBalanceTotal
+    );
 
     /**
      * @notice Returns the restriction purposes assigned to an account
@@ -64,7 +58,7 @@ interface IERC20Restrictable {
      * @notice Returns the restricted balance for the account and the restriction purpose
      *
      * @param account The account to get the balance of
-     * @param purpose The restriction purpose to check (if zero, returns the total restricted balance)
+     * @param id TODO
      */
-    function balanceOfRestricted(address account, bytes32 purpose) external view returns (uint256);
+    function balanceOfRestricted(address account, bytes32 id) external view returns (uint256);
 }
