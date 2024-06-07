@@ -68,3 +68,43 @@ interface IERC20Restrictable {
      */
     function balanceOfRestricted(address account, bytes32 purpose) external view returns (uint256);
 }
+
+/**
+ * @title IERC20RestrictableV2 interface
+ * @author CloudWalk Inc.
+ * @notice TODO
+ */
+interface IERC20RestrictableV2 {
+    /**
+     * @notice TODO
+     */
+    event RestrictionChanged(
+        address indexed from,
+        address indexed to,
+        bytes32 indexed id,
+        uint256 newBalanceSpecific,
+        uint256 oldBalanceSpecific,
+        uint256 newBalanceTotal,
+        uint256 oldBalanceTotal
+    );
+
+    /**
+     * @notice TODO
+     */
+    function restrictionIncrease(address from, address to, uint256 amount, bytes32 id) external;
+
+    /**
+     * @notice TODO
+     */
+    function restrictionDecrease(address from, address to, uint256 amount, bytes32 id) external;
+
+    /**
+     * @notice TODO
+     */
+    function transferRestricted(address from, address to, uint256 amount, bytes32 id) external;
+
+    /**
+     * @notice TODO
+     */
+    function balanceOfRestricted(address from, address to, bytes32 id) external view returns (uint256);
+}
