@@ -54,7 +54,7 @@ let purposeAccount1: HardhatEthersSigner;
 
 describe("Contract 'ERC20Restrictable'", async () => {
   before(async () => {
-    [deployer, pauser, blocklister, user1, user2, purposeAccount1, purposeAccount2] = await ethers.getSigners();
+    [deployer, pauser, blocklister, user1, user2, purposeAccount1] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20RestrictableMock");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
@@ -414,7 +414,7 @@ describe("Contract 'ERC20Restrictable'", async () => {
 
 describe("Contract ERC20RestrictableV2", async () => {
   before(async () => {
-    [deployer, pauser, blocklister, user1, user2, purposeAccount1, purposeAccount2] = await ethers.getSigners();
+    [deployer, pauser, blocklister, user1, user2, purposeAccount1] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20RestrictableMockV2");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
