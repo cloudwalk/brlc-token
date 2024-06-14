@@ -71,12 +71,20 @@ interface IERC20Restrictable {
 
 /**
  * @title IERC20RestrictableV2 interface
- * @author CloudWalk Inc.
- * @notice TODO
+ * @dev Interface for ERC20 tokens with restriction capabilities.
+ * @notice Provides functions to manage token restrictions and perform restricted transfers.
  */
 interface IERC20RestrictableV2 {
     /**
-     * @notice TODO
+     * @notice Emitted when the restriction is changed for a transfer between accounts.
+     *
+     * @param from The address from which tokens are being transferred
+     * @param to The address to which tokens are being transferred
+     * @param id The identifier for the restriction (purpose)
+     * @param newBalanceSpecific The new restricted balance for the specific restriction (id)
+     * @param oldBalanceSpecific The old restricted balance for the specific restriction (id)
+     * @param newBalanceTotal The new total restricted balance
+     * @param oldBalanceTotal The old total restricted balance
      */
     event RestrictionChanged(
         address indexed from,
@@ -89,22 +97,42 @@ interface IERC20RestrictableV2 {
     );
 
     /**
-     * @notice TODO
+     * @notice Increases the restricted balance for a transfer between accounts.
+     *
+     * @param from The address from which tokens are being restricted
+     * @param to The address to which tokens are being restricted
+     * @param amount The amount of tokens to restrict
+     * @param id The identifier for the restriction (purpose)
      */
     function restrictionIncrease(address from, address to, uint256 amount, bytes32 id) external;
 
     /**
-     * @notice TODO
+     * @notice Decreases the restricted balance for a transfer between accounts.
+     *
+     * @param from The address from which tokens are being unrestricted
+     * @param to The address to which tokens are being unrestricted
+     * @param amount The amount of tokens to unrestrict
+     * @param id The identifier for the restriction (purpose)
      */
     function restrictionDecrease(address from, address to, uint256 amount, bytes32 id) external;
 
     /**
-     * @notice TODO
+     * @notice Transfers tokens with restrictions between accounts.
+     *
+     * @param from The address from which tokens are being transferred
+     * @param to The address to which tokens are being transferred
+     * @param amount The amount of tokens to transfer
+     * @param id The identifier for the restriction (purpose)
      */
     function transferRestricted(address from, address to, uint256 amount, bytes32 id) external;
 
     /**
-     * @notice TODO
+     * @notice Returns the restricted balance for a transfer between accounts for a specific restriction.
+     *
+     * @param from The address from which tokens are being restricted
+     * @param to The address to which tokens are being restricted
+     * @param id The identifier for the restriction (purpose)
+     * @return The amount of restricted tokens
      */
     function balanceOfRestricted(address from, address to, bytes32 id) external view returns (uint256);
 }
