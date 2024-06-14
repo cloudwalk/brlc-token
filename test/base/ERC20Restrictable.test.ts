@@ -51,7 +51,6 @@ let blocklister: HardhatEthersSigner;
 let user1: HardhatEthersSigner;
 let user2: HardhatEthersSigner;
 let purposeAccount1: HardhatEthersSigner;
-let purposeAccount2: HardhatEthersSigner;
 
 describe("Contract 'ERC20Restrictable'", async () => {
   before(async () => {
