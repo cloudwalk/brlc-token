@@ -24,12 +24,6 @@ abstract contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
      */
     error UnauthorizedBridge(address account);
 
-    /// @notice The zero amount of tokens is passed during the mint operation
-    error ZeroMintForBridgingAmount();
-
-    /// @notice The zero amount of tokens is passed during the burn operation
-    error ZeroBurnForBridgingAmount();
-
     // -------------------- Modifiers --------------------------------
 
     /// @notice Throws if called by any account other than the bridge
@@ -87,10 +81,6 @@ abstract contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
      * @dev The `amount` value must be greater than zero
      */
     function mintForBridging(address account, uint256 amount) external onlyBridge returns (bool) {
-        if (amount == 0) {
-            revert ZeroMintForBridgingAmount();
-        }
-
         _mint(account, amount);
         emit MintForBridging(account, amount);
 
@@ -104,10 +94,6 @@ abstract contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
      * @dev The `amount` value must be greater than zero
      */
     function burnForBridging(address account, uint256 amount) external onlyBridge returns (bool) {
-        if (amount == 0) {
-            revert ZeroBurnForBridgingAmount();
-        }
-
         _burn(account, amount);
         emit BurnForBridging(account, amount);
 

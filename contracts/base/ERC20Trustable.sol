@@ -14,11 +14,6 @@ abstract contract ERC20Trustable is ERC20Base, IERC20Trustable {
     /// @notice The mapping of the configured `trusted` status of the accounts
     mapping(address => bool) private _trusted;
 
-    // -------------------- Errors -----------------------------------
-
-    /// @notice Thrown when the account is already configured with the same `trusted` status
-    error TrustedAccountAlreadyConfigured();
-
     // -------------------- Functions --------------------------------
 
     /**
@@ -47,10 +42,6 @@ abstract contract ERC20Trustable is ERC20Base, IERC20Trustable {
      * @dev Emits a {TrustedAccountConfigured} event
      */
     function configureTrustedAccount(address account, bool status) external onlyOwner {
-        if (_trusted[account] == status) {
-            revert TrustedAccountAlreadyConfigured();
-        }
-
         _trusted[account] = status;
 
         emit TrustedAccountConfigured(account, status);

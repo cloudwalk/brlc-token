@@ -22,9 +22,6 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /// @notice The token freezing operation is not approved by the account
     error FreezingNotApproved();
 
-    /// @notice The token freezing is already approved by the account
-    error FreezingAlreadyApproved();
-
     /// @notice The frozen balance is exceeded during the operation
     error LackOfFrozenBalance();
 
@@ -58,10 +55,6 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @notice The contract must not be paused
      */
     function approveFreezing() external whenNotPaused {
-        if (_freezeApprovals[_msgSender()]) {
-            revert FreezingAlreadyApproved();
-        }
-
         _freezeApprovals[_msgSender()] = true;
 
         emit FreezeApproval(_msgSender());

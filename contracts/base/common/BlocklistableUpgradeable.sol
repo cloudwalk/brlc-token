@@ -98,16 +98,6 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      */
     error BlocklistedAccount(address account);
 
-    /**
-     * @notice The address to blocklist is zero address
-     */
-    error ZeroAddressToBlocklist();
-
-    /**
-     * @notice The account is already configured
-     */
-    error AlreadyConfigured();
-
     // -------------------- Modifiers --------------------------------
 
     /**
@@ -187,9 +177,6 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      * @param account The address to blocklist
      */
     function blocklist(address account) public onlyBlocklister {
-        if (account == address(0)) {
-            revert ZeroAddressToBlocklist();
-        }
         if (_blocklisted[account]) {
             return;
         }
@@ -252,10 +239,6 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      */
     function enableBlocklist(bool status) external onlyOwner {
         BlocklistableStorageSlot storage storageSlot = _getBlocklistableSlot(_BLOCKLISTABLE_STORAGE_SLOT);
-        if (storageSlot.enabled == status) {
-            revert AlreadyConfigured();
-        }
-
         storageSlot.enabled = status;
         emit BlocklistEnabled(status);
     }
@@ -272,10 +255,6 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      * @param newMainBlocklister The address of the new main blocklister
      */
     function setMainBlocklister(address newMainBlocklister) external onlyOwner {
-        if (_mainBlocklister == newMainBlocklister) {
-            revert AlreadyConfigured();
-        }
-
         _mainBlocklister = newMainBlocklister;
         emit MainBlockListerChanged(newMainBlocklister);
     }
@@ -294,10 +273,6 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      */
     function configureBlocklister(address account, bool status) external onlyMainBlocklister {
         BlocklistableStorageSlot storage storageSlot = _getBlocklistableSlot(_BLOCKLISTABLE_STORAGE_SLOT);
-        if (storageSlot.blocklisters[account] == status) {
-            revert AlreadyConfigured();
-        }
-
         storageSlot.blocklisters[account] = status;
         emit BlocklisterConfigured(account, status);
     }

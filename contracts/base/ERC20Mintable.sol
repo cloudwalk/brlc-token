@@ -64,29 +64,14 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /// @notice The mint allowance is exceeded during the mint operation
     error ExceededMintAllowance();
 
-    /// @notice The zero amount of tokens is passed during the mint operation
-    error ZeroMintAmount();
-
-    /// @notice The zero amount of tokens is passed during the burn operation
-    error ZeroBurnAmount();
-
-    /// @notice The zero amount of tokens is passed during the premint operation
-    error ZeroPremintAmount();
-
     /// @notice The transfer amount exceeded the preminted (not available) amount
     error TransferExceededPremintedAmount();
-
-    /// @notice The same maximum count of pending premints is already configured
-    error MaxPendingPremintsCountAlreadyConfigured();
 
     /// @notice The maximum number of pending premints has been reached
     error MaxPendingPremintsLimitReached();
 
     /// @notice The premint release timestamp must be in the future
     error PremintReleaseTimePassed();
-
-    /// @notice The premint rescheduling with the provided parameters is already configured
-    error PremintReschedulingAlreadyConfigured();
 
     /// @notice The target premint release timestamp for the premint rescheduling must be in the future
     error PremintReschedulingTimePassed();
@@ -208,10 +193,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      */
     function configureMaxPendingPremintsCount(uint16 newLimit) external onlyOwner {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
-        if (storageSlot.maxPendingPremintsCount == newLimit) {
-            revert MaxPendingPremintsCountAlreadyConfigured();
-        }
-
         storageSlot.maxPendingPremintsCount = newLimit;
 
         emit MaxPendingPremintsCountConfigured(newLimit);
@@ -386,10 +367,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     function _mintInternal(address account, uint256 amount) internal returns (bool) {
-        if (amount == 0) {
-            revert ZeroMintAmount();
-        }
-
         uint256 mintAllowance = _mintersAllowance[_msgSender()];
         if (amount > mintAllowance) {
             revert ExceededMintAllowance();
@@ -404,10 +381,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     function _burnInternal(address account, uint256 amount) internal returns (bool) {
-        if (amount == 0) {
-            revert ZeroBurnAmount();
-        }
-
         _burn(account, amount);
 
         emit Burn(_msgSender(), amount);
@@ -484,9 +457,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         }
 
         if (oldAmount == 0) {
-            if (newAmount == 0) {
-                revert ZeroPremintAmount();
-            }
             if (premintRecords.length >= storageSlot.maxPendingPremintsCount) {
                 revert MaxPendingPremintsLimitReached();
             }
@@ -517,9 +487,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint256 oldTargetRelease = _resolvePremintRelease(originalRelease, storageSlot.premintReschedulings);
         if (oldTargetRelease <= block.timestamp) {
             revert PremintReleaseTimePassed();
-        }
-        if (oldTargetRelease == newTargetRelease) {
-            revert PremintReschedulingAlreadyConfigured();
         }
         uint256 precedingOriginalReleaseCounter = storageSlot.premintReschedulingCounters[originalRelease];
         if (precedingOriginalReleaseCounter != 0) {

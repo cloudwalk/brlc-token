@@ -22,9 +22,6 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
 
     // -------------------- Errors -----------------------------------
 
-    /// @notice Thrown when the zero restriction purpose is passed to the function
-    error ZeroPurpose();
-
     /// @notice Thrown when the transfer amount exceeds the restricted balance
     error TransferExceededRestrictedAmount();
 
@@ -53,12 +50,6 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
      * @inheritdoc IERC20Restrictable
      */
     function assignPurposes(address account, bytes32[] memory purposes) external onlyOwner {
-        for (uint256 i = 0; i < purposes.length; i++) {
-            if (purposes[i] == bytes32(0)) {
-                revert ZeroPurpose();
-            }
-        }
-
         emit PurposesAssigned(account, purposes, _purposeAssignments[account]);
 
         _purposeAssignments[account] = purposes;
@@ -68,16 +59,6 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
      * @inheritdoc IERC20Restrictable
      */
     function restrictionIncrease(address account, bytes32 purpose, uint256 amount) external onlyBlocklister {
-        if (account == address(0)) {
-            revert ZeroAddress();
-        }
-        if (purpose == bytes32(0)) {
-            revert ZeroPurpose();
-        }
-        if (amount == 0) {
-            revert ZeroAmount();
-        }
-
         uint256 oldBalance = _restrictedPurposeBalances[account][purpose];
         uint256 newBalance = oldBalance + amount;
 
@@ -91,16 +72,6 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
      * @inheritdoc IERC20Restrictable
      */
     function restrictionDecrease(address account, bytes32 purpose, uint256 amount) external onlyBlocklister {
-        if (account == address(0)) {
-            revert ZeroAddress();
-        }
-        if (purpose == bytes32(0)) {
-            revert ZeroPurpose();
-        }
-        if (amount == 0) {
-            revert ZeroAmount();
-        }
-
         uint256 oldBalance = _restrictedPurposeBalances[account][purpose];
         uint256 newBalance = oldBalance - amount;
 
