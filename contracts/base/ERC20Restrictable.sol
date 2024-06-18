@@ -341,18 +341,34 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
                 uint256 newRestrictedBalanceToAnyId = oldRestrictedBalanceToAnyId;
                 uint256 restrictedBalanceTotal = _totalRestrictedBalances[from];
 
-                if (newRestrictedBalanceToId >= amount) {
+                if (oldRestrictedBalanceToId >= amount) {
                     newRestrictedBalanceToAnyId -= amount;
                     newRestrictedBalanceToId -= amount;
                     restrictedBalanceTotal -= amount;
-                } else if (newRestrictedBalanceToAnyId >= amount && newRestrictedBalanceToId < amount) {
+                } else if (oldRestrictedBalanceToAnyId >= amount) {
                     newRestrictedBalanceToId = 0;
                     newRestrictedBalanceToAnyId -= amount;
                     restrictedBalanceTotal -= amount;
                 } else {
-                    restrictedBalanceTotal = 0;
                     newRestrictedBalanceToAnyId = 0;
                     newRestrictedBalanceToId = 0;
+                    if (restrictedBalanceTotal >= oldRestrictedBalanceToAnyId) {
+                        restrictedBalanceTotal -= oldRestrictedBalanceToAnyId;
+                    } else {
+                        restrictedBalanceTotal = 0;
+                    }
+                }
+
+                if (oldRestrictedBalanceToAnyId != newRestrictedBalanceToAnyId) {
+                    emit RestrictionChanged(
+                        from,
+                        to,
+                        ANY_ID,
+                        newRestrictedBalanceToAnyId,
+                        oldRestrictedBalanceToAnyId,
+                        restrictedBalanceTotal,
+                        restrictedBalanceTotal
+                    );
                 }
 
                 emit RestrictionChanged(
@@ -364,15 +380,7 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
                     restrictedBalanceTotal,
                     restrictedBalanceTotal
                 );
-                emit RestrictionChanged(
-                    from,
-                    to,
-                    ANY_ID,
-                    newRestrictedBalanceToAnyId,
-                    oldRestrictedBalanceToAnyId,
-                    restrictedBalanceTotal,
-                    restrictedBalanceTotal
-                );
+
                 _restrictedBalances[from][to][id] = newRestrictedBalanceToId;
                 _totalRestrictedBalances[from] = restrictedBalanceTotal;
                 _restrictedBalances[from][to][ANY_ID] = newRestrictedBalanceToAnyId;
@@ -483,14 +491,15 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
         if ((flags & FLAG_INCREASING) != 0) {
             newBalanceSpecific += amount;
             newBalanceTotal += amount;
+            _restrictedBalances[from][to][ANY_ID] += amount;
         } else {
             newBalanceSpecific -= amount;
             newBalanceTotal -= amount;
+            _restrictedBalances[from][to][ANY_ID] -= amount;
         }
 
         _restrictedBalances[from][to][id] = newBalanceSpecific;
         _totalRestrictedBalances[from] = newBalanceTotal;
-        _restrictedBalances[from][to][ANY_ID] = newBalanceTotal;
 
         emit RestrictionChanged(
             from,
