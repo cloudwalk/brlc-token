@@ -107,7 +107,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         emit Freeze(from, newFrozenBalance, oldFrozenBalance);
 
         _frozenBalances[from] = newFrozenBalance;
-        _transfer(from, to, amount);
+        _transferWithId(from, to, amount, bytes32(0));
     }
 
     /**
@@ -138,11 +138,8 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      */
     function _balanceOf_ERC20Freezable(address account) internal view virtual returns (uint256);
 
-    /**
-     * @inheritdoc ERC20Base
-     */
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        super._afterTokenTransfer(from, to, amount);
+    function _afterTokenTransferWithId(address from, address to, uint256 amount, bytes32 id) internal virtual override {
+        super._afterTokenTransferWithId(from, to, amount, id);
         uint256 frozen = _frozenBalances[from];
         if (frozen != 0 && msg.sig != this.transferFrozen.selector) {
             if (_balanceOf_ERC20Freezable(from) < frozen) {

@@ -133,49 +133,6 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     }
 
     /**
-     * @inheritdoc ERC20Base
-     */
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        // Execute basic transfer logic
-        super._afterTokenTransfer(from, to, amount);
-
-//        // Execute restricted transfer logic
-//        uint256 restrictedBalance = _totalRestrictedBalances[from];
-//        if (restrictedBalance != 0) {
-//            uint256 purposeAmount = amount;
-//            bytes32[] memory purposes = _purposeAssignments[to];
-//
-//            for (uint256 i = 0; i < purposes.length; i++) {
-//                bytes32 purpose = purposes[i];
-//                uint256 purposeBalance = _restrictedPurposeBalances[from][purpose];
-//
-//                if (purposeBalance != 0) {
-//                    if (purposeBalance > purposeAmount) {
-//                        restrictedBalance -= purposeAmount;
-//                        purposeBalance -= purposeAmount;
-//                        purposeAmount = 0;
-//                    } else {
-//                        restrictedBalance -= purposeBalance;
-//                        purposeAmount -= purposeBalance;
-//                        purposeBalance = 0;
-//                    }
-//                    _restrictedPurposeBalances[from][purpose] = purposeBalance;
-//                }
-//
-//                if (purposeAmount == 0) {
-//                    break;
-//                }
-//            }
-//
-//            if (_balanceOf_ERC20Restrictable(from) < restrictedBalance) {
-//                revert TransferExceededRestrictedAmount();
-//            }
-//
-//            _totalRestrictedBalances[from] = restrictedBalance;
-//        }
-    }
-
-    /**
      * @notice Returns the transferable amount of tokens owned by account
      *
      * @param account The account to get the balance of
@@ -332,6 +289,37 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
             revert InvalidId();
         }
 
+        transferFromWithId(from, to, amount, id);
+    }
+
+    /**
+     * @inheritdoc IERC20RestrictableV2
+     */
+    function balanceOfRestricted(address from, address to, bytes32 id) public view returns (uint256) {
+        return _balanceOfRestricted(from, to, id);
+    }
+
+    /**
+     * @notice Migrates the restricted balance of a specific obsolete purpose to a universal restriction.
+     * @dev Transfers the restricted balance associated with an obsolete purpose from one account to another.
+     *      If the `to` address matches the obsolete purpose address, the balance is added to the universal restriction (ANY_ID).
+     * @param from The address from which the obsolete purpose balance is being migrated.
+     * @param to The address to which the obsolete purpose balance is being migrated.
+     */
+    function migrateBalance(address from, address to) public {
+        address obsolatePurposeAddress = _defineObsolatePurposeAddress();
+        if (to == obsolatePurposeAddress) {
+            uint256 purposeAmount = _restrictedPurposeBalances[from][OBSOLETE_PURPOSE];
+            if (purposeAmount != 0) {
+                _restrictedBalances[from][to][ANY_ID] += purposeAmount;
+                _restrictedPurposeBalances[from][OBSOLETE_PURPOSE] = 0;
+            }
+        }
+    }
+
+    function _afterTokenTransferWithId(address from, address to, uint256 amount, bytes32 id) internal virtual override {
+        super._afterTokenTransferWithId(from, to, amount, id);
+
         if (_totalRestrictedBalances[from] != 0) {
             uint256 oldRestrictedBalanceToId = _restrictedBalances[from][to][id];
 
@@ -382,39 +370,7 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
                 _restrictedBalances[from][to][ANY_ID] = newRestrictedBalanceToAnyId;
             }
         }
-        transferFrom(from, to, amount);
-    }
 
-    /**
-     * @inheritdoc IERC20RestrictableV2
-     */
-    function balanceOfRestricted(address from, address to, bytes32 id) public view returns (uint256) {
-        return _balanceOfRestricted(from, to, id);
-    }
-
-    /**
-     * @notice Migrates the restricted balance of a specific obsolete purpose to a universal restriction.
-     * @dev Transfers the restricted balance associated with an obsolete purpose from one account to another.
-     *      If the `to` address matches the obsolete purpose address, the balance is added to the universal restriction (ANY_ID).
-     * @param from The address from which the obsolete purpose balance is being migrated.
-     * @param to The address to which the obsolete purpose balance is being migrated.
-     */
-    function migrateBalance(address from, address to) public {
-        address obsolatePurposeAddress = _defineObsolatePurposeAddress();
-        if (to == obsolatePurposeAddress) {
-            uint256 purposeAmount = _restrictedPurposeBalances[from][OBSOLETE_PURPOSE];
-            if (purposeAmount != 0) {
-                _restrictedBalances[from][to][ANY_ID] += purposeAmount;
-                _restrictedPurposeBalances[from][OBSOLETE_PURPOSE] = 0;
-            }
-        }
-    }
-
-    /**
-     * @inheritdoc ERC20Base
-     */
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        super._afterTokenTransfer(from, to, amount);
         if (_balanceOf_ERC20Restrictable(from) < _totalRestrictedBalances[from]) {
             revert TransferExceededRestrictedAmount();
         }

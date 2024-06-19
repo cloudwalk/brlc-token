@@ -53,6 +53,26 @@ abstract contract ERC20Base is
      */
     function __ERC20Base_init_unchained() internal onlyInitializing {}
 
+    function transfer(address to, uint256 amount) public virtual override returns (bool) {
+        _transferWithId(_msgSender(), to, amount, bytes32(0));
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) public virtual override returns (bool) {
+        _transferWithId(from, to, amount, bytes32(0));
+        return true;
+    }
+
+    function transferFromWithId(
+        address from,
+        address to,
+        uint256 amount,
+        bytes32 id
+    ) public virtual returns (bool) {
+        _transferWithId(from, to, amount, bytes32(0));
+        return true;
+    }
+
     /**
      * @inheritdoc ERC20Upgradeable
      */
@@ -65,6 +85,12 @@ abstract contract ERC20Base is
      */
     function allowance(address owner, address spender) public view virtual override returns (uint256) {
         return super.allowance(owner, spender);
+    }
+
+    function _transferWithId(address from, address to, uint256 amount, bytes32 id) internal {
+        _beforeTokenTransferWithId(from, to, amount, id);
+        _transfer(from, to, amount);
+        _afterTokenTransferWithId(from, to, amount, id);
     }
 
     /**
@@ -97,25 +123,12 @@ abstract contract ERC20Base is
         super._spendAllowance(owner, spender, amount);
     }
 
-    /**
-     * @inheritdoc ERC20Upgradeable
-     *
-     * @dev The contract must not be paused
-     * @dev The `from` address must not be blocklisted
-     * @dev The `to` address must not be blocklisted
-     */
-    function _beforeTokenTransfer(
+    function _beforeTokenTransferWithId(
         address from,
         address to,
-        uint256 amount
-    ) internal virtual override whenNotPaused notBlocklisted(from) notBlocklistedOrBypassIfBlocklister(to) {
-        super._beforeTokenTransfer(from, to, amount);
-    }
+        uint256 amount,
+        bytes32 id
+    ) internal virtual whenNotPaused notBlocklisted(from) notBlocklistedOrBypassIfBlocklister(to) {}
 
-    /**
-     * @inheritdoc ERC20Upgradeable
-     */
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        super._afterTokenTransfer(from, to, amount);
-    }
+    function _afterTokenTransferWithId(address from, address to, uint256 amount, bytes32 id) internal virtual {}
 }

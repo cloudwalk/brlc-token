@@ -392,7 +392,7 @@ describe("Contract ERC20RestrictableV2", async () => {
 
       expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(0);
     });
-    
+
     it("Executes as expected if using restriction to any id and restriction is partially covered by specific and any id", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.mint(user1.address, 150));

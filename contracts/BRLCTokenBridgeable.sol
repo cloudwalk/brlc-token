@@ -80,8 +80,12 @@ contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
     /**
      * @dev See {ERC20Base-_beforeTokenTransfer}
      */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override(ERC20Base) {
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._beforeTokenTransfer(from, to, amount);
+    }
+
+    function _beforeTokenTransferWithId(address from, address to, uint256 amount, bytes32 id) internal virtual override {
+        super._beforeTokenTransferWithId(from, to, amount, id);
     }
 
     /**
@@ -92,8 +96,17 @@ contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
         address from,
         address to,
         uint256 amount
-    ) internal virtual override(ERC20Base, ERC20Freezable) {
+    ) internal virtual override {
         super._afterTokenTransfer(from, to, amount);
+    }
+
+    function _afterTokenTransferWithId(
+        address from,
+        address to,
+        uint256 amount,
+        bytes32 id
+    ) internal virtual override(ERC20Base, ERC20Freezable) {
+        super._afterTokenTransferWithId(from, to, amount, id);
     }
 
     /**

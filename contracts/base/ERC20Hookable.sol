@@ -109,17 +109,14 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
         return _afterTokenTransferHooks;
     }
 
-    /**
-     * @dev Overrides the `_beforeTokenTransfer` function by calling attached hooks after the base logic
-     */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override(ERC20Base) {
-        super._beforeTokenTransfer(from, to, amount);
+    function _beforeTokenTransferWithId(address from, address to, uint256 amount, bytes32 id) internal virtual override(ERC20Base) {
+        super._beforeTokenTransferWithId(from, to, amount, id);
         for (uint256 i = 0; i < _beforeTokenTransferHooks.length; ++i) {
             if (_beforeTokenTransferHooks[i].policy == ErrorHandlingPolicy.Revert) {
-                IERC20Hook(_beforeTokenTransferHooks[i].account).beforeTokenTransfer(from, to, amount);
+                IERC20Hook(_beforeTokenTransferHooks[i].account).beforeTokenTransferWithId(from, to, amount, id);
             } else {
                 // ErrorHandlingPolicy.Event
-                try IERC20Hook(_beforeTokenTransferHooks[i].account).beforeTokenTransfer(from, to, amount) {
+                try IERC20Hook(_beforeTokenTransferHooks[i].account).beforeTokenTransferWithId(from, to, amount, id) {
                     // Do nothing
                 } catch Error(string memory reason) {
                     emit BeforeTokenTransferHookFailure(_beforeTokenTransferHooks[i].account, reason, 0, "");
@@ -132,17 +129,14 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
         }
     }
 
-    /**
-     * @dev Overrides the `_afterTokenTransfer` function by calling attached hooks after the base logic
-     */
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        super._afterTokenTransfer(from, to, amount);
+    function _afterTokenTransferWithId(address from, address to, uint256 amount, bytes32 id) internal virtual override {
+        super._afterTokenTransferWithId(from, to, amount, id);
         for (uint256 i = 0; i < _afterTokenTransferHooks.length; ++i) {
             if (_afterTokenTransferHooks[i].policy == ErrorHandlingPolicy.Revert) {
-                IERC20Hook(_afterTokenTransferHooks[i].account).afterTokenTransfer(from, to, amount);
+                IERC20Hook(_afterTokenTransferHooks[i].account).afterTokenTransferWithId(from, to, amount, id);
             } else {
                 // ErrorHandlingPolicy.Event
-                try IERC20Hook(_afterTokenTransferHooks[i].account).afterTokenTransfer(from, to, amount) {
+                try IERC20Hook(_afterTokenTransferHooks[i].account).afterTokenTransferWithId(from, to, amount, id) {
                     // Do nothing
                 } catch Error(string memory reason) {
                     emit AfterTokenTransferHookFailure(_afterTokenTransferHooks[i].account, reason, 0, "");
