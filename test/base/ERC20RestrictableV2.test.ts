@@ -21,7 +21,6 @@ const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable
 
 const REVERT_ERROR_ZERO_ADDRESS = "ZeroAddress";
 const REVERT_ERROR_ZERO_AMOUNT = "ZeroAmount";
-const REVERT_ERROR_ZERO_PURPOSE = "ZeroPurpose";
 const REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER = "UnauthorizedBlocklister";
 const REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT = "TransferExceededRestrictedAmount";
 const REVERT_ERROR_OBSOLATE = "Obsolate";
@@ -228,12 +227,9 @@ describe("Contract ERC20RestrictableV2", async () => {
         await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, RESTRICTION_ID);
 
       expect(balanceOfRestrictedAfter).to.eq(balanceOfRestrictedBefore + BigInt(100));
-
-      const totalRestrictedBalanceToAnyId =
-       await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID);
       const totalRestrictedBalance = await token.balanceOfRestricted(user1.address, ethers.ZeroHash);
 
-      expect(totalRestrictedBalanceToAnyId).to.eq(totalRestrictedBalance);
+      expect(totalRestrictedBalance).to.eq(balanceOfRestrictedAfter);
     });
 
     it("Is reverted if the caller is not the blocklister", async () => {
@@ -396,7 +392,7 @@ describe("Contract ERC20RestrictableV2", async () => {
 
       expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(0);
     });
-
+    
     it("Executes as expected if using restriction to any id and restriction is partially covered by specific and any id", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.mint(user1.address, 150));
@@ -462,7 +458,7 @@ describe("Contract ERC20RestrictableV2", async () => {
         [-150, 150]
       );
 
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(50);
+      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(0);
       expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, PURPOSE_1)).to.eq(0);
       expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, PURPOSE_2)).to.eq(50);
     });
@@ -530,7 +526,7 @@ describe("Contract ERC20RestrictableV2", async () => {
           [-50, 50]
         );
 
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(50);
+      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, PURPOSE_1)).to.eq(50);
     });
 
     it("Allows only 'transferRestricted' if the amount uses the restricted balance", async () => {
@@ -542,7 +538,7 @@ describe("Contract ERC20RestrictableV2", async () => {
 
       await expect(connect(token, user1).transfer(user2.address, 80))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(50);
+      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, PURPOSE_1)).to.eq(50);
 
       await expect(connect(token, blocklister).transferRestricted(user1.address, user2.address, 80, PURPOSE_1))
         .to.changeTokenBalances(

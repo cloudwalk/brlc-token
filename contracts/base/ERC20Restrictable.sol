@@ -340,23 +340,19 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
                 uint256 oldRestrictedBalanceToAnyId = _restrictedBalances[from][to][ANY_ID];
                 uint256 newRestrictedBalanceToAnyId = oldRestrictedBalanceToAnyId;
                 uint256 restrictedBalanceTotal = _totalRestrictedBalances[from];
+                uint256 totalAvailableBalanceToSpend = oldRestrictedBalanceToId + oldRestrictedBalanceToAnyId;
 
                 if (oldRestrictedBalanceToId >= amount) {
-                    newRestrictedBalanceToAnyId -= amount;
                     newRestrictedBalanceToId -= amount;
                     restrictedBalanceTotal -= amount;
-                } else if (oldRestrictedBalanceToAnyId >= amount) {
+                } else if (totalAvailableBalanceToSpend >= amount && oldRestrictedBalanceToId < amount) {
                     newRestrictedBalanceToId = 0;
-                    newRestrictedBalanceToAnyId -= amount;
+                    newRestrictedBalanceToAnyId -= (amount - oldRestrictedBalanceToId);
                     restrictedBalanceTotal -= amount;
                 } else {
                     newRestrictedBalanceToAnyId = 0;
                     newRestrictedBalanceToId = 0;
-                    if (restrictedBalanceTotal >= oldRestrictedBalanceToAnyId) {
-                        restrictedBalanceTotal -= oldRestrictedBalanceToAnyId;
-                    } else {
-                        restrictedBalanceTotal = 0;
-                    }
+                    restrictedBalanceTotal -= (oldRestrictedBalanceToId + oldRestrictedBalanceToAnyId);
                 }
 
                 if (oldRestrictedBalanceToAnyId != newRestrictedBalanceToAnyId) {
@@ -491,11 +487,9 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
         if ((flags & FLAG_INCREASING) != 0) {
             newBalanceSpecific += amount;
             newBalanceTotal += amount;
-            _restrictedBalances[from][to][ANY_ID] += amount;
         } else {
             newBalanceSpecific -= amount;
             newBalanceTotal -= amount;
-            _restrictedBalances[from][to][ANY_ID] -= amount;
         }
 
         _restrictedBalances[from][to][id] = newBalanceSpecific;
@@ -516,7 +510,7 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
      * @dev Defines an obsolete purpose address based on the current blockchain network.
      * @return The address corresponding to the obsolete purpose for the current network.
      *         - On Mainnet (chain ID 2009), returns `0x1F94A163C329bEc14C73Ca46c66150E3c47dbEDC`.
-     *         - On Testnet (all other chain IDs), returns `0x3181Ab023a4D4788754258BE5A3b8cf3D8276B98`.
+     *         - On Testnet (or on all other chain IDs), returns `0x3181Ab023a4D4788754258BE5A3b8cf3D8276B98`.
      */
     function _defineObsolatePurposeAddress() internal virtual view returns (address) {
         if (block.chainid == 2009) {
