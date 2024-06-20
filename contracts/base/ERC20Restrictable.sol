@@ -191,52 +191,56 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
 
 /**
  * @title ERC20RestrictableV2 contract
- * @dev Abstract contract extending ERC20Restrictable and implementing IERC20RestrictableV2
- *      Provides additional functionalities for restricted ERC20 token transfers
- * @notice This contract includes constants and errors specific to the restriction functionality
+ * @dev Abstract contract extending ERC20Restrictable and implementing IERC20RestrictableV2.
+ *      Provides additional functionalities for restricted ERC20 token transfers.
+ * @notice This contract includes constants and errors specific to the restriction functionality.
+ *
+ * See additional notes in comments for the {IERC20RestrictableV2} interface.
  */
 abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2 {
     /**
-     * @notice Identifier representing any restriction
-     * @dev This constant is used to denote a restriction that applies universally
-     */
-    bytes32 public constant ANY_ID = bytes32(type(uint256).max);
-
-    /**
-     * @notice Identifier for an obsolete purpose restriction
-     * @dev This constant represents a specific restriction purpose that is considered obsolete
+     * @notice Identifier for an obsolete purpose restriction.
+     * @dev This constant represents a specific restriction purpose that is considered obsolete.
      */
     bytes32 private constant OBSOLETE_PURPOSE = hex"fb3d7b70219de002ab2965369568c7492c0ca6cde8075175e3c26888f30d5bf2";
 
     /**
-     * @notice Flag indicating an increase in restriction
-     * @dev This constant is used in functions to specify that the restriction amount should be increased
+     * @notice Identifier representing any ID related to a token transfer.
+     * @dev This constant is used to denote a restriction that applies universally.
+     *
+     * See comments for the {IERC20RestrictableV2} interface for more details.
+     */
+    bytes32 public constant ANY_ID = bytes32(type(uint256).max);
+
+    /**
+     * @notice Flag indicating an increase in restriction.
+     * @dev This constant is used in functions to specify that the restriction amount should be increased.
      */
     uint256 private constant FLAG_INCREASING = 1;
 
     /**
-     * @notice Flag indicating a decrease in restriction
-     * @dev This constant is used in functions to specify that the restriction amount should be decreased
+     * @notice Flag indicating a decrease in restriction.
+     * @dev This constant is used in functions to specify that the restriction amount should be decreased.
      */
     uint256 private constant FLAG_DECREASING = 0;
 
     // -------------------- Errors -----------------------------------
 
     /**
-     * @notice Thrown when the restriction ID is zero
-     * @dev This error is used to indicate that a provided restriction ID is invalid because it is zero
+     * @notice Thrown when the restriction ID is zero.
+     * @dev This error is used to indicate that a provided restriction ID is invalid because it is zero.
      */
     error ZeroId();
 
     /**
-     * @notice Thrown when the restriction ID is invalid
-     * @dev This error is used to indicate that a provided restriction ID is invalid
+     * @notice Thrown when the restriction ID is invalid.
+     * @dev This error is used to indicate that a provided restriction ID is invalid.
      */
     error InvalidId();
 
     /**
-     * @notice Thrown when an obsolete restriction is used
-     * @dev This error is used to indicate that an obsolete restriction purpose has been referenced
+     * @notice Thrown when an obsolete function is used.
+     * @dev This error is used to indicate that an obsolete function has been called.
      */
     error Obsolete();
 
@@ -395,11 +399,11 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
     }
 
     /**
-     * @notice Migrates the restricted balance of a specific obsolete purpose to a universal restriction
-     * @dev Transfers the restricted balance associated with an obsolete purpose from one account to another
-     *      If the `to` address matches the obsolete purpose address, the balance is added to the universal restriction (ANY_ID)
-     * @param from The address from which the obsolete purpose balance is being migrated
-     * @param to The address to which the obsolete purpose balance is being migrated
+     * @notice Migrates the restricted balance of a specific obsolete purpose to a universal restriction (with ANY_ID).
+     * @dev Convert the restricted balance associated with an obsolete purpose to a universal restriction (with ANY_ID).
+     *      If the `to` address matches the obsolete purpose address, the balance is added to the universal restriction.
+     * @param from The address of the tokens sender for possible migration.
+     * @param to The address of the tokens receiver for possible migration.
      */
     function migrateBalance(address from, address to) public {
         address obsoletePurposeAddress = _defineObsoletePurposeAddress();
@@ -430,14 +434,14 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
     function _balanceOf_ERC20Restrictable(address account) internal view virtual override returns (uint256);
 
     /**
-     * @notice Retrieves the restricted balance for a specific purpose or total restricted balance if `id` or `to` is zero
-     * @param from The address from which the restricted balance is being queried
-     * @param to The address to which the restricted balance is applied
-     * @param id The identifier for the restriction (purpose)
-     * @return The amount of restricted tokens
-     * @dev Returns the total restricted balance if `id` is zero or `to` is zero
-     *      If `id` is `OBSOLETE_PURPOSE`, returns the restricted purpose balance
-     *      Otherwise, returns the specific restricted balance for the given `from`, `to`, and `id`
+     * @notice Retrieves a specific restricted balance or a total one for an account if `id` or `to` is zero.
+     * @param from The address of the tokens sender.
+     * @param to The address of the tokens receiver.
+     * @param id The identifier that is related to the token transfers or the `ANY_ID` value.
+     * @return The balance of the restriction
+     * @dev Returns the total restricted balance if `id` is zero or `to` is zero.
+     *      If `id` is `OBSOLETE_PURPOSE`, returns the restricted purpose balance.
+     *      Otherwise, returns the specific restricted balance for the given `from`, `to`, and `id`.
      */
     function _balanceOfRestricted(address from, address to, bytes32 id) internal view returns (uint256) {
         if (id == bytes32(0) || to == address(0)) {
@@ -452,20 +456,21 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
     }
 
     /**
-     * @notice Changes the restriction on a transfer between two accounts
-     * @param from The address from which tokens are restricted
-     * @param to The address to which tokens are restricted
-     * @param amount The amount of tokens to be restricted or unrestricted
-     * @param id The identifier for the restriction (purpose)
-     * @param flags The flags indicating the type of change (increase or decrease)
-     *        - If `FLAG_INCREASING` is set, the restriction amount is increased
-     *        - Otherwise, the restriction amount is decreased
-     * @dev This function modifies the restricted balance for a specific purpose and the total restricted balance
-     *      It emits the `RestrictionChanged` event to log the changes
+     * @notice Changes the balance of a restriction.
+     * @param from The address of the tokens sender.
+     * @param to The address of the tokens receiver.
+     * @param amount The amount to change the restriction balance by.
+     * @param id The identifier for the restriction (purpose).
+     * @param flags The flags indicating the type of change (increase or decrease).
+     *        If `FLAG_INCREASING` is set, the restriction amount is increased.
+     *        Otherwise, the restriction amount is decreased.
+     * @dev This function modifies the restricted balance for a specific purpose and the total restricted balance.
+     *      It emits the `RestrictionChanged` event to log the changes.
      * @dev Reverts if:
-     *      - `from` or `to` is the zero address
-     *      - `id` is zero
-     *      - `amount` is zero
+     *
+     *      - `from` or `to` is the zero address.
+     *      - `id` is zero.
+     *      - `amount` is zero.
      */
     function _changeRestriction(address from, address to, uint256 amount, bytes32 id, uint256 flags) private {
         if (from == address(0)) {
@@ -509,10 +514,8 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
     }
 
     /**
-     * @dev Defines an obsolete purpose address based on the current blockchain network
-     * @return The address corresponding to the obsolete purpose for the current network
-     *         - On Mainnet (chain ID 2009), returns `0x1F94A163C329bEc14C73Ca46c66150E3c47dbEDC`
-     *         - On Testnet (or on all other chain IDs), returns `0x3181Ab023a4D4788754258BE5A3b8cf3D8276B98`
+     * @dev Defines an obsolete purpose address based on the current blockchain network.
+     * @return The address corresponding to the obsolete purpose for the current network.
      */
     function _defineObsoletePurposeAddress() internal virtual view returns (address) {
         if (block.chainid == 2009) {

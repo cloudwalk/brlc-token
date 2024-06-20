@@ -64,6 +64,13 @@ contract ERC20RestrictableMockV2 is ERC20RestrictableV2 {
         return true;
     }
 
+    /**
+     * @notice Provide some balance for the obsolete mapping of restrictions by purposes.
+     *
+     * @param from The address of token sender
+     * @param purpose The purpose of a restriction
+     * @param amount The amount of to increase the restriction balance by
+     */
     function mockRestrictedPurposeBalances(address from, bytes32 purpose, uint256 amount) external {
         _restrictedPurposeBalances[from][purpose] = amount;
     }
