@@ -138,41 +138,6 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         // Execute basic transfer logic
         super._afterTokenTransfer(from, to, amount);
-
-//        // Execute restricted transfer logic
-//        uint256 restrictedBalance = _totalRestrictedBalances[from];
-//        if (restrictedBalance != 0) {
-//            uint256 purposeAmount = amount;
-//            bytes32[] memory purposes = _purposeAssignments[to];
-//
-//            for (uint256 i = 0; i < purposes.length; i++) {
-//                bytes32 purpose = purposes[i];
-//                uint256 purposeBalance = _restrictedPurposeBalances[from][purpose];
-//
-//                if (purposeBalance != 0) {
-//                    if (purposeBalance > purposeAmount) {
-//                        restrictedBalance -= purposeAmount;
-//                        purposeBalance -= purposeAmount;
-//                        purposeAmount = 0;
-//                    } else {
-//                        restrictedBalance -= purposeBalance;
-//                        purposeAmount -= purposeBalance;
-//                        purposeBalance = 0;
-//                    }
-//                    _restrictedPurposeBalances[from][purpose] = purposeBalance;
-//                }
-//
-//                if (purposeAmount == 0) {
-//                    break;
-//                }
-//            }
-//
-//            if (_balanceOf_ERC20Restrictable(from) < restrictedBalance) {
-//                revert TransferExceededRestrictedAmount();
-//            }
-//
-//            _totalRestrictedBalances[from] = restrictedBalance;
-//        }
     }
 
     /**

@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx, connect } from "../../test-utils/eth";
+import { connect, proveTx } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -29,30 +29,51 @@ const REVERT_ERROR_ZERO_ID = "ZeroId";
 
 const PURPOSE_ZERO = "0x0000000000000000000000000000000000000000000000000000000000000000";
 const PURPOSE_1 = "0x0000000000000000000000000000000000000000000000000000000000000001";
-const PURPOSE_2 = "0x0000000000000000000000000000000000000000000000000000000000000002";
 const OBSOLETE_ADDRESS = "0x3181Ab023a4D4788754258BE5A3b8cf3D8276B98";
-const OBSOLETE_ID =
-  ethers.getBytes(ethers.hexlify("0xfb3d7b70219de002ab2965369568c7492c0ca6cde8075175e3c26888f30d5bf2"));
-const ANY_ID = ethers.getBytes("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-const RESTRICTION_ID = ethers.getBytes(PURPOSE_1);
+const OBSOLETE_ID = "0xfb3d7b70219de002ab2965369568c7492c0ca6cde8075175e3c26888f30d5bf2";
+const ANY_ID = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+const ID1 = "0x0000000000000000000000000000000000000000000000000000000000000123";
+const ID2 = "0x0000000000000000000000000000000000000000000000000000000000000311";
+const ID_ZERO = "0x0000000000000000000000000000000000000000000000000000000000000000";
+const ADDRESS_ZERO = ethers.ZeroAddress;
 
-const BALANCE_OF_RESTRICTED_V2_SIGNATURE = "balanceOfRestricted(address,address,bytes32)";
-const RESTRICTION_INCREASE_V2_SIGNATURE =
+const FUNC_BALANCE_OF_RESTRICTED_V2 = "balanceOfRestricted(address,address,bytes32)";
+const FUNC_RESTRICTION_INCREASE_V2 =
   "restrictionIncrease(address,address,uint256,bytes32)";
-const RESTRICTION_DECREASE_V2_SIGNATURE =
+const FUNC_RESTRICTION_DECREASE_V2 =
   "restrictionDecrease(address,address,uint256,bytes32)";
 
 let tokenFactory: ContractFactory;
 let deployer: HardhatEthersSigner;
 let pauser: HardhatEthersSigner;
 let blocklister: HardhatEthersSigner;
-let user1: HardhatEthersSigner;
-let user2: HardhatEthersSigner;
-let purposeAccount1: HardhatEthersSigner;
+let fromAccount: HardhatEthersSigner;
+let toAccount: HardhatEthersSigner;
+let purposeAccount: HardhatEthersSigner;
+
+async function checkRestrictedBalancesV2(token: Contract, props: {
+  id: string;
+  expectedRestrictedBalanceSpecific: bigint;
+  expectedRestrictedBalanceTotal: bigint;
+  fromAddress?: string;
+  toAddress?: string;
+}) {
+  const { id, expectedRestrictedBalanceSpecific, expectedRestrictedBalanceTotal } = props;
+  const fromAddress: string = props.fromAddress ?? fromAccount.address;
+  const toAddress: string = props.toAddress ?? toAccount.address;
+
+  const specificRestrictedBalance = await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAddress, toAddress, id);
+  const totalRestrictedBalance1 = await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAddress, ADDRESS_ZERO, id);
+  const totalRestrictedBalance2 = await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAddress, toAddress, ID_ZERO);
+
+  expect(specificRestrictedBalance).to.eq(expectedRestrictedBalanceSpecific);
+  expect(totalRestrictedBalance1).to.eq(expectedRestrictedBalanceTotal);
+  expect(totalRestrictedBalance2).to.eq(expectedRestrictedBalanceTotal);
+}
 
 describe("Contract ERC20RestrictableV2", async () => {
   before(async () => {
-    [deployer, pauser, blocklister, user1, user2, purposeAccount1] = await ethers.getSigners();
+    [deployer, pauser, blocklister, fromAccount, toAccount, purposeAccount] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20RestrictableMockV2");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
@@ -68,7 +89,7 @@ describe("Contract ERC20RestrictableV2", async () => {
     const { token } = await deployToken();
     await proveTx(token.setPauser(pauser.address));
     await proveTx(token.setMainBlocklister(blocklister.address));
-    await proveTx(connect(token, user1).approve(blocklister.address, 1000000));
+    await proveTx(connect(token, fromAccount).approve(blocklister.address, 1000000));
     return { token };
   }
 
@@ -76,8 +97,11 @@ describe("Contract ERC20RestrictableV2", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.owner()).to.equal(deployer.address);
-      expect(await token.pauser()).to.equal(ethers.ZeroAddress);
-      expect(await token.mainBlocklister()).to.equal(ethers.ZeroAddress);
+      expect(await token.pauser()).to.equal(ADDRESS_ZERO);
+      expect(await token.mainBlocklister()).to.equal(ADDRESS_ZERO);
+
+      // Check public constants
+      expect(await token.ANY_ID()).to.equal(ANY_ID);
     });
 
     it("Is reverted if called for the second time", async () => {
@@ -114,14 +138,14 @@ describe("Contract ERC20RestrictableV2", async () => {
     it("Executes as expected", async () => {
       const { token } = await setUpFixture(deployToken);
 
-      await expect(token.assignPurposes(purposeAccount1.address, [PURPOSE_1]))
+      await expect(token.assignPurposes(purposeAccount.address, [PURPOSE_1]))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_OBSOLETE);
     });
 
     it("Is reverted if caller is not the owner", async () => {
       const { token } = await setUpFixture(deployToken);
 
-      await expect(connect(token, user1).assignPurposes(purposeAccount1.address, [PURPOSE_1]))
+      await expect(connect(token, fromAccount).assignPurposes(purposeAccount.address, [PURPOSE_1]))
         .to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
@@ -130,36 +154,44 @@ describe("Contract ERC20RestrictableV2", async () => {
     it("Executes as expected and emits correct event", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
-      const balanceOfRestrictedBefore = await token.balanceOfRestricted(user1.address, PURPOSE_ZERO);
+      const balanceOfRestrictedBefore: bigint = 0n;
+      const increasingAmount = 100;
+      const expectedNewRestrictedBalance = balanceOfRestrictedBefore + BigInt(increasingAmount);
 
-      await expect(connect(token, blocklister).restrictionIncrease(user1.address, OBSOLETE_ID, 100))
+      await expect(connect(token, blocklister).restrictionIncrease(fromAccount.address, OBSOLETE_ID, increasingAmount))
         .to.emit(token, "RestrictionChanged")
         .withArgs(
-          user1.address,
+          fromAccount.address,
           OBSOLETE_ADDRESS,
           ANY_ID,
-          100,
-          0,
-          100,
-          0
+          expectedNewRestrictedBalance, // newBalanceSpecific
+          balanceOfRestrictedBefore, // oldBalanceSpecific
+          expectedNewRestrictedBalance, // newBalanceTotal
+          balanceOfRestrictedBefore // oldBalanceTotal
         );
 
-      const balanceOfRestrictedAfter = await token.balanceOfRestricted(user1.address, PURPOSE_ZERO);
+      const balanceOfRestrictedAfterV1 = await token.balanceOfRestricted(fromAccount.address, PURPOSE_ZERO);
+      expect(balanceOfRestrictedAfterV1).to.eq(expectedNewRestrictedBalance);
 
-      expect(balanceOfRestrictedAfter).to.eq(balanceOfRestrictedBefore + BigInt(100));
+      await checkRestrictedBalancesV2(token, {
+        id: ANY_ID,
+        expectedRestrictedBalanceSpecific: expectedNewRestrictedBalance,
+        expectedRestrictedBalanceTotal: expectedNewRestrictedBalance,
+        toAddress: OBSOLETE_ADDRESS
+      });
     });
 
     it("Is reverted if the caller is not the blocklister", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
-      await expect(connect(token, user1).restrictionIncrease(user1.address, OBSOLETE_ID, 100))
+      await expect(connect(token, fromAccount).restrictionIncrease(fromAccount.address, OBSOLETE_ID, 100))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
     });
 
-    it("Is reverted if the provided id is not obsolete purpose", async () => {
+    it("Is reverted if the provided id is not the obsolete purpose", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
-      await expect(connect(token, blocklister).restrictionIncrease(user1.address, PURPOSE_1, 100))
+      await expect(connect(token, blocklister).restrictionIncrease(fromAccount.address, PURPOSE_1, 100))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_INVALID_ID);
     });
   });
@@ -167,387 +199,513 @@ describe("Contract ERC20RestrictableV2", async () => {
   describe("Function 'restrictionDecrease()' V1", async () => {
     it("Executes as expected and emits correct event", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(connect(token, blocklister).restrictionIncrease(user1.address, OBSOLETE_ID, 100));
+      await proveTx(connect(token, blocklister).restrictionIncrease(fromAccount.address, OBSOLETE_ID, 100));
 
-      const balanceOfRestrictedBefore = await token.balanceOfRestricted(user1.address, PURPOSE_ZERO);
+      const balanceOfRestrictedBefore = 100n;
+      const decreasingAmount = 50;
+      const expectedNewRestrictedBalance = balanceOfRestrictedBefore - BigInt(decreasingAmount);
 
-      await expect(connect(token, blocklister).restrictionDecrease(user1.address, OBSOLETE_ID, 100))
+      await expect(connect(token, blocklister).restrictionDecrease(fromAccount.address, OBSOLETE_ID, decreasingAmount))
         .to.emit(token, "RestrictionChanged")
         .withArgs(
-          user1.address,
+          fromAccount.address,
           OBSOLETE_ADDRESS,
           ANY_ID,
-          0,
-          100,
-          0,
-          100
+          expectedNewRestrictedBalance, // newBalanceSpecific
+          balanceOfRestrictedBefore, // oldBalanceSpecific
+          expectedNewRestrictedBalance, // newBalanceTotal
+          balanceOfRestrictedBefore // oldBalanceTotal
         );
 
-      const balanceOfRestrictedAfter = await token.balanceOfRestricted(user1.address, PURPOSE_ZERO);
+      const balanceOfRestrictedAfterV1 = await token.balanceOfRestricted(fromAccount.address, PURPOSE_ZERO);
+      expect(balanceOfRestrictedAfterV1).to.eq(expectedNewRestrictedBalance);
 
-      expect(balanceOfRestrictedAfter).to.eq(balanceOfRestrictedBefore - BigInt(100));
+      await checkRestrictedBalancesV2(token, {
+        id: ANY_ID,
+        expectedRestrictedBalanceSpecific: expectedNewRestrictedBalance,
+        expectedRestrictedBalanceTotal: expectedNewRestrictedBalance,
+        toAddress: OBSOLETE_ADDRESS
+      });
     });
 
     it("Is reverted if the caller is not the blocklister", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
-      await expect(connect(token, user1).restrictionDecrease(user1.address, OBSOLETE_ID, 100))
+      await expect(connect(token, fromAccount).restrictionDecrease(fromAccount.address, OBSOLETE_ID, 100))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
     });
 
     it("Is reverted if the provided id is not obsolete purpose", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
-      await expect(connect(token, blocklister).restrictionDecrease(user1.address, PURPOSE_1, 100))
+      await expect(connect(token, blocklister).restrictionDecrease(fromAccount.address, PURPOSE_1, 100))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_INVALID_ID);
     });
   });
 
   describe("Function 'restrictionIncrease()' V2", async () => {
-    it("Executes as expected and emits the correct event", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      const tokenUnderBlocklister = connect(token, blocklister);
+    async function checkRestrictionIncreaseV2(token: Contract, props: {
+      id: string;
+      oldRestrictedBalanceSpecific?: bigint;
+      oldRestrictedBalanceTotal?: bigint;
+    }): Promise<{ newRestrictedBalanceSpecific: bigint; newRestrictedBalanceTotal: bigint }> {
+      const id = props.id;
+      const oldRestrictedBalanceSpecific: bigint = props.oldRestrictedBalanceSpecific ?? 0n;
+      const oldRestrictedBalanceTotal: bigint = props.oldRestrictedBalanceTotal ?? 0n;
+      const increasingAmount = 100;
+      const newRestrictedBalanceSpecific = oldRestrictedBalanceSpecific + BigInt(increasingAmount);
+      const newRestrictedBalanceTotal = oldRestrictedBalanceTotal + BigInt(increasingAmount);
 
-      const balanceOfRestrictedBefore =
-        await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, RESTRICTION_ID);
       await expect(
-        tokenUnderBlocklister[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, RESTRICTION_ID)
-      ).to.emit(token, "RestrictionChanged")
-        .withArgs(
-          user1.address,
-          user2.address,
-          RESTRICTION_ID,
-          100,
-          0,
-          100,
-          0
-        );
+        token[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, increasingAmount, id)
+      ).to.emit(
+        token,
+        "RestrictionChanged"
+      ).withArgs(
+        fromAccount.address,
+        toAccount.address,
+        id,
+        newRestrictedBalanceSpecific,
+        oldRestrictedBalanceSpecific,
+        newRestrictedBalanceTotal,
+        oldRestrictedBalanceTotal
+      );
 
-      const balanceOfRestrictedAfter =
-        await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, RESTRICTION_ID);
+      await checkRestrictedBalancesV2(token, {
+        id,
+        expectedRestrictedBalanceSpecific: newRestrictedBalanceSpecific,
+        expectedRestrictedBalanceTotal: newRestrictedBalanceTotal
+      });
 
-      expect(balanceOfRestrictedAfter).to.eq(balanceOfRestrictedBefore + BigInt(100));
-      const totalRestrictedBalance = await token.balanceOfRestricted(user1.address, ethers.ZeroHash);
+      return {
+        newRestrictedBalanceSpecific,
+        newRestrictedBalanceTotal
+      };
+    }
 
-      expect(totalRestrictedBalance).to.eq(balanceOfRestrictedAfter);
+    describe("Executes as expected and emits the correct event if", async () => {
+      it("It is called for a specific ID twice", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const tokenUnderBlocklister = connect(token, blocklister);
+        const result = await checkRestrictionIncreaseV2(tokenUnderBlocklister, { id: ID1 });
+        await checkRestrictionIncreaseV2(tokenUnderBlocklister, {
+          id: ID1,
+          oldRestrictedBalanceSpecific: result.newRestrictedBalanceSpecific,
+          oldRestrictedBalanceTotal: result.newRestrictedBalanceTotal
+        });
+      });
+
+      it("It is called for the universal ID twice", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const tokenUnderBlocklister = connect(token, blocklister);
+        const result = await checkRestrictionIncreaseV2(tokenUnderBlocklister, { id: ANY_ID });
+        await checkRestrictionIncreaseV2(tokenUnderBlocklister, {
+          id: ANY_ID,
+          oldRestrictedBalanceSpecific: result.newRestrictedBalanceSpecific,
+          oldRestrictedBalanceTotal: result.newRestrictedBalanceTotal
+        });
+      });
+
+      it("It is called for a specific ID, then for the universal ID", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const tokenUnderBlocklister = connect(token, blocklister);
+        const result = await checkRestrictionIncreaseV2(tokenUnderBlocklister, { id: ID1 });
+        await checkRestrictionIncreaseV2(tokenUnderBlocklister, {
+          id: ANY_ID,
+          oldRestrictedBalanceSpecific: 0n,
+          oldRestrictedBalanceTotal: result.newRestrictedBalanceTotal
+        });
+      });
+
+      it("It is called for the universal ID, then for a specific ID", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const tokenUnderBlocklister = connect(token, blocklister);
+        const result = await checkRestrictionIncreaseV2(tokenUnderBlocklister, { id: ANY_ID });
+        await checkRestrictionIncreaseV2(tokenUnderBlocklister, {
+          id: ID1,
+          oldRestrictedBalanceSpecific: 0n,
+          oldRestrictedBalanceTotal: result.newRestrictedBalanceTotal
+        });
+      });
     });
 
-    it("Is reverted if the caller is not the blocklister", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
+    describe("Is reverted if", async () => {
+      it("The caller is not the blocklister", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
 
-      await expect(
-        connect(token, user1)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, RESTRICTION_ID)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
-    });
+        await expect(
+          connect(token, fromAccount)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ID1)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
+      });
 
-    it("Is reverted if 'from' address is zero", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      const tokenUnderBlocklister = connect(token, blocklister);
+      it("The 'from' address is zero", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const tokenUnderBlocklister = connect(token, blocklister);
 
-      await expect(
-        tokenUnderBlocklister[RESTRICTION_INCREASE_V2_SIGNATURE](ethers.ZeroAddress, user2.address, 100, RESTRICTION_ID)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
-    });
+        await expect(
+          tokenUnderBlocklister[FUNC_RESTRICTION_INCREASE_V2](ADDRESS_ZERO, toAccount.address, 100, ID1)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
+      });
 
-    it("Is reverted if the 'to' address is zero", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      const tokenUnderBlocklister = connect(token, blocklister);
+      it("The 'to' address is zero", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const tokenUnderBlocklister = connect(token, blocklister);
 
-      await expect(
-        tokenUnderBlocklister[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, ethers.ZeroAddress, 100, RESTRICTION_ID)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
-    });
+        await expect(
+          tokenUnderBlocklister[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, ADDRESS_ZERO, 100, ID1)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
+      });
 
-    it("Is reverted if the 'id' parameter is zero", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      const tokenUnderBlocklister = connect(token, blocklister);
+      it("The 'id' parameter is zero", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const tokenUnderBlocklister = connect(token, blocklister);
 
-      await expect(
-        tokenUnderBlocklister[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, ethers.ZeroHash)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ID);
-    });
+        await expect(
+          tokenUnderBlocklister[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ID_ZERO)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ID);
+      });
 
-    it("Is reverted if the 'amount' parameter is zero", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      const tokenUnderBlocklister = connect(token, blocklister);
+      it("The 'amount' parameter is zero", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const tokenUnderBlocklister = connect(token, blocklister);
 
-      await expect(
-        tokenUnderBlocklister[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 0, RESTRICTION_ID)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_AMOUNT);
+        await expect(
+          tokenUnderBlocklister[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 0, ID1)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_AMOUNT);
+      });
     });
   });
 
   describe("Function 'restrictionDecrease()' V2", async () => {
-    it("Executes as expected and emits the correct event", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      const tokenUnderBlocklister = connect(token, blocklister);
-      await proveTx(
-        tokenUnderBlocklister[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, RESTRICTION_ID)
+    async function checkRestrictionDecreaseV2(token: Contract, props: {
+      id: string;
+      oldRestrictedBalanceSpecific: bigint;
+      oldRestrictedBalanceTotal: bigint;
+    }): Promise<{ newRestrictedBalanceSpecific: bigint; newRestrictedBalanceTotal: bigint }> {
+      const id = props.id;
+      const oldRestrictedBalanceSpecific: bigint = props.oldRestrictedBalanceSpecific;
+      const oldRestrictedBalanceTotal: bigint = props.oldRestrictedBalanceTotal;
+      const decreasingAmount = 50;
+      const newRestrictedBalanceSpecific = oldRestrictedBalanceSpecific - BigInt(decreasingAmount);
+      const newRestrictedBalanceTotal = oldRestrictedBalanceTotal - BigInt(decreasingAmount);
+
+      await expect(
+        token[FUNC_RESTRICTION_DECREASE_V2](fromAccount.address, toAccount.address, decreasingAmount, id)
+      ).to.emit(
+        token,
+        "RestrictionChanged"
+      ).withArgs(
+        fromAccount.address,
+        toAccount.address,
+        id,
+        newRestrictedBalanceSpecific,
+        oldRestrictedBalanceSpecific,
+        newRestrictedBalanceTotal,
+        oldRestrictedBalanceTotal
       );
 
-      const balanceOfRestrictedBefore =
-        await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, RESTRICTION_ID);
-      await expect(
-        tokenUnderBlocklister[RESTRICTION_DECREASE_V2_SIGNATURE](user1.address, user2.address, 100, RESTRICTION_ID)
-      ).to.emit(token, "RestrictionChanged")
-        .withArgs(
-          user1.address,
-          user2.address,
-          RESTRICTION_ID,
-          0,
-          100,
-          0,
-          100
+      await checkRestrictedBalancesV2(token, {
+        id,
+        expectedRestrictedBalanceSpecific: newRestrictedBalanceSpecific,
+        expectedRestrictedBalanceTotal: newRestrictedBalanceTotal
+      });
+
+      return {
+        newRestrictedBalanceSpecific,
+        newRestrictedBalanceTotal
+      };
+    }
+
+    describe("Executes as expected and emits the correct event if", async () => {
+      it("It is called for a specific ID once", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const tokenUnderBlocklister = connect(token, blocklister);
+        await proveTx(
+          tokenUnderBlocklister[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ID1)
         );
+        await proveTx(
+          tokenUnderBlocklister[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 200, ANY_ID)
+        );
+        await checkRestrictionDecreaseV2(tokenUnderBlocklister, {
+          id: ID1,
+          oldRestrictedBalanceSpecific: 100n,
+          oldRestrictedBalanceTotal: 300n
+        });
+      });
 
-      const balanceOfRestrictedAfter =
-        await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, RESTRICTION_ID);
-
-      expect(balanceOfRestrictedAfter).to.eq(balanceOfRestrictedBefore - BigInt(100));
+      it("It is called for a universal ID once", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const tokenUnderBlocklister = connect(token, blocklister);
+        await proveTx(
+          tokenUnderBlocklister[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ID1)
+        );
+        await proveTx(
+          tokenUnderBlocklister[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 200, ANY_ID)
+        );
+        await checkRestrictionDecreaseV2(tokenUnderBlocklister, {
+          id: ANY_ID,
+          oldRestrictedBalanceSpecific: 200n,
+          oldRestrictedBalanceTotal: 300n
+        });
+      });
     });
 
-    it("Is reverted if the caller is not the blocklister", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
+    describe("Is reverted if", async () => {
+      it("The caller is not a blocklister", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
 
-      await expect(
-        connect(token, user1)[RESTRICTION_DECREASE_V2_SIGNATURE](user1.address, user2.address, 100, RESTRICTION_ID)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
+        await expect(
+          connect(token, fromAccount)[FUNC_RESTRICTION_DECREASE_V2](fromAccount.address, toAccount.address, 100, ID1)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
+      });
+
+      it("There is not enough restricted balance", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+
+        await expect(
+          connect(token, blocklister)[FUNC_RESTRICTION_DECREASE_V2](fromAccount.address, toAccount.address, 100, ID1)
+        ).to.be.revertedWithPanic(0x11);
+      });
     });
   });
 
   describe("Function 'migrateBalance()'", async () => {
-    it("Executes as expected", async () => {
+    it("Executes as expected if the 'to' address is obsolete", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mockRestrictedPurposeBalances(user1.address, OBSOLETE_ID, 100));
+      await proveTx(token.mockRestrictedPurposeBalances(fromAccount.address, OBSOLETE_ID, 100));
 
-      expect(await token.balanceOfRestricted(user1.address, OBSOLETE_ID)).to.eq(100);
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(0);
+      expect(await token.balanceOfRestricted(fromAccount.address, OBSOLETE_ID)).to.eq(100);
+      expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ANY_ID)).to.eq(0);
 
-      await proveTx(token.migrateBalance(user1.address, OBSOLETE_ADDRESS));
+      await proveTx(token.migrateBalance(fromAccount.address, OBSOLETE_ADDRESS));
 
-      expect(await token.balanceOfRestricted(user1.address, OBSOLETE_ID)).to.eq(0);
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, OBSOLETE_ADDRESS, ANY_ID)).to.eq(100);
+      expect(await token.balanceOfRestricted(fromAccount.address, OBSOLETE_ID)).to.eq(0);
+      expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, OBSOLETE_ADDRESS, ANY_ID)).to.eq(100);
     });
 
-    it("Executes as expected if 'to' address is not obsolete", async () => {
+    it("Executes as expected if the 'to' address is not obsolete", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mockRestrictedPurposeBalances(user1.address, OBSOLETE_ID, 100));
+      await proveTx(token.mockRestrictedPurposeBalances(fromAccount.address, OBSOLETE_ID, 100));
 
-      expect(await token.balanceOfRestricted(user1.address, OBSOLETE_ID)).to.eq(100);
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(0);
+      expect(await token.balanceOfRestricted(fromAccount.address, OBSOLETE_ID)).to.eq(100);
+      expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ANY_ID)).to.eq(0);
 
-      await proveTx(token.migrateBalance(user1.address, user2.address));
+      await proveTx(token.migrateBalance(fromAccount.address, toAccount.address));
 
-      expect(await token.balanceOfRestricted(user1.address, OBSOLETE_ID)).to.eq(100);
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(0);
+      expect(await token.balanceOfRestricted(fromAccount.address, OBSOLETE_ID)).to.eq(100);
+      expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ANY_ID)).to.eq(0);
     });
 
-    it("Executes as expected if obsolete amount is zeo", async () => {
+    it("Executes as expected if the obsolete amount is zero", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
-      expect(await token.balanceOfRestricted(user1.address, OBSOLETE_ID)).to.eq(0);
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(0);
+      expect(await token.balanceOfRestricted(fromAccount.address, OBSOLETE_ID)).to.eq(0);
+      expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ANY_ID)).to.eq(0);
 
-      await proveTx(token.migrateBalance(user1.address, OBSOLETE_ADDRESS));
+      await proveTx(token.migrateBalance(fromAccount.address, OBSOLETE_ADDRESS));
 
-      expect(await token.balanceOfRestricted(user1.address, OBSOLETE_ID)).to.eq(0);
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, OBSOLETE_ADDRESS, ANY_ID)).to.eq(0);
+      expect(await token.balanceOfRestricted(fromAccount.address, OBSOLETE_ID)).to.eq(0);
+      expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, OBSOLETE_ADDRESS, ANY_ID)).to.eq(0);
     });
   });
 
-  describe("Function 'transferWithId()'", async () => {
-    it("Executes as expected and emits correct events", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mint(user1.address, 100));
-      await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, PURPOSE_1)
-      );
+  describe("Function 'transferRestricted()'", async () => {
+    describe("Executes as expected and emits correct events if", async () => {
+      it("There is only restricted balance", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.mint(fromAccount.address, 100));
+        await proveTx(
+          connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ID1)
+        );
 
-      const tx = await connect(token, blocklister).transferWithId(user1.address, user2.address, 100, PURPOSE_1);
-      await expect(tx).to.emit(token, "RestrictionChanged");
+        const tx = await connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 100, ID1);
+        await expect(tx).to.emit(token, "RestrictionChanged");
 
-      await expect(tx).to.changeTokenBalances(
-        token,
-        [user1, user2],
-        [-100, 100]
-      );
+        await expect(tx).to.changeTokenBalances(
+          token,
+          [fromAccount, toAccount],
+          [-100, 100]
+        );
 
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(0);
+        expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ANY_ID)).to.eq(0);
+      });
+
+      it("There is restricted and free balances", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.mint(fromAccount.address, 200));
+        await proveTx(
+          connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ID1)
+        );
+
+        const tx = await connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 100, ID1);
+
+        await expect(tx).to.changeTokenBalances(
+          token,
+          [fromAccount, toAccount],
+          [-100, 100]
+        );
+
+        expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ANY_ID)).to.eq(0);
+      });
+
+      it("The restriction is partially covered by a specific ID and ANY_ID", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.mint(fromAccount.address, 150));
+        await proveTx(
+          connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 50, ID1)
+        );
+        await proveTx(
+          connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ANY_ID)
+        );
+
+        const tx = await connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 80, ID1);
+
+        await expect(tx).to.changeTokenBalances(
+          token,
+          [fromAccount, toAccount],
+          [-80, 80]
+        );
+
+        expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ANY_ID)).to.eq(70);
+        expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ID1)).to.eq(0);
+      });
+
+      it("The restriction is fully covered by a specific ID and ANY_ID", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.mint(fromAccount.address, 200));
+        await proveTx(
+          connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 50, ID1)
+        );
+        await proveTx(
+          connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 50, ANY_ID)
+        );
+
+        const tx = await connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 200, ID1);
+
+        await expect(tx).to.changeTokenBalances(
+          token,
+          [fromAccount, toAccount],
+          [-200, 200]
+        );
+
+        expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ANY_ID)).to.eq(0);
+        expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ID1)).to.eq(0);
+      });
+
+      it("The account have more than one restriction by ID", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.mint(fromAccount.address, 200));
+        await proveTx(
+          connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 50, ID1)
+        );
+        await proveTx(
+          connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 50, ID2)
+        );
+        await proveTx(
+          connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ANY_ID)
+        );
+
+        const tx = await connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 150, ID1);
+
+        await expect(tx).to.changeTokenBalances(
+          token,
+          [fromAccount, toAccount],
+          [-150, 150]
+        );
+
+        expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ANY_ID)).to.eq(0);
+        expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ID1)).to.eq(0);
+        expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ID2)).to.eq(50);
+      });
     });
 
-    it("Executes as expected if the amount is bigger than restricted to id", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mint(user1.address, 200));
-      await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, PURPOSE_1)
-      );
+    describe("Is reverted if", async () => {
+      it("The total restriction amount consists of different restriction ids", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.mint(fromAccount.address, 200));
+        await proveTx(
+          connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 50, ID1)
+        );
+        await proveTx(
+          connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 50, ID2)
+        );
+        await proveTx(
+          connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ANY_ID)
+        );
 
-      const tx = await connect(token, blocklister).transferWithId(user1.address, user2.address, 100, PURPOSE_1);
+        await expect(connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 200, ID1))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
+      });
 
-      await expect(tx).to.changeTokenBalances(
-        token,
-        [user1, user2],
-        [-100, 100]
-      );
+      it("The caller is not a blocklister", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
 
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(0);
-    });
-    
-    it("Executes as expected if using restriction to any id and restriction is partially covered by specific and any id", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mint(user1.address, 150));
-      await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 50, PURPOSE_1)
-      );
-      await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, ANY_ID)
-      );
+        await expect(token.transferRestricted(fromAccount.address, toAccount.address, 100, ANY_ID))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
+      });
 
-      const tx = await connect(token, blocklister).transferWithId(user1.address, user2.address, 80, PURPOSE_1);
+      it("The 'from' address or the 'to' address is zero", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
 
-      await expect(tx).to.changeTokenBalances(
-        token,
-        [user1, user2],
-        [-80, 80]
-      );
+        await expect(connect(token, blocklister).transferRestricted(ADDRESS_ZERO, toAccount.address, 100, ANY_ID))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
 
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(70);
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, PURPOSE_1)).to.eq(0);
-    });
+        await expect(connect(token, blocklister).transferRestricted(fromAccount.address, ADDRESS_ZERO, 100, ANY_ID))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
+      });
 
-    it("Executes as expected if the amount is bigger than the total restricted balance", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mint(user1.address, 200));
-      await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 50, PURPOSE_1)
-      );
-      await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 50, ANY_ID)
-      );
+      it("The 'id' parameter is zero", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
 
-      const tx = await connect(token, blocklister).transferWithId(user1.address, user2.address, 200, PURPOSE_1);
+        await expect(connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 100, ID_ZERO))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ID);
+      });
 
-      await expect(tx).to.changeTokenBalances(
-        token,
-        [user1, user2],
-        [-200, 200]
-      );
+      it("The 'id' parameter is ANY_ID", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
 
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(0);
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, PURPOSE_1)).to.eq(0);
-    });
-
-    it("Executes as expected if the user have more than one restriction by id", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mint(user1.address, 200));
-      await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 50, PURPOSE_1)
-      );
-      await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 50, PURPOSE_2)
-      );
-      await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, ANY_ID)
-      );
-
-      const tx = await connect(token, blocklister).transferWithId(user1.address, user2.address, 150, PURPOSE_1);
-
-      await expect(tx).to.changeTokenBalances(
-        token,
-        [user1, user2],
-        [-150, 150]
-      );
-
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(0);
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, PURPOSE_1)).to.eq(0);
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, PURPOSE_2)).to.eq(50);
-    });
-
-    it("Is reverted if the total restriction amount consists of different restriction ids", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mint(user1.address, 200));
-      await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 50, PURPOSE_1)
-      );
-      await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 50, PURPOSE_2)
-      );
-      await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, ANY_ID)
-      );
-
-      await expect(connect(token, blocklister).transferWithId(user1.address, user2.address, 200, PURPOSE_1))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
-    });
-
-    it("Is reverted if the caller is not a blocklister", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-
-      await expect(token.transferWithId(user1.address, user2.address, 100, ANY_ID))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
-    });
-
-    it("Is reverted if the 'from' address or the 'to' address is zero", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-
-      await expect(connect(token, blocklister).transferWithId(ethers.ZeroAddress, user2.address, 100, ANY_ID))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
-
-      await expect(connect(token, blocklister).transferWithId(user1.address, ethers.ZeroAddress, 100, ANY_ID))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
-    });
-
-    it("Is reverted if the 'id' is zero", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-
-      await expect(connect(token, blocklister).transferWithId(user1.address, user2.address, 100, ethers.ZeroHash))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ID);
-    });
-
-    it("Is reverted if the 'id' is ANY_ID marker", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-
-      await expect(connect(token, blocklister).transferWithId(user1.address, user2.address, 100, ANY_ID))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_INVALID_ID);
+        await expect(connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 100, ANY_ID))
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_INVALID_ID);
+      });
     });
   });
 
   describe("Restricted scenarios", async () => {
     it("Allows default transfer if the amount does not affect restricted balance", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mint(user1.address, 100));
+      await proveTx(token.mint(fromAccount.address, 100));
       await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 50, PURPOSE_1)
+        connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 50, ID1)
       );
-      await expect(connect(token, user1).transfer(user2.address, 50))
+      await expect(connect(token, fromAccount).transfer(toAccount.address, 50))
         .to.changeTokenBalances(
           token,
-          [user1, user2],
+          [fromAccount, toAccount],
           [-50, 50]
         );
 
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, PURPOSE_1)).to.eq(50);
+      expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ID1)).to.eq(50);
     });
 
     it("Allows only 'transferWithId' if the amount uses the restricted balance", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mint(user1.address, 100));
+      await proveTx(token.mint(fromAccount.address, 100));
       await proveTx(
-        connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 50, PURPOSE_1)
+        connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 50, ID1)
       );
 
-      await expect(connect(token, user1).transfer(user2.address, 80))
+      await expect(connect(token, fromAccount).transfer(toAccount.address, 80))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, PURPOSE_1)).to.eq(50);
+      expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ID1)).to.eq(50);
 
-      await expect(connect(token, blocklister).transferWithId(user1.address, user2.address, 80, PURPOSE_1))
+      await expect(connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 80, ID1))
         .to.changeTokenBalances(
           token,
-          [user1, user2],
+          [fromAccount, toAccount],
           [-80, 80]
         );
 
-      expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, ANY_ID)).to.eq(0);
+      expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ANY_ID)).to.eq(0);
     });
   });
 });
