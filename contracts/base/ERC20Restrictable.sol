@@ -369,21 +369,23 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
                         restrictedBalanceTotal,
                         restrictedBalanceTotal
                     );
+                    _restrictedBalances[from][to][ANY_ID] = newRestrictedBalanceToAnyId;
                 }
 
-                emit RestrictionChanged(
-                    from,
-                    to,
-                    id,
-                    newRestrictedBalanceToId,
-                    oldRestrictedBalanceToId,
-                    restrictedBalanceTotal,
-                    restrictedBalanceTotal
-                );
+                if (oldRestrictedBalanceToId != newRestrictedBalanceToId) {
+                    emit RestrictionChanged(
+                        from,
+                        to,
+                        id,
+                        newRestrictedBalanceToId,
+                        oldRestrictedBalanceToId,
+                        restrictedBalanceTotal,
+                        restrictedBalanceTotal
+                    );
+                    _restrictedBalances[from][to][id] = newRestrictedBalanceToId;
+                }
 
-                _restrictedBalances[from][to][id] = newRestrictedBalanceToId;
                 _totalRestrictedBalances[from] = restrictedBalanceTotal;
-                _restrictedBalances[from][to][ANY_ID] = newRestrictedBalanceToAnyId;
             }
         }
         transferFrom(from, to, amount);
