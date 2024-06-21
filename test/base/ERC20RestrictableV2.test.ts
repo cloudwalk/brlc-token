@@ -68,7 +68,7 @@ describe("Contract ERC20RestrictableV2", async () => {
     const { token } = await deployToken();
     await proveTx(token.setPauser(pauser.address));
     await proveTx(token.setMainBlocklister(blocklister.address));
-    await proveTx(connect(token, user1).approve(blocklister.address, 1000000));
+    await proveTx(connect(token, user1).approve(blocklister.address, ethers.MaxUint256));
     return { token };
   }
 

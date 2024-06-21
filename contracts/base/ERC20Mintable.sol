@@ -415,6 +415,9 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         return true;
     }
 
+    /**
+     * @inheritdoc ERC20Base
+     */
     function _afterTokenTransferWithId(address from, address to, uint256 amount, bytes32 id) internal virtual override {
         super._afterTokenTransferWithId(from, to, amount, id);
         uint256 preminted = balanceOfPremint(from);

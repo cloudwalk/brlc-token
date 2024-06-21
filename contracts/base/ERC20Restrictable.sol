@@ -224,7 +224,9 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
     /**
      * @inheritdoc IERC20Restrictable
      */
-    function assignPurposes(address account, bytes32[] memory purposes) external override onlyOwner {
+    function assignPurposes(address account, bytes32[] memory purposes) external view override onlyOwner {
+        account;
+        purposes;
         revert Obsolate();
     }
 
@@ -317,6 +319,9 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
         }
     }
 
+    /**
+     * @inheritdoc ERC20Base
+     */
     function _afterTokenTransferWithId(address from, address to, uint256 amount, bytes32 id) internal virtual override {
         super._afterTokenTransferWithId(from, to, amount, id);
 

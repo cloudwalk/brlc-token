@@ -25,8 +25,4 @@ interface IERC20Hook {
      * @param amount The amount of tokens transferred
      */
     function afterTokenTransfer(address from, address to, uint256 amount) external;
-
-    function beforeTokenTransferWithId(address from, address to, uint256 amount, bytes32 id) external;
-
-    function afterTokenTransferWithId(address from, address to, uint256 amount, bytes32 id) external;
 }

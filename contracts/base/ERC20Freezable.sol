@@ -138,6 +138,9 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      */
     function _balanceOf_ERC20Freezable(address account) internal view virtual returns (uint256);
 
+    /**
+     * @inheritdoc ERC20Base
+     */
     function _afterTokenTransferWithId(address from, address to, uint256 amount, bytes32 id) internal virtual override {
         super._afterTokenTransferWithId(from, to, amount, id);
         uint256 frozen = _frozenBalances[from];

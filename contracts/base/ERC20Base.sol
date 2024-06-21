@@ -53,23 +53,54 @@ abstract contract ERC20Base is
      */
     function __ERC20Base_init_unchained() internal onlyInitializing {}
 
+    /**
+     * @notice Transfers `amount` tokens from the caller's account to `to`
+     *
+     * @param to The address of the receiver of tokens
+     * @param amount The amount of tokens to be transferred
+     *
+     * @return bool Returns `true` if the transfer is successful
+     */
     function transfer(address to, uint256 amount) public virtual override returns (bool) {
         _transferWithId(_msgSender(), to, amount, bytes32(0));
         return true;
     }
 
+    /**
+     * @notice Transfers `amount` tokens from `from` to `to` using the allowance mechanism
+     *
+     * @param from The address of the owner of tokens
+     * @param to The address of the receiver of tokens
+     * @param amount The amount of tokens to be transferred
+     *
+     * @return bool Returns `true` if the transfer is successful
+     */
     function transferFrom(address from, address to, uint256 amount) public virtual override returns (bool) {
+        address spender = _msgSender();
+        _spendAllowance(from, spender, amount);
         _transferWithId(from, to, amount, bytes32(0));
         return true;
     }
 
+    /**
+     * @notice Transfers `amount` tokens from `from` to `to` with an additional identifier
+     *
+     * @param from The address of the owner of tokens
+     * @param to The address of the receiver of tokens
+     * @param amount The amount of tokens to be transferred
+     * @param id An additional identifier for the transfer
+     *
+     * @return bool Returns `true` if the transfer is successful
+     */
     function transferFromWithId(
         address from,
         address to,
         uint256 amount,
         bytes32 id
     ) public virtual returns (bool) {
-        _transferWithId(from, to, amount, bytes32(0));
+        address spender = _msgSender();
+        _spendAllowance(from, spender, amount);
+        _transferWithId(from, to, amount, id);
         return true;
     }
 
@@ -87,7 +118,20 @@ abstract contract ERC20Base is
         return super.allowance(owner, spender);
     }
 
-    function _transferWithId(address from, address to, uint256 amount, bytes32 id) internal {
+    /**
+     * @notice Internal function to transfer `amount` tokens from `from` to `to` with an additional identifier
+     *
+     * @param from The address of the owner of tokens
+     * @param to The address of the receiver of tokens
+     * @param amount The amount of tokens to be transferred
+     * @param id An additional identifier for the transfer
+     */
+    function _transferWithId(
+        address from,
+        address to,
+        uint256 amount,
+        bytes32 id
+    ) internal {
         _beforeTokenTransferWithId(from, to, amount, id);
         _transfer(from, to, amount);
         _afterTokenTransferWithId(from, to, amount, id);
@@ -123,6 +167,15 @@ abstract contract ERC20Base is
         super._spendAllowance(owner, spender, amount);
     }
 
+    /**
+     * @notice Hook that is called before any transfer of tokens
+     * @dev Checks that the contract is not paused and neither `from` nor `to` addresses are blocklisted
+     *
+     * @param from The address of the owner of tokens
+     * @param to The address of the receiver of tokens
+     * @param amount The amount of tokens to be transferred
+     * @param id An additional identifier for the transfer
+     */
     function _beforeTokenTransferWithId(
         address from,
         address to,
@@ -130,5 +183,34 @@ abstract contract ERC20Base is
         bytes32 id
     ) internal virtual whenNotPaused notBlocklisted(from) notBlocklistedOrBypassIfBlocklister(to) {}
 
+    /**
+     * @notice Hook that is called after any transfer of tokens
+     *
+     * @param from The address of the owner of tokens
+     * @param to The address of the receiver of tokens
+     * @param amount The amount of tokens that were transferred
+     * @param id An additional identifier for the transfer
+     */
     function _afterTokenTransferWithId(address from, address to, uint256 amount, bytes32 id) internal virtual {}
+
+
+    /// @dev for backward compatibility with ERC20Mintable (_mint and _burn checks)
+
+    /**
+     * @inheritdoc ERC20Upgradeable
+     */
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override whenNotPaused notBlocklisted(from) notBlocklistedOrBypassIfBlocklister(to) {
+        super._beforeTokenTransfer(from, to, amount);
+    }
+
+    /**
+     * @inheritdoc ERC20Upgradeable
+     */
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
+        super._afterTokenTransfer(from, to, amount);
+    }
 }

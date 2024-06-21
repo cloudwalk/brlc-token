@@ -98,12 +98,10 @@ contract CWToken is
         return balance;
     }
 
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual override {}
-
+    /**
+     * @dev See {ERC20Base-_afterTokenTransfer}
+     * @dev See {ERC20Hookable-_afterTokenTransfer}
+     */
     function _beforeTokenTransferWithId(
         address from,
         address to,
@@ -120,12 +118,6 @@ contract CWToken is
      * @dev See {ERC20Restrictable-_afterTokenTransfer}
      * @dev See {ERC20Hookable-_afterTokenTransfer}
      */
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual override {}
-
     function _afterTokenTransferWithId(
         address from,
         address to,
