@@ -509,7 +509,7 @@ describe("Contract ERC20RestrictableV2", async () => {
     });
   });
 
-  describe("Function 'transferRestricted()'", async () => {
+  describe("Function 'transferWithId()'", async () => {
     describe("Executes as expected and emits correct events if", async () => {
       it("There is only restricted balance", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
@@ -518,7 +518,7 @@ describe("Contract ERC20RestrictableV2", async () => {
           connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ID1)
         );
 
-        const tx = await connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 100, ID1);
+        const tx = await connect(token, blocklister).transferWithId(fromAccount.address, toAccount.address, 100, ID1);
         await expect(tx).to.emit(token, "RestrictionChanged");
 
         await expect(tx).to.changeTokenBalances(
@@ -537,7 +537,7 @@ describe("Contract ERC20RestrictableV2", async () => {
           connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ID1)
         );
 
-        const tx = await connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 100, ID1);
+        const tx = await connect(token, blocklister).transferWithId(fromAccount.address, toAccount.address, 100, ID1);
 
         await expect(tx).to.changeTokenBalances(
           token,
@@ -558,7 +558,7 @@ describe("Contract ERC20RestrictableV2", async () => {
           connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ANY_ID)
         );
 
-        const tx = await connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 80, ID1);
+        const tx = await connect(token, blocklister).transferWithId(fromAccount.address, toAccount.address, 80, ID1);
 
         await expect(tx).to.changeTokenBalances(
           token,
@@ -580,7 +580,7 @@ describe("Contract ERC20RestrictableV2", async () => {
           connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 50, ANY_ID)
         );
 
-        const tx = await connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 200, ID1);
+        const tx = await connect(token, blocklister).transferWithId(fromAccount.address, toAccount.address, 200, ID1);
 
         await expect(tx).to.changeTokenBalances(
           token,
@@ -605,7 +605,7 @@ describe("Contract ERC20RestrictableV2", async () => {
           connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ANY_ID)
         );
 
-        const tx = await connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 150, ID1);
+        const tx = await connect(token, blocklister).transferWithId(fromAccount.address, toAccount.address, 150, ID1);
 
         await expect(tx).to.changeTokenBalances(
           token,
@@ -633,38 +633,38 @@ describe("Contract ERC20RestrictableV2", async () => {
           connect(token, blocklister)[FUNC_RESTRICTION_INCREASE_V2](fromAccount.address, toAccount.address, 100, ANY_ID)
         );
 
-        await expect(connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 200, ID1))
+        await expect(connect(token, blocklister).transferWithId(fromAccount.address, toAccount.address, 200, ID1))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
       });
 
       it("The caller is not a blocklister", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
 
-        await expect(token.transferRestricted(fromAccount.address, toAccount.address, 100, ANY_ID))
+        await expect(token.transferWithId(fromAccount.address, toAccount.address, 100, ANY_ID))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
       });
 
       it("The 'from' address or the 'to' address is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
 
-        await expect(connect(token, blocklister).transferRestricted(ADDRESS_ZERO, toAccount.address, 100, ANY_ID))
+        await expect(connect(token, blocklister).transferWithId(ADDRESS_ZERO, toAccount.address, 100, ANY_ID))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
 
-        await expect(connect(token, blocklister).transferRestricted(fromAccount.address, ADDRESS_ZERO, 100, ANY_ID))
+        await expect(connect(token, blocklister).transferWithId(fromAccount.address, ADDRESS_ZERO, 100, ANY_ID))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
       });
 
       it("The 'id' parameter is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
 
-        await expect(connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 100, ID_ZERO))
+        await expect(connect(token, blocklister).transferWithId(fromAccount.address, toAccount.address, 100, ID_ZERO))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ID);
       });
 
       it("The 'id' parameter is ANY_ID", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
 
-        await expect(connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 100, ANY_ID))
+        await expect(connect(token, blocklister).transferWithId(fromAccount.address, toAccount.address, 100, ANY_ID))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_INVALID_ID);
       });
     });
@@ -698,7 +698,7 @@ describe("Contract ERC20RestrictableV2", async () => {
         .to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
       expect(await token[FUNC_BALANCE_OF_RESTRICTED_V2](fromAccount.address, toAccount.address, ID1)).to.eq(50);
 
-      await expect(connect(token, blocklister).transferRestricted(fromAccount.address, toAccount.address, 80, ID1))
+      await expect(connect(token, blocklister).transferWithId(fromAccount.address, toAccount.address, 80, ID1))
         .to.changeTokenBalances(
           token,
           [fromAccount, toAccount],
