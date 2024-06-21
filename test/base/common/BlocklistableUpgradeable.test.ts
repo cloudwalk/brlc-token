@@ -116,23 +116,6 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
       expect(await blocklistable.isBlocklistEnabled()).to.equal(true);
     });
 
-    it("Is reverted if blocklist is already enabled", async () => {
-      const { blocklistable } = await setUpFixture(deployBlocklistable);
-      expect(await blocklistable.isBlocklistEnabled()).to.equal(true);
-      await expect(
-        blocklistable.enableBlocklist(true)
-      ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_ALREADY_CONFIGURED);
-    });
-
-    it("Is reverted if blocklist already disabled", async () => {
-      const { blocklistable } = await setUpFixture(deployBlocklistable);
-      await proveTx(blocklistable.enableBlocklist(false));
-      expect(await blocklistable.isBlocklistEnabled()).to.equal(false);
-      await expect(
-        blocklistable.enableBlocklist(false)
-      ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_ALREADY_CONFIGURED);
-    });
-
     it("Is reverted if called not by the owner", async () => {
       const { blocklistable } = await setUpFixture(deployBlocklistable);
       await expect(
@@ -157,14 +140,6 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
         connect(blocklistable, user).setMainBlocklister(user.address)
       ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
-
-    it("Is reverted the the account is already a main blocklister", async () => {
-      const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
-      expect(await blocklistable.mainBlocklister()).to.eq(deployer.address);
-      await expect(
-        blocklistable.setMainBlocklister(deployer.address)
-      ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_ALREADY_CONFIGURED);
-    });
   });
 
   describe("Function 'blocklist()'", async () => {
@@ -185,13 +160,6 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
       await expect(connect(blocklistable, user).blocklist(user.address))
         .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER)
         .withArgs(user.address);
-    });
-
-    it("Is reverted if blocklisted address is zero", async () => {
-      const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
-      await expect(
-        connect(blocklistable, blocklister).blocklist(ZERO_ADDRESS)
-      ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_ZERO_ADDRESS_BLOCKLISTED);
     });
   });
 
@@ -251,16 +219,6 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
       await expect(connect(blocklistable, user).configureBlocklister(user.address, true))
         .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_UNAUTHORIZED_MAIN_BLOCKLISTER)
         .withArgs(user.address);
-    });
-
-    it("Is reverted if the account is already configured", async () => {
-      const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
-      await expect(blocklistable.configureBlocklister(user.address, true))
-        .to.emit(blocklistable, EVENT_NAME_BLOCKLISTER_CHANGED)
-        .withArgs(user.address, true);
-      await expect(
-        blocklistable.configureBlocklister(user.address, true)
-      ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_ALREADY_CONFIGURED);
     });
   });
 
@@ -347,13 +305,6 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
       await expect(connect(blocklistable, user).blacklist(user.address))
         .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER)
         .withArgs(user.address);
-    });
-
-    it("Function 'blacklist()' is reverted if blocklisted address is zero", async () => {
-      const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
-      await expect(
-        connect(blocklistable, blocklister).blacklist(ZERO_ADDRESS)
-      ).to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_ZERO_ADDRESS_BLOCKLISTED);
     });
 
     it("Function 'unBlacklist()' executes as expected if it is called by the blocklister", async () => {

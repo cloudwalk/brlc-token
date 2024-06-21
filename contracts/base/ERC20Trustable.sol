@@ -42,9 +42,11 @@ abstract contract ERC20Trustable is ERC20Base, IERC20Trustable {
      * @dev Emits a {TrustedAccountConfigured} event
      */
     function configureTrustedAccount(address account, bool status) external onlyOwner {
-        _trusted[account] = status;
+        if (!_trusted[account] == status) {
+            _trusted[account] = status;
 
-        emit TrustedAccountConfigured(account, status);
+            emit TrustedAccountConfigured(account, status);
+        }
     }
 
     /**

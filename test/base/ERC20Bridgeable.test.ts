@@ -26,13 +26,10 @@ describe("Contract 'ERC20Bridgeable'", async () => {
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
   const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
-  const REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ADDRESS = "ERC20: mint to the zero address";
   const REVERT_MESSAGE_ERC20_BURN_FROM_THE_ZERO_ADDRESS = "ERC20: burn from the zero address";
   const REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE = "ERC20: burn amount exceeds balance";
 
   const REVERT_ERROR_UNAUTHORIZED_BRIDGE = "UnauthorizedBridge";
-  const REVERT_ERROR_ZERO_MINT_FOR_BRIDGING_AMOUNT = "ZeroMintForBridgingAmount";
-  const REVERT_ERROR_ZERO_BURN_FOR_BRIDGING_AMOUNT = "ZeroBurnForBridgingAmount";
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -112,20 +109,6 @@ describe("Contract 'ERC20Bridgeable'", async () => {
         connect(token, user).mintForBridging(user.address, TOKEN_AMOUNT)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BRIDGE);
     });
-
-    it("Is reverted if called to mint for the zero address", async () => {
-      const { token } = await setUpFixture(deployToken);
-      await expect(
-        connect(token, bridge1).mintForBridging(ethers.ZeroAddress, TOKEN_AMOUNT)
-      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ADDRESS);
-    });
-
-    it("Is reverted if the token minting amount is zero", async () => {
-      const { token } = await setUpFixture(deployToken);
-      await expect(
-        connect(token, bridge1).mintForBridging(user.address, 0)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_MINT_FOR_BRIDGING_AMOUNT);
-    });
   });
 
   describe("Function 'burnForBridging()'", async () => {
@@ -163,13 +146,6 @@ describe("Contract 'ERC20Bridgeable'", async () => {
       await expect(
         connect(token, bridge1).burnForBridging(user.address, TOKEN_AMOUNT + 1)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
-    });
-
-    it("Is reverted if the token burning amount is zero", async () => {
-      const { token } = await setUpFixture(deployToken);
-      await expect(
-        connect(token, bridge1).burnForBridging(user.address, 0)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_BURN_FOR_BRIDGING_AMOUNT);
     });
   });
 

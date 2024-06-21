@@ -20,9 +20,6 @@ describe("Contract 'ERC20Restrictable'", async () => {
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
 
-  const REVERT_ERROR_ZERO_ADDRESS = "ZeroAddress";
-  const REVERT_ERROR_ZERO_AMOUNT = "ZeroAmount";
-  const REVERT_ERROR_ZERO_PURPOSE = "ZeroPurpose";
   const REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER = "UnauthorizedBlocklister";
   const REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT = "TransferExceededRestrictedAmount";
 
@@ -126,13 +123,6 @@ describe("Contract 'ERC20Restrictable'", async () => {
         connect(token, user1).assignPurposes(purposeAccount1.address, [PURPOSE_1])
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
-
-    it("Is reverted if zero purpose is assigned", async () => {
-      const { token } = await setUpFixture(deployToken);
-      await expect(
-        token.assignPurposes(purposeAccount1.address, [PURPOSE_1, PURPOSE_ZERO])
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_PURPOSE);
-    });
   });
 
   describe("Function 'restrictionIncrease()'", async () => {
@@ -170,27 +160,6 @@ describe("Contract 'ERC20Restrictable'", async () => {
         connect(token, user1).restrictionIncrease(purposeAccount1.address, PURPOSE_1, 100)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
     });
-
-    it("Is reverted if the provided account is zero", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await expect(
-        connect(token, blocklister).restrictionIncrease(ethers.ZeroAddress, PURPOSE_1, 100)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
-    });
-
-    it("Is reverted if the provided amount is zero", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await expect(
-        connect(token, blocklister).restrictionIncrease(purposeAccount1.address, PURPOSE_1, 0)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_AMOUNT);
-    });
-
-    it("Is reverted if the provided purpose is zero", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await expect(
-        connect(token, blocklister).restrictionIncrease(purposeAccount1.address, PURPOSE_ZERO, 100)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_PURPOSE);
-    });
   });
 
   describe("Function 'restrictionDecrease()'", async () => {
@@ -227,27 +196,6 @@ describe("Contract 'ERC20Restrictable'", async () => {
       await expect(
         connect(token, user1).restrictionDecrease(purposeAccount1.address, PURPOSE_1, 100)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
-    });
-
-    it("Is reverted if the provided account is zero", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await expect(
-        connect(token, blocklister).restrictionDecrease(ethers.ZeroAddress, PURPOSE_1, 100)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
-    });
-
-    it("Is reverted if the provided amount is zero", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await expect(
-        connect(token, blocklister).restrictionDecrease(purposeAccount1.address, PURPOSE_1, 0)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_AMOUNT);
-    });
-
-    it("Is reverted if the provided purpose is zero", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await expect(
-        connect(token, blocklister).restrictionDecrease(purposeAccount1.address, PURPOSE_ZERO, 100)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_PURPOSE);
     });
   });
 

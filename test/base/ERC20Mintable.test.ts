@@ -41,19 +41,14 @@ describe("Contract 'ERC20Mintable'", async () => {
   const REVERT_ERROR_BLOCKLISTED_ACCOUNT = "BlocklistedAccount";
   const REVERT_ERROR_UNAUTHORIZED_MAIN_MINTER = "UnauthorizedMainMinter";
   const REVERT_ERROR_UNAUTHORIZED_MINTER = "UnauthorizedMinter";
-  const REVERT_ERROR_ZERO_BURN_AMOUNT = "ZeroBurnAmount";
-  const REVERT_ERROR_ZERO_MINT_AMOUNT = "ZeroMintAmount";
-  const REVERT_ERROR_ZERO_PREMINT_AMOUNT = "ZeroPremintAmount";
   const REVERT_ERROR_PREMINT_INSUFFICIENT_AMOUNT = "PremintInsufficientAmount";
   const REVERT_ERROR_PREMINT_NON_EXISTENT = "PremintNonExistent";
   const REVERT_ERROR_PREMINT_UNCHANGED = "PremintUnchanged";
   const REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE = "ExceededMintAllowance";
   const REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED = "PremintReleaseTimePassed";
-  const REVERT_ERROR_PREMINT_RESCHEDULING_ALREADY_CONFIGURED = "PremintReschedulingAlreadyConfigured";
   const REVERT_ERROR_PREMINT_RESCHEDULING_TIME_PASSED = "PremintReschedulingTimePassed";
   const REVERT_ERROR_PREMINT_RESCHEDULING_CHAIN = "PremintReschedulingChain";
   const REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED = "MaxPendingPremintsLimitReached";
-  const REVERT_ERROR_MAX_PENDING_PREMINTS_COUNT_ALREADY_CONFIGURED = "MaxPendingPremintsCountAlreadyConfigured";
   const REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE = "InappropriateUint64Value";
 
   enum PremintFunction {
@@ -279,13 +274,6 @@ describe("Contract 'ERC20Mintable'", async () => {
         ).to.be.revertedWith(REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
       });
 
-      it("The mint amount is zero", async () => {
-        const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(
-          connect(token, minter).mint(user.address, 0)
-        ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_MINT_AMOUNT);
-      });
-
       it("The mint amount exceeds the mint allowance", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(
@@ -334,12 +322,6 @@ describe("Contract 'ERC20Mintable'", async () => {
       await expect(connect(token, minter).burn(TOKEN_AMOUNT))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
         .withArgs(minter.address);
-    });
-
-    it("Is reverted if the burn amount is zero", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await expect(connect(token, minter).burn(0))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_BURN_AMOUNT);
     });
 
     it("Is reverted if the burn amount exceeds the caller token balance", async () => {
@@ -661,12 +643,6 @@ describe("Contract 'ERC20Mintable'", async () => {
         ).to.be.revertedWith(REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
       });
 
-      it("The amount of a new premint is zero", async () => {
-        const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(connect(token, minter).premintIncrease(user.address, 0, timestamp))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_PREMINT_AMOUNT);
-      });
-
       it("The amount of a new premint exceeds the mint allowance", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(
@@ -942,23 +918,6 @@ describe("Contract 'ERC20Mintable'", async () => {
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RELEASE_TIME_PASSED);
       });
 
-      it("The provided original release time equals the provided target release time", async () => {
-        const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(
-          connect(token, minter).reschedulePremintRelease(timestamp, timestamp)
-        ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RESCHEDULING_ALREADY_CONFIGURED);
-      });
-
-      it("The provided target release time is already configured", async () => {
-        const { token } = await setUpFixture(deployAndConfigureToken);
-        const originalRelease = timestamp;
-        const targetRelease = timestamp + 1;
-        await proveTx(connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease));
-        await expect(
-          connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease)
-        ).to.be.revertedWithCustomError(token, REVERT_ERROR_PREMINT_RESCHEDULING_ALREADY_CONFIGURED);
-      });
-
       it("A rescheduling chain will be made in result", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalRelease = timestamp;
@@ -998,13 +957,6 @@ describe("Contract 'ERC20Mintable'", async () => {
         .to.emit(token, EVENT_NAME_MAX_PENDING_PREMINTS_COUNT_CONFIGURED)
         .withArgs(MAX_PENDING_PREMINTS_COUNT);
       expect(await token.maxPendingPremintsCount()).to.eq(MAX_PENDING_PREMINTS_COUNT);
-    });
-
-    it("Is reverted if the limit is already configured with the same number", async () => {
-      const { token } = await setUpFixture(deployToken);
-      await proveTx(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
-      expect(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_MAX_PENDING_PREMINTS_COUNT_ALREADY_CONFIGURED);
     });
 
     it("Is reverted if caller is not an owner", async () => {

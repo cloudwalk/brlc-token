@@ -26,8 +26,6 @@ describe("Contract 'ERC20Trustable'", async () => {
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
   const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
 
-  const REVERT_ERROR_TRUSTED_ACCOUNT_ALREADY_CONFIGURED = "TrustedAccountAlreadyConfigured";
-
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
   let user: HardhatEthersSigner;
@@ -94,18 +92,6 @@ describe("Contract 'ERC20Trustable'", async () => {
         .to.emit(token, EVENT_NAME_TRUSTED_ACCOUNT_CONFIGURED)
         .withArgs(trustedAccount, false);
       expect(await token.isTrustedAccount(trustedAccount.address)).to.eq(false);
-    });
-
-    it("Is reverted if the account is already configured", async () => {
-      const { token } = await setUpFixture(deployToken);
-
-      await proveTx(token.configureTrustedAccount(trustedAccount.address, true));
-      expect(token.configureTrustedAccount(trustedAccount.address, true))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_TRUSTED_ACCOUNT_ALREADY_CONFIGURED);
-
-      await proveTx(token.configureTrustedAccount(trustedAccount.address, false));
-      expect(token.configureTrustedAccount(trustedAccount.address, false))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_TRUSTED_ACCOUNT_ALREADY_CONFIGURED);
     });
 
     it("Is reverted if the caller is not an owner", async () => {

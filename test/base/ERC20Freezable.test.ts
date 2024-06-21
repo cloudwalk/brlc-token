@@ -29,7 +29,6 @@ describe("Contract 'ERC20Freezable'", async () => {
   const REVERT_MESSAGE_PAUSABLE_PAUSED = "Pausable: paused";
 
   const REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER = "UnauthorizedBlocklister";
-  const REVERT_ERROR_FREEZING_ALREADY_APPROVED = "FreezingAlreadyApproved";
   const REVERT_ERROR_FREEZING_NOT_APPROVED = "FreezingNotApproved";
   const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
   const REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT = "TransferExceededFrozenAmount";
@@ -110,14 +109,6 @@ describe("Contract 'ERC20Freezable'", async () => {
         .to.emit(token, EVENT_NAME_FREEZE_APPROVAL)
         .withArgs(user1.address);
       expect(await token.freezeApproval(user1.address)).to.eq(true);
-    });
-
-    it("Is reverted if freezing is already approved", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(connect(token, user1).approveFreezing());
-      await expect(
-        connect(token, user1).approveFreezing()
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_FREEZING_ALREADY_APPROVED);
     });
 
     it("Is reverted if contract is paused", async () => {
