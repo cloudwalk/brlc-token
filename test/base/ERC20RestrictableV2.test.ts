@@ -23,7 +23,7 @@ const REVERT_ERROR_ZERO_ADDRESS = "ZeroAddress";
 const REVERT_ERROR_ZERO_AMOUNT = "ZeroAmount";
 const REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER = "UnauthorizedBlocklister";
 const REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT = "TransferExceededRestrictedAmount";
-const REVERT_ERROR_OBSOLATE = "Obsolate";
+const REVERT_ERROR_OBSOLETE = "Obsolete";
 const REVERT_ERROR_INVALID_ID = "InvalidId";
 const REVERT_ERROR_ZERO_ID = "ZeroId";
 
@@ -115,7 +115,7 @@ describe("Contract ERC20RestrictableV2", async () => {
       const { token } = await setUpFixture(deployToken);
 
       await expect(token.assignPurposes(purposeAccount1.address, [PURPOSE_1]))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_OBSOLATE);
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_OBSOLETE);
     });
 
     it("Is reverted if caller is not the owner", async () => {
@@ -355,7 +355,7 @@ describe("Contract ERC20RestrictableV2", async () => {
     });
   });
 
-  describe("Function 'transferRestricted()'", async () => {
+  describe("Function 'transferWithId()'", async () => {
     it("Executes as expected and emits correct events", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.mint(user1.address, 100));
@@ -363,7 +363,7 @@ describe("Contract ERC20RestrictableV2", async () => {
         connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, PURPOSE_1)
       );
 
-      const tx = await connect(token, blocklister).transferRestricted(user1.address, user2.address, 100, PURPOSE_1);
+      const tx = await connect(token, blocklister).transferWithId(user1.address, user2.address, 100, PURPOSE_1);
       await expect(tx).to.emit(token, "RestrictionChanged");
 
       await expect(tx).to.changeTokenBalances(
@@ -382,7 +382,7 @@ describe("Contract ERC20RestrictableV2", async () => {
         connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, PURPOSE_1)
       );
 
-      const tx = await connect(token, blocklister).transferRestricted(user1.address, user2.address, 100, PURPOSE_1);
+      const tx = await connect(token, blocklister).transferWithId(user1.address, user2.address, 100, PURPOSE_1);
 
       await expect(tx).to.changeTokenBalances(
         token,
@@ -403,7 +403,7 @@ describe("Contract ERC20RestrictableV2", async () => {
         connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, ANY_ID)
       );
 
-      const tx = await connect(token, blocklister).transferRestricted(user1.address, user2.address, 80, PURPOSE_1);
+      const tx = await connect(token, blocklister).transferWithId(user1.address, user2.address, 80, PURPOSE_1);
 
       await expect(tx).to.changeTokenBalances(
         token,
@@ -425,7 +425,7 @@ describe("Contract ERC20RestrictableV2", async () => {
         connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 50, ANY_ID)
       );
 
-      const tx = await connect(token, blocklister).transferRestricted(user1.address, user2.address, 200, PURPOSE_1);
+      const tx = await connect(token, blocklister).transferWithId(user1.address, user2.address, 200, PURPOSE_1);
 
       await expect(tx).to.changeTokenBalances(
         token,
@@ -450,7 +450,7 @@ describe("Contract ERC20RestrictableV2", async () => {
         connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, ANY_ID)
       );
 
-      const tx = await connect(token, blocklister).transferRestricted(user1.address, user2.address, 150, PURPOSE_1);
+      const tx = await connect(token, blocklister).transferWithId(user1.address, user2.address, 150, PURPOSE_1);
 
       await expect(tx).to.changeTokenBalances(
         token,
@@ -476,38 +476,38 @@ describe("Contract ERC20RestrictableV2", async () => {
         connect(token, blocklister)[RESTRICTION_INCREASE_V2_SIGNATURE](user1.address, user2.address, 100, ANY_ID)
       );
 
-      await expect(connect(token, blocklister).transferRestricted(user1.address, user2.address, 200, PURPOSE_1))
+      await expect(connect(token, blocklister).transferWithId(user1.address, user2.address, 200, PURPOSE_1))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
     });
 
     it("Is reverted if the caller is not a blocklister", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
-      await expect(token.transferRestricted(user1.address, user2.address, 100, ANY_ID))
+      await expect(token.transferWithId(user1.address, user2.address, 100, ANY_ID))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
     });
 
     it("Is reverted if the 'from' address or the 'to' address is zero", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
-      await expect(connect(token, blocklister).transferRestricted(ethers.ZeroAddress, user2.address, 100, ANY_ID))
+      await expect(connect(token, blocklister).transferWithId(ethers.ZeroAddress, user2.address, 100, ANY_ID))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
 
-      await expect(connect(token, blocklister).transferRestricted(user1.address, ethers.ZeroAddress, 100, ANY_ID))
+      await expect(connect(token, blocklister).transferWithId(user1.address, ethers.ZeroAddress, 100, ANY_ID))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
     });
 
     it("Is reverted if the 'id' is zero", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
-      await expect(connect(token, blocklister).transferRestricted(user1.address, user2.address, 100, ethers.ZeroHash))
+      await expect(connect(token, blocklister).transferWithId(user1.address, user2.address, 100, ethers.ZeroHash))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ID);
     });
 
     it("Is reverted if the 'id' is ANY_ID marker", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
-      await expect(connect(token, blocklister).transferRestricted(user1.address, user2.address, 100, ANY_ID))
+      await expect(connect(token, blocklister).transferWithId(user1.address, user2.address, 100, ANY_ID))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_INVALID_ID);
     });
   });
@@ -529,7 +529,7 @@ describe("Contract ERC20RestrictableV2", async () => {
       expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, PURPOSE_1)).to.eq(50);
     });
 
-    it("Allows only 'transferRestricted' if the amount uses the restricted balance", async () => {
+    it("Allows only 'transferWithId' if the amount uses the restricted balance", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.mint(user1.address, 100));
       await proveTx(
@@ -540,7 +540,7 @@ describe("Contract ERC20RestrictableV2", async () => {
         .to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
       expect(await token[BALANCE_OF_RESTRICTED_V2_SIGNATURE](user1.address, user2.address, PURPOSE_1)).to.eq(50);
 
-      await expect(connect(token, blocklister).transferRestricted(user1.address, user2.address, 80, PURPOSE_1))
+      await expect(connect(token, blocklister).transferWithId(user1.address, user2.address, 80, PURPOSE_1))
         .to.changeTokenBalances(
           token,
           [user1, user2],

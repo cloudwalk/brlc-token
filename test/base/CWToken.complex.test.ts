@@ -171,7 +171,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 10));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 5, ID)
+        token.transferWithId(user.address, purposeAccount.address, 5, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -186,7 +186,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 10));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 10, ID)
+        token.transferWithId(user.address, purposeAccount.address, 10, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -201,7 +201,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 10));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 15, ID)
+        token.transferWithId(user.address, purposeAccount.address, 15, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
@@ -211,7 +211,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 10));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 20, ID)
+        token.transferWithId(user.address, purposeAccount.address, 20, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
@@ -221,7 +221,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 10));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 25, ID)
+        token.transferWithId(user.address, purposeAccount.address, 25, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
@@ -231,7 +231,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 10));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 5, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 5, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
     });
 
@@ -241,7 +241,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 10));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 10, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 10, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
     });
 
@@ -251,7 +251,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 10));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 15, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 15, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
@@ -261,7 +261,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 10));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 20, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 20, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
@@ -271,7 +271,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 10));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 25, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 25, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
   });
@@ -520,7 +520,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 5, ID)
+        token.transferWithId(user.address, purposeAccount.address, 5, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -536,7 +536,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 10, ID)
+        token.transferWithId(user.address, purposeAccount.address, 10, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -552,7 +552,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 15, ID)
+        token.transferWithId(user.address, purposeAccount.address, 15, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -568,7 +568,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 20, ID)
+        token.transferWithId(user.address, purposeAccount.address, 20, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -584,7 +584,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 25, ID)
+        token.transferWithId(user.address, purposeAccount.address, 25, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
       expect(await token[BALANCE_OF_RESTRICTED](user.address, ethers.ZeroAddress, ID)).to.eq(10);
     });
@@ -596,7 +596,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 5, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 5, ID)
       ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
@@ -612,7 +612,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 10, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 10, ID)
       ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
@@ -628,7 +628,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 15, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 15, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
     });
 
@@ -639,7 +639,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 20, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 20, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
     });
 
@@ -650,7 +650,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 25, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 25, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
@@ -660,7 +660,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.premintIncrease(user.address, 10, timestamp));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 5, ID)
+        token.transferWithId(user.address, purposeAccount.address, 5, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -675,7 +675,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.premintIncrease(user.address, 10, timestamp));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 10, ID)
+        token.transferWithId(user.address, purposeAccount.address, 10, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -690,7 +690,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.premintIncrease(user.address, 10, timestamp));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 15, ID)
+        token.transferWithId(user.address, purposeAccount.address, 15, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT);
       expect(await token[BALANCE_OF_RESTRICTED](user.address, ethers.ZeroAddress, ID)).to.eq(10);
     });
@@ -701,7 +701,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.premintIncrease(user.address, 10, timestamp));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 20, ID)
+        token.transferWithId(user.address, purposeAccount.address, 20, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT);
       expect(await token[BALANCE_OF_RESTRICTED](user.address, ethers.ZeroAddress, ID)).to.eq(10);
     });
@@ -712,7 +712,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.premintIncrease(user.address, 10, timestamp));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 25, ID)
+        token.transferWithId(user.address, purposeAccount.address, 25, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
       expect(await token[BALANCE_OF_RESTRICTED](user.address, ethers.ZeroAddress, ID)).to.eq(10);
     });
@@ -723,7 +723,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.premintIncrease(user.address, 10, timestamp));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 5, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 5, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
       expect(await token[BALANCE_OF_RESTRICTED](user.address, ethers.ZeroAddress, ID)).to.eq(10);
     });
@@ -734,7 +734,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.premintIncrease(user.address, 10, timestamp));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 10, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 10, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
       expect(await token[BALANCE_OF_RESTRICTED](user.address, ethers.ZeroAddress, ID)).to.eq(10);
     });
@@ -745,7 +745,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.premintIncrease(user.address, 10, timestamp));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 15, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 15, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT);
       expect(await token[BALANCE_OF_RESTRICTED](user.address, ethers.ZeroAddress, ID)).to.eq(10);
     });
@@ -756,7 +756,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.premintIncrease(user.address, 10, timestamp));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 20, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 20, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT);
       expect(await token[BALANCE_OF_RESTRICTED](user.address, ethers.ZeroAddress, ID)).to.eq(10);
     });
@@ -767,7 +767,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.premintIncrease(user.address, 10, timestamp));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 25, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 25, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
   });
@@ -785,7 +785,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 5, ID)
+        token.transferWithId(user.address, purposeAccount.address, 5, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -802,7 +802,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 10, ID)
+        token.transferWithId(user.address, purposeAccount.address, 10, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -819,7 +819,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 15, ID)
+        token.transferWithId(user.address, purposeAccount.address, 15, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -836,7 +836,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 20, ID)
+        token.transferWithId(user.address, purposeAccount.address, 20, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
@@ -848,7 +848,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 25, ID)
+        token.transferWithId(user.address, purposeAccount.address, 25, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
@@ -860,7 +860,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 5, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 5, ID)
       ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
@@ -877,7 +877,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 10, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 10, ID)
       ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
@@ -894,7 +894,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 15, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 15, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
     });
 
@@ -906,7 +906,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 20, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 20, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
@@ -918,7 +918,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await increaseBlockTimestampTo(timestamp);
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 25, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 25, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
@@ -929,7 +929,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 5));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 5, ID)
+        token.transferWithId(user.address, purposeAccount.address, 5, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -945,7 +945,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 5));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 10, ID)
+        token.transferWithId(user.address, purposeAccount.address, 10, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -961,7 +961,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 5));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 15, ID)
+        token.transferWithId(user.address, purposeAccount.address, 15, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
@@ -972,7 +972,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 5));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 20, ID)
+        token.transferWithId(user.address, purposeAccount.address, 20, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT);
     });
 
@@ -983,7 +983,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 5));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 25, ID)
+        token.transferWithId(user.address, purposeAccount.address, 25, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
@@ -994,7 +994,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 5));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 5, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 5, ID)
       ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
@@ -1010,7 +1010,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 5));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 10, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 10, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
     });
 
@@ -1021,7 +1021,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 5));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 15, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 15, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
     });
 
@@ -1032,7 +1032,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 5));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 20, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 20, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT);
     });
 
@@ -1043,7 +1043,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 5));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 25, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 25, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
   });
@@ -1054,7 +1054,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 10));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 5, ID)
+        token.transferWithId(user.address, purposeAccount.address, 5, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
@@ -1063,7 +1063,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.freeze(user.address, 10));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 5, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 5, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
   });
@@ -1186,7 +1186,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.mint(user.address, 20));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 5, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 5, ID)
+        token.transferWithId(user.address, purposeAccount.address, 5, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -1200,7 +1200,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.mint(user.address, 20));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 10, ID)
+        token.transferWithId(user.address, purposeAccount.address, 10, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -1214,7 +1214,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.mint(user.address, 20));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 15, ID)
+        token.transferWithId(user.address, purposeAccount.address, 15, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -1228,7 +1228,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.mint(user.address, 20));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 20, ID)
+        token.transferWithId(user.address, purposeAccount.address, 20, ID)
       ).to.changeTokenBalances(
         token,
         [user, purposeAccount],
@@ -1242,7 +1242,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.mint(user.address, 20));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, purposeAccount.address, 25, ID)
+        token.transferWithId(user.address, purposeAccount.address, 25, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
 
@@ -1251,7 +1251,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.mint(user.address, 20));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 5, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 5, ID)
       ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
@@ -1265,7 +1265,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.mint(user.address, 20));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 10, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 10, ID)
       ).to.changeTokenBalances(
         token,
         [user, nonPurposeAccount],
@@ -1279,7 +1279,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.mint(user.address, 20));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 15, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 15, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
     });
 
@@ -1288,7 +1288,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.mint(user.address, 20));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 20, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 20, ID)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
     });
 
@@ -1297,7 +1297,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await proveTx(token.mint(user.address, 20));
       await proveTx(token[RESTRICTION_INCREASE_V2](user.address, purposeAccount.address, 10, ID));
       await expect(
-        token.transferRestricted(user.address, nonPurposeAccount.address, 25, ID)
+        token.transferWithId(user.address, nonPurposeAccount.address, 25, ID)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
   });

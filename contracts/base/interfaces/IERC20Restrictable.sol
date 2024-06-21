@@ -124,7 +124,7 @@ interface IERC20RestrictableV2 {
      * @param amount The amount of tokens to transfer
      * @param id The identifier for the restriction (purpose)
      */
-    function transferRestricted(address from, address to, uint256 amount, bytes32 id) external;
+    function transferWithId(address from, address to, uint256 amount, bytes32 id) external;
 
     /**
      * @notice Returns the restricted balance for a transfer between accounts for a specific restriction.
