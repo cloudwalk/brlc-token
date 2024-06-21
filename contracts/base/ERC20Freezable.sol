@@ -55,9 +55,11 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @notice The contract must not be paused
      */
     function approveFreezing() external whenNotPaused {
-        _freezeApprovals[_msgSender()] = true;
+        if (!_freezeApprovals[_msgSender()]) {
+            _freezeApprovals[_msgSender()] = true;
 
-        emit FreezeApproval(_msgSender());
+            emit FreezeApproval(_msgSender());
+        }
     }
 
     /**

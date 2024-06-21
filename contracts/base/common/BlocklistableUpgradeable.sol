@@ -239,8 +239,10 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
      */
     function enableBlocklist(bool status) external onlyOwner {
         BlocklistableStorageSlot storage storageSlot = _getBlocklistableSlot(_BLOCKLISTABLE_STORAGE_SLOT);
-        storageSlot.enabled = status;
-        emit BlocklistEnabled(status);
+        if (!storageSlot.enabled == status) {
+            storageSlot.enabled = status;
+            emit BlocklistEnabled(status);
+        }
     }
 
     /**
