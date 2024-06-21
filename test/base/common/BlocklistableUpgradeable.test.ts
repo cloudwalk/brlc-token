@@ -31,8 +31,6 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
   const REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER = "UnauthorizedBlocklister";
   const REVERT_ERROR_UNAUTHORIZED_MAIN_BLOCKLISTER = "UnauthorizedMainBlocklister";
   const REVERT_ERROR_BLOCKLISTED_ACCOUNT = "BlocklistedAccount";
-  const REVERT_ERROR_ZERO_ADDRESS_BLOCKLISTED = "ZeroAddressToBlocklist";
-  const REVERT_ERROR_ALREADY_CONFIGURED = "AlreadyConfigured";
 
   const ZERO_ADDRESS = ethers.ZeroAddress;
 
