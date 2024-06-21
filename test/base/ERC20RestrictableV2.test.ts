@@ -519,7 +519,16 @@ describe("Contract ERC20RestrictableV2", async () => {
         );
 
         const tx = await connect(token, blocklister).transferWithId(fromAccount.address, toAccount.address, 100, ID1);
-        await expect(tx).to.emit(token, "RestrictionChanged");
+        await expect(tx).to.emit(token, "RestrictionChanged")
+          .withArgs(
+            fromAccount,
+            toAccount,
+            ID1,
+            0, // newRestrictedBalanceToID
+            100, // oldRestrictedBalanceToId
+            0, // newRestrictedBalanceTotal
+            100 // oldRestrictedBalanceTotal
+          );
 
         await expect(tx).to.changeTokenBalances(
           token,
@@ -538,6 +547,17 @@ describe("Contract ERC20RestrictableV2", async () => {
         );
 
         const tx = await connect(token, blocklister).transferWithId(fromAccount.address, toAccount.address, 100, ID1);
+
+        await expect(tx).to.emit(token, "RestrictionChanged")
+          .withArgs(
+            fromAccount,
+            toAccount,
+            ID1,
+            0, // newRestrictedBalanceToID
+            100, // oldRestrictedBalanceToId
+            0, // newRestrictedBalanceTotal
+            100 // oldRestrictedBalanceTotal
+          );
 
         await expect(tx).to.changeTokenBalances(
           token,
@@ -559,6 +579,26 @@ describe("Contract ERC20RestrictableV2", async () => {
         );
 
         const tx = await connect(token, blocklister).transferWithId(fromAccount.address, toAccount.address, 80, ID1);
+
+        await expect(tx).to.emit(token, "RestrictionChanged")
+          .withArgs(
+            fromAccount,
+            toAccount,
+            ID1,
+            0, // newRestrictedBalanceToID
+            50, // oldRestrictedBalanceToId
+            70, // newRestrictedBalanceTotal
+            150 // oldRestrictedBalanceTotal
+          ).and.to.emit(token, "RestrictionChanged") // ANY_ID restricted amount changed event
+          .withArgs(
+            fromAccount,
+            toAccount,
+            ANY_ID,
+            70, // newRestrictedBalanceToID
+            100, // oldRestrictedBalanceToId
+            70, // newRestrictedBalanceTotal
+            150 // oldRestrictedBalanceTotal
+          );
 
         await expect(tx).to.changeTokenBalances(
           token,
