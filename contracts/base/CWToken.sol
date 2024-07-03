@@ -123,6 +123,26 @@ contract CWToken is
         uint256 amount
     ) internal virtual override(ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictable, ERC20Hookable) {
         super._afterTokenTransfer(from, to, amount);
+
+        uint256 balanceTotal = balanceOf(from);
+        uint256 balanceFrozen = balanceOfFrozen(from);
+        uint256 balancePreminted = balanceOfPremint(from);
+        uint256 balanceRestricted = balanceOfRestricted(from, bytes32(0));
+
+        if (balanceTotal < balanceFrozen + balancePreminted + balanceRestricted) {
+            uint256 balanceFreezable = (balanceTotal >= balancePreminted) ? balanceTotal - balancePreminted : 0;
+
+            if (balancePreminted != 0 && balanceTotal < balancePreminted) {
+                revert TransferExceededPremintedAmount();
+            } else if (balanceFrozen != 0 &&
+                msg.sig != this.transferFrozen.selector &&
+                balanceFreezable < balanceFrozen
+            ) {
+                revert TransferExceededFrozenAmount();
+            } else if (balanceRestricted != 0) {
+                revert TransferExceededRestrictedAmount();
+            }
+        }
     }
 
     /**
@@ -134,32 +154,5 @@ contract CWToken is
         address spender
     ) public view override(ERC20Base, ERC20Trustable) returns (uint256) {
         return super.allowance(owner, spender);
-    }
-
-    /**
-     * @inheritdoc ERC20Mintable
-     */
-    function _balanceOf_ERC20Mintable(address account) internal view virtual override returns (uint256) {
-        return balanceOf(account);
-    }
-
-    /**
-     * @inheritdoc ERC20Freezable
-     */
-    function _balanceOf_ERC20Freezable(address account) internal view virtual override returns (uint256) {
-        return balanceOf(account) - balanceOfPremint(account);
-    }
-
-    /**
-     * @inheritdoc ERC20Restrictable
-     */
-    function _balanceOf_ERC20Restrictable(address account) internal view virtual override returns (uint256) {
-        uint256 frozenBalance = balanceOfFrozen(account);
-        uint256 restBalance = balanceOf(account) - balanceOfPremint(account);
-        if (frozenBalance < restBalance) {
-            return restBalance - frozenBalance;
-        } else {
-            return 0;
-        }
     }
 }
