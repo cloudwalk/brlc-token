@@ -121,7 +121,7 @@ contract CWToken is
         address from,
         address to,
         uint256 amount
-    ) internal virtual override(ERC20Base, ERC20Mintable, ERC20Freezable, ERC20Restrictable, ERC20Hookable) {
+    ) internal virtual override(ERC20Base, ERC20Restrictable, ERC20Hookable) {
         super._afterTokenTransfer(from, to, amount);
 
         uint256 balanceTotal = balanceOf(from);

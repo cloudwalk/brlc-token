@@ -92,7 +92,7 @@ contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
         address from,
         address to,
         uint256 amount
-    ) internal virtual override(ERC20Base, ERC20Freezable) {
+    ) internal virtual override(ERC20Base) {
         super._afterTokenTransfer(from, to, amount);
     }
 }

@@ -415,13 +415,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         return true;
     }
 
-    /**
-     * @inheritdoc ERC20Base
-     */
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        super._afterTokenTransfer(from, to, amount);
-    }
-
     function _getExtendedStorageSlot() internal pure returns (ExtendedStorageSlot storage r) {
         /// @solidity memory-safe-assembly
         assembly {
