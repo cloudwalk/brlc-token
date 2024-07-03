@@ -132,12 +132,9 @@ contract CWToken is
         if (balanceTotal < balanceFrozen + balancePreminted + balanceRestricted) {
             uint256 balanceFreezable = (balanceTotal >= balancePreminted) ? balanceTotal - balancePreminted : 0;
 
-            if (balancePreminted != 0 && balanceTotal < balancePreminted) {
+            if (balanceTotal < balancePreminted) {
                 revert TransferExceededPremintedAmount();
-            } else if (balanceFrozen != 0 &&
-                msg.sig != this.transferFrozen.selector &&
-                balanceFreezable < balanceFrozen
-            ) {
+            } else if (balanceFreezable < balanceFrozen && msg.sig != this.transferFrozen.selector) {
                 revert TransferExceededFrozenAmount();
             } else if (balanceRestricted != 0) {
                 revert TransferExceededRestrictedAmount();
