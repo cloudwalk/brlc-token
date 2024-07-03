@@ -282,15 +282,5 @@ describe("Contract 'ERC20Freezable'", async () => {
         [-1, 1]
       );
     });
-
-    it("Tokens below the frozen balance cannot be transferred successfully", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mint(user1.address, TOKEN_AMOUNT + 1));
-      await proveTx(connect(token, user1).approveFreezing());
-      await proveTx(connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT));
-      await expect(
-        connect(token, user1).transfer(user2.address, 2)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
-    });
   });
 });

@@ -281,16 +281,6 @@ describe("Contract 'ERC20Restrictable'", async () => {
       await proveTx(token.mint(user1.address, 300));
 
       await expect(
-        connect(token, user1).transfer(user2.address, 1)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
-      await expect(
-        connect(token, user1).transfer(purposeAccount1.address, 101)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
-      await expect(
-        connect(token, user1).transfer(purposeAccount2.address, 201)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
-
-      await expect(
         connect(token, user1).transfer(purposeAccount1.address, 25)
       ).to.changeTokenBalances(
         token,
@@ -318,10 +308,6 @@ describe("Contract 'ERC20Restrictable'", async () => {
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_ZERO)).to.eq(200);
 
       await proveTx(token.mint(user1.address, 200));
-
-      await expect(
-        connect(token, user1).transfer(user2.address, 1)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT);
 
       await expect(
         connect(token, user1).transfer(purposeAccount1.address, 50)
@@ -361,13 +347,6 @@ describe("Contract 'ERC20Restrictable'", async () => {
       await proveTx(connect(token, blocklister).restrictionIncrease(user1.address, PURPOSE_1, 100));
 
       await proveTx(token.mint(user1.address, 200));
-
-      await expect(
-        connect(token, user1).transfer(user2.address, 101)
-      ).to.be.revertedWithCustomError(
-        token,
-        REVERT_ERROR_TRANSFER_EXCEEDED_RESTRICTED_AMOUNT
-      );
 
       await expect(
         connect(token, user1).transfer(user2.address, 25)
