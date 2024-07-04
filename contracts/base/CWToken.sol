@@ -112,8 +112,6 @@ contract CWToken is
 
     /**
      * @dev See {ERC20Base-_afterTokenTransfer}
-     * @dev See {ERC20Mintable-_afterTokenTransfer}
-     * @dev See {ERC20Freezable-_afterTokenTransfer}
      * @dev See {ERC20Restrictable-_afterTokenTransfer}
      * @dev See {ERC20Hookable-_afterTokenTransfer}
      */
@@ -136,7 +134,7 @@ contract CWToken is
                 revert TransferExceededPremintedAmount();
             } else if (balanceFreezable < balanceFrozen && msg.sig != this.transferFrozen.selector) {
                 revert TransferExceededFrozenAmount();
-            } else if (balanceRestricted != 0) {
+            } else if (balanceRestricted != 0 && msg.sig != this.transferFrozen.selector) {
                 revert TransferExceededRestrictedAmount();
             }
         }
