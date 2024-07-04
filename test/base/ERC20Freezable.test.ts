@@ -32,7 +32,6 @@ describe("Contract 'ERC20Freezable'", async () => {
   const REVERT_ERROR_FREEZING_ALREADY_APPROVED = "FreezingAlreadyApproved";
   const REVERT_ERROR_FREEZING_NOT_APPROVED = "FreezingNotApproved";
   const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
-  const REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT = "TransferExceededFrozenAmount";
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -280,6 +279,20 @@ describe("Contract 'ERC20Freezable'", async () => {
         token,
         [user1, user2],
         [-1, 1]
+      );
+    });
+    it("Frozen tokens are transferred successfully", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await proveTx(token.mint(user1.address, TOKEN_AMOUNT));
+      await proveTx(connect(token, user1).approveFreezing());
+      await proveTx(connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT + 1));
+
+      await expect(
+        connect(token, user1).transfer(user2.address, TOKEN_AMOUNT)
+      ).to.changeTokenBalances(
+        token,
+        [user1, user2],
+        [-TOKEN_AMOUNT, TOKEN_AMOUNT]
       );
     });
   });
