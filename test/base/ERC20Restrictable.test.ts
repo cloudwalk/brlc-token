@@ -375,7 +375,7 @@ describe("Contract 'ERC20Restrictable'", async () => {
       expect(await token.balanceOfRestricted(user1.address, PURPOSE_1)).to.eq(0);
     });
 
-    it("Tokens are transferred properly if restricted tokens amount greater than total", async () => {
+    it("Tokens are transferred properly if the restricted balance is greater than the total one", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
       await proveTx(token.assignPurposes(purposeAccount1.address, [PURPOSE_1]));

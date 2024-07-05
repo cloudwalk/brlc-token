@@ -1033,9 +1033,9 @@ describe("Contract 'ERC20Mintable'", async () => {
   });
 
   describe("Function 'transfer()'", async () => {
-    it("Preminted tokens are transferred properly", async () => {
-      const timestamp = (await getLatestBlockTimestamp()) + 100;
+    it("Executes as expected even for preminted tokens that has not been released yet", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
+      const timestamp = (await getLatestBlockTimestamp()) + 100;
       await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
       const tx = connect(token, user).transfer(recipient.address, TOKEN_AMOUNT);
       await expect(tx).to.changeTokenBalances(

@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx, connect } from "../../test-utils/eth";
+import { proveTx, connect, getLatestBlockTimestamp } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -208,6 +208,14 @@ describe("Contract 'ERC20Freezable'", async () => {
         await expect(tx).to.changeTokenBalances(token, [user1, user2], [-transferAmount, transferAmount]);
       }
 
+      it("The frozen amount is less than the account balance", async () => {
+        await executeAndCheckTransferFrozen({
+          balance: TOKEN_AMOUNT,
+          frozenAmount: TOKEN_AMOUNT - 1,
+          transferAmount: TOKEN_AMOUNT - 1
+        });
+      });
+
       it("The frozen amount is equal to the account balance", async () => {
         await executeAndCheckTransferFrozen({
           balance: TOKEN_AMOUNT,
@@ -267,33 +275,47 @@ describe("Contract 'ERC20Freezable'", async () => {
     });
   });
 
-  describe("Frozen token scenarios", async () => {
-    it("Tokens above the frozen balance can be transferred successfully", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mint(user1.address, TOKEN_AMOUNT + 1));
-      await proveTx(connect(token, user1).approveFreezing());
-      await proveTx(connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT));
-      await expect(
-        connect(token, user1).transfer(user2.address, 1)
-      ).to.changeTokenBalances(
-        token,
-        [user1, user2],
-        [-1, 1]
-      );
-    });
-    it("Frozen tokens are transferred successfully", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mint(user1.address, TOKEN_AMOUNT));
-      await proveTx(connect(token, user1).approveFreezing());
-      await proveTx(connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT + 1));
+  describe("Function 'transfer()'", async () => {
+    describe("Execute as expected if the frozen balance is not zero and if", async () => {
+      async function checkTransfer(
+        props: {
+          totalBalanceBefore: number;
+          frozenBalanceBefore: number;
+          transferAmount: number;
+        }
+      ) {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const { totalBalanceBefore, frozenBalanceBefore, transferAmount } = props;
+        await proveTx(token.mint(user1.address, totalBalanceBefore));
+        await proveTx(connect(token, user1).approveFreezing());
+        await proveTx(connect(token, blocklister).freeze(user1.address, frozenBalanceBefore));
+        await expect(
+          connect(token, user1).transfer(user2.address, transferAmount)
+        ).to.changeTokenBalances(
+          token,
+          [user1, user2],
+          [-transferAmount, transferAmount]
+        );
+        const totalBalanceAfter = totalBalanceBefore - transferAmount;
+        expect(await token.balanceOf(user1.address)).to.equal(totalBalanceAfter);
+        expect(await token.balanceOfFrozen(user1.address)).to.equal(frozenBalanceBefore);
+      }
 
-      await expect(
-        connect(token, user1).transfer(user2.address, TOKEN_AMOUNT)
-      ).to.changeTokenBalances(
-        token,
-        [user1, user2],
-        [-TOKEN_AMOUNT, TOKEN_AMOUNT]
-      );
+      it("Only the free tokens are transferred", async () => {
+        await checkTransfer({
+          totalBalanceBefore: TOKEN_AMOUNT + 5,
+          frozenBalanceBefore: TOKEN_AMOUNT,
+          transferAmount: 5
+        });
+      });
+
+      it("Not only free tokens are transferred", async () => {
+        await checkTransfer({
+          totalBalanceBefore: TOKEN_AMOUNT + 5,
+          frozenBalanceBefore: TOKEN_AMOUNT,
+          transferAmount: 10
+        });
+      });
     });
   });
 });
