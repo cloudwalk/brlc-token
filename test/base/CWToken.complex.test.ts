@@ -1618,4 +1618,58 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     });
   });
+  describe("Test 1 restricted and frozen token", async () => {
+    let timestamp: number;
+    before(async () => {
+      timestamp = (await getLatestBlockTimestamp()) + 100;
+    });
+    it("Transfer 1 token", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await proveTx(token.mint(user.address, 1));
+      await proveTx(token.freeze(user.address, 1));
+      await proveTx(token.restrictionIncrease(user.address, PURPOSE, 1));
+      await increaseBlockTimestampTo(timestamp);
+
+      const tx = connect(token, user).transfer(purposeAccount.address, 1);
+      await expect(
+        tx
+      ).to.changeTokenBalances(
+        token,
+        [user, purposeAccount],
+        [-1, 1]
+      );
+    });
+    it("TransferFrozen 1 token to purpose", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await proveTx(token.mint(user.address, 1));
+      await proveTx(token.freeze(user.address, 1));
+      await proveTx(token.restrictionIncrease(user.address, PURPOSE, 1));
+      await increaseBlockTimestampTo(timestamp);
+
+      const tx = connect(token, deployer).transferFrozen(user.address, purposeAccount.address, 1);
+      await expect(
+        tx
+      ).to.changeTokenBalances(
+        token,
+        [user, purposeAccount],
+        [-1, 1]
+      );
+    });
+    it("TransferFrozen 1 token to non-purpose", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await proveTx(token.mint(user.address, 1));
+      await proveTx(token.freeze(user.address, 1));
+      await proveTx(token.restrictionIncrease(user.address, PURPOSE, 1));
+      await increaseBlockTimestampTo(timestamp);
+
+      const tx = connect(token, deployer).transferFrozen(user.address, nonPurposeAccount.address, 1);
+      await expect(
+        tx
+      ).to.changeTokenBalances(
+        token,
+        [user, purposeAccount],
+        [-1, 1]
+      );
+    });
+  });
 });
