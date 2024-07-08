@@ -1686,6 +1686,24 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
         expect(await token.balanceOfRestricted(user.address, PURPOSE)).to.eq(0);
       });
 
+      it("Transfer to purpose account - test 10 with greater restriction", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 10));
+        await proveTx(token.restrictionIncrease(user.address, PURPOSE, 15));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 10)
+        ).to.changeTokenBalances(
+          token,
+          [user, purposeAccount],
+          [-10, 10]
+        );
+        expect(await token.balanceOfFrozen(user.address)).to.eq(0);
+        expect(await token.balanceOfRestricted(user.address, PURPOSE)).to.eq(5);
+      });
+
       it("Transfer to purpose account - test 15", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(token.enableBlocklist(true));
@@ -1734,7 +1752,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
         expect(await token.balanceOfRestricted(user.address, PURPOSE)).to.eq(5);
       });
 
-      it("Transfer to non-purpose account - test 10 if restricted greater", async () => {
+      it("Transfer to non-purpose account - test 10 with greater restriction", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(token.enableBlocklist(true));
         await proveTx(token.setMainBlocklister(blocklister));
