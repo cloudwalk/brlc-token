@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx, connect, getLatestBlockTimestamp } from "../../test-utils/eth";
+import { proveTx, connect } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
