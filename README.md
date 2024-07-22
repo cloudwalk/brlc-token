@@ -34,7 +34,10 @@ npm install
 npx hardhat compile
 
 # Run all tests
-npx hardhat test
+npm run tests
+
+# Run complex tests
+npm run complex-tests
 ```
 
 ## Networks and deployments
