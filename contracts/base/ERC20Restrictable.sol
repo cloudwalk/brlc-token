@@ -6,6 +6,8 @@ import { IERC20Restrictable } from "./interfaces/IERC20Restrictable.sol";
 import { IERC20RestrictableV2 } from "./interfaces/IERC20Restrictable.sol";
 import { ERC20Base } from "./ERC20Base.sol";
 
+import { IERC20Freezable } from "./interfaces/IERC20Freezable.sol";
+
 /**
  * @title ERC20Restrictable contract
  * @author CloudWalk Inc.
@@ -23,6 +25,9 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
 
     /// @notice The mapping of the restricted balances: sender => receiver => id => balance
     mapping(address => mapping(address => mapping(bytes32 => uint256))) internal _restrictedBalances;
+
+    /// @notice The mapping of the restricted balances by addresses: sender => receiver => amount
+    mapping(address => mapping(address => uint256)) internal _restrictedBalancesTo;
 
     // -------------------- Errors -----------------------------------
 
@@ -151,7 +156,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
      * @dev This empty reserved space is put in place to allow future versions
      * to add new variables without shifting down storage in the inheritance chain
      */
-    uint256[46] private __gap;
+    uint256[45] private __gap;
 }
 
 /**
@@ -305,25 +310,29 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
 
         if (_totalRestrictedBalances[from] != 0) {
             uint256 oldRestrictedBalanceToId = _restrictedBalances[from][to][id];
+            uint256 oldRestrictedBalanceToAnyId = _restrictedBalances[from][to][ANY_ID];
 
-            if (oldRestrictedBalanceToId != 0) {
+            if (oldRestrictedBalanceToId != 0 || oldRestrictedBalanceToAnyId != 0) {
                 uint256 newRestrictedBalanceToId = oldRestrictedBalanceToId;
-                uint256 oldRestrictedBalanceToAnyId = _restrictedBalances[from][to][ANY_ID];
                 uint256 oldRestrictedBalanceTotal = _totalRestrictedBalances[from];
                 uint256 newRestrictedBalanceTotal = oldRestrictedBalanceTotal;
                 uint256 newRestrictedBalanceToAnyId = oldRestrictedBalanceToAnyId;
                 uint256 totalAvailableBalanceToSpend = oldRestrictedBalanceToId + oldRestrictedBalanceToAnyId;
+                uint256 newRestrictedBalanceTo = _restrictedBalancesTo[from][to];
 
                 if (oldRestrictedBalanceToId >= amount) {
                     newRestrictedBalanceToId -= amount;
                     newRestrictedBalanceTotal -= amount;
+                    newRestrictedBalanceTo -= amount;
                 } else if (totalAvailableBalanceToSpend >= amount && oldRestrictedBalanceToId < amount) {
                     newRestrictedBalanceToId = 0;
                     newRestrictedBalanceToAnyId -= (amount - oldRestrictedBalanceToId);
                     newRestrictedBalanceTotal -= amount;
+                    newRestrictedBalanceTo -= amount;
                 } else {
                     newRestrictedBalanceToAnyId = 0;
                     newRestrictedBalanceToId = 0;
+                    newRestrictedBalanceTo = 0;
                     newRestrictedBalanceTotal -= (oldRestrictedBalanceToId + oldRestrictedBalanceToAnyId);
                 }
 
@@ -354,6 +363,7 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
                 }
 
                 _totalRestrictedBalances[from] = newRestrictedBalanceTotal;
+                _restrictedBalancesTo[from][to] = newRestrictedBalanceTo;
             }
         }
         transferFrom(from, to, amount);
@@ -389,6 +399,16 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
      */
     function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._afterTokenTransfer(from, to, amount);
+        if (msg.sig == IERC20Freezable.transferFrozen.selector) {
+            return;
+        }
+        if (_totalRestrictedBalances[from] != 0 && msg.sig == this.transferWithId.selector) {
+            uint256 availableBalance = _balanceOf_ERC20Restrictable(from);
+            uint256 totalBalance = balanceOf(from);
+            if (availableBalance == totalBalance && _restrictedBalancesTo[from][to] > totalBalance) {
+                return;
+            }
+        }
         if (_balanceOf_ERC20Restrictable(from) < _totalRestrictedBalances[from]) {
             revert TransferExceededRestrictedAmount();
         }
@@ -455,19 +475,24 @@ abstract contract ERC20RestrictableV2 is ERC20Restrictable, IERC20RestrictableV2
         }
 
         uint256 oldBalanceSpecific = _restrictedBalances[from][to][id];
+        uint256 oldBalanceTo = _restrictedBalancesTo[from][to];
         uint256 oldBalanceTotal = _totalRestrictedBalances[from];
         uint256 newBalanceSpecific = oldBalanceSpecific;
+        uint256 newBalanceTo = oldBalanceTo;
         uint256 newBalanceTotal = oldBalanceTotal;
 
         if ((flags & FLAG_INCREASING) != 0) {
             newBalanceSpecific += amount;
             newBalanceTotal += amount;
+            newBalanceTo += amount;
         } else {
             newBalanceSpecific -= amount;
             newBalanceTotal -= amount;
+            newBalanceTo -= amount;
         }
 
         _restrictedBalances[from][to][id] = newBalanceSpecific;
+        _restrictedBalancesTo[from][to] = newBalanceTo;
         _totalRestrictedBalances[from] = newBalanceTotal;
 
         emit RestrictionChanged(
