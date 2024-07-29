@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 import { ERC20Base } from "./ERC20Base.sol";
 import { ERC20Mintable } from "./ERC20Mintable.sol";
 import { ERC20Freezable } from "./ERC20Freezable.sol";
-import { ERC20Restrictable } from "./ERC20Restrictable.sol";
+import { ERC20RestrictableV2 } from "./ERC20Restrictable.sol";
 import { ERC20Hookable } from "./ERC20Hookable.sol";
 import { ERC20Trustable } from "./ERC20Trustable.sol";
 
@@ -20,7 +20,7 @@ contract CWToken is
     ERC20Base,
     ERC20Mintable,
     ERC20Freezable,
-    ERC20Restrictable,
+    ERC20RestrictableV2,
     ERC20Hookable,
     ERC20Trustable,
     IERC20ComplexBalance
@@ -91,7 +91,7 @@ contract CWToken is
         balance.total = balanceOf(account);
         balance.premint = balanceOfPremint(account);
         balance.frozen = balanceOfFrozen(account);
-        balance.restricted = balanceOfRestricted(account, bytes32(0));
+        balance.restricted = balanceOfRestricted(account, address(0), bytes32(0));
 
         uint256 detained = balance.premint + balance.frozen + balance.restricted;
         balance.free = balance.total > detained ? balance.total - detained : 0;
@@ -112,6 +112,8 @@ contract CWToken is
 
     /**
      * @dev See {ERC20Base-_afterTokenTransfer}
+     * @dev See {ERC20Mintable-_afterTokenTransfer}
+     * @dev See {ERC20Freezable-_afterTokenTransfer}
      * @dev See {ERC20Restrictable-_afterTokenTransfer}
      * @dev See {ERC20Hookable-_afterTokenTransfer}
      */
@@ -119,7 +121,7 @@ contract CWToken is
         address from,
         address to,
         uint256 amount
-    ) internal virtual override(ERC20Base, ERC20Restrictable, ERC20Hookable) {
+    ) internal virtual override(ERC20Base, ERC20RestrictableV2, ERC20Hookable) {
         super._afterTokenTransfer(from, to, amount);
 
         uint256 balanceTotal = balanceOf(from);
