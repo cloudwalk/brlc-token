@@ -32,7 +32,6 @@ describe("Contract 'ERC20Freezable'", async () => {
   const REVERT_ERROR_FREEZING_ALREADY_APPROVED = "FreezingAlreadyApproved";
   const REVERT_ERROR_FREEZING_NOT_APPROVED = "FreezingNotApproved";
   const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
-  const REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT = "TransferExceededFrozenAmount";
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -209,6 +208,14 @@ describe("Contract 'ERC20Freezable'", async () => {
         await expect(tx).to.changeTokenBalances(token, [user1, user2], [-transferAmount, transferAmount]);
       }
 
+      it("The frozen amount is less than the account balance", async () => {
+        await executeAndCheckTransferFrozen({
+          balance: TOKEN_AMOUNT,
+          frozenAmount: TOKEN_AMOUNT - 1,
+          transferAmount: TOKEN_AMOUNT - 1
+        });
+      });
+
       it("The frozen amount is equal to the account balance", async () => {
         await executeAndCheckTransferFrozen({
           balance: TOKEN_AMOUNT,
@@ -268,29 +275,47 @@ describe("Contract 'ERC20Freezable'", async () => {
     });
   });
 
-  describe("Frozen token scenarios", async () => {
-    it("Tokens above the frozen balance can be transferred successfully", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mint(user1.address, TOKEN_AMOUNT + 1));
-      await proveTx(connect(token, user1).approveFreezing());
-      await proveTx(connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT));
-      await expect(
-        connect(token, user1).transfer(user2.address, 1)
-      ).to.changeTokenBalances(
-        token,
-        [user1, user2],
-        [-1, 1]
-      );
-    });
+  describe("Function 'transfer()'", async () => {
+    describe("Execute as expected if the frozen balance is not zero and if", async () => {
+      async function checkTransfer(
+        props: {
+          totalBalanceBefore: number;
+          frozenBalanceBefore: number;
+          transferAmount: number;
+        }
+      ) {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        const { totalBalanceBefore, frozenBalanceBefore, transferAmount } = props;
+        await proveTx(token.mint(user1.address, totalBalanceBefore));
+        await proveTx(connect(token, user1).approveFreezing());
+        await proveTx(connect(token, blocklister).freeze(user1.address, frozenBalanceBefore));
+        await expect(
+          connect(token, user1).transfer(user2.address, transferAmount)
+        ).to.changeTokenBalances(
+          token,
+          [user1, user2],
+          [-transferAmount, transferAmount]
+        );
+        const totalBalanceAfter = totalBalanceBefore - transferAmount;
+        expect(await token.balanceOf(user1.address)).to.equal(totalBalanceAfter);
+        expect(await token.balanceOfFrozen(user1.address)).to.equal(frozenBalanceBefore);
+      }
 
-    it("Tokens below the frozen balance cannot be transferred successfully", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(token.mint(user1.address, TOKEN_AMOUNT + 1));
-      await proveTx(connect(token, user1).approveFreezing());
-      await proveTx(connect(token, blocklister).freeze(user1.address, TOKEN_AMOUNT));
-      await expect(
-        connect(token, user1).transfer(user2.address, 2)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT);
+      it("Only the free tokens are transferred", async () => {
+        await checkTransfer({
+          totalBalanceBefore: TOKEN_AMOUNT + 5,
+          frozenBalanceBefore: TOKEN_AMOUNT,
+          transferAmount: 5
+        });
+      });
+
+      it("Not only free tokens are transferred", async () => {
+        await checkTransfer({
+          totalBalanceBefore: TOKEN_AMOUNT + 5,
+          frozenBalanceBefore: TOKEN_AMOUNT,
+          transferAmount: 10
+        });
+      });
     });
   });
 });

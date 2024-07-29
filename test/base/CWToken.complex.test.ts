@@ -23,6 +23,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
   const REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT = "TransferExceededPremintedAmount";
   const REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
   const REVERT_MESSAGE_INSUFFICIENT_ALLOWANCE = "ERC20: insufficient allowance";
+  const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
 
   const PURPOSE = "0x0000000000000000000000000000000000000000000000000000000000000001";
 
@@ -31,9 +32,10 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
   let user: HardhatEthersSigner;
   let purposeAccount: HardhatEthersSigner;
   let nonPurposeAccount: HardhatEthersSigner;
+  let blocklister: HardhatEthersSigner;
 
   before(async () => {
-    [deployer, user, purposeAccount, nonPurposeAccount] = await ethers.getSigners();
+    [deployer, user, purposeAccount, nonPurposeAccount, blocklister] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("CWToken");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
@@ -1616,6 +1618,213 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
       await expect(
         connect(token, user).transfer(nonPurposeAccount.address, 25)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
+    });
+  });
+  describe("Function 'transferFrozen()'", async () => {
+    describe("Frozen balance only", async () => {
+      it("Transfer to purpose account - test 5", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 5));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, purposeAccount, 5)
+        ).to.changeTokenBalances(
+          token,
+          [user, purposeAccount],
+          [-5, 5]
+        );
+        expect(await token.balanceOfFrozen(user.address)).to.eq(0);
+      });
+
+      it("Transfer to purpose account - test 10", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 5));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, purposeAccount, 10)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_LACK_OF_FROZEN_BALANCE);
+      });
+    });
+    describe("Frozen and Restricted balances", async () => {
+      it("Transfer to purpose account - test 5", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 10));
+        await proveTx(token.restrictionIncrease(user.address, PURPOSE, 5));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 5)
+        ).to.changeTokenBalances(
+          token,
+          [user, purposeAccount],
+          [-5, 5]
+        );
+        expect(await token.balanceOfFrozen(user.address)).to.eq(5);
+        expect(await token.balanceOfRestricted(user.address, PURPOSE)).to.eq(0);
+      });
+
+      it("Transfer to purpose account - test 10", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 10));
+        await proveTx(token.restrictionIncrease(user.address, PURPOSE, 5));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 10)
+        ).to.changeTokenBalances(
+          token,
+          [user, purposeAccount],
+          [-10, 10]
+        );
+        expect(await token.balanceOfFrozen(user.address)).to.eq(0);
+        expect(await token.balanceOfRestricted(user.address, PURPOSE)).to.eq(0);
+      });
+
+      it("Transfer to purpose account - test 10 with greater restriction", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 10));
+        await proveTx(token.restrictionIncrease(user.address, PURPOSE, 15));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 10)
+        ).to.changeTokenBalances(
+          token,
+          [user, purposeAccount],
+          [-10, 10]
+        );
+        expect(await token.balanceOfFrozen(user.address)).to.eq(0);
+        expect(await token.balanceOfRestricted(user.address, PURPOSE)).to.eq(5);
+      });
+
+      it("Transfer to purpose account - test 15", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 10));
+        await proveTx(token.restrictionIncrease(user.address, PURPOSE, 5));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 15)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_LACK_OF_FROZEN_BALANCE);
+      });
+
+      it("Transfer to non-purpose account - test 5", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 10));
+        await proveTx(token.restrictionIncrease(user.address, PURPOSE, 5));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, nonPurposeAccount.address, 5)
+        ).to.changeTokenBalances(
+          token,
+          [user, nonPurposeAccount],
+          [-5, 5]
+        );
+        expect(await token.balanceOfFrozen(user.address)).to.eq(5);
+        expect(await token.balanceOfRestricted(user.address, PURPOSE)).to.eq(5);
+      });
+
+      it("Transfer to non-purpose account - test 10", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 10));
+        await proveTx(token.restrictionIncrease(user.address, PURPOSE, 5));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, nonPurposeAccount.address, 10)
+        ).to.changeTokenBalances(
+          token,
+          [user, nonPurposeAccount],
+          [-10, 10]
+        );
+        expect(await token.balanceOfFrozen(user.address)).to.eq(0);
+        expect(await token.balanceOfRestricted(user.address, PURPOSE)).to.eq(5);
+      });
+
+      it("Transfer to non-purpose account - test 10 with greater restriction", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 10));
+        await proveTx(token.restrictionIncrease(user.address, PURPOSE, 15));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, nonPurposeAccount.address, 10)
+        ).to.changeTokenBalances(
+          token,
+          [user, nonPurposeAccount],
+          [-10, 10]
+        );
+        expect(await token.balanceOfFrozen(user.address)).to.eq(0);
+        expect(await token.balanceOfRestricted(user.address, PURPOSE)).to.eq(15);
+      });
+
+      it("Transfer to non-purpose account - test 15", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 10));
+        await proveTx(token.restrictionIncrease(user.address, PURPOSE, 5));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, nonPurposeAccount.address, 15)
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_LACK_OF_FROZEN_BALANCE);
+      });
+    });
+    describe("Frozen balance is greater than total balance", async () => {
+      it("Transfer to purpose account - test 5", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 25));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 5)
+        ).to.changeTokenBalances(
+          token,
+          [user, purposeAccount],
+          [-5, 5]
+        );
+        expect(await token.balanceOfFrozen(user.address)).to.eq(20);
+      });
+
+      it("Transfer to purpose account - test 20", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 25));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 20)
+        ).to.changeTokenBalances(
+          token,
+          [user, purposeAccount],
+          [-20, 20]
+        );
+        expect(await token.balanceOfFrozen(user.address)).to.eq(5);
+      });
+
+      it("Transfer to purpose account - test 25", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
+        await proveTx(token.enableBlocklist(true));
+        await proveTx(token.setMainBlocklister(blocklister));
+        await proveTx(token.mint(user.address, 20));
+        await proveTx(token.freeze(user.address, 25));
+        await expect(
+          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 25)
+        ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
+      });
     });
   });
 });

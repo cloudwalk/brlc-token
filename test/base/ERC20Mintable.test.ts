@@ -73,9 +73,10 @@ describe("Contract 'ERC20Mintable'", async () => {
   let mainMinter: HardhatEthersSigner;
   let minter: HardhatEthersSigner;
   let user: HardhatEthersSigner;
+  let recipient: HardhatEthersSigner;
 
   before(async () => {
-    [deployer, pauser, mainBlocklister, mainMinter, minter, user] = await ethers.getSigners();
+    [deployer, pauser, mainBlocklister, mainMinter, minter, user, recipient] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20MintableMock");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
@@ -1028,6 +1029,23 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       await increaseBlockTimestampTo(timestamp + 50);
       expect(await token.balanceOfPremint(user.address)).to.eq(0);
+    });
+  });
+
+  describe("Function 'transfer()'", async () => {
+    it("Executes as expected even for preminted tokens that has not been released yet", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      const timestamp = (await getLatestBlockTimestamp()) + 100;
+      await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
+      const tx = connect(token, user).transfer(recipient.address, TOKEN_AMOUNT);
+      await expect(tx).to.changeTokenBalances(
+        token,
+        [user, recipient],
+        [-TOKEN_AMOUNT, TOKEN_AMOUNT]
+      );
+      await expect(tx)
+        .to.emit(token, EVENT_NAME_TRANSFER)
+        .withArgs(user.address, recipient.address, TOKEN_AMOUNT);
     });
   });
 });

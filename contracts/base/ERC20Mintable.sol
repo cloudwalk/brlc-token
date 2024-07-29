@@ -415,19 +415,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         return true;
     }
 
-    /**
-     * @inheritdoc ERC20Base
-     */
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        super._afterTokenTransfer(from, to, amount);
-        uint256 preminted = balanceOfPremint(from);
-        if (preminted != 0) {
-            if (_balanceOf_ERC20Mintable(from) < preminted) {
-                revert TransferExceededPremintedAmount();
-            }
-        }
-    }
-
     function _getExtendedStorageSlot() internal pure returns (ExtendedStorageSlot storage r) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -563,11 +550,4 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         }
         premintRecords.pop();
     }
-
-    /**
-     * @notice Returns the transferable amount of tokens owned by account
-     *
-     * @param account The account to get the balance of
-     */
-    function _balanceOf_ERC20Mintable(address account) internal view virtual returns (uint256);
 }
