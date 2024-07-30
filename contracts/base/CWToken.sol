@@ -136,7 +136,19 @@ contract CWToken is
                 revert TransferExceededPremintedAmount();
             } else if (balanceFreezable < balanceFrozen && msg.sig != this.transferFrozen.selector) {
                 revert TransferExceededFrozenAmount();
-            } else if (balanceRestricted != 0 && msg.sig != this.transferFrozen.selector) {
+            } else if (balanceRestricted != 0) {
+                uint256 restBalance = balanceTotal - balancePreminted;
+                uint256 availableBalance = (balanceFrozen < restBalance) ? restBalance - balanceFrozen : 0;
+
+                if (msg.sig == this.transferFrozen.selector) {
+                    return;
+                } else if (msg.sig == this.transferWithId.selector &&
+                    availableBalance == balanceTotal &&
+                    _restrictedBalancesTo[from][to] > balanceTotal
+                ) {
+                    return;
+                }
+
                 revert TransferExceededRestrictedAmount();
             }
         }
