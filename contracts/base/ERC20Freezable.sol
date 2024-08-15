@@ -113,6 +113,45 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @inheritdoc IERC20Freezable
      */
+    function frozenIncrease(address account, uint256 amount) external onlyBlocklister {
+        if (account == address(0)) {
+            revert ZeroAddress();
+        }
+        if (amount == 0) {
+            revert ZeroAmount();
+        }
+
+        uint256 oldBalance = _frozenBalances[account];
+        uint256 newBalance = oldBalance + amount;
+        _frozenBalances[account] = newBalance;
+
+        emit FrozenUpdated(account, newBalance, oldBalance);
+    }
+
+    /**
+     * @inheritdoc IERC20Freezable
+     */
+    function frozenDecrease(address account, uint256 amount) external onlyBlocklister {
+        uint256 oldBalance = _frozenBalances[account];
+        if (account == address(0)) {
+            revert ZeroAddress();
+        }
+        if (amount == 0) {
+            revert ZeroAmount();
+        }
+        if (amount > oldBalance) {
+            revert LackOfFrozenBalance();
+        }
+
+        uint256 newBalance = oldBalance - amount;
+        _frozenBalances[account] = newBalance;
+
+        emit FrozenUpdated(account, newBalance, oldBalance);
+    }
+
+    /**
+     * @inheritdoc IERC20Freezable
+     */
     function freezeApproval(address account) external view returns (bool) {
         return _freezeApprovals[account];
     }
