@@ -22,6 +22,7 @@ describe("Contract 'ERC20Freezable'", async () => {
   const EVENT_NAME_FREEZE = "Freeze";
   const EVENT_NAME_FREEZE_APPROVAL = "FreezeApproval";
   const EVENT_NAME_FREEZE_TRANSFER = "FreezeTransfer";
+  const EVENT_NAME_FROZEN_UPDATED = "FrozenUpdated";
 
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
@@ -32,6 +33,8 @@ describe("Contract 'ERC20Freezable'", async () => {
   const REVERT_ERROR_FREEZING_ALREADY_APPROVED = "FreezingAlreadyApproved";
   const REVERT_ERROR_FREEZING_NOT_APPROVED = "FreezingNotApproved";
   const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
+  const REVERT_ERROR_ZERO_AMOUNT = "ZeroAmount";
+  const REVERT_ERROR_ZERO_ADDRESS = "ZeroAddress";
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -316,6 +319,84 @@ describe("Contract 'ERC20Freezable'", async () => {
           transferAmount: 10
         });
       });
+    });
+  });
+
+  describe("Function 'frozenIncrease()'", async () => {
+    it("Increase frozen and emits the correct event", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+
+      expect(await token.balanceOfFrozen(user1.address)).to.eq(0);
+
+      await expect(connect(token, blocklister).frozenIncrease(user1.address, 100))
+        .to.emit(token, EVENT_NAME_FROZEN_UPDATED)
+        .withArgs(user1.address, 100, 0);
+      expect(await token.balanceOfFrozen(user1.address)).to.eq(100);
+
+      await expect(connect(token, blocklister).frozenIncrease(user1.address, 100))
+        .to.emit(token, EVENT_NAME_FROZEN_UPDATED)
+        .withArgs(user1.address, 200, 100);
+      expect(await token.balanceOfFrozen(user1.address)).to.eq(200);
+    });
+
+    it("Is reverted if the caller is not a blocklister", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await expect(
+        connect(token, user1).frozenIncrease(user2.address, 100)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
+    });
+
+    it("Is reverted if the provided account is zero", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await expect(
+        connect(token, blocklister).frozenIncrease(ethers.ZeroAddress, 100)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
+    });
+
+    it("Is reverted if the provided amount is zero", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await expect(
+        connect(token, blocklister).frozenIncrease(user2.address, 0)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_AMOUNT);
+    });
+  });
+
+  describe("Function 'frozenDecrease()'", async () => {
+    it("Decrease frozen and emits the correct event", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+
+      await proveTx(connect(token, blocklister).frozenIncrease(user1.address, 200));
+
+      await expect(connect(token, blocklister).frozenDecrease(user1.address, 100))
+        .to.emit(token, EVENT_NAME_FROZEN_UPDATED)
+        .withArgs(user1.address, 100, 200);
+      expect(await token.balanceOfFrozen(user1.address)).to.eq(100);
+
+      await expect(connect(token, blocklister).frozenDecrease(user1.address, 100))
+        .to.emit(token, EVENT_NAME_FROZEN_UPDATED)
+        .withArgs(user1.address, 0, 100);
+      expect(await token.balanceOfFrozen(user1.address)).to.eq(0);
+    });
+
+    it("Is reverted if the caller is not a blocklister", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await expect(
+        connect(token, user1).frozenDecrease(user1.address, 100)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER);
+    });
+
+    it("Is reverted if the provided account is zero", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await expect(
+        connect(token, blocklister).frozenDecrease(ethers.ZeroAddress, 100)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
+    });
+
+    it("Is reverted if the provided amount is zero", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await expect(
+        connect(token, blocklister).frozenDecrease(user1.address, 0)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_AMOUNT);
     });
   });
 });
