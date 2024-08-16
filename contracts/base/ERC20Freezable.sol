@@ -80,6 +80,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         }
 
         emit Freeze(account, amount, _frozenBalances[account]);
+        emit FrozenBalanceUpdated(account, amount, _frozenBalances[account]);
 
         _frozenBalances[account] = amount;
     }
@@ -105,6 +106,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
 
         emit FreezeTransfer(from, amount);
         emit Freeze(from, newFrozenBalance, oldFrozenBalance);
+        emit FrozenBalanceUpdated(from, newFrozenBalance, oldFrozenBalance);
 
         _frozenBalances[from] = newFrozenBalance;
         _transfer(from, to, amount);
@@ -113,40 +115,39 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @inheritdoc IERC20Freezable
      */
-    function frozenIncrease(address account, uint256 amount) external onlyBlocklister {
-        if (account == address(0)) {
-            revert ZeroAddress();
-        }
-        if (amount == 0) {
-            revert ZeroAmount();
-        }
-
-        uint256 oldBalance = _frozenBalances[account];
-        uint256 newBalance = oldBalance + amount;
-        _frozenBalances[account] = newBalance;
-
-        emit FrozenUpdated(account, newBalance, oldBalance);
+    function freezeIncrease(address account, uint256 amount) external onlyBlocklister {
+        _freezeChange(account, amount, true);
     }
 
     /**
      * @inheritdoc IERC20Freezable
      */
-    function frozenDecrease(address account, uint256 amount) external onlyBlocklister {
-        uint256 oldBalance = _frozenBalances[account];
+    function freezeDecrease(address account, uint256 amount) external onlyBlocklister {
+        _freezeChange(account, amount, false);
+    }
+
+    function _freezeChange(address account, uint256 amount, bool increasing) internal onlyBlocklister {
         if (account == address(0)) {
             revert ZeroAddress();
         }
-        if (amount == 0) {
-            revert ZeroAmount();
+        if (!_freezeApprovals[account]) {
+            revert FreezingNotApproved();
         }
-        if (amount > oldBalance) {
+
+        uint256 oldBalance = _frozenBalances[account];
+        uint256 newBalance;
+
+        if (increasing) {
+            newBalance = oldBalance + amount;
+        } else if (!increasing && amount <= oldBalance) {
+            newBalance = oldBalance - amount;
+        } else {
             revert LackOfFrozenBalance();
         }
 
-        uint256 newBalance = oldBalance - amount;
         _frozenBalances[account] = newBalance;
 
-        emit FrozenUpdated(account, newBalance, oldBalance);
+        emit FrozenBalanceUpdated(account, newBalance, oldBalance);
     }
 
     /**
