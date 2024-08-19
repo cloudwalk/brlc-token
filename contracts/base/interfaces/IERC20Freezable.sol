@@ -33,15 +33,6 @@ interface IERC20Freezable {
     event Freeze(address indexed account, uint256 newFrozenBalance, uint256 oldFrozenBalance);
 
     /**
-     * @notice Emitted when the frozen balance is updated for an account
-     *
-     * @param account The account the frozen is updated for
-     * @param newBalance The new frozen balance
-     * @param oldBalance The old frozen balance
-     */
-    event FrozenBalanceUpdated(address indexed account, uint256 newBalance, uint256 oldBalance);
-
-    /**
      * @notice Approves token freezing for the caller
      *
      * Emits a {FreezeApproval} event
@@ -72,7 +63,7 @@ interface IERC20Freezable {
     /**
      * @notice Increases the frozen balance for an account
      *
-     * Emits a {FrozenBalanceUpdated} event
+     * Emits a {Freeze} event
      *
      * @param account The account to increase frozen balance for
      * @param amount The amount to increase the frozen balance by
@@ -82,7 +73,7 @@ interface IERC20Freezable {
     /**
      * @notice Decreases the frozen balance for an account
      *
-     * Emits a {FrozenBalanceUpdated} event
+     * Emits a {Freeze} event
      *
      * @param account The account to decrease frozen balance for
      * @param amount The amount to decrease the frozen balance by

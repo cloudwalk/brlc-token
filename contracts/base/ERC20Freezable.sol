@@ -75,12 +75,14 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @dev The token freezing must be approved by the `account`
      */
     function freeze(address account, uint256 amount) external whenNotPaused onlyBlocklister {
+        if (account == address(0)) {
+            revert ZeroAddress();
+        }
         if (!_freezeApprovals[account]) {
             revert FreezingNotApproved();
         }
 
         emit Freeze(account, amount, _frozenBalances[account]);
-        emit FrozenBalanceUpdated(account, amount, _frozenBalances[account]);
 
         _frozenBalances[account] = amount;
     }
@@ -106,7 +108,6 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
 
         emit FreezeTransfer(from, amount);
         emit Freeze(from, newFrozenBalance, oldFrozenBalance);
-        emit FrozenBalanceUpdated(from, newFrozenBalance, oldFrozenBalance);
 
         _frozenBalances[from] = newFrozenBalance;
         _transfer(from, to, amount);
@@ -116,6 +117,10 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @inheritdoc IERC20Freezable
      */
     function freezeIncrease(address account, uint256 amount) external onlyBlocklister {
+        if (amount == 0) {
+            revert ZeroAmount();
+        }
+
         _freezeChange(account, amount, true);
     }
 
@@ -123,6 +128,10 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @inheritdoc IERC20Freezable
      */
     function freezeDecrease(address account, uint256 amount) external onlyBlocklister {
+        if (amount == 0) {
+            revert ZeroAmount();
+        }
+
         _freezeChange(account, amount, false);
     }
 
@@ -147,7 +156,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
 
         _frozenBalances[account] = newBalance;
 
-        emit FrozenBalanceUpdated(account, newBalance, oldBalance);
+        emit Freeze(account, newBalance, oldBalance);
     }
 
     /**
