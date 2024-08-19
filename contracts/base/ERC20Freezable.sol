@@ -121,7 +121,11 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
             revert ZeroAmount();
         }
 
-        _freezeChange(account, amount, true);
+        _freezeChange(
+            account,
+            amount,
+            true // increasing
+        );
     }
 
     /**
@@ -132,7 +136,11 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
             revert ZeroAmount();
         }
 
-        _freezeChange(account, amount, false);
+        _freezeChange(
+            account,
+            amount,
+            false // decreasing
+        );
     }
 
     function _freezeChange(address account, uint256 amount, bool increasing) internal onlyBlocklister {
