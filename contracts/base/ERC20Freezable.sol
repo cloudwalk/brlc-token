@@ -116,11 +116,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @inheritdoc IERC20Freezable
      */
-    function freezeIncrease(address account, uint256 amount) external onlyBlocklister {
-        if (amount == 0) {
-            revert ZeroAmount();
-        }
-
+    function freezeIncrease(address account, uint256 amount) external whenNotPaused onlyBlocklister {
         _freezeChange(
             account,
             amount,
@@ -131,11 +127,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @inheritdoc IERC20Freezable
      */
-    function freezeDecrease(address account, uint256 amount) external onlyBlocklister {
-        if (amount == 0) {
-            revert ZeroAmount();
-        }
-
+    function freezeDecrease(address account, uint256 amount) external whenNotPaused onlyBlocklister {
         _freezeChange(
             account,
             amount,
@@ -143,23 +135,29 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         );
     }
 
-    function _freezeChange(address account, uint256 amount, bool increasing) internal onlyBlocklister {
+    function _freezeChange(address account, uint256 amount, bool increasing) internal {
         if (account == address(0)) {
             revert ZeroAddress();
+        }
+        if (amount == 0) {
+            revert ZeroAmount();
         }
         if (!_freezeApprovals[account]) {
             revert FreezingNotApproved();
         }
 
         uint256 oldBalance = _frozenBalances[account];
-        uint256 newBalance;
+        uint256 newBalance = oldBalance;
 
         if (increasing) {
-            newBalance = oldBalance + amount;
-        } else if (!increasing && amount <= oldBalance) {
-            newBalance = oldBalance - amount;
+            newBalance += amount;
         } else {
-            revert LackOfFrozenBalance();
+            if (amount > oldBalance) {
+                revert LackOfFrozenBalance();
+            }
+            unchecked {
+                newBalance -= amount;
+            }
         }
 
         _frozenBalances[account] = newBalance;
