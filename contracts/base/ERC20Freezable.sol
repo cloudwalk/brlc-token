@@ -68,11 +68,22 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
-     * @inheritdoc IERC20Freezable
+     * @dev [DEPRECATED] Freezes tokens of the specified account
      *
-     * @dev The contract must not be paused
-     * @dev Can only be called by the blocklister account
-     * @dev The token freezing must be approved by the `account`
+     * Emits a {Freeze} event
+     *
+     * IMPORTANT: This function is deprecated and will be removed in the future updates of the contract.
+     *            Use the {freezeIncrease} and {freezeDecrease} functions instead.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused
+     * - Can only be called by the blocklister account
+     * - The account address must not be zero
+     * - The token freezing must be approved by the `account`
+     *
+     * @param account The account whose tokens will be frozen
+     * @param amount The amount of tokens to freeze
      */
     function freeze(address account, uint256 amount) external whenNotPaused onlyBlocklister {
         if (account == address(0)) {
@@ -115,6 +126,12 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
 
     /**
      * @inheritdoc IERC20Freezable
+     *
+     * @dev The contract must not be paused
+     * @dev Can only be called by the blocklister account
+     * @dev The account address must not be zero
+     * @dev The amount must not be zero
+     * @dev The token freezing must be approved by the `account`
      */
     function freezeIncrease(address account, uint256 amount) external whenNotPaused onlyBlocklister {
         _freezeChange(
@@ -126,6 +143,12 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
 
     /**
      * @inheritdoc IERC20Freezable
+     *
+     * @dev The contract must not be paused
+     * @dev Can only be called by the blocklister account
+     * @dev The account address must not be zero
+     * @dev The amount must not be zero
+     * @dev The token freezing must be approved by the `account`
      */
     function freezeDecrease(address account, uint256 amount) external whenNotPaused onlyBlocklister {
         _freezeChange(
@@ -135,6 +158,30 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         );
     }
 
+    /**
+     * @inheritdoc IERC20Freezable
+     */
+    function freezeApproval(address account) external view returns (bool) {
+        return _freezeApprovals[account];
+    }
+
+    /**
+     * @inheritdoc IERC20Freezable
+     */
+    function balanceOfFrozen(address account) public view returns (uint256) {
+        return _frozenBalances[account];
+    }
+
+    /**
+     * @dev [DEPRECATED] Keep this function for backward compatibility
+     */
+    function frozenBalance(address account) public view returns (uint256) {
+        return balanceOfFrozen(account);
+    }
+
+    /**
+     * @dev Changes the frozen balance internally
+     */
     function _freezeChange(address account, uint256 amount, bool increasing) internal {
         if (account == address(0)) {
             revert ZeroAddress();
@@ -163,27 +210,6 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         _frozenBalances[account] = newBalance;
 
         emit Freeze(account, newBalance, oldBalance);
-    }
-
-    /**
-     * @inheritdoc IERC20Freezable
-     */
-    function freezeApproval(address account) external view returns (bool) {
-        return _freezeApprovals[account];
-    }
-
-    /**
-     * @inheritdoc IERC20Freezable
-     */
-    function balanceOfFrozen(address account) public view returns (uint256) {
-        return _frozenBalances[account];
-    }
-
-    /**
-     * @dev [DEPRECATED] Keep this function for backward compatibility
-     */
-    function frozenBalance(address account) public view returns (uint256) {
-        return balanceOfFrozen(account);
     }
 
     /**
