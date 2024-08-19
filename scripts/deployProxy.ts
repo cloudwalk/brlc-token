@@ -6,9 +6,9 @@ async function main() {
   const factory = await ethers.getContractFactory(CONTRACT_NAME);
   const proxy = await upgrades.deployProxy(factory);
 
-  await proxy.deployed();
+  await proxy.waitForDeployment();
 
-  console.log("Proxy deployed to:", proxy.address);
+  console.log("Proxy deployed to:", await proxy.getAddress());
 }
 
 main().then().catch(err => {
