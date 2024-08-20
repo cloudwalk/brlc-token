@@ -40,16 +40,6 @@ interface IERC20Freezable {
     function approveFreezing() external;
 
     /**
-     * @notice Freezes tokens of the specified account
-     *
-     * Emits a {Freeze} event
-     *
-     * @param account The account whose tokens will be frozen
-     * @param amount The amount of tokens to freeze
-     */
-    function freeze(address account, uint256 amount) external;
-
-    /**
      * @notice Transfers frozen tokens on behalf of an account
      *
      * Emits a {FreezeTransfer} event
@@ -59,6 +49,26 @@ interface IERC20Freezable {
      * @param amount The amount of tokens to transfer
      */
     function transferFrozen(address from, address to, uint256 amount) external;
+
+    /**
+     * @notice Increases the frozen balance for an account
+     *
+     * Emits a {Freeze} event
+     *
+     * @param account The account to increase frozen balance for
+     * @param amount The amount to increase the frozen balance by
+     */
+    function freezeIncrease(address account, uint256 amount) external;
+
+    /**
+     * @notice Decreases the frozen balance for an account
+     *
+     * Emits a {Freeze} event
+     *
+     * @param account The account to decrease frozen balance for
+     * @param amount The amount to decrease the frozen balance by
+     */
+    function freezeDecrease(address account, uint256 amount) external;
 
     /**
      * @notice Checks if token freezing is approved for an account
