@@ -33,11 +33,35 @@ interface IERC20Freezable {
     event Freeze(address indexed account, uint256 newFrozenBalance, uint256 oldFrozenBalance);
 
     /**
+     * @notice Emitted when a freezer account is assigned
+     *
+     * @param freezer The address of the freezer to configure
+     */
+    event FreezerAssigned(address indexed freezer);
+
+    /**
+     * @notice Emitted when a freezer account is removed
+     *
+     * @param freezer The address of the freezer to configure
+     */
+    event FreezerRemoved(address indexed freezer);
+
+    /**
      * @notice Approves token freezing for the caller
      *
      * Emits a {FreezeApproval} event
      */
     function approveFreezing() external;
+
+    /**
+     * @notice Assign a freezer
+     *
+     * Emits a {FreezerAssigned,FreezerRemoved} event
+     *
+     * @param freezers The array of addresses of the freezers to configure
+     * @param status The new status of the freezers
+     */
+    function configureFreezers(address[] calldata freezers,bool status) external;
 
     /**
      * @notice Transfers frozen tokens on behalf of an account
@@ -85,4 +109,13 @@ interface IERC20Freezable {
      * @return The amount of tokens that are frozen for the account
      */
     function balanceOfFrozen(address account) external view returns (uint256);
+
+    /**
+     * @notice Checks if the account is configured as a freezer
+     *
+     * @param account The address to check
+     * @return True if the account is a freezer
+     */
+    function isFreezer(address account) external view returns (bool);
+
 }
