@@ -260,10 +260,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @dev Configures the freezer internally
      */
-    function _configureFreezer(
-        address freezer,
-        bool status
-    ) internal {
+    function _configureFreezer(address freezer, bool status) internal {
         if (_freezers[freezer] == status) {
             revert AlreadyConfigured();
         }
