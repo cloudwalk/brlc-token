@@ -47,8 +47,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @notice Throws if called by any account other than the minter
      */
     modifier onlyFreezer() {
-        address sender = _msgSender();
-        if (!_freezers[sender] && !isBlocklister(sender) && sender != mainBlocklister()) {
+        if (!_freezers[_msgSender()] && !isBlocklister(_msgSender()) && _msgSender() != mainBlocklister()) {
             revert UnauthorizedFreezer(_msgSender());
         }
         _;
