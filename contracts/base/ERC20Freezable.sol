@@ -116,7 +116,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * Requirements:
      *
      * - The contract must not be paused
-     * - Can only be called by the blocklister account
+     * - Can only be called by the freezer or blocklister account
      * - The account address must not be zero
      * - The token freezing must be approved by the `account`
      *
@@ -140,7 +140,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @inheritdoc IERC20Freezable
      *
      * @dev The contract must not be paused
-     * @dev Can only be called by the blocklister account
+     * @dev Can only be called by the freezer or blocklister account
      * @dev The account address must not be zero
      * @dev The amount must not be zero
      * @dev The token freezing must be approved by the `account`
@@ -157,7 +157,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @inheritdoc IERC20Freezable
      *
      * @dev The contract must not be paused
-     * @dev Can only be called by the blocklister account
+     * @dev Can only be called by the freezer or blocklister account
      * @dev The account address must not be zero
      * @dev The amount must not be zero
      * @dev The token freezing must be approved by the `account`
@@ -174,7 +174,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @inheritdoc IERC20Freezable
      *
      * @dev The contract must not be paused
-     * @dev Can only be called by the blocklister account
+     * @dev Can only be called by the freezer or blocklister account
      * @dev The frozen balance must be greater than the `amount`
      */
     function transferFrozen(address from, address to, uint256 amount) public virtual whenNotPaused onlyFreezer {
