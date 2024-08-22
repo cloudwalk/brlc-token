@@ -36,10 +36,8 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
 
     /**
      * @notice The transaction sender is not a freezer
-     *
-     * @param account The address of the transaction sender
      */
-    error UnauthorizedFreezer(address account);
+    error UnauthorizedFreezer();
 
     // -------------------- Modifiers --------------------------------
 
@@ -48,7 +46,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      */
     modifier onlyFreezer() {
         if (!_freezers[_msgSender()] && !isBlocklister(_msgSender()) && _msgSender() != mainBlocklister()) {
-            revert UnauthorizedFreezer(_msgSender());
+            revert UnauthorizedFreezer();
         }
         _;
     }
