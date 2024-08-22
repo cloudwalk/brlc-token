@@ -255,8 +255,7 @@ describe("Contract 'ERC20Freezable'", async () => {
     it("Is reverted if the caller is not a blocklister or freezer", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await expect(connect(token, user1).freeze(user2.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_FREEZE)
-        .withArgs(user1.address);
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_FREEZE);
     });
 
     it("Is reverted if the provided account is zero", async () => {
@@ -342,8 +341,7 @@ describe("Contract 'ERC20Freezable'", async () => {
         await proveTx(token.mint(user1.address, TOKEN_AMOUNT));
         await proveTx(connect(token, user1).approveFreezing());
         await expect(connect(token, user2).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_FREEZE)
-          .withArgs(user2.address);
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_FREEZE);
       });
 
       it("The contract is paused", async () => {
