@@ -9,6 +9,20 @@ pragma solidity ^0.8.0;
  */
 interface IERC20Freezable {
     /**
+     * @notice Emitted when a freezer account is assigned
+     *
+     * @param freezer The address of the assigned freezer
+     */
+    event FreezerAssigned(address indexed freezer);
+
+    /**
+     * @notice Emitted when a freezer account is removed
+     *
+     * @param freezer The address of the removed freezer
+     */
+    event FreezerRemoved(address indexed freezer);
+
+    /**
      * @notice Emitted when token freezing has been approved for an account
      *
      * @param account The account for which token freezing has been approved
@@ -33,27 +47,6 @@ interface IERC20Freezable {
     event Freeze(address indexed account, uint256 newFrozenBalance, uint256 oldFrozenBalance);
 
     /**
-     * @notice Emitted when a freezer account is assigned
-     *
-     * @param freezer The address of the assigned freezer
-     */
-    event FreezerAssigned(address indexed freezer);
-
-    /**
-     * @notice Emitted when a freezer account is removed
-     *
-     * @param freezer The address of the removed freezer
-     */
-    event FreezerRemoved(address indexed freezer);
-
-    /**
-     * @notice Approves token freezing for the caller
-     *
-     * Emits a {FreezeApproval} event
-     */
-    function approveFreezing() external;
-
-    /**
      * @notice Configure freezers
      *
      * Emits a {FreezerAssigned} event for each assigned freezer.
@@ -63,6 +56,13 @@ interface IERC20Freezable {
      * @param status The new status of the freezers: `true` is to assign freezers, `false` is to remove freezers.
      */
     function configureFreezers(address[] calldata freezers,bool status) external;
+
+    /**
+     * @notice Approves token freezing for the caller
+     *
+     * Emits a {FreezeApproval} event
+     */
+    function approveFreezing() external;
 
     /**
      * @notice Transfers frozen tokens on behalf of an account
@@ -96,6 +96,14 @@ interface IERC20Freezable {
     function freezeDecrease(address account, uint256 amount) external;
 
     /**
+     * @notice Checks if the account is configured as a freezer
+     *
+     * @param account The address to check
+     * @return True if the account is configured as a freezer
+     */
+    function isFreezer(address account) external view returns (bool);
+
+    /**
      * @notice Checks if token freezing is approved for an account
      *
      * @param account The account to check the approval for
@@ -110,13 +118,4 @@ interface IERC20Freezable {
      * @return The amount of tokens that are frozen for the account
      */
     function balanceOfFrozen(address account) external view returns (uint256);
-
-    /**
-     * @notice Checks if the account is configured as a freezer
-     *
-     * @param account The address to check
-     * @return True if the account is configured as a freezer
-     */
-    function isFreezer(address account) external view returns (bool);
-
 }

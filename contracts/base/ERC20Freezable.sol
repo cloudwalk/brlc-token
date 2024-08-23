@@ -197,6 +197,13 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @inheritdoc IERC20Freezable
      */
+    function isFreezer(address account) external view returns (bool) {
+        return _freezers[account];
+    }
+
+    /**
+     * @inheritdoc IERC20Freezable
+     */
     function freezeApproval(address account) external view returns (bool) {
         return _freezeApprovals[account];
     }
@@ -216,10 +223,20 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
-     * @inheritdoc IERC20Freezable
+     * @dev Configures a freezer internally
      */
-    function isFreezer(address account) external view returns (bool) {
-        return _freezers[account];
+    function _configureFreezer(address freezer, bool status) internal {
+        if (_freezers[freezer] == status) {
+            revert AlreadyConfigured();
+        }
+
+        _freezers[freezer] = status;
+
+        if (status == true) {
+            emit FreezerAssigned(freezer);
+        } else {
+            emit FreezerRemoved(freezer);
+        }
     }
 
     /**
@@ -253,23 +270,6 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         _frozenBalances[account] = newBalance;
 
         emit Freeze(account, newBalance, oldBalance);
-    }
-
-    /**
-     * @dev Configures a freezer internally
-     */
-    function _configureFreezer(address freezer, bool status) internal {
-        if (_freezers[freezer] == status) {
-            revert AlreadyConfigured();
-        }
-
-        _freezers[freezer] = status;
-
-        if (status == true) {
-            emit FreezerAssigned(freezer);
-        } else {
-            emit FreezerRemoved(freezer);
-        }
     }
 
     /**
