@@ -34,15 +34,14 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /// @notice The transfer amount exceeded the frozen amount
     error TransferExceededFrozenAmount();
 
-    /**
-     * @notice The transaction sender is not a freezer
-     */
+    /// @notice The transaction sender is not a freezer
     error UnauthorizedFreezer();
 
     // -------------------- Modifiers --------------------------------
 
     /**
      * @notice Throws if called by any account other than the freezer
+     * @dev Temporarily all blocklisters are treated as freezers. Necessary for a seamless transition to the new logic
      */
     modifier onlyFreezer() {
         if (!_freezers[_msgSender()] && !isBlocklister(_msgSender()) && _msgSender() != mainBlocklister()) {
@@ -77,6 +76,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      *
      * @dev The contract must not be paused
      * @dev Can only be called by the owner
+     * @dev Each freezer from the array must not be already have the provided status
      */
     function configureFreezers(
         address[] calldata freezers,
@@ -90,7 +90,8 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @inheritdoc IERC20Freezable
      *
-     * @notice The contract must not be paused
+     * @dev The contract must not be paused
+     * @dev The caller must not be already approved for freezing
      */
     function approveFreezing() external whenNotPaused {
         if (_freezeApprovals[_msgSender()]) {
@@ -113,7 +114,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * Requirements:
      *
      * - The contract must not be paused
-     * - Can only be called by the freezer or blocklister account
+     * - Can only be called by a freezer
      * - The account address must not be zero
      * - The token freezing must be approved by the `account`
      *
@@ -137,7 +138,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @inheritdoc IERC20Freezable
      *
      * @dev The contract must not be paused
-     * @dev Can only be called by the freezer or blocklister account
+     * @dev Can only be called by a freezer
      * @dev The account address must not be zero
      * @dev The amount must not be zero
      * @dev The token freezing must be approved by the `account`
@@ -154,7 +155,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @inheritdoc IERC20Freezable
      *
      * @dev The contract must not be paused
-     * @dev Can only be called by the freezer or blocklister account
+     * @dev Can only be called by a freezer
      * @dev The account address must not be zero
      * @dev The amount must not be zero
      * @dev The token freezing must be approved by the `account`
@@ -171,7 +172,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @inheritdoc IERC20Freezable
      *
      * @dev The contract must not be paused
-     * @dev Can only be called by the freezer or blocklister account
+     * @dev Can only be called by a freezer
      * @dev The frozen balance must be greater than the `amount`
      */
     function transferFrozen(address from, address to, uint256 amount) public virtual whenNotPaused onlyFreezer {
@@ -255,7 +256,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
-     * @dev Configures the freezer internally
+     * @dev Configures a freezer internally
      */
     function _configureFreezer(address freezer, bool status) internal {
         if (_freezers[freezer] == status) {

@@ -35,14 +35,14 @@ interface IERC20Freezable {
     /**
      * @notice Emitted when a freezer account is assigned
      *
-     * @param freezer The address of the freezer to configure
+     * @param freezer The address of the assigned freezer
      */
     event FreezerAssigned(address indexed freezer);
 
     /**
      * @notice Emitted when a freezer account is removed
      *
-     * @param freezer The address of the freezer to configure
+     * @param freezer The address of the removed freezer
      */
     event FreezerRemoved(address indexed freezer);
 
@@ -54,12 +54,13 @@ interface IERC20Freezable {
     function approveFreezing() external;
 
     /**
-     * @notice Assign a freezer
+     * @notice Configure freezers
      *
-     * Emits a {FreezerAssigned,FreezerRemoved} event
+     * Emits a {FreezerAssigned} event for each assigned freezer.
+     * Emits a {FreezerRemoved} event for each removed freezer.
      *
-     * @param freezers The array of addresses of the freezers to configure
-     * @param status The new status of the freezers
+     * @param freezers The array of freezer addresses to configure
+     * @param status The new status of the freezers: `true` is to assign freezers, `false` is to remove freezers.
      */
     function configureFreezers(address[] calldata freezers,bool status) external;
 
@@ -114,7 +115,7 @@ interface IERC20Freezable {
      * @notice Checks if the account is configured as a freezer
      *
      * @param account The address to check
-     * @return True if the account is a freezer
+     * @return True if the account is configured as a freezer
      */
     function isFreezer(address account) external view returns (bool);
 
