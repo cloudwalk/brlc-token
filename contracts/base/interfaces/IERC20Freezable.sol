@@ -49,11 +49,12 @@ interface IERC20Freezable {
     /**
      * @notice Configure freezers
      *
-     * Emits a {FreezerAssigned} event for each assigned freezer.
-     * Emits a {FreezerRemoved} event for each removed freezer.
+     * Emits a {FreezerAssigned} event for each assigned freezer
+     *
+     * Emits a {FreezerRemoved} event for each removed freezer
      *
      * @param freezers The array of freezer addresses to configure
-     * @param status The new status of the freezers: `true` is to assign freezers, `false` is to remove freezers.
+     * @param status The new status of the freezers: `true` is to assign freezers, `false` is to remove freezers
      */
     function configureFreezers(address[] calldata freezers, bool status) external;
 
