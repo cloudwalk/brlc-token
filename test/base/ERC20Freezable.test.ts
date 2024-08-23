@@ -25,19 +25,19 @@ describe("Contract 'ERC20Freezable'", async () => {
   const EVENT_NAME_FREEZER_ASSIGNED = "FreezerAssigned";
   const EVENT_NAME_FREEZER_REMOVED = "FreezerRemoved";
 
-  const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
+  const REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
-  const REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
+  const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
   const REVERT_MESSAGE_PAUSABLE_PAUSED = "Pausable: paused";
 
-  const REVERT_ERROR_UNAUTHORIZED_FREEZE = "UnauthorizedFreezer";
+  const REVERT_ERROR_ALREADY_CONFIGURED = "AlreadyConfigured";
   const REVERT_ERROR_FREEZING_ALREADY_APPROVED = "FreezingAlreadyApproved";
   const REVERT_ERROR_FREEZING_NOT_APPROVED = "FreezingNotApproved";
   const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
+  const REVERT_ERROR_UNAUTHORIZED_FREEZE = "UnauthorizedFreezer";
   const REVERT_ERROR_ZERO_AMOUNT = "ZeroAmount";
   const REVERT_ERROR_ZERO_ADDRESS = "ZeroAddress";
-  const REVERT_ERROR_ALREADY_CONFIGURED = "AlreadyConfigured";
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
