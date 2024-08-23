@@ -318,7 +318,7 @@ describe("Contract 'ERC20Freezable'", async () => {
 
       await expect(tokenUnderFreezer.freezeDecrease(user1.address, TOKEN_AMOUNT))
         .to.emit(token, EVENT_NAME_FREEZE)
-        .withArgs(user1.address, TOKEN_AMOUNT * 2, TOKEN_AMOUNT * 3);
+        .withArgs(user1.address, TOKEN_AMOUNTx2, TOKEN_AMOUNTx3);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNTx2);
 
       await expect(tokenUnderFreezer.freezeDecrease(user1.address, TOKEN_AMOUNTx2))
