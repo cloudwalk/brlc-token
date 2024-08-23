@@ -55,7 +55,7 @@ interface IERC20Freezable {
      * @param freezers The array of freezer addresses to configure
      * @param status The new status of the freezers: `true` is to assign freezers, `false` is to remove freezers.
      */
-    function configureFreezers(address[] calldata freezers,bool status) external;
+    function configureFreezers(address[] calldata freezers, bool status) external;
 
     /**
      * @notice Approves token freezing for the caller

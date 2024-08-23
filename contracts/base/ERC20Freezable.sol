@@ -79,7 +79,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @dev Each freezer from the array must not be already have the provided status
      */
     function configureFreezers(
-        address[] calldata freezers,
+        address[] calldata freezers, // Tools: this comment prevents Prettier from formatting into a single line.
         bool status
     ) external whenNotPaused onlyOwner {
         for (uint256 i = 0; i < freezers.length; i++) {
