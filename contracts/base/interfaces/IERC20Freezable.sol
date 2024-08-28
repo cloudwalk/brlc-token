@@ -47,7 +47,7 @@ interface IERC20Freezable {
     event Freeze(address indexed account, uint256 newFrozenBalance, uint256 oldFrozenBalance);
 
     /**
-     * @notice Configure a batch of freezers
+     * @notice Configures a batch of freezers
      *
      * Emits a {FreezerAssigned} event for each assigned freezer
      *
