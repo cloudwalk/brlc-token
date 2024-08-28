@@ -68,7 +68,7 @@ describe("Contract 'ERC20Freezable'", async () => {
     await proveTx(token.setPauser(pauser.address));
     await proveTx(token.setMainBlocklister(mainBlocklister.address));
     await proveTx(connect(token, mainBlocklister).configureBlocklister(blocklister.address, true));
-    await proveTx(token.configureFreezers([freezer.address], true));
+    await proveTx(token.configureFreezerBatch([freezer.address], true));
     return { token };
   }
 
@@ -115,12 +115,12 @@ describe("Contract 'ERC20Freezable'", async () => {
     });
   });
 
-  describe("Function 'configureFreezers()'", async () => {
+  describe("Function 'configureFreezerBatch()'", async () => {
     it("Configures several freezers and emits the correct events as expected", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.isFreezer(user1.address)).to.eq(false);
       expect(await token.isFreezer(user2.address)).to.eq(false);
-      await expect(connect(token, deployer).configureFreezers([user1.address, user2.address], true))
+      await expect(connect(token, deployer).configureFreezerBatch([user1.address, user2.address], true))
         .to.emit(token, EVENT_NAME_FREEZER_ASSIGNED)
         .withArgs(user1.address)
         .to.emit(token, EVENT_NAME_FREEZER_ASSIGNED)
@@ -131,11 +131,11 @@ describe("Contract 'ERC20Freezable'", async () => {
 
     it("Removes several freezers and emits the correct events as expected", async () => {
       const { token } = await setUpFixture(deployToken);
-      await proveTx(connect(token, deployer).configureFreezers([user1.address, user2.address], true));
+      await proveTx(connect(token, deployer).configureFreezerBatch([user1.address, user2.address], true));
       expect(await token.isFreezer(user1.address)).to.eq(true);
       expect(await token.isFreezer(user2.address)).to.eq(true);
 
-      await expect(connect(token, deployer).configureFreezers([user1.address, user2.address], false))
+      await expect(connect(token, deployer).configureFreezerBatch([user1.address, user2.address], false))
         .to.emit(token, EVENT_NAME_FREEZER_REMOVED)
         .withArgs(user1.address)
         .to.emit(token, EVENT_NAME_FREEZER_REMOVED)
@@ -149,23 +149,23 @@ describe("Contract 'ERC20Freezable'", async () => {
       await proveTx(token.setPauser(pauser.address));
       await proveTx(connect(token, pauser).pause());
       await expect(
-        connect(token, deployer).configureFreezers([user1.address], true)
+        connect(token, deployer).configureFreezerBatch([user1.address], true)
       ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
     });
 
     it("Is reverted if the caller is not an owner", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
-        connect(token, user1).configureFreezers([user1.address], true)
+        connect(token, user1).configureFreezerBatch([user1.address], true)
       ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
     });
 
     it("Is reverted if freezers with different statuses are already configured", async () => {
       const { token } = await setUpFixture(deployToken);
-      await proveTx(connect(token, deployer).configureFreezers([user2.address], true));
-      await expect(connect(token, deployer).configureFreezers([user1.address, user2.address], true))
+      await proveTx(connect(token, deployer).configureFreezerBatch([user2.address], true));
+      await expect(connect(token, deployer).configureFreezerBatch([user1.address, user2.address], true))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_ALREADY_CONFIGURED);
-      await expect(connect(token, deployer).configureFreezers([user1.address, user2.address], false))
+      await expect(connect(token, deployer).configureFreezerBatch([user1.address, user2.address], false))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_ALREADY_CONFIGURED);
     });
   });

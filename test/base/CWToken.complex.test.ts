@@ -50,7 +50,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
     await proveTx(token.setMainBlocklister(deployer.address));
-    await proveTx(token.configureFreezers([deployer.address, freezer.address], true));
+    await proveTx(token.configureFreezerBatch([deployer.address, freezer.address], true));
     await proveTx(token.assignPurposes(purposeAccount.address, [PURPOSE]));
     await proveTx(token.updateMainMinter(deployer.address));
     await proveTx(token.configureMinter(deployer.address, 20));

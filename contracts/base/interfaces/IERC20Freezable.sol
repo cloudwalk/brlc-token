@@ -47,7 +47,7 @@ interface IERC20Freezable {
     event Freeze(address indexed account, uint256 newFrozenBalance, uint256 oldFrozenBalance);
 
     /**
-     * @notice Configure freezers
+     * @notice Configure a batch of freezers
      *
      * Emits a {FreezerAssigned} event for each assigned freezer
      *
@@ -56,7 +56,7 @@ interface IERC20Freezable {
      * @param freezers The array of freezer addresses to configure
      * @param status The new status of the freezers: `true` is to assign freezers, `false` is to remove freezers
      */
-    function configureFreezers(address[] calldata freezers, bool status) external;
+    function configureFreezerBatch(address[] calldata freezers, bool status) external;
 
     /**
      * @notice Approves token freezing for the caller
