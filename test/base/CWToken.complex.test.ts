@@ -32,10 +32,10 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
   let user: HardhatEthersSigner;
   let purposeAccount: HardhatEthersSigner;
   let nonPurposeAccount: HardhatEthersSigner;
-  let blocklister: HardhatEthersSigner;
+  let freezer: HardhatEthersSigner;
 
   before(async () => {
-    [deployer, user, purposeAccount, nonPurposeAccount, blocklister] = await ethers.getSigners();
+    [deployer, user, purposeAccount, nonPurposeAccount, freezer] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("CWToken");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
@@ -50,7 +50,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
     await proveTx(token.setMainBlocklister(deployer.address));
-    await proveTx(token.configureBlocklister(deployer.address, true));
+    await proveTx(token.configureFreezers([deployer.address, freezer.address], true));
     await proveTx(token.assignPurposes(purposeAccount.address, [PURPOSE]));
     await proveTx(token.updateMainMinter(deployer.address));
     await proveTx(token.configureMinter(deployer.address, 20));
@@ -1624,12 +1624,10 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
     describe("Frozen balance only", async () => {
       it("Transfer to purpose account - test 5", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(token.enableBlocklist(true));
-        await proveTx(token.setMainBlocklister(blocklister));
         await proveTx(token.mint(user.address, 20));
         await proveTx(token.freeze(user.address, 5));
         await expect(
-          connect(token, blocklister).transferFrozen(user, purposeAccount, 5)
+          connect(token, freezer).transferFrozen(user, purposeAccount, 5)
         ).to.changeTokenBalances(
           token,
           [user, purposeAccount],
@@ -1640,25 +1638,21 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
 
       it("Transfer to purpose account - test 10", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(token.enableBlocklist(true));
-        await proveTx(token.setMainBlocklister(blocklister));
         await proveTx(token.mint(user.address, 20));
         await proveTx(token.freeze(user.address, 5));
         await expect(
-          connect(token, blocklister).transferFrozen(user, purposeAccount, 10)
+          connect(token, freezer).transferFrozen(user, purposeAccount, 10)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_LACK_OF_FROZEN_BALANCE);
       });
     });
     describe("Frozen and Restricted balances", async () => {
       it("Transfer to purpose account - test 5", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(token.enableBlocklist(true));
-        await proveTx(token.setMainBlocklister(blocklister));
         await proveTx(token.mint(user.address, 20));
         await proveTx(token.freeze(user.address, 10));
         await proveTx(token.restrictionIncrease(user.address, PURPOSE, 5));
         await expect(
-          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 5)
+          connect(token, freezer).transferFrozen(user, purposeAccount.address, 5)
         ).to.changeTokenBalances(
           token,
           [user, purposeAccount],
@@ -1670,13 +1664,11 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
 
       it("Transfer to purpose account - test 10", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(token.enableBlocklist(true));
-        await proveTx(token.setMainBlocklister(blocklister));
         await proveTx(token.mint(user.address, 20));
         await proveTx(token.freeze(user.address, 10));
         await proveTx(token.restrictionIncrease(user.address, PURPOSE, 5));
         await expect(
-          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 10)
+          connect(token, freezer).transferFrozen(user, purposeAccount.address, 10)
         ).to.changeTokenBalances(
           token,
           [user, purposeAccount],
@@ -1688,13 +1680,11 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
 
       it("Transfer to purpose account - test 10 with greater restriction", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(token.enableBlocklist(true));
-        await proveTx(token.setMainBlocklister(blocklister));
         await proveTx(token.mint(user.address, 20));
         await proveTx(token.freeze(user.address, 10));
         await proveTx(token.restrictionIncrease(user.address, PURPOSE, 15));
         await expect(
-          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 10)
+          connect(token, freezer).transferFrozen(user, purposeAccount.address, 10)
         ).to.changeTokenBalances(
           token,
           [user, purposeAccount],
@@ -1706,25 +1696,21 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
 
       it("Transfer to purpose account - test 15", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(token.enableBlocklist(true));
-        await proveTx(token.setMainBlocklister(blocklister));
         await proveTx(token.mint(user.address, 20));
         await proveTx(token.freeze(user.address, 10));
         await proveTx(token.restrictionIncrease(user.address, PURPOSE, 5));
         await expect(
-          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 15)
+          connect(token, freezer).transferFrozen(user, purposeAccount.address, 15)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_LACK_OF_FROZEN_BALANCE);
       });
 
       it("Transfer to non-purpose account - test 5", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(token.enableBlocklist(true));
-        await proveTx(token.setMainBlocklister(blocklister));
         await proveTx(token.mint(user.address, 20));
         await proveTx(token.freeze(user.address, 10));
         await proveTx(token.restrictionIncrease(user.address, PURPOSE, 5));
         await expect(
-          connect(token, blocklister).transferFrozen(user, nonPurposeAccount.address, 5)
+          connect(token, freezer).transferFrozen(user, nonPurposeAccount.address, 5)
         ).to.changeTokenBalances(
           token,
           [user, nonPurposeAccount],
@@ -1736,13 +1722,11 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
 
       it("Transfer to non-purpose account - test 10", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(token.enableBlocklist(true));
-        await proveTx(token.setMainBlocklister(blocklister));
         await proveTx(token.mint(user.address, 20));
         await proveTx(token.freeze(user.address, 10));
         await proveTx(token.restrictionIncrease(user.address, PURPOSE, 5));
         await expect(
-          connect(token, blocklister).transferFrozen(user, nonPurposeAccount.address, 10)
+          connect(token, freezer).transferFrozen(user, nonPurposeAccount.address, 10)
         ).to.changeTokenBalances(
           token,
           [user, nonPurposeAccount],
@@ -1754,13 +1738,11 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
 
       it("Transfer to non-purpose account - test 10 with greater restriction", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(token.enableBlocklist(true));
-        await proveTx(token.setMainBlocklister(blocklister));
         await proveTx(token.mint(user.address, 20));
         await proveTx(token.freeze(user.address, 10));
         await proveTx(token.restrictionIncrease(user.address, PURPOSE, 15));
         await expect(
-          connect(token, blocklister).transferFrozen(user, nonPurposeAccount.address, 10)
+          connect(token, freezer).transferFrozen(user, nonPurposeAccount.address, 10)
         ).to.changeTokenBalances(
           token,
           [user, nonPurposeAccount],
@@ -1772,25 +1754,21 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
 
       it("Transfer to non-purpose account - test 15", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(token.enableBlocklist(true));
-        await proveTx(token.setMainBlocklister(blocklister));
         await proveTx(token.mint(user.address, 20));
         await proveTx(token.freeze(user.address, 10));
         await proveTx(token.restrictionIncrease(user.address, PURPOSE, 5));
         await expect(
-          connect(token, blocklister).transferFrozen(user, nonPurposeAccount.address, 15)
+          connect(token, freezer).transferFrozen(user, nonPurposeAccount.address, 15)
         ).to.be.revertedWithCustomError(token, REVERT_ERROR_LACK_OF_FROZEN_BALANCE);
       });
     });
     describe("Frozen balance is greater than total balance", async () => {
       it("Transfer to purpose account - test 5", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(token.enableBlocklist(true));
-        await proveTx(token.setMainBlocklister(blocklister));
         await proveTx(token.mint(user.address, 20));
         await proveTx(token.freeze(user.address, 25));
         await expect(
-          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 5)
+          connect(token, freezer).transferFrozen(user, purposeAccount.address, 5)
         ).to.changeTokenBalances(
           token,
           [user, purposeAccount],
@@ -1801,12 +1779,10 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
 
       it("Transfer to purpose account - test 20", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(token.enableBlocklist(true));
-        await proveTx(token.setMainBlocklister(blocklister));
         await proveTx(token.mint(user.address, 20));
         await proveTx(token.freeze(user.address, 25));
         await expect(
-          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 20)
+          connect(token, freezer).transferFrozen(user, purposeAccount.address, 20)
         ).to.changeTokenBalances(
           token,
           [user, purposeAccount],
@@ -1817,12 +1793,10 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
 
       it("Transfer to purpose account - test 25", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(token.enableBlocklist(true));
-        await proveTx(token.setMainBlocklister(blocklister));
         await proveTx(token.mint(user.address, 20));
         await proveTx(token.freeze(user.address, 25));
         await expect(
-          connect(token, blocklister).transferFrozen(user, purposeAccount.address, 25)
+          connect(token, freezer).transferFrozen(user, purposeAccount.address, 25)
         ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
       });
     });
