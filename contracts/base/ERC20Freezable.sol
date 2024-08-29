@@ -41,7 +41,6 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
 
     /**
      * @notice Throws if called by any account other than the freezer
-     * @dev Temporarily all blocklisters are treated as freezers. Necessary for a seamless transition to the new logic
      */
     modifier onlyFreezer() {
         if (!_freezers[_msgSender()]) {
