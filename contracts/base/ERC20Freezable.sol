@@ -77,6 +77,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @dev The contract must not be paused
      * @dev Can only be called by the owner
      * @dev Each freezer from the array must not be already have the provided status
+     * @dev NOTE: The previous function name was: `configureFreezers()`
      */
     function configureFreezerBatch(
         address[] calldata freezers, // Tools: this comment prevents Prettier from formatting into a single line.

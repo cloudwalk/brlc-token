@@ -53,6 +53,8 @@ interface IERC20Freezable {
      *
      * Emits a {FreezerRemoved} event for each removed freezer
      *
+     * NOTE: The previous function name was: `configureFreezers()`
+     *
      * @param freezers The array of freezer addresses to configure
      * @param status The new status of the freezers: `true` is to assign freezers, `false` is to remove freezers
      */
