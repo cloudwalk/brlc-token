@@ -39,6 +39,9 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /// @notice The transaction sender is not a freezer
     error UnauthorizedFreezer();
 
+    /// @notice The provided address belongs to a contract so its balance cannot be frozen
+    error ContractBalanceFreezingAttempt();
+
     // -------------------- Modifiers --------------------------------
 
     /**
@@ -115,13 +118,12 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @param amount The amount of tokens to freeze
      */
     function freeze(address account, uint256 amount) external whenNotPaused onlyFreezer {
-        if (account == address(0)) {
-            revert ZeroAddress();
-        }
-
-        emit Freeze(account, amount, _frozenBalances[account]);
-
-        _frozenBalances[account] = amount;
+        _checkAddress(account);
+        _freeze(
+            account,
+            amount, // newBalance
+            _frozenBalances[account] // oldBalance
+        );
     }
 
     /**
@@ -234,12 +236,30 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
-     * @dev Changes the frozen balance internally
+     * @dev Checks the address of an account to freeze
      */
-    function _freezeChange(address account, uint256 amount, bool increasing) internal {
+    function _checkAddress(address account) view internal {
         if (account == address(0)) {
             revert ZeroAddress();
         }
+        if (account.code.length != 0) {
+            revert ContractBalanceFreezingAttempt();
+        }
+    }
+
+    /**
+     * @dev Changes the frozen balance
+     */
+    function _freeze(address account, uint256 newBalance, uint256 oldBalance) internal {
+        emit Freeze(account, newBalance, oldBalance);
+        _frozenBalances[account] = newBalance;
+    }
+
+    /**
+     * @dev Changes the frozen balance internally
+     */
+    function _freezeChange(address account, uint256 amount, bool increasing) internal {
+        _checkAddress(account);
         if (amount == 0) {
             revert ZeroAmount();
         }
@@ -257,10 +277,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
                 newBalance -= amount;
             }
         }
-
-        _frozenBalances[account] = newBalance;
-
-        emit Freeze(account, newBalance, oldBalance);
+        _freeze(account, newBalance, oldBalance);
     }
 
     /**
