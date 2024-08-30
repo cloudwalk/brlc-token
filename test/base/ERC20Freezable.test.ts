@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx, connect } from "../../test-utils/eth";
+import { proveTx, connect, getAddress } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -33,6 +33,7 @@ describe("Contract 'ERC20Freezable'", async () => {
   const REVERT_MESSAGE_PAUSABLE_PAUSED = "Pausable: paused";
 
   const REVERT_ERROR_ALREADY_CONFIGURED = "AlreadyConfigured";
+  const REVERT_ERROR_CONTRACT_BALANCE_FREEZING_ATTEMPT = "ContractBalanceFreezingAttempt";
   const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
   const REVERT_ERROR_UNAUTHORIZED_FREEZER = "UnauthorizedFreezer";
   const REVERT_ERROR_ZERO_AMOUNT = "ZeroAmount";
@@ -210,6 +211,13 @@ describe("Contract 'ERC20Freezable'", async () => {
         connect(token, freezer).freeze(ethers.ZeroAddress, TOKEN_AMOUNT)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
     });
+
+    it("Is reverted if the provided account is a contract", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await expect(
+        connect(token, freezer).freeze(getAddress(token), TOKEN_AMOUNT)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_BALANCE_FREEZING_ATTEMPT);
+    });
   });
 
   describe("Function 'freezeIncrease()'", async () => {
@@ -249,6 +257,13 @@ describe("Contract 'ERC20Freezable'", async () => {
       await expect(
         connect(token, freezer).freezeIncrease(ethers.ZeroAddress, TOKEN_AMOUNT)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
+    });
+
+    it("Is reverted if the provided account is a contract", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await expect(
+        connect(token, freezer).freezeIncrease(getAddress(token), TOKEN_AMOUNT)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_BALANCE_FREEZING_ATTEMPT);
     });
 
     it("Is reverted if the provided amount is zero", async () => {
@@ -297,6 +312,13 @@ describe("Contract 'ERC20Freezable'", async () => {
       await expect(
         connect(token, freezer).freezeDecrease(ethers.ZeroAddress, TOKEN_AMOUNT)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
+    });
+
+    it("Is reverted if the provided account is zero", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await expect(
+        connect(token, freezer).freezeDecrease(getAddress(token), TOKEN_AMOUNT)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_BALANCE_FREEZING_ATTEMPT);
     });
 
     it("Is reverted if the provided amount is zero", async () => {
