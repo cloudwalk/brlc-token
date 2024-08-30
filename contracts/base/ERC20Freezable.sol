@@ -11,7 +11,7 @@ import { ERC20Base } from "./ERC20Base.sol";
  * @notice The ERC20 token implementation that supports the freezing operations
  */
 abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
-    /// @notice The mapping of the freeze approvals
+    /// @notice [DEPRECATED] The mapping of the freeze approvals. No longer in use
     mapping(address => bool) private _freezeApprovals;
 
     /// @notice The mapping of the frozen balances
@@ -22,10 +22,12 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
 
     // -------------------- Errors -----------------------------------
 
-    /// @notice The token freezing operation is not approved by the account
+    /// @notice [DEPRECATED] The token freezing operation is not approved by the account. No longer in use
+    /// @dev Kept for backward compatibility with transaction analysis tools
     error FreezingNotApproved();
 
-    /// @notice The token freezing is already approved by the account
+    /// @notice [DEPRECATED] The token freezing is already approved by the account. No longer in use
+    /// @dev Kept for backward compatibility with transaction analysis tools
     error FreezingAlreadyApproved();
 
     /// @notice The frozen balance is exceeded during the operation
@@ -88,20 +90,12 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
-     * @inheritdoc IERC20Freezable
+     * @dev [DEPRECATED] Approves token freezing for the caller
      *
-     * @dev The contract must not be paused
-     * @dev The caller must not be already approved for freezing
+     * IMPORTANT: This function is deprecated and will be removed in the future updates of the contract.
+     *            For now it is kept for backward compatibility
      */
-    function approveFreezing() external whenNotPaused {
-        if (_freezeApprovals[_msgSender()]) {
-            revert FreezingAlreadyApproved();
-        }
-
-        _freezeApprovals[_msgSender()] = true;
-
-        emit FreezeApproval(_msgSender());
-    }
+    function approveFreezing() external {}
 
     /**
      * @dev [DEPRECATED] Freezes tokens of the specified account
@@ -116,7 +110,6 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * - The contract must not be paused
      * - Can only be called by a freezer
      * - The account address must not be zero
-     * - The token freezing must be approved by the `account`
      *
      * @param account The account whose tokens will be frozen
      * @param amount The amount of tokens to freeze
@@ -124,9 +117,6 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     function freeze(address account, uint256 amount) external whenNotPaused onlyFreezer {
         if (account == address(0)) {
             revert ZeroAddress();
-        }
-        if (!_freezeApprovals[account]) {
-            revert FreezingNotApproved();
         }
 
         emit Freeze(account, amount, _frozenBalances[account]);
@@ -141,7 +131,6 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @dev Can only be called by a freezer
      * @dev The account address must not be zero
      * @dev The amount must not be zero
-     * @dev The token freezing must be approved by the `account`
      */
     function freezeIncrease(address account, uint256 amount) external whenNotPaused onlyFreezer {
         _freezeChange(
@@ -158,7 +147,6 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @dev Can only be called by a freezer
      * @dev The account address must not be zero
      * @dev The amount must not be zero
-     * @dev The token freezing must be approved by the `account`
      */
     function freezeDecrease(address account, uint256 amount) external whenNotPaused onlyFreezer {
         _freezeChange(
@@ -202,7 +190,13 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
-     * @inheritdoc IERC20Freezable
+     * @notice [DEPRECATED] Checks if token freezing is approved for an account
+     *
+     * IMPORTANT: This function is deprecated and will be removed in the future updates of the contract.
+     *            For now it is kept for backward compatibility
+     *
+     * @param account The account to check the approval for
+     * @return True if token freezing is approved for the account
      */
     function freezeApproval(address account) external view returns (bool) {
         return _freezeApprovals[account];
@@ -248,9 +242,6 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         }
         if (amount == 0) {
             revert ZeroAmount();
-        }
-        if (!_freezeApprovals[account]) {
-            revert FreezingNotApproved();
         }
 
         uint256 oldBalance = _frozenBalances[account];
