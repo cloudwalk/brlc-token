@@ -9,14 +9,14 @@ pragma solidity ^0.8.0;
  */
 interface IERC20Freezable {
     /**
-     * @notice Emitted when a freezer account is assigned
+     * @notice Emitted when an account is assigned as a freezer
      *
      * @param freezer The address of the assigned freezer
      */
     event FreezerAssigned(address indexed freezer);
 
     /**
-     * @notice Emitted when a freezer account is removed
+     * @notice Emitted when an account is removed as a freezer
      *
      * @param freezer The address of the removed freezer
      */
