@@ -63,4 +63,14 @@ contract ERC20FreezableMock is ERC20Freezable {
         _mint(account, amount);
         return true;
     }
+
+    /**
+     * @notice Directly sets the frozen balance for an account ignoring any checks
+     *
+     * @param account The address of an account to set the frozen balance
+     * @param newBalance The value of the frozen balance to set
+     */
+    function setFrozenBalance(address account, uint256 newBalance) external {
+        _freeze(account, newBalance, balanceOfFrozen(account));
+    }
 }

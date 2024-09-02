@@ -171,7 +171,7 @@ describe("Contract 'ERC20Freezable'", async () => {
   });
 
   describe("Function 'freeze()'", async () => {
-    it("Freezes tokens and emits the correct events", async () => {
+    it("Freezes tokens and emits the correct events for an externally owned account", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       const tokenUnderFreezer: Contract = connect(token, freezer);
       expect(await token.balanceOf(user1.address)).to.eq(0);
@@ -189,6 +189,15 @@ describe("Contract 'ERC20Freezable'", async () => {
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNT - 2, TOKEN_AMOUNT + 1);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT - 2);
+    });
+
+    it("Executes as expected is the target account is a contract and the new balance is zero", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      const tokenAddress = getAddress(token);
+      await proveTx(token.setFrozenBalance(tokenAddress, TOKEN_AMOUNT));
+      await expect(connect(token, freezer).freeze(tokenAddress, 0))
+        .to.emit(token, EVENT_NAME_FREEZE)
+        .withArgs(tokenAddress, 0, TOKEN_AMOUNT);
     });
 
     it("Is reverted if contract is paused", async () => {
@@ -212,7 +221,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
     });
 
-    it("Is reverted if the provided account is a contract", async () => {
+    it("Is reverted if the provided account is a contract and the new frozen balance is non-zero", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await expect(
         connect(token, freezer).freeze(getAddress(token), TOKEN_AMOUNT)
@@ -292,6 +301,15 @@ describe("Contract 'ERC20Freezable'", async () => {
       expect(await token.balanceOfFrozen(user1.address)).to.eq(0);
     });
 
+    it("Executes as expected is the target account is a contract and the new balance is zero", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      const tokenAddress = getAddress(token);
+      await proveTx(token.setFrozenBalance(tokenAddress, TOKEN_AMOUNT));
+      await expect(connect(token, freezer).freezeDecrease(tokenAddress, TOKEN_AMOUNT))
+        .to.emit(token, EVENT_NAME_FREEZE)
+        .withArgs(tokenAddress, 0, TOKEN_AMOUNT);
+    });
+
     it("Is reverted if contract is paused", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, pauser).pause());
@@ -314,8 +332,10 @@ describe("Contract 'ERC20Freezable'", async () => {
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_ADDRESS);
     });
 
-    it("Is reverted if the provided account is zero", async () => {
+    it("Is reverted if the provided account is a contract and the new frozen balance is non-zero", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
+      const tokenAddress = getAddress(token);
+      await proveTx(token.setFrozenBalance(tokenAddress, TOKEN_AMOUNTx2));
       await expect(
         connect(token, freezer).freezeDecrease(getAddress(token), TOKEN_AMOUNT)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_BALANCE_FREEZING_ATTEMPT);

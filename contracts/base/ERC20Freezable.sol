@@ -119,7 +119,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      */
     function freeze(address account, uint256 amount) external whenNotPaused onlyFreezer {
         _checkAddress(account);
-        _freeze(
+        _checkAndFreeze(
             account,
             amount, // newBalance
             _frozenBalances[account] // oldBalance
@@ -238,13 +238,20 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @dev Checks the address of an account to freeze
      */
-    function _checkAddress(address account) view internal {
+    function _checkAddress(address account) pure internal {
         if (account == address(0)) {
             revert ZeroAddress();
         }
-        if (account.code.length != 0) {
+    }
+
+    /**
+     * @dev Checks the freezing ability and execute it
+     */
+    function _checkAndFreeze(address account, uint256 newBalance, uint256 oldBalance) internal {
+        if (newBalance != 0 && account.code.length != 0) {
             revert ContractBalanceFreezingAttempt();
         }
+        _freeze(account, newBalance, oldBalance);
     }
 
     /**
@@ -277,7 +284,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
                 newBalance -= amount;
             }
         }
-        _freeze(account, newBalance, oldBalance);
+        _checkAndFreeze(account, newBalance, oldBalance);
     }
 
     /**
