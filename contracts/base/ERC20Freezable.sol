@@ -166,7 +166,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     function freezeDecrease(
         address account,
         uint256 amount
-    ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance)  {
+    ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance) {
         return _changeFrozen(account, amount, uint256(FrozenBalanceChangeType.Decrease));
     }
 
