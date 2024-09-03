@@ -11,6 +11,20 @@ import { ERC20Base } from "./ERC20Base.sol";
  * @notice The ERC20 token implementation that supports the freezing operations
  */
 abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
+    /**
+     * @dev Possible types of a frozen balance change operation
+     *
+     * The values:
+     * - Increase = 0 -- To increase the frozen balance by the provided amount
+     * - Decrease = 1 -- To decrease the frozen balance by the provided amount
+     * - Update = 2 ---- To make the frozen balance equal to the provided amount
+     */
+    enum FrozenBalanceChangeType {
+        Increase,
+        Decrease,
+        Update
+    }
+
     /// @notice [DEPRECATED] The mapping of the freeze approvals. No longer in use
     mapping(address => bool) private _freezeApprovals;
 
@@ -123,10 +137,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         address account,
         uint256 amount
     ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance) {
-        _checkAddress(account);
-        newBalance = amount;
-        oldBalance = _frozenBalances[account];
-        _checkAndFreeze(account, newBalance, oldBalance);
+        return _changeFrozen(account, amount, uint256(FrozenBalanceChangeType.Update));
     }
 
     /**
@@ -141,11 +152,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         address account,
         uint256 amount
     ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance) {
-        return _freezeChange(
-            account,
-            amount,
-            true // increasing
-        );
+        return _changeFrozen(account, amount, uint256(FrozenBalanceChangeType.Increase));
     }
 
     /**
@@ -160,11 +167,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         address account,
         uint256 amount
     ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance)  {
-        return _freezeChange(
-            account,
-            amount,
-            false // decreasing
-        );
+        return _changeFrozen(account, amount, uint256(FrozenBalanceChangeType.Decrease));
     }
 
     /**
@@ -248,26 +251,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
-     * @dev Checks the address of an account to freeze
-     */
-    function _checkAddress(address account) pure internal {
-        if (account == address(0)) {
-            revert ZeroAddress();
-        }
-    }
-
-    /**
-     * @dev Checks the freezing ability and execute it
-     */
-    function _checkAndFreeze(address account, uint256 newBalance, uint256 oldBalance) internal {
-        if (newBalance != 0 && account.code.length != 0) {
-            revert ContractBalanceFreezingAttempt();
-        }
-        _freeze(account, newBalance, oldBalance);
-    }
-
-    /**
-     * @dev Changes the frozen balance
+     * @dev Updates the frozen balance
      */
     function _freeze(address account, uint256 newBalance, uint256 oldBalance) internal {
         emit Freeze(account, newBalance, oldBalance);
@@ -275,32 +259,42 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
-     * @dev Changes the frozen balance internally
+     * @dev Changes the frozen balance of an account internally according to the amount and the change operation type
      */
-    function _freezeChange(
+    function _changeFrozen(
         address account,
         uint256 amount,
-        bool increasing
+        uint256 changeType
     ) internal returns (uint256 newBalance, uint256 oldBalance) {
-        _checkAddress(account);
-        if (amount == 0) {
-            revert ZeroAmount();
+        if (account == address(0)) {
+            revert ZeroAddress();
         }
-
-        oldBalance = _frozenBalances[account];
-        newBalance = oldBalance;
-
-        if (increasing) {
-            newBalance += amount;
+        if (changeType == uint256(FrozenBalanceChangeType.Update)) {
+            oldBalance = _frozenBalances[account];
+            newBalance = amount;
         } else {
-            if (amount > oldBalance) {
-                revert LackOfFrozenBalance();
+            if (amount == 0) {
+                revert ZeroAmount();
             }
-            unchecked {
-                newBalance -= amount;
+
+            oldBalance = _frozenBalances[account];
+            newBalance = oldBalance;
+
+            if (changeType == uint256(FrozenBalanceChangeType.Increase)) {
+                newBalance += amount;
+            } else {
+                if (amount > oldBalance) {
+                    revert LackOfFrozenBalance();
+                }
+                unchecked {
+                    newBalance -= amount;
+                }
             }
         }
-        _checkAndFreeze(account, newBalance, oldBalance);
+        if (newBalance != 0 && account.code.length != 0) {
+            revert ContractBalanceFreezingAttempt();
+        }
+        _freeze(account, newBalance, oldBalance);
     }
 
     /**
