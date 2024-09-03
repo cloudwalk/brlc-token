@@ -116,14 +116,17 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      *
      * @param account The account whose tokens will be frozen
      * @param amount The amount of tokens to freeze
+     * @return newBalance The frozen balance of the account after the change
+     * @return oldBalance The frozen balance of the account before the change
      */
-    function freeze(address account, uint256 amount) external whenNotPaused onlyFreezer {
+    function freeze(
+        address account,
+        uint256 amount
+    ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance) {
         _checkAddress(account);
-        _checkAndFreeze(
-            account,
-            amount, // newBalance
-            _frozenBalances[account] // oldBalance
-        );
+        newBalance = amount;
+        oldBalance = _frozenBalances[account];
+        _checkAndFreeze(account, newBalance, oldBalance);
     }
 
     /**
@@ -134,8 +137,11 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @dev The account address must not be zero
      * @dev The amount must not be zero
      */
-    function freezeIncrease(address account, uint256 amount) external whenNotPaused onlyFreezer {
-        _freezeChange(
+    function freezeIncrease(
+        address account,
+        uint256 amount
+    ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance) {
+        return _freezeChange(
             account,
             amount,
             true // increasing
@@ -150,8 +156,11 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @dev The account address must not be zero
      * @dev The amount must not be zero
      */
-    function freezeDecrease(address account, uint256 amount) external whenNotPaused onlyFreezer {
-        _freezeChange(
+    function freezeDecrease(
+        address account,
+        uint256 amount
+    ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance)  {
+        return _freezeChange(
             account,
             amount,
             false // decreasing
@@ -165,22 +174,25 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * @dev Can only be called by a freezer
      * @dev The frozen balance must be greater than the `amount`
      */
-    function transferFrozen(address from, address to, uint256 amount) public virtual whenNotPaused onlyFreezer {
-        uint256 oldFrozenBalance = _frozenBalances[from];
+    function transferFrozen(
+        address from,
+        address to,
+        uint256 amount
+    ) public virtual whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance) {
+        oldBalance = _frozenBalances[from];
 
-        if (amount > oldFrozenBalance) {
+        if (amount > oldBalance) {
             revert LackOfFrozenBalance();
         }
 
-        uint256 newFrozenBalance;
         unchecked {
-            newFrozenBalance = oldFrozenBalance - amount;
+            newBalance = oldBalance - amount;
         }
 
         emit FreezeTransfer(from, amount);
-        emit Freeze(from, newFrozenBalance, oldFrozenBalance);
+        emit Freeze(from, newBalance, oldBalance);
 
-        _frozenBalances[from] = newFrozenBalance;
+        _frozenBalances[from] = newBalance;
         _transfer(from, to, amount);
     }
 
@@ -265,14 +277,18 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
      * @dev Changes the frozen balance internally
      */
-    function _freezeChange(address account, uint256 amount, bool increasing) internal {
+    function _freezeChange(
+        address account,
+        uint256 amount,
+        bool increasing
+    ) internal returns (uint256 newBalance, uint256 oldBalance) {
         _checkAddress(account);
         if (amount == 0) {
             revert ZeroAmount();
         }
 
-        uint256 oldBalance = _frozenBalances[account];
-        uint256 newBalance = oldBalance;
+        oldBalance = _frozenBalances[account];
+        newBalance = oldBalance;
 
         if (increasing) {
             newBalance += amount;

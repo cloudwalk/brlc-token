@@ -69,8 +69,14 @@ interface IERC20Freezable {
      * @param from The account tokens will be transferred from
      * @param to The account tokens will be transferred to
      * @param amount The amount of tokens to transfer
+     * @return newBalance The frozen balance of the `from` account after the transfer
+     * @return oldBalance The frozen balance of the `from` account before the transfer
      */
-    function transferFrozen(address from, address to, uint256 amount) external;
+    function transferFrozen(
+        address from,
+        address to,
+        uint256 amount
+    ) external returns (uint256 newBalance, uint256 oldBalance);
 
     /**
      * @notice Increases the frozen balance for an account
@@ -79,8 +85,13 @@ interface IERC20Freezable {
      *
      * @param account The account to increase frozen balance for
      * @param amount The amount to increase the frozen balance by
+     * @return newBalance The frozen balance of the account after the increase
+     * @return oldBalance The frozen balance of the account before the increase
      */
-    function freezeIncrease(address account, uint256 amount) external;
+    function freezeIncrease(
+        address account,
+        uint256 amount
+    ) external returns (uint256 newBalance, uint256 oldBalance);
 
     /**
      * @notice Decreases the frozen balance for an account
@@ -89,8 +100,13 @@ interface IERC20Freezable {
      *
      * @param account The account to decrease frozen balance for
      * @param amount The amount to decrease the frozen balance by
+     * @return newBalance The frozen balance of the account after the decrease
+     * @return oldBalance The frozen balance of the account before the decrease
      */
-    function freezeDecrease(address account, uint256 amount) external;
+    function freezeDecrease(
+        address account,
+        uint256 amount
+    ) external returns (uint256 newBalance, uint256 oldBalance);
 
     /**
      * @notice Checks if the account is configured as a freezer
