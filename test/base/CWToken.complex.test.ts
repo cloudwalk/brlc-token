@@ -55,7 +55,6 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
     await proveTx(token.updateMainMinter(deployer.address));
     await proveTx(token.configureMinter(deployer.address, 20));
     await proveTx(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
-    await proveTx(connect(token, user).approveFreezing());
     return { token };
   }
 

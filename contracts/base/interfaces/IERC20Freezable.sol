@@ -23,7 +23,8 @@ interface IERC20Freezable {
     event FreezerRemoved(address indexed freezer);
 
     /**
-     * @notice Emitted when token freezing has been approved for an account
+     * @notice [DEPRECATED]  Emitted when token freezing has been approved for an account. No longer in use
+     * @dev Kept for backward compatibility with transaction analysis tools
      *
      * @param account The account for which token freezing has been approved
      */
@@ -59,13 +60,6 @@ interface IERC20Freezable {
      * @param status The new status of the freezers: `true` is to assign freezers, `false` is to remove freezers
      */
     function configureFreezerBatch(address[] calldata freezers, bool status) external;
-
-    /**
-     * @notice Approves token freezing for the caller
-     *
-     * Emits a {FreezeApproval} event
-     */
-    function approveFreezing() external;
 
     /**
      * @notice Transfers frozen tokens on behalf of an account
@@ -105,14 +99,6 @@ interface IERC20Freezable {
      * @return True if the account is configured as a freezer
      */
     function isFreezer(address account) external view returns (bool);
-
-    /**
-     * @notice Checks if token freezing is approved for an account
-     *
-     * @param account The account to check the approval for
-     * @return True if token freezing is approved for the account
-     */
-    function freezeApproval(address account) external view returns (bool);
 
     /**
      * @notice Retrieves the frozen balance of an account
