@@ -174,17 +174,30 @@ describe("Contract 'ERC20Freezable'", async () => {
     it("Freezes tokens and emits the correct events for an externally owned account", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       const tokenUnderFreezer: Contract = connect(token, freezer);
+
       expect(await token.balanceOf(user1.address)).to.eq(0);
+
+      expect(
+        await tokenUnderFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT)
+      ).to.deep.eq([TOKEN_AMOUNT, 0]);
       await expect(tokenUnderFreezer.freeze(user1.address, TOKEN_AMOUNT))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNT, 0);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT);
+
       await proveTx(token.mint(user1.address, TOKEN_AMOUNT));
       expect(await token.balanceOf(user1.address)).to.eq(TOKEN_AMOUNT);
+      expect(
+        await tokenUnderFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT + 1)
+      ).to.deep.eq([TOKEN_AMOUNT + 1, TOKEN_AMOUNT]);
       await expect(tokenUnderFreezer.freeze(user1.address, TOKEN_AMOUNT + 1))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNT + 1, TOKEN_AMOUNT);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT + 1);
+
+      expect(
+        await tokenUnderFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT + 2)
+      ).to.deep.eq([TOKEN_AMOUNT + 2, TOKEN_AMOUNT + 1]);
       await expect(tokenUnderFreezer.freeze(user1.address, TOKEN_AMOUNT - 2))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNT - 2, TOKEN_AMOUNT + 1);
@@ -235,11 +248,17 @@ describe("Contract 'ERC20Freezable'", async () => {
       const tokenUnderFreezer: Contract = connect(token, freezer);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(0);
 
+      expect(
+        await tokenUnderFreezer.freezeIncrease.staticCall(user1.address, TOKEN_AMOUNT)
+      ).to.deep.eq([TOKEN_AMOUNT, 0]);
       await expect(tokenUnderFreezer.freezeIncrease(user1.address, TOKEN_AMOUNT))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNT, 0);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT);
 
+      expect(
+        await tokenUnderFreezer.freezeIncrease.staticCall(user1.address, TOKEN_AMOUNTx2)
+      ).to.deep.eq([TOKEN_AMOUNTx3, TOKEN_AMOUNT]);
       await expect(tokenUnderFreezer.freezeIncrease(user1.address, TOKEN_AMOUNTx2))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNTx3, TOKEN_AMOUNT);
@@ -290,11 +309,17 @@ describe("Contract 'ERC20Freezable'", async () => {
 
       await proveTx(tokenUnderFreezer.freezeIncrease(user1.address, TOKEN_AMOUNTx3));
 
+      expect(
+        await tokenUnderFreezer.freezeDecrease.staticCall(user1.address, TOKEN_AMOUNT)
+      ).to.deep.eq([TOKEN_AMOUNTx2, TOKEN_AMOUNTx3]);
       await expect(tokenUnderFreezer.freezeDecrease(user1.address, TOKEN_AMOUNT))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNTx2, TOKEN_AMOUNTx3);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNTx2);
 
+      expect(
+        await tokenUnderFreezer.freezeDecrease.staticCall(user1.address, TOKEN_AMOUNTx2)
+      ).to.deep.eq([0, TOKEN_AMOUNTx2]);
       await expect(tokenUnderFreezer.freezeDecrease(user1.address, TOKEN_AMOUNTx2))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, 0, TOKEN_AMOUNTx2);
@@ -378,6 +403,11 @@ describe("Contract 'ERC20Freezable'", async () => {
 
         await proveTx(token.mint(user1.address, props.balance));
         await proveTx(connect(token, freezer).freeze(user1.address, oldFrozenAmount));
+        expect(await connect(token, freezer).transferFrozen.staticCall(
+          user1.address,
+          user2.address,
+          transferAmount
+        )).to.deep.eq([newFrozenAmount, oldFrozenAmount]);
         const tx = connect(token, freezer).transferFrozen(
           user1.address,
           user2.address,
