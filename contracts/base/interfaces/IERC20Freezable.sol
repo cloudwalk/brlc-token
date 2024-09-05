@@ -79,7 +79,7 @@ interface IERC20Freezable {
     ) external returns (uint256 newBalance, uint256 oldBalance);
 
     /**
-     * @notice Increases the frozen balance for an account
+     * @notice Increases the frozen balance of an account
      *
      * Emits a {Freeze} event
      *
@@ -94,7 +94,7 @@ interface IERC20Freezable {
     ) external returns (uint256 newBalance, uint256 oldBalance);
 
     /**
-     * @notice Decreases the frozen balance for an account
+     * @notice Decreases the frozen balance of an account
      *
      * Emits a {Freeze} event
      *

@@ -12,17 +12,18 @@ import { ERC20Base } from "./ERC20Base.sol";
  */
 abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /**
-     * @dev Possible types of a frozen balance change operation
+     * @dev Possible types of a frozen balance update operation
      *
      * The values:
-     * - Increase = 0 -- To increase the frozen balance by the provided amount
-     * - Decrease = 1 -- To decrease the frozen balance by the provided amount
-     * - Update = 2 ---- To make the frozen balance equal to the provided amount
+     *
+     * - Increase = 0 ----- To increase the frozen balance by the provided amount.
+     * - Decrease = 1 ----- To decrease the frozen balance by the provided amount.
+     * - Replacement = 2 -- To replace the frozen balance with the provided amount.
      */
-    enum FrozenBalanceChangeType {
+    enum FrozenBalanceUpdateType {
         Increase,
         Decrease,
-        Update
+        Replacement
     }
 
     /// @notice [DEPRECATED] The mapping of the freeze approvals. No longer in use
@@ -115,7 +116,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     function approveFreezing() external {}
 
     /**
-     * @dev [DEPRECATED] Freezes tokens of the specified account
+     * @notice [DEPRECATED] Updates the frozen balance of an account
      *
      * Emits a {Freeze} event
      *
@@ -128,16 +129,16 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * - Can only be called by a freezer
      * - The account address must not be zero
      *
-     * @param account The account whose tokens will be frozen
-     * @param amount The amount of tokens to freeze
-     * @return newBalance The frozen balance of the account after the change
-     * @return oldBalance The frozen balance of the account before the change
+     * @param account The account to update the frozen balance for
+     * @param amount The amount of tokens to set as the new frozen balance
+     * @return newBalance The frozen balance of the account after the update
+     * @return oldBalance The frozen balance of the account before the update
      */
     function freeze(
         address account,
         uint256 amount
     ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance) {
-        return _changeFrozen(account, amount, uint256(FrozenBalanceChangeType.Update));
+        return _updateFrozen(account, amount, uint256(FrozenBalanceUpdateType.Replacement));
     }
 
     /**
@@ -152,7 +153,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         address account,
         uint256 amount
     ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance) {
-        return _changeFrozen(account, amount, uint256(FrozenBalanceChangeType.Increase));
+        return _updateFrozen(account, amount, uint256(FrozenBalanceUpdateType.Increase));
     }
 
     /**
@@ -167,7 +168,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         address account,
         uint256 amount
     ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance) {
-        return _changeFrozen(account, amount, uint256(FrozenBalanceChangeType.Decrease));
+        return _updateFrozen(account, amount, uint256(FrozenBalanceUpdateType.Decrease));
     }
 
     /**
@@ -259,17 +260,17 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     }
 
     /**
-     * @dev Changes the frozen balance of an account internally according to the amount and the change operation type
+     * @dev Updates the frozen balance of an account internally according to the amount and the update operation type
      */
-    function _changeFrozen(
+    function _updateFrozen(
         address account,
         uint256 amount,
-        uint256 changeType
+        uint256 updateType
     ) internal returns (uint256 newBalance, uint256 oldBalance) {
         if (account == address(0)) {
             revert ZeroAddress();
         }
-        if (changeType == uint256(FrozenBalanceChangeType.Update)) {
+        if (updateType == uint256(FrozenBalanceUpdateType.Replacement)) {
             oldBalance = _frozenBalances[account];
             newBalance = amount;
         } else {
@@ -280,7 +281,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
             oldBalance = _frozenBalances[account];
             newBalance = oldBalance;
 
-            if (changeType == uint256(FrozenBalanceChangeType.Increase)) {
+            if (updateType == uint256(FrozenBalanceUpdateType.Increase)) {
                 newBalance += amount;
             } else {
                 if (amount > oldBalance) {
