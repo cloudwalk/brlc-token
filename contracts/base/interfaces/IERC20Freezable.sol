@@ -23,7 +23,7 @@ interface IERC20Freezable {
     event FreezerRemoved(address indexed freezer);
 
     /**
-     * @notice [DEPRECATED]  Emitted when token freezing has been approved for an account. No longer in use
+     * @notice [DEPRECATED] Emitted when token freezing has been approved for an account. No longer in use
      * @dev Kept for backward compatibility with transaction analysis tools
      *
      * @param account The account for which token freezing has been approved
