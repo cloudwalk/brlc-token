@@ -23,7 +23,7 @@ interface IERC20Freezable {
     event FreezerRemoved(address indexed freezer);
 
     /**
-     * @notice [DEPRECATED]  Emitted when token freezing has been approved for an account. No longer in use
+     * @notice [DEPRECATED] Emitted when token freezing has been approved for an account. No longer in use
      * @dev Kept for backward compatibility with transaction analysis tools
      *
      * @param account The account for which token freezing has been approved
@@ -54,7 +54,7 @@ interface IERC20Freezable {
      *
      * Emits a {FreezerRemoved} event for each removed freezer
      *
-     * NOTE: The previous function name was: `configureFreezers()`
+     * HISTORICAL NOTE: The previous function name was: `configureFreezers()`
      *
      * @param freezers The array of freezer addresses to configure
      * @param status The new status of the freezers: `true` is to assign freezers, `false` is to remove freezers
@@ -69,28 +69,44 @@ interface IERC20Freezable {
      * @param from The account tokens will be transferred from
      * @param to The account tokens will be transferred to
      * @param amount The amount of tokens to transfer
+     * @return newBalance The frozen balance of the `from` account after the transfer
+     * @return oldBalance The frozen balance of the `from` account before the transfer
      */
-    function transferFrozen(address from, address to, uint256 amount) external;
+    function transferFrozen(
+        address from, // Tools: this comment prevents Prettier from formatting into a single line.
+        address to,
+        uint256 amount
+    ) external returns (uint256 newBalance, uint256 oldBalance);
 
     /**
-     * @notice Increases the frozen balance for an account
+     * @notice Increases the frozen balance of an account
      *
      * Emits a {Freeze} event
      *
      * @param account The account to increase frozen balance for
      * @param amount The amount to increase the frozen balance by
+     * @return newBalance The frozen balance of the account after the increase
+     * @return oldBalance The frozen balance of the account before the increase
      */
-    function freezeIncrease(address account, uint256 amount) external;
+    function freezeIncrease(
+        address account, // Tools: this comment prevents Prettier from formatting into a single line
+        uint256 amount
+    ) external returns (uint256 newBalance, uint256 oldBalance);
 
     /**
-     * @notice Decreases the frozen balance for an account
+     * @notice Decreases the frozen balance of an account
      *
      * Emits a {Freeze} event
      *
      * @param account The account to decrease frozen balance for
      * @param amount The amount to decrease the frozen balance by
+     * @return newBalance The frozen balance of the account after the decrease
+     * @return oldBalance The frozen balance of the account before the decrease
      */
-    function freezeDecrease(address account, uint256 amount) external;
+    function freezeDecrease(
+        address account, // Tools: this comment prevents Prettier from formatting into a single line
+        uint256 amount
+    ) external returns (uint256 newBalance, uint256 oldBalance);
 
     /**
      * @notice Checks if the account is configured as a freezer
