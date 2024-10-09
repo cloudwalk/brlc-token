@@ -274,7 +274,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
 
   describe("Frozen and premint balances", async () => {
     let timestamp: number;
-    before(async () => {
+    beforeEach(async () => {
       timestamp = (await getLatestBlockTimestamp()) + 100;
     });
     it("Transfer to purpose account - test 5 with release awaiting", async () => {
@@ -506,7 +506,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
 
   describe("Premint and restricted balances", async () => {
     let timestamp: number;
-    before(async () => {
+    beforeEach(async () => {
       timestamp = (await getLatestBlockTimestamp()) + 100;
     });
     it("Transfer to purpose account - test 5 with release awaiting", async () => {
@@ -770,7 +770,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
 
   describe("Frozen, restricted and premint balances", async () => {
     let timestamp: number;
-    before(async () => {
+    beforeEach(async () => {
       timestamp = (await getLatestBlockTimestamp()) + 100;
     });
     it("Transfer to purpose account - test 5 with release awaiting", async () => {
@@ -1300,7 +1300,7 @@ describe("Contract 'CWToken' - Premintable, Freezable & Restrictable scenarios",
 
   describe("Premint balance only, no frozen balance or restricted balance", async () => {
     let timestamp: number;
-    before(async () => {
+    beforeEach(async () => {
       timestamp = await getLatestBlockTimestamp() + 100;
     });
     it("Transfer to purpose account with release awaiting - test 5", async () => {
