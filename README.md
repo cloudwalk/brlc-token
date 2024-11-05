@@ -37,10 +37,6 @@ npx hardhat compile
 npx hardhat test
 ```
 
-## Networks and deployments
-
-Information about deployments across all the networks can be found [here](./docs/deployed-contracts.json).
-
 ## Licensing
 
 This project is released under the MIT License, see [LICENSE](./LICENSE).
