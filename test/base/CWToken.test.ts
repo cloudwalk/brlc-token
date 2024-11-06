@@ -76,7 +76,6 @@ describe("Contract 'CWToken'", async () => {
     });
   });
 
-
   describe("Function '$__VERSION()'", async () => {
     it("Returns expected values", async () => {
       const { token } = await setUpFixture(deployToken);
