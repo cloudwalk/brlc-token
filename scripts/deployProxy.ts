@@ -6,16 +6,15 @@ async function main() {
   const TOKEN_SYMBOL: string = ""; // TBD: Enter token symbol
 
   const factory = await ethers.getContractFactory(CONTRACT_NAME);
-  const proxy = await upgrades.deployProxy(
-    factory,
-    [TOKEN_NAME, TOKEN_SYMBOL]
-  );
+  const proxy = await upgrades.deployProxy(factory, [TOKEN_NAME, TOKEN_SYMBOL]);
 
   await proxy.waitForDeployment();
 
   console.log("Proxy deployed:", await proxy.getAddress());
 }
 
-main().then().catch(err => {
-  throw err;
-});
+main()
+  .then()
+  .catch(err => {
+    throw err;
+  });
