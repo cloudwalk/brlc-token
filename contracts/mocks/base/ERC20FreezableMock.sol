@@ -6,7 +6,7 @@ import { ERC20Freezable } from "../../base/ERC20Freezable.sol";
 
 /**
  * @title ERC20FreezableMock contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice An implementation of the {ERC20Freezable} contract for testing purposes
  */
 contract ERC20FreezableMock is ERC20Freezable {

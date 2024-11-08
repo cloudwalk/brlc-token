@@ -8,7 +8,7 @@ import { ERC20Base } from "./ERC20Base.sol";
 
 /**
  * @title ERC20Hookable contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The ERC20 token implementation that supports hooking operations
  */
 abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {

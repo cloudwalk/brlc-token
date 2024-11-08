@@ -6,7 +6,7 @@ import { IERC20Hook } from "./../base/interfaces/IERC20Hook.sol";
 
 /**
  * @title ERC20HookMock contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice An implementation of the {IERC20Hook} contract for testing purposes
  */
 contract ERC20HookMock is IERC20Hook {

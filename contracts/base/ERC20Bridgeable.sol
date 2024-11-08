@@ -8,7 +8,7 @@ import { ERC20Base } from "./ERC20Base.sol";
 
 /**
  * @title ERC20Bridgeable contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The ERC20 token implementation that supports bridging operations
  */
 abstract contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {

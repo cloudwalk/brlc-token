@@ -7,7 +7,7 @@ import { ERC20Base } from "./ERC20Base.sol";
 
 /**
  * @title ERC20Mintable contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The ERC20 token implementation that supports the mint, premint, and burn operations
  */
 abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {

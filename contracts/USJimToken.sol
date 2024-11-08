@@ -6,7 +6,7 @@ import { CWToken } from "./base/CWToken.sol";
 
 /**
  * @title USJimToken contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The USJim token implementation
  */
 contract USJimToken is CWToken {

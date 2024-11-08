@@ -6,7 +6,7 @@ import { BlocklistableUpgradeable } from "../../../base/common/BlocklistableUpgr
 
 /**
  * @title BlocklistableUpgradeableMock contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice An implementation of the {BlocklistableUpgradeable} contract for testing purposes
  */
 contract BlocklistableUpgradeableMock is BlocklistableUpgradeable {

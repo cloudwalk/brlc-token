@@ -6,7 +6,7 @@ import { ERC20Trustable } from "../../base/ERC20Trustable.sol";
 
 /**
  * @title ERC20TrustableMock contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice An implementation of the {ERC20Trustable} contract for testing purposes
  */
 contract ERC20TrustableMock is ERC20Trustable {

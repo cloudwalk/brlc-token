@@ -6,7 +6,7 @@ import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC2
 
 /**
  * @title ERC20TokenMock contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice An implementation of the {ERC20Upgradeable} contract for testing purposes
  */
 contract ERC20TokenMock is ERC20Upgradeable {

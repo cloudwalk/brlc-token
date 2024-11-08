@@ -8,7 +8,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 
 /**
  * @title RescuableUpgradeable base contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice Allows to rescue ERC20 tokens locked up in the contract using the `rescuer` account
  * @dev This contract is used through inheritance. It introduces the `rescuer` role that is allowed
  * to rescue tokens locked up in the contract that is inherited from this one.

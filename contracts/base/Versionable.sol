@@ -6,7 +6,7 @@ import "./interfaces/IVersionable.sol";
 
 /**
  * @title Versionable contract
- * @author CloudWalk Inc. (See https://cloudwalk.io)
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @dev Defines the contract version.
  */
 abstract contract Versionable is IVersionable {

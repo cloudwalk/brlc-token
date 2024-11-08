@@ -7,7 +7,7 @@ import { ERC20Base } from "./ERC20Base.sol";
 
 /**
  * @title ERC20Restrictable contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The ERC20 token implementation that supports restriction operations
  */
 abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {

@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title ERC20Trustable contract interface
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The interface of the token that supports the `trusted` transfers on behalf
  */
 interface IERC20Trustable {

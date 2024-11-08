@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title IERC20Hookable interface
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The interface of a token that supports hooking operations
  */
 interface IERC20Hookable {

@@ -14,7 +14,7 @@ import { IERC20ComplexBalance } from "./interfaces/IERC20ComplexBalance.sol";
 
 /**
  * @title CWToken contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The CloudWalk token that extends the standard ERC20 token implementation with additional functionality
  */
 contract CWToken is

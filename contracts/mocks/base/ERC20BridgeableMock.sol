@@ -6,7 +6,7 @@ import { ERC20Bridgeable } from "../../base/ERC20Bridgeable.sol";
 
 /**
  * @title ERC20BridgeableMock contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice An implementation of the {ERC20Bridgeable} contract for testing purposes
  */
 contract ERC20BridgeableMock is ERC20Bridgeable {
