@@ -8,12 +8,13 @@ import { ERC20Freezable } from "./ERC20Freezable.sol";
 import { ERC20Restrictable } from "./ERC20Restrictable.sol";
 import { ERC20Hookable } from "./ERC20Hookable.sol";
 import { ERC20Trustable } from "./ERC20Trustable.sol";
+import { Versionable } from "./Versionable.sol";
 
 import { IERC20ComplexBalance } from "./interfaces/IERC20ComplexBalance.sol";
 
 /**
  * @title CWToken contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The CloudWalk token that extends the standard ERC20 token implementation with additional functionality
  */
 contract CWToken is
@@ -23,7 +24,8 @@ contract CWToken is
     ERC20Restrictable,
     ERC20Hookable,
     ERC20Trustable,
-    IERC20ComplexBalance
+    IERC20ComplexBalance,
+    Versionable
 {
     /**
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract

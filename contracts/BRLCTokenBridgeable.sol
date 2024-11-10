@@ -8,7 +8,7 @@ import { ERC20Freezable } from "./base/ERC20Freezable.sol";
 
 /**
  * @title BRLCTokenBridgeable contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The BRLC token implementation that supports bridging operations
  */
 contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {

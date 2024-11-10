@@ -7,7 +7,7 @@ import { ERC20Base } from "./ERC20Base.sol";
 
 /**
  * @title ERC20Freezable contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The ERC20 token implementation that supports the freezing operations
  */
 abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {

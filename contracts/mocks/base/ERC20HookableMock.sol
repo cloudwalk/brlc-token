@@ -6,7 +6,7 @@ import { ERC20Hookable } from "../../base/ERC20Hookable.sol";
 
 /**
  * @title ERC20HookableMock contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice An implementation of the {ERC20Hookable} contract for testing purposes
  */
 contract ERC20HookableMock is ERC20Hookable {

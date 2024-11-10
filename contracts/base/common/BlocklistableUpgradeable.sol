@@ -6,7 +6,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 
 /**
  * @title BlocklistableUpgradeable base contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice Allows to blocklist and unblocklist accounts using the `blocklister` account
  * @dev This contract is used through inheritance. It makes available the modifier `notBlocklisted`,
  * which can be applied to functions to restrict their usage to not blocklisted accounts only.

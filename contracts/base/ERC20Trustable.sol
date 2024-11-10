@@ -7,7 +7,7 @@ import { IERC20Trustable } from "./interfaces/IERC20Trustable.sol";
 
 /**
  * @title ERC20Trustable contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The ERC20 token implementation that supports the `trusted` transfers on behalf
  */
 abstract contract ERC20Trustable is ERC20Base, IERC20Trustable {

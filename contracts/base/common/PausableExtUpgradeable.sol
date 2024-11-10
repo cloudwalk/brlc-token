@@ -7,7 +7,7 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/securit
 
 /**
  * @title PausableExtUpgradeable base contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice Extends the OpenZeppelin's {PausableUpgradeable} contract by adding the `pauser` account
  * @dev This contract is used through inheritance. It introduces the `pauser` role that is allowed to
  * trigger the paused or unpaused state of the contract that is inherited from this one.

@@ -6,7 +6,7 @@ import { ERC20Mintable } from "../../base/ERC20Mintable.sol";
 
 /**
  * @title ERC20MintableMock contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice An implementation of the {ERC20Mintable} contract for testing purposes
  */
 contract ERC20MintableMock is ERC20Mintable {

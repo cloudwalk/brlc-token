@@ -6,7 +6,7 @@ import { ERC20Base } from "../../base/ERC20Base.sol";
 
 /**
  * @title ERC20BaseMock contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice An implementation of the {ERC20Base} contract for testing purposes
  */
 contract ERC20BaseMock is ERC20Base {

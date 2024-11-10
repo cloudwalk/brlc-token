@@ -6,7 +6,7 @@ import { ERC20Restrictable } from "../../base/ERC20Restrictable.sol";
 
 /**
  * @title ERC20RestrictableMock contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice An implementation of the {ERC20Restrictable} contract for testing purposes
  */
 contract ERC20RestrictableMock is ERC20Restrictable {

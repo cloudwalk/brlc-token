@@ -5,6 +5,14 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { connect } from "../../test-utils/eth";
 
+interface Version {
+  major: number;
+  minor: number;
+  patch: number;
+
+  [key: string]: number; // Indexing signature to ensure that fields are iterated over in a key-value style
+}
+
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
     return loadFixture(func);
@@ -17,7 +25,11 @@ describe("Contract 'CWToken'", async () => {
   const TOKEN_NAME = "CW Token";
   const TOKEN_SYMBOL = "CWT";
   const TOKEN_DECIMALS = 6;
-
+  const EXPECTED_VERSION: Version = {
+    major: 1,
+    minor: 0,
+    patch: 0
+  };
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
 
   let tokenFactory: ContractFactory;
@@ -61,6 +73,23 @@ describe("Contract 'CWToken'", async () => {
       await expect(
         tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
+    });
+  });
+
+  describe("Function '$__VERSION()'", async () => {
+    it("Returns expected values", async () => {
+      const { token } = await setUpFixture(deployToken);
+      const tokenVersion = await token.$__VERSION();
+      Object.keys(EXPECTED_VERSION).forEach(property => {
+        const value = tokenVersion[property];
+        if (typeof value === "undefined" || typeof value === "function" || typeof value === "object") {
+          throw Error(`Property "${property}" is not found`);
+        }
+        expect(value).to.eq(
+          EXPECTED_VERSION[property],
+          `Mismatch in the "${property}" property`
+        );
+      });
     });
   });
 });

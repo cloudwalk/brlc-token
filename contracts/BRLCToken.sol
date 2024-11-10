@@ -6,7 +6,7 @@ import { CWToken } from "./base/CWToken.sol";
 
 /**
  * @title BRLCToken contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The BRLC token implementation
  */
 contract BRLCToken is CWToken {

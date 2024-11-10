@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title IERC20ComplexBalance interface
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The interface of a token that supports complex balance tracking
  */
 interface IERC20ComplexBalance {

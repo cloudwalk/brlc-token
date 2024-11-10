@@ -10,7 +10,7 @@ import { BlocklistableUpgradeable } from "./common/BlocklistableUpgradeable.sol"
 
 /**
  * @title ERC20Base contract
- * @author CloudWalk Inc.
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice This contract is base implementation of the BRLC token with inherited Rescuable,
  * Pausable, and Blocklistable functionality.
  */
