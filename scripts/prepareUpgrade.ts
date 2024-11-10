@@ -13,8 +13,6 @@ async function main() {
   console.log("Upgrade prepared:", response);
 }
 
-main()
-  .then()
-  .catch(err => {
-    throw err;
-  });
+main().then().catch(err => {
+  throw err;
+});
