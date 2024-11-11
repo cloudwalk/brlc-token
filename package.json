@@ -4,7 +4,7 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@openzeppelin/hardhat-upgrades": "^3.5.0",
+    "@openzeppelin/hardhat-upgrades": "3.3.0",
     "@stylistic/eslint-plugin": "^1.8.1",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
