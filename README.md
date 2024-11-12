@@ -21,7 +21,7 @@ This repository contains BRLC token smart contracts.
     ```sh
     cp .env.example .env
     ```
-3. If necessary, update settings in the newly created `.env` file (e.g., Solidity version, number of optimization runs, network RPC URLs, private keys (PK) for networks, etc.).
+3. Optionally update the settings in the newly created `.env` file (e.g., Solidity version, number of optimization runs, network RPC URLs, private keys (PK) for networks, etc.).
 
 ## Build and test
 
