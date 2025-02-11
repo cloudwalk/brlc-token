@@ -2,7 +2,7 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: brlc-token
-  description: BRLC smart contracts
+  description: Token smart contracts
   annotations:
     github.com/project-slug: cloudwalk/brlc-token
     backstage.io/techdocs-ref: dir:.
