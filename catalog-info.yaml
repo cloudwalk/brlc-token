@@ -16,6 +16,7 @@ metadata:
       title: Repository
       icon: github
 spec:
-  type: smart contract
+  type: smart-contract
+  system: Blockchain
   lifecycle: production
   owner: team-smart-contracts
