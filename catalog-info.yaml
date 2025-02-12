@@ -19,4 +19,4 @@ spec:
   type: smart-contract
   system: Blockchain
   lifecycle: production
-  owner: team-smart-contracts
+  owner: team-blockchain
