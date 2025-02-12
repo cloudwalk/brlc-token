@@ -1,4 +1,4 @@
-name: coverage
+name: coverage-to-codecov
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   coverage:
-    name: Run tests and collect coverage
+    name: Run tests, collect coverage, upload to Codecov
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
