@@ -6,9 +6,6 @@ metadata:
   annotations:
     github.com/project-slug: cloudwalk/brlc-token
     backstage.io/techdocs-ref: dir:.
-  labels:
-    <http://cloudwalk.io/regulation-scope|cloudwalk.io/regulation-scope>: none
-    <http://cloudwalk.io/critical-level|cloudwalk.io/critical-level>: high
   tags:
     - solidity
     - typescript
@@ -18,6 +15,9 @@ metadata:
     - url: https://github.com/cloudwalk/brlc-token
       title: Repository
       icon: github
+  labels:
+    cloudwalk.io/regulation-scope: none
+    cloudwalk.io/critical-level: high
 spec:
   type: smart-contract
   system: Blockchain
