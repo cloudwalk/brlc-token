@@ -15,6 +15,9 @@ metadata:
     - url: https://github.com/cloudwalk/brlc-token
       title: Repository
       icon: github
+  labels:
+    cloudwalk.io/regulation-scope: none
+    cloudwalk.io/critical-level: high
 spec:
   type: smart-contract
   system: Blockchain
