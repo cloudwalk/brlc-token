@@ -6,6 +6,9 @@ metadata:
   annotations:
     github.com/project-slug: cloudwalk/brlc-token
     backstage.io/techdocs-ref: dir:.
+  labels:
+    <http://cloudwalk.io/regulation-scope|cloudwalk.io/regulation-scope>: none
+    <http://cloudwalk.io/critical-level|cloudwalk.io/critical-level>: high
   tags:
     - solidity
     - typescript
