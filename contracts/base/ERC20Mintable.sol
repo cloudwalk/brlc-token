@@ -23,6 +23,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint16 maxPendingPremintsCount;
         mapping(uint256 => uint256) premintReschedulings;
         mapping(uint256 => uint256) premintReschedulingCounters;
+        uint256 TotalReserveSupply;
     }
 
     /// @notice The structure that represents an array of premint records
@@ -105,6 +106,9 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
     /// @notice The provided value cannot be cast to uint64 type
     error InappropriateUint64Value(uint256 value);
+
+    /// @notice The amount of tokens to burn is greater than the total reserve supply
+    error InsufficientReserveSupply();
 
     // -------------------- Modifiers --------------------------------
 
@@ -234,6 +238,25 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
+     * @dev The contract must not be paused
+     * @dev Can only be called by a minter account
+     * @dev The message sender must not be blocklisted
+     */
+    function mintFromReserve(
+        address account,
+        uint256 amount
+    ) external whenNotPaused onlyMinter notBlocklisted(_msgSender()) {
+        _mintInternal(account, amount);
+
+        ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
+        storageSlot.TotalReserveSupply += amount;
+
+        emit MintFromReserve(_msgSender(), account, amount);
+    }
+
+    /**
+     * @inheritdoc IERC20Mintable
+     *
      * @dev Can only be called by a minter account
      * @dev The message sender must not be blocklisted
      * @dev The `account` address must not be blocklisted
@@ -306,6 +329,28 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      */
     function burn(uint256 amount) external onlyMinter notBlocklisted(_msgSender()) {
         _burnInternal(_msgSender(), amount);
+    }
+
+    /**
+     * @inheritdoc IERC20Mintable
+     *
+     * @dev The contract must not be paused
+     * @dev Can only be called by a minter account
+     * @dev The message sender must not be blocklisted
+     * @dev The amount of tokens to burn must be less than or equal to the total reserve supply
+     */
+    function burnToReserve(uint256 amount) external whenNotPaused onlyMinter notBlocklisted(_msgSender()) {
+        _burnInternal(_msgSender(), amount);
+
+        ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
+
+        if (storageSlot.TotalReserveSupply < amount) {
+            revert InsufficientReserveSupply();
+        }
+
+        storageSlot.TotalReserveSupply -= amount;
+
+        emit BurnToReserve(_msgSender(), amount);
     }
 
     /**
@@ -383,6 +428,14 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      */
     function minterAllowance(address minter) external view returns (uint256) {
         return _mintersAllowance[minter];
+    }
+
+    /**
+     * @inheritdoc IERC20Mintable
+     */
+    function totalReserveSupply() external view returns (uint256) {
+        ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
+        return storageSlot.TotalReserveSupply;
     }
 
     function _mintInternal(address account, uint256 amount) internal returns (bool) {
