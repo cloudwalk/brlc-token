@@ -125,6 +125,13 @@ interface IERC20Mintable {
     function minterAllowance(address minter) external view returns (uint256);
 
     /**
+     * @notice Returns the total reserve supply
+     *
+     * @return The total reserve supply
+     */
+    function totalReserveSupply() external view returns (uint256);
+
+    /**
      * @notice Updates the main minter address
      *
      * Emits a {MainMinterChanged} event
