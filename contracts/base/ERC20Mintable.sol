@@ -251,7 +251,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
         storageSlot.totalReserveSupply += amount;
 
-        emit MintFromReserve(_msgSender(), account, amount);
+        emit MintFromReserve(_msgSender(), account, amount, storageSlot.totalReserveSupply);
     }
 
     /**
@@ -348,9 +348,11 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
             revert InsufficientReserveSupply();
         }
 
+        unchecked {
             storageSlot.totalReserveSupply -= amount;
+        }
 
-        emit BurnToReserve(_msgSender(), amount);
+        emit BurnToReserve(_msgSender(), amount, storageSlot.totalReserveSupply);
     }
 
     /**

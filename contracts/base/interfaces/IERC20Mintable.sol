@@ -45,8 +45,14 @@ interface IERC20Mintable {
      * @param minter The address of the minter
      * @param to The address of the tokens recipient
      * @param amount The amount of tokens being minted
+     * @param newReserveSupply The new total reserve supply
      */
-    event MintFromReserve(address indexed minter, address indexed to, uint256 amount);
+    event MintFromReserve(
+        address indexed minter,
+        address indexed to,
+        uint256 amount,
+        uint256 newReserveSupply
+    );
 
     /**
      * @notice Emitted when tokens are preminted
@@ -93,8 +99,13 @@ interface IERC20Mintable {
      *
      * @param burner The address of the tokens burner
      * @param amount The amount of tokens being burned
+     * @param newReserveSupply The new total reserve supply
      */
-    event BurnToReserve(address indexed burner, uint256 amount);
+    event BurnToReserve(
+        address indexed burner,
+        uint256 amount,
+        uint256 newReserveSupply
+    );
 
     /**
      * @notice Emitted when the limit of premints is configured
@@ -216,7 +227,7 @@ interface IERC20Mintable {
     /**
      * @notice Mints tokens from reserve
      *
-     * @dev Minting from reserve means that the tokens are minted in a normal way, but we also
+     * @dev Minting from reserve means that the tokens are minted in a regular way, but we also
      * increase the total reserve supply by the amount of tokens minted
      *
      * Emits a {Mint} event
@@ -239,7 +250,7 @@ interface IERC20Mintable {
     /**
      * @notice Burns tokens to reserve
      *
-     * @dev Burning to reserve means that the tokens are burned in a normal way, but we also
+     * @dev Burning to reserve means that the tokens are burned in a regular way, but we also
      * decrease the total reserve supply by the amount of tokens burned
      *
      * Emits a {Burn} event

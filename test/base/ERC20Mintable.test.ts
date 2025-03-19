@@ -370,7 +370,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       await expect(tx)
         .to.emit(token, EVENT_NAME_MINT_FROM_RESERVE)
-        .withArgs(minter.address, user.address, TOKEN_AMOUNT);
+        .withArgs(minter.address, user.address, TOKEN_AMOUNT, TOKEN_AMOUNT);
 
       await expect(tx)
         .to.emit(token, EVENT_NAME_TRANSFER)
@@ -382,7 +382,11 @@ describe("Contract 'ERC20Mintable'", async () => {
       expect(await token.totalReserveSupply()).to.eq(TOKEN_AMOUNT);
 
       // mint another amount to verify reserve accumulates correctly
-      await connect(token, minter).mintFromReserve(recipient.address, TOKEN_AMOUNT);
+      const tx2: TransactionResponse = await connect(token, minter).mintFromReserve(recipient.address, TOKEN_AMOUNT);
+      await expect(tx2)
+        .to.emit(token, EVENT_NAME_MINT_FROM_RESERVE)
+        .withArgs(minter.address, recipient.address, TOKEN_AMOUNT, TOKEN_AMOUNT * 2);
+
       expect(await token.totalReserveSupply()).to.eq(TOKEN_AMOUNT * 2);
     });
 
@@ -440,7 +444,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       await expect(tx)
         .to.emit(token, EVENT_NAME_BURN_TO_RESERVE)
-        .withArgs(minter.address, TOKEN_AMOUNT / 2);
+        .withArgs(minter.address, TOKEN_AMOUNT / 2, TOKEN_AMOUNT / 2);
 
       await expect(tx)
         .to.emit(token, EVENT_NAME_TRANSFER)
@@ -453,6 +457,14 @@ describe("Contract 'ERC20Mintable'", async () => {
       );
 
       expect(await token.totalReserveSupply()).to.eq(TOKEN_AMOUNT / 2);
+
+      // burn remaining tokens to verify event with zero reserve supply
+      const tx2: TransactionResponse = await connect(token, minter).burnToReserve(TOKEN_AMOUNT / 2);
+      await expect(tx2)
+        .to.emit(token, EVENT_NAME_BURN_TO_RESERVE)
+        .withArgs(minter.address, TOKEN_AMOUNT / 2, 0);
+
+      expect(await token.totalReserveSupply()).to.eq(0);
     });
 
     it("Is reverted if the contract is paused", async () => {
