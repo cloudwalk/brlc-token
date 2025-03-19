@@ -40,6 +40,21 @@ interface IERC20Mintable {
     event Mint(address indexed minter, address indexed to, uint256 amount);
 
     /**
+     * @notice Emitted when tokens are minted from reserve
+     *
+     * @param minter The address of the minter
+     * @param to The address of the tokens recipient
+     * @param amount The amount of tokens being minted
+     * @param newReserveSupply The new total reserve supply
+     */
+    event MintFromReserve(
+        address indexed minter,
+        address indexed to,
+        uint256 amount,
+        uint256 newReserveSupply
+    );
+
+    /**
      * @notice Emitted when tokens are preminted
      *
      * @param minter The address of the minter
@@ -80,6 +95,19 @@ interface IERC20Mintable {
     event Burn(address indexed burner, uint256 amount);
 
     /**
+     * @notice Emitted when tokens are burned to reserve
+     *
+     * @param burner The address of the tokens burner
+     * @param amount The amount of tokens being burned
+     * @param newReserveSupply The new total reserve supply
+     */
+    event BurnToReserve(
+        address indexed burner,
+        uint256 amount,
+        uint256 newReserveSupply
+    );
+
+    /**
      * @notice Emitted when the limit of premints is configured
      *
      * @param newLimit The new limit of premints
@@ -106,6 +134,13 @@ interface IERC20Mintable {
      * @return The mint allowance of the minter
      */
     function minterAllowance(address minter) external view returns (uint256);
+
+    /**
+     * @notice Returns the total reserve supply
+     *
+     * @return The total reserve supply
+     */
+    function totalReserveSupply() external view returns (uint256);
 
     /**
      * @notice Updates the main minter address
@@ -190,6 +225,20 @@ interface IERC20Mintable {
     function reschedulePremintRelease(uint256 originalRelease, uint256 targetRelease) external;
 
     /**
+     * @notice Mints tokens from reserve
+     *
+     * @dev Minting from reserve means that the tokens are minted in a regular way, but we also
+     * increase the total reserve supply by the amount of tokens minted
+     *
+     * Emits a {Mint} event
+     * Emits a {MintFromReserve} event
+     *
+     * @param account The address of a tokens recipient
+     * @param amount The amount of tokens to mint
+     */
+    function mintFromReserve(address account, uint256 amount) external;
+
+    /**
      * @notice Burns tokens
      *
      * Emits a {Burn} event
@@ -197,4 +246,17 @@ interface IERC20Mintable {
      * @param amount The amount of tokens to burn
      */
     function burn(uint256 amount) external;
+
+    /**
+     * @notice Burns tokens to reserve
+     *
+     * @dev Burning to reserve means that the tokens are burned in a regular way, but we also
+     * decrease the total reserve supply by the amount of tokens burned
+     *
+     * Emits a {Burn} event
+     * Emits a {BurnToReserve} event
+     *
+     * @param amount The amount of tokens to burn
+     */
+    function burnToReserve(uint256 amount) external;
 }

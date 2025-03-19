@@ -30,6 +30,8 @@ describe("Contract 'ERC20Mintable'", async () => {
   const EVENT_NAME_PREMINT = "Premint";
   const EVENT_NAME_MAX_PENDING_PREMINTS_COUNT_CONFIGURED = "MaxPendingPremintsCountConfigured";
   const EVENT_NAME_PREMINT_RELEASE_RESCHEDULED = "PremintReleaseRescheduled";
+  const EVENT_NAME_MINT_FROM_RESERVE = "MintFromReserve";
+  const EVENT_NAME_BURN_TO_RESERVE = "BurnToReserve";
 
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
@@ -55,6 +57,7 @@ describe("Contract 'ERC20Mintable'", async () => {
   const REVERT_ERROR_MAX_PENDING_PREMINTS_LIMIT_REACHED = "MaxPendingPremintsLimitReached";
   const REVERT_ERROR_MAX_PENDING_PREMINTS_COUNT_ALREADY_CONFIGURED = "MaxPendingPremintsCountAlreadyConfigured";
   const REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE = "InappropriateUint64Value";
+  const REVERT_ERROR_INSUFFICIENT_RESERVE_SUPPLY = "InsufficientReserveSupply";
 
   enum PremintFunction {
     Increase = 0,
@@ -349,6 +352,201 @@ describe("Contract 'ERC20Mintable'", async () => {
       await expect(
         connect(token, minter).burn(TOKEN_AMOUNT + 1)
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
+    });
+  });
+
+  describe("Function 'mintFromReserve()'", async () => {
+    it("Executes as expected and emits the correct events", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+
+      const oldMintAllowance: bigint = await token.minterAllowance(minter.address);
+      const newExpectedMintAllowance: bigint = oldMintAllowance - BigInt(TOKEN_AMOUNT);
+
+      const tx: TransactionResponse = await connect(token, minter).mintFromReserve(user.address, TOKEN_AMOUNT);
+
+      await expect(tx)
+        .to.emit(token, EVENT_NAME_MINT)
+        .withArgs(minter.address, user.address, TOKEN_AMOUNT);
+
+      await expect(tx)
+        .to.emit(token, EVENT_NAME_MINT_FROM_RESERVE)
+        .withArgs(minter.address, user.address, TOKEN_AMOUNT, TOKEN_AMOUNT);
+
+      await expect(tx)
+        .to.emit(token, EVENT_NAME_TRANSFER)
+        .withArgs(ethers.ZeroAddress, user.address, TOKEN_AMOUNT);
+
+      await expect(tx).to.changeTokenBalances(token, [user], [TOKEN_AMOUNT]);
+
+      expect(await token.minterAllowance(minter.address)).to.eq(newExpectedMintAllowance);
+      expect(await token.totalReserveSupply()).to.eq(TOKEN_AMOUNT);
+
+      // mint another amount to verify reserve accumulates correctly
+      const tx2: TransactionResponse = await connect(token, minter).mintFromReserve(recipient.address, TOKEN_AMOUNT);
+      await expect(tx2)
+        .to.emit(token, EVENT_NAME_MINT_FROM_RESERVE)
+        .withArgs(minter.address, recipient.address, TOKEN_AMOUNT, TOKEN_AMOUNT * 2);
+
+      expect(await token.totalReserveSupply()).to.eq(TOKEN_AMOUNT * 2);
+    });
+
+    it("Is reverted if the contract is paused", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await proveTx(connect(token, pauser).pause());
+      await expect(
+        connect(token, minter).mintFromReserve(user.address, TOKEN_AMOUNT)
+      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+    });
+
+    it("Is reverted if the caller is not a minter", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await expect(connect(token, user).mintFromReserve(user.address, TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MINTER)
+        .withArgs(user.address);
+    });
+
+    it("Is reverted if the caller is blocklisted", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await proveTx(connect(token, minter).selfBlocklist());
+      await expect(connect(token, minter).mintFromReserve(user.address, TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(minter.address);
+    });
+
+    it("Is reverted if the mint amount is zero", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await expect(
+        connect(token, minter).mintFromReserve(user.address, 0)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_MINT_AMOUNT);
+    });
+
+    it("Is reverted if the mint amount exceeds the mint allowance", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await expect(
+        connect(token, minter).mintFromReserve(user.address, MINT_ALLOWANCE + 1)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_EXCEEDED_MINT_ALLOWANCE);
+    });
+  });
+
+  describe("Function 'burnToReserve()'", async () => {
+    it("Executes as expected and emits the correct events", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+
+      // first mint to reserve to create reserve supply
+      await proveTx(connect(token, minter).mintFromReserve(minter.address, TOKEN_AMOUNT));
+      expect(await token.totalReserveSupply()).to.eq(TOKEN_AMOUNT);
+
+      const tx: TransactionResponse = await connect(token, minter).burnToReserve(TOKEN_AMOUNT / 2);
+
+      await expect(tx)
+        .to.emit(token, EVENT_NAME_BURN)
+        .withArgs(minter.address, TOKEN_AMOUNT / 2);
+
+      await expect(tx)
+        .to.emit(token, EVENT_NAME_BURN_TO_RESERVE)
+        .withArgs(minter.address, TOKEN_AMOUNT / 2, TOKEN_AMOUNT / 2);
+
+      await expect(tx)
+        .to.emit(token, EVENT_NAME_TRANSFER)
+        .withArgs(minter.address, ethers.ZeroAddress, TOKEN_AMOUNT / 2);
+
+      await expect(tx).to.changeTokenBalances(
+        token,
+        [minter, mainMinter, deployer, token],
+        [-TOKEN_AMOUNT / 2, 0, 0, 0]
+      );
+
+      expect(await token.totalReserveSupply()).to.eq(TOKEN_AMOUNT / 2);
+
+      // burn remaining tokens to verify event with zero reserve supply
+      const tx2: TransactionResponse = await connect(token, minter).burnToReserve(TOKEN_AMOUNT / 2);
+      await expect(tx2)
+        .to.emit(token, EVENT_NAME_BURN_TO_RESERVE)
+        .withArgs(minter.address, TOKEN_AMOUNT / 2, 0);
+
+      expect(await token.totalReserveSupply()).to.eq(0);
+    });
+
+    it("Is reverted if the contract is paused", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await proveTx(connect(token, minter).mintFromReserve(minter.address, TOKEN_AMOUNT));
+      await proveTx(connect(token, pauser).pause());
+      await expect(
+        connect(token, minter).burnToReserve(TOKEN_AMOUNT)
+      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+    });
+
+    it("Is reverted if the caller is not a minter", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await proveTx(connect(token, minter).mintFromReserve(user.address, TOKEN_AMOUNT));
+      await expect(connect(token, user).burnToReserve(TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MINTER)
+        .withArgs(user.address);
+    });
+
+    it("Is reverted if the caller is blocklisted", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await proveTx(connect(token, minter).mintFromReserve(minter.address, TOKEN_AMOUNT));
+      await proveTx(connect(token, minter).selfBlocklist());
+      await expect(connect(token, minter).burnToReserve(TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
+        .withArgs(minter.address);
+    });
+
+    it("Is reverted if the burn amount is zero", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await expect(connect(token, minter).burnToReserve(0))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_ZERO_BURN_AMOUNT);
+    });
+
+    it("Is reverted if the burn amount exceeds the caller token balance", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await proveTx(connect(token, minter).mintFromReserve(minter.address, TOKEN_AMOUNT));
+      await expect(
+        connect(token, minter).burnToReserve(TOKEN_AMOUNT + 1)
+      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
+    });
+
+    it("Is reverted if the burn amount exceeds the total reserve supply", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+
+      // mint non-reserve tokens to the minter
+      await proveTx(connect(token, minter).mint(minter.address, TOKEN_AMOUNT));
+
+      // mint a small amount to reserve
+      await proveTx(connect(token, minter).mintFromReserve(minter.address, 1));
+
+      // try to burn more than the reserve supply
+      await expect(
+        connect(token, minter).burnToReserve(2)
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_INSUFFICIENT_RESERVE_SUPPLY);
+    });
+  });
+
+  describe("Function 'totalReserveSupply()'", async () => {
+    it("Returns the correct total reserve supply", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+
+      // initial reserve supply should be 0
+      expect(await token.totalReserveSupply()).to.eq(0);
+
+      // mint to reserve should increase the reserve supply
+      await proveTx(connect(token, minter).mintFromReserve(user.address, TOKEN_AMOUNT));
+      expect(await token.totalReserveSupply()).to.eq(TOKEN_AMOUNT);
+
+      // regular mint should not affect the reserve supply
+      await proveTx(connect(token, minter).mint(user.address, TOKEN_AMOUNT));
+      expect(await token.totalReserveSupply()).to.eq(TOKEN_AMOUNT);
+
+      // burn to reserve should decrease the reserve supply
+      await proveTx(connect(token, minter).mintFromReserve(minter.address, TOKEN_AMOUNT));
+      await proveTx(connect(token, minter).burnToReserve(TOKEN_AMOUNT));
+      expect(await token.totalReserveSupply()).to.eq(TOKEN_AMOUNT);
+
+      // regular burn should not affect the reserve supply
+      await proveTx(connect(token, minter).mint(minter.address, TOKEN_AMOUNT));
+      await proveTx(connect(token, minter).burn(TOKEN_AMOUNT));
+      expect(await token.totalReserveSupply()).to.eq(TOKEN_AMOUNT);
     });
   });
 
