@@ -23,7 +23,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint16 maxPendingPremintsCount;
         mapping(uint256 => uint256) premintReschedulings;
         mapping(uint256 => uint256) premintReschedulingCounters;
-        uint256 TotalReserveSupply;
+        uint256 totalReserveSupply;
     }
 
     /// @notice The structure that represents an array of premint records
@@ -249,7 +249,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         _mintInternal(account, amount);
 
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
-        storageSlot.TotalReserveSupply += amount;
+        storageSlot.totalReserveSupply += amount;
 
         emit MintFromReserve(_msgSender(), account, amount);
     }
@@ -344,11 +344,11 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
 
-        if (storageSlot.TotalReserveSupply < amount) {
+        if (storageSlot.totalReserveSupply < amount) {
             revert InsufficientReserveSupply();
         }
 
-        storageSlot.TotalReserveSupply -= amount;
+            storageSlot.totalReserveSupply -= amount;
 
         emit BurnToReserve(_msgSender(), amount);
     }
@@ -435,7 +435,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      */
     function totalReserveSupply() external view returns (uint256) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
-        return storageSlot.TotalReserveSupply;
+        return storageSlot.totalReserveSupply;
     }
 
     function _mintInternal(address account, uint256 amount) internal returns (bool) {
