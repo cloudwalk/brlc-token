@@ -41,9 +41,10 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
   let deployer: HardhatEthersSigner;
   let blocklister: HardhatEthersSigner;
   let user: HardhatEthersSigner;
+  let users: HardhatEthersSigner[];
 
   before(async () => {
-    [deployer, blocklister, user] = await ethers.getSigners();
+    [deployer, blocklister, user, ...users] = await ethers.getSigners();
     blocklistableFactory = await ethers.getContractFactory("BlocklistableUpgradeableMock");
     blocklistableFactory = blocklistableFactory.connect(deployer); // Explicitly specifying the deployer account
   });
@@ -212,6 +213,35 @@ describe("Contract 'BlocklistableUpgradeable'", async () => {
     it("Is reverted if called not by the blocklister", async () => {
       const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
       await expect(connect(blocklistable, user).unBlocklist(user.address))
+        .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER)
+        .withArgs(user.address);
+    });
+  });
+
+  describe("Function 'unBlocklistBatch()'", async () => {
+    it("Executes as expected and emits the correct events if it is called by the blocklister", async () => {
+      const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
+      const blocklistedUserCount = 3;
+      const userAddresses = users.slice(0, blocklistedUserCount).map(user => user.address);
+      for (const userAddress of userAddresses) {
+        await proveTx(connect(blocklistable, blocklister).blocklist(userAddress));
+        expect(await blocklistable.isBlocklisted(userAddress)).to.equal(true);
+      }
+      const tx = connect(blocklistable, blocklister).unBlocklistBatch(userAddresses);
+      for (const userAddress of userAddresses) {
+        await expect(tx)
+          .to.emit(blocklistable, EVENT_NAME_UNBLOCKLISTED)
+          .withArgs(userAddress);
+        expect(await blocklistable.isBlocklisted(userAddress)).to.equal(false);
+      }
+      await expect(
+        connect(blocklistable, blocklister).unBlocklistBatch(userAddresses)
+      ).not.to.emit(blocklistable, EVENT_NAME_UNBLOCKLISTED);
+    });
+
+    it("Is reverted if called not by the blocklister", async () => {
+      const { blocklistable } = await setUpFixture(deployAndConfigureBlocklistable);
+      await expect(connect(blocklistable, user).unBlocklistBatch([user.address]))
         .to.be.revertedWithCustomError(blocklistable, REVERT_ERROR_UNAUTHORIZED_BLOCKLISTER)
         .withArgs(user.address);
     });
