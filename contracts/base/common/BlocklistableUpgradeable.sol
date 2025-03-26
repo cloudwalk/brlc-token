@@ -221,6 +221,24 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
     }
 
     /**
+     * @notice Removes a batch of accounts from the blocklist
+     *
+     * Requirements:
+     *
+     * - Can only be called by the blocklister account
+     *
+     * Emits an {UnBlocklisted} event for each account that was blocklisted previously but unblocklisted now
+     *
+     * @param accounts The array of addresses to remove from the blocklist
+     */
+    function unBlocklistBatch(address[] calldata accounts) public onlyBlocklister {
+        uint256 count = accounts.length;
+        for (uint256 i = 0; i < count; ++i) {
+            unBlocklist(accounts[i]);
+        }
+    }
+
+    /**
      * @notice Adds the transaction sender to the blocklist
      *
      * Emits a {SelfBlocklisted} event
