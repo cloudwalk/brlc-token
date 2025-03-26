@@ -365,22 +365,4 @@ abstract contract BlocklistableUpgradeable is OwnableUpgradeable {
             r.slot := slot
         }
     }
-
-    //*************** Service Functions For Backward Compatibility ***************
-
-    function blacklist(address account) external onlyBlocklister {
-        blocklist(account);
-    }
-
-    function unBlacklist(address account) external onlyBlocklister {
-        unBlocklist(account);
-    }
-
-    function selfBlacklist() external {
-        selfBlocklist();
-    }
-
-    function isBlacklisted(address account) external view returns (bool) {
-        return isBlocklisted(account);
-    }
 }
