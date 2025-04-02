@@ -4,9 +4,11 @@ pragma solidity ^0.8.4;
 
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+
 import { RescuableUpgradeable } from "./common/RescuableUpgradeable.sol";
 import { PausableExtUpgradeable } from "./common/PausableExtUpgradeable.sol";
-import { BlocklistableUpgradeable } from "./common/BlocklistableUpgradeable.sol";
+
+import { LegacyBlocklistablePlaceholder } from "../legacy/LegacyBlocklistablePlaceholder.sol";
 
 /**
  * @title ERC20Base contract
@@ -18,7 +20,7 @@ abstract contract ERC20Base is
     OwnableUpgradeable,
     RescuableUpgradeable,
     PausableExtUpgradeable,
-    BlocklistableUpgradeable,
+    LegacyBlocklistablePlaceholder,
     ERC20Upgradeable
 {
     /// @dev Throws if the zero address is passed to the function
@@ -41,7 +43,6 @@ abstract contract ERC20Base is
         __Rescuable_init_unchained();
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
-        __Blocklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
         __ERC20Base_init_unchained();
     }
@@ -78,7 +79,7 @@ abstract contract ERC20Base is
         address owner,
         address spender,
         uint256 amount
-    ) internal virtual override whenNotPaused notBlocklisted(owner) notBlocklisted(spender) {
+    ) internal virtual override whenNotPaused {
         super._approve(owner, spender, amount);
     }
 
@@ -93,7 +94,7 @@ abstract contract ERC20Base is
         address owner,
         address spender,
         uint256 amount
-    ) internal virtual override whenNotPaused notBlocklisted(owner) notBlocklisted(spender) {
+    ) internal virtual override whenNotPaused {
         super._spendAllowance(owner, spender, amount);
     }
 
@@ -108,7 +109,7 @@ abstract contract ERC20Base is
         address from,
         address to,
         uint256 amount
-    ) internal virtual override whenNotPaused notBlocklisted(from) notBlocklistedOrBypassIfBlocklister(to) {
+    ) internal virtual override whenNotPaused {
         super._beforeTokenTransfer(from, to, amount);
     }
 

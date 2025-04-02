@@ -46,7 +46,6 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
       expect(await token.owner()).to.equal(deployer.address);
       expect(await token.pauser()).to.equal(ethers.ZeroAddress);
       expect(await token.rescuer()).to.equal(ethers.ZeroAddress);
-      expect(await token.mainBlocklister()).to.equal(ethers.ZeroAddress);
       expect(await token.isBridgeSupported(bridge.address)).to.equal(true);
       expect(await token.isIERC20Bridgeable()).to.equal(true);
       expect(await token.bridge()).to.equal(bridge.address);

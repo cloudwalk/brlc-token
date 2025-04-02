@@ -38,7 +38,6 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
         __Ownable_init_unchained();
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
-        __Blocklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
         __ERC20Base_init_unchained();
         __ERC20Restrictable_init_unchained();
@@ -67,7 +66,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /**
      * @inheritdoc IERC20Restrictable
      */
-    function restrictionIncrease(address account, bytes32 purpose, uint256 amount) external onlyBlocklister {
+    function restrictionIncrease(address account, bytes32 purpose, uint256 amount) external onlyOwner {
         if (account == address(0)) {
             revert ZeroAddress();
         }
@@ -90,7 +89,7 @@ abstract contract ERC20Restrictable is ERC20Base, IERC20Restrictable {
     /**
      * @inheritdoc IERC20Restrictable
      */
-    function restrictionDecrease(address account, bytes32 purpose, uint256 amount) external onlyBlocklister {
+    function restrictionDecrease(address account, bytes32 purpose, uint256 amount) external onlyOwner {
         if (account == address(0)) {
             revert ZeroAddress();
         }

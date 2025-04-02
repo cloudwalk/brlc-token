@@ -29,7 +29,6 @@ abstract contract ERC20Trustable is ERC20Base, IERC20Trustable {
         __Ownable_init_unchained();
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
-        __Blocklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
         __ERC20Base_init_unchained();
         __ERC20Trustable_init_unchained();

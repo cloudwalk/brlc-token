@@ -50,7 +50,6 @@ describe("Contract 'ERC20Trustable'", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.owner()).to.equal(deployer.address);
       expect(await token.pauser()).to.equal(ethers.ZeroAddress);
-      expect(await token.mainBlocklister()).to.equal(ethers.ZeroAddress);
     });
 
     it("Is reverted if called for the second time", async () => {
