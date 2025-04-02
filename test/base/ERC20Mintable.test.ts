@@ -40,7 +40,6 @@ describe("Contract 'ERC20Mintable'", async () => {
   const REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT = "ERC20: mint to the zero address";
   const REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE = "ERC20: burn amount exceeds balance";
 
-  const REVERT_ERROR_BLOCKLISTED_ACCOUNT = "BlocklistedAccount";
   const REVERT_ERROR_UNAUTHORIZED_MAIN_MINTER = "UnauthorizedMainMinter";
   const REVERT_ERROR_UNAUTHORIZED_MINTER = "UnauthorizedMinter";
   const REVERT_ERROR_ZERO_BURN_AMOUNT = "ZeroBurnAmount";
@@ -72,14 +71,13 @@ describe("Contract 'ERC20Mintable'", async () => {
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
   let pauser: HardhatEthersSigner;
-  let mainBlocklister: HardhatEthersSigner;
   let mainMinter: HardhatEthersSigner;
   let minter: HardhatEthersSigner;
   let user: HardhatEthersSigner;
   let recipient: HardhatEthersSigner;
 
   before(async () => {
-    [deployer, pauser, mainBlocklister, mainMinter, minter, user, recipient] = await ethers.getSigners();
+    [deployer, pauser, mainMinter, minter, user, recipient] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20MintableMock");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
@@ -88,14 +86,12 @@ describe("Contract 'ERC20Mintable'", async () => {
     let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
-    await proveTx(token.enableBlocklist(true));
     return { token };
   }
 
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
     await proveTx(token.setPauser(pauser.address));
-    await proveTx(token.setMainBlocklister(mainBlocklister.address));
     await proveTx(token.updateMainMinter(mainMinter.address));
     await proveTx(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
     await proveTx(connect(token, mainMinter).configureMinter(minter.address, MINT_ALLOWANCE));
@@ -107,7 +103,6 @@ describe("Contract 'ERC20Mintable'", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.owner()).to.eq(deployer.address);
       expect(await token.pauser()).to.eq(ethers.ZeroAddress);
-      expect(await token.mainBlocklister()).to.eq(ethers.ZeroAddress);
       expect(await token.mainMinter()).to.eq(ethers.ZeroAddress);
       expect(await token.maxPendingPremintsCount()).to.eq(0);
     });
@@ -218,7 +213,8 @@ describe("Contract 'ERC20Mintable'", async () => {
 
   describe("Function 'mint()'", async () => {
     describe("Executes as expected and emits the correct events if", async () => {
-      async function checkMinting(token: Contract) {
+      it("All needed conditions are met", async () => {
+        const { token } = await setUpFixture(deployAndConfigureToken);
         const oldMintAllowance: bigint = await token.minterAllowance(minter.address);
         const newExpectedMintAllowance: bigint = oldMintAllowance - BigInt(TOKEN_AMOUNT);
         const tx: TransactionResponse = await connect(token, minter).mint(user.address, TOKEN_AMOUNT);
@@ -228,18 +224,6 @@ describe("Contract 'ERC20Mintable'", async () => {
           .withArgs(ethers.ZeroAddress, user.address, TOKEN_AMOUNT);
         await expect(tx).to.changeTokenBalances(token, [user], [TOKEN_AMOUNT]);
         expect(await token.minterAllowance(minter.address)).to.eq(newExpectedMintAllowance);
-      }
-
-      it("The caller and destination address are not blocklisted", async () => {
-        const { token } = await setUpFixture(deployAndConfigureToken);
-        await checkMinting(token);
-      });
-
-      it("The destination address is blocklisted but the caller is a blocklister", async () => {
-        const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(connect(token, mainBlocklister).configureBlocklister(minter.address, true));
-        await proveTx(connect(token, user).selfBlocklist());
-        await checkMinting(token);
       });
     });
 
@@ -256,23 +240,6 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(connect(token, user).mint(user.address, TOKEN_AMOUNT))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MINTER)
-          .withArgs(user.address);
-      });
-
-      it("The caller is blocklisted even if the caller is a blocklister", async () => {
-        const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(connect(token, mainBlocklister).configureBlocklister(minter.address, true));
-        await proveTx(connect(token, minter).selfBlocklist());
-        await expect(connect(token, minter).mint(user.address, TOKEN_AMOUNT))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
-          .withArgs(minter.address);
-      });
-
-      it("The destination address is blocklisted and the caller is not a blocklister", async () => {
-        const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(connect(token, user).selfBlocklist());
-        await expect(connect(token, minter).mint(user.address, TOKEN_AMOUNT))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
           .withArgs(user.address);
       });
 
@@ -329,15 +296,6 @@ describe("Contract 'ERC20Mintable'", async () => {
       await expect(connect(token, user).burn(TOKEN_AMOUNT))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MINTER)
         .withArgs(user.address);
-    });
-
-    it("Is reverted if the caller is blocklisted", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(connect(token, minter).mint(minter.address, TOKEN_AMOUNT));
-      await proveTx(connect(token, minter).selfBlocklist());
-      await expect(connect(token, minter).burn(TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
-        .withArgs(minter.address);
     });
 
     it("Is reverted if the burn amount is zero", async () => {
@@ -403,14 +361,6 @@ describe("Contract 'ERC20Mintable'", async () => {
       await expect(connect(token, user).mintFromReserve(user.address, TOKEN_AMOUNT))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MINTER)
         .withArgs(user.address);
-    });
-
-    it("Is reverted if the caller is blocklisted", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(connect(token, minter).selfBlocklist());
-      await expect(connect(token, minter).mintFromReserve(user.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
-        .withArgs(minter.address);
     });
 
     it("Is reverted if the mint amount is zero", async () => {
@@ -482,15 +432,6 @@ describe("Contract 'ERC20Mintable'", async () => {
       await expect(connect(token, user).burnToReserve(TOKEN_AMOUNT))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MINTER)
         .withArgs(user.address);
-    });
-
-    it("Is reverted if the caller is blocklisted", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      await proveTx(connect(token, minter).mintFromReserve(minter.address, TOKEN_AMOUNT));
-      await proveTx(connect(token, minter).selfBlocklist());
-      await expect(connect(token, minter).burnToReserve(TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
-        .withArgs(minter.address);
     });
 
     it("Is reverted if the burn amount is zero", async () => {
@@ -634,15 +575,8 @@ describe("Contract 'ERC20Mintable'", async () => {
         }
       }
 
-      it("A new premint is created and the caller and recipient are not blocklisted", async () => {
+      it("A new premint is created", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await executeAndCheckPremint(token);
-      });
-
-      it("A new premint is created and the recipient is blocklisted but the caller is a blocklister", async () => {
-        const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(connect(token, mainBlocklister).configureBlocklister(minter.address, true));
-        await proveTx(connect(token, user).selfBlocklist());
         await executeAndCheckPremint(token);
       });
 
@@ -826,30 +760,6 @@ describe("Contract 'ERC20Mintable'", async () => {
           .withArgs(user.address);
         await expect(connect(token, user).premintDecrease(user.address, TOKEN_AMOUNT, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MINTER)
-          .withArgs(user.address);
-      });
-
-      it("The caller is blocklisted even if the caller is a blocklister", async () => {
-        const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(connect(token, mainBlocklister).configureBlocklister(minter.address, true));
-        await proveTx(connect(token, minter).selfBlocklist());
-        await expect(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
-          .withArgs(minter.address);
-        await expect(connect(token, minter).premintDecrease(user.address, TOKEN_AMOUNT, timestamp))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
-          .withArgs(minter.address);
-      });
-
-      it("The recipient is blocklisted and the caller is not a blocklister", async () => {
-        const { token } = await setUpFixture(deployAndConfigureToken);
-        await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
-        await proveTx(connect(token, user).selfBlocklist());
-        await expect(connect(token, minter).premintIncrease(user.address, 1, timestamp))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
-          .withArgs(user.address);
-        await expect(connect(token, minter).premintDecrease(user.address, 1, timestamp))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
           .withArgs(user.address);
       });
 
@@ -1098,17 +1008,6 @@ describe("Contract 'ERC20Mintable'", async () => {
         await expect(connect(token, user).reschedulePremintRelease(originalRelease, targetRelease))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_MINTER)
           .withArgs(user.address);
-      });
-
-      it("The caller is blocklisted even if the caller is a blocklister", async () => {
-        const { token } = await setUpFixture(deployAndConfigureToken);
-        const originalRelease = timestamp;
-        const targetRelease = timestamp + 1;
-        await proveTx(connect(token, mainBlocklister).configureBlocklister(minter.address, true));
-        await proveTx(connect(token, minter).selfBlocklist());
-        await expect(connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease))
-          .to.be.revertedWithCustomError(token, REVERT_ERROR_BLOCKLISTED_ACCOUNT)
-          .withArgs(minter.address);
       });
 
       it("The provided target release timestamp for the rescheduling is passed", async () => {

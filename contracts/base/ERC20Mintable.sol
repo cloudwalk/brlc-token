@@ -142,7 +142,6 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         __Ownable_init_unchained();
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
-        __Blocklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
         __ERC20Base_init_unchained();
         __ERC20Mintable_init_unchained();
@@ -231,7 +230,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The `amount` value must be greater than zero and not
      * greater than the mint allowance of the minter
      */
-    function mint(address account, uint256 amount) external onlyMinter notBlocklisted(_msgSender()) returns (bool) {
+    function mint(address account, uint256 amount) external onlyMinter returns (bool) {
         return _mintInternal(account, amount);
     }
 
@@ -245,7 +244,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     function mintFromReserve(
         address account,
         uint256 amount
-    ) external whenNotPaused onlyMinter notBlocklisted(_msgSender()) {
+    ) external whenNotPaused onlyMinter {
         _mintInternal(account, amount);
 
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
@@ -268,7 +267,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         address account,
         uint256 amount,
         uint256 release
-    ) external onlyMinter notBlocklisted(_msgSender()) {
+    ) external onlyMinter {
         _premint(
             account,
             amount,
@@ -291,7 +290,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         address account,
         uint256 amount,
         uint256 release
-    ) external onlyMinter notBlocklisted(_msgSender()) {
+    ) external onlyMinter {
         _premint(
             account,
             amount,
@@ -315,7 +314,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     function reschedulePremintRelease(
         uint256 originalRelease,
         uint256 targetRelease
-    ) external whenNotPaused onlyMinter notBlocklisted(_msgSender()) {
+    ) external whenNotPaused onlyMinter {
         _reschedulePremintRelease(originalRelease, targetRelease);
     }
 
@@ -327,7 +326,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The message sender must not be blocklisted
      * @dev The `amount` value must be greater than zero
      */
-    function burn(uint256 amount) external onlyMinter notBlocklisted(_msgSender()) {
+    function burn(uint256 amount) external onlyMinter {
         _burnInternal(_msgSender(), amount);
     }
 
@@ -339,7 +338,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The message sender must not be blocklisted
      * @dev The amount of tokens to burn must be less than or equal to the total reserve supply
      */
-    function burnToReserve(uint256 amount) external whenNotPaused onlyMinter notBlocklisted(_msgSender()) {
+    function burnToReserve(uint256 amount) external whenNotPaused onlyMinter {
         _burnInternal(_msgSender(), amount);
 
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
