@@ -18,8 +18,10 @@ pragma solidity ^0.8.4;
  * - map `BlocklistableStorageSlot.blocklisters` must be clear for all addresses for which
  *   the `BlocklisterConfigured` and `BlacklisterConfigured` events were emitted in the past.
  *
- * RECOMMENDATION! It is better not to use the event and error names from this smart-contract
- * to avoid confusion between legacy and new entities.
+ * RECOMMENDATIONS!
+ * 1. It is better not to use the event and error names from this smart-contract
+ *    to avoid confusion between legacy and new entities.
+ * 2. This contract should be removed for new deployments.
  */
 abstract contract LegacyBlocklistablePlaceholder {
     /// @notice The structure that represents blocklistable contract storage
