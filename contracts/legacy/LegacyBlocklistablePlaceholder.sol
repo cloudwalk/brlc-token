@@ -87,7 +87,6 @@ abstract contract LegacyBlocklistablePlaceholder {
      */
     event BlocklistEnabled(bool indexed status);
 
-
     // -------------------- Obsolete Events --------------------------
 
     /**
