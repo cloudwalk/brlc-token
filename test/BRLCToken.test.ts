@@ -45,7 +45,6 @@ describe("Contract 'BRLCToken'", async () => {
       expect(await token.owner()).to.equal(deployer.address);
       expect(await token.pauser()).to.equal(ethers.ZeroAddress);
       expect(await token.rescuer()).to.equal(ethers.ZeroAddress);
-      expect(await token.mainBlocklister()).to.equal(ethers.ZeroAddress);
       expect(await token.mainMinter()).to.equal(ethers.ZeroAddress);
     });
 

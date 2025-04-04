@@ -42,14 +42,12 @@ describe("Contract 'ERC20Freezable'", async () => {
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
   let pauser: HardhatEthersSigner;
-  let mainBlocklister: HardhatEthersSigner;
-  let blocklister: HardhatEthersSigner;
   let freezer: HardhatEthersSigner;
   let user1: HardhatEthersSigner;
   let user2: HardhatEthersSigner;
 
   before(async () => {
-    [deployer, pauser, mainBlocklister, blocklister, freezer, user1, user2] = await ethers.getSigners();
+    [deployer, pauser, freezer, user1, user2] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20FreezableMock");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
@@ -64,8 +62,6 @@ describe("Contract 'ERC20Freezable'", async () => {
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
     await proveTx(token.setPauser(pauser.address));
-    await proveTx(token.setMainBlocklister(mainBlocklister.address));
-    await proveTx(connect(token, mainBlocklister).configureBlocklister(blocklister.address, true));
     await proveTx(token.configureFreezerBatch([freezer.address], true));
     return { token };
   }
@@ -75,8 +71,6 @@ describe("Contract 'ERC20Freezable'", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.owner()).to.equal(deployer.address);
       expect(await token.pauser()).to.equal(ethers.ZeroAddress);
-      expect(await token.mainBlocklister()).to.equal(ethers.ZeroAddress);
-      expect(await token.isBlocklister(blocklister.address)).to.equal(false);
       expect(await token.isFreezer(freezer.address)).to.equal(false);
 
       // To ensure 100% coverage even for the deprecated function
@@ -524,20 +518,6 @@ describe("Contract 'ERC20Freezable'", async () => {
           transferAmount: 10
         });
       });
-    });
-  });
-
-  describe("Modifier 'onlyFreezer()'", async () => {
-    it("Does not treat blocklisters and the main blocklister as freezers", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-
-      await expect(
-        connect(token, blocklister).freezeIncrease(user1.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_FREEZER);
-
-      await expect(
-        connect(token, mainBlocklister).freezeIncrease(user1.address, TOKEN_AMOUNTx2)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_FREEZER);
     });
   });
 });

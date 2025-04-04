@@ -79,7 +79,6 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         __Ownable_init_unchained();
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
-        __Blocklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
         __ERC20Base_init_unchained();
         __ERC20Freezable_init_unchained();

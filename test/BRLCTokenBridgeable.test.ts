@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { connect } from "../test-utils/eth";
+import { connect, proveTx } from "../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -46,7 +46,6 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
       expect(await token.owner()).to.equal(deployer.address);
       expect(await token.pauser()).to.equal(ethers.ZeroAddress);
       expect(await token.rescuer()).to.equal(ethers.ZeroAddress);
-      expect(await token.mainBlocklister()).to.equal(ethers.ZeroAddress);
       expect(await token.isBridgeSupported(bridge.address)).to.equal(true);
       expect(await token.isIERC20Bridgeable()).to.equal(true);
       expect(await token.bridge()).to.equal(bridge.address);
@@ -65,6 +64,20 @@ describe("Contract 'BRLCTokenBridgeable'", async () => {
       await expect(
         tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge.address)
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
+    });
+  });
+
+  describe("Function 'transfer()'", async () => {
+    it("Executes as expected", async () => {
+      const { token } = await setUpFixture(deployToken);
+      const amount = 123456789;
+      await proveTx(connect(token, bridge).mintForBridging(deployer.address, amount));
+      const tx = token.transfer(bridge.address, amount);
+      expect(tx).to.changeTokenBalances(
+        token,
+        [deployer, bridge],
+        [-amount, +amount]
+      );
     });
   });
 

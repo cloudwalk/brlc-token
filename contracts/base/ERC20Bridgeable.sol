@@ -58,7 +58,6 @@ abstract contract ERC20Bridgeable is ERC20Base, IERC20Bridgeable {
         __Ownable_init_unchained();
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
-        __Blocklistable_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
         __ERC20Base_init_unchained();
         __ERC20Bridgeable_init_unchained(bridge_);
