@@ -14,11 +14,11 @@ pragma solidity ^0.8.4;
  * If it is necessary to use the slots of this smart contract, they must be cleared taking into account the following:
  *
  * - map `_purposeAssignments` must be clear for all addresses for which
- *   the `PurposesAssigned` events were emitted in the past.
+ *   the `PurposesAssigned` or `AssignPurposes` events were emitted in the past.
  * - map `_totalRestrictedBalances` must be clear for all addresses for which
- *   the `RestrictionUpdated` events were emitted in the past.
+ *   the `RestrictionUpdated` or `UpdateRestriction` events were emitted in the past.
  * - map `_restrictedPurposeBalances` must be clear for all addresses and purposes for which
- *   the `RestrictionUpdated` events were emitted in the past.
+ *   the `RestrictionUpdated` or `UpdateRestriction` events were emitted in the past.
  *
  * RECOMMENDATIONS!
  * 1. It is better not to use the event and error names from this smart-contract
@@ -55,6 +55,18 @@ abstract contract LegacyRestrictablePlaceholder {
      * @param oldBalance The old restricted balance
      */
     event RestrictionUpdated(address indexed account, bytes32 indexed purpose, uint256 newBalance, uint256 oldBalance);
+
+    // -------------------- Obsolete Events --------------------------
+
+    /**
+     * @dev The same as the `PurposesAssigned` event above but with the obsolete name.
+     */
+    event AssignPurposes(address indexed account, bytes32[] newPurposes, bytes32[] oldPurposes);
+
+    /**
+     * @dev The same as the `RestrictionUpdated` event above but with the obsolete name.
+     */
+    event UpdateRestriction(address indexed account, bytes32 indexed purpose, uint256 newBalance, uint256 oldBalance);
 
     // -------------------- Errors -----------------------------------
 
