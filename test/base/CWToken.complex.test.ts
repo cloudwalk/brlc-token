@@ -6,9 +6,9 @@ import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { connect, getLatestBlockTimestamp, increaseBlockTimestampTo, proveTx } from "../../test-utils/eth";
 
 interface TokenAmounts {
-  minted: number;
-  preminted: number;
+  total: number;
   frozen: number;
+  preminted: number;
 }
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
@@ -20,7 +20,6 @@ async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
 }
 
 function processPremintingRelease(amounts: TokenAmounts) {
-  amounts.minted += amounts.preminted;
   amounts.preminted = 0;
 }
 
@@ -30,7 +29,6 @@ async function awaitPremintingRelease(props: { timestamp: number; amounts?: Toke
     processPremintingRelease(props.amounts);
   }
 }
-
 
 describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () => {
   const TOKEN_NAME = "CW Token";
@@ -75,7 +73,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
     token: Contract;
     amounts: TokenAmounts;
   }) {
-    const total = props.amounts.minted + props.amounts.preminted;
+    const total = props.amounts.total;
     const detained = props.amounts.preminted + props.amounts.frozen;
     const free = total > detained ? total - detained : 0;
     const actualComplexBalance = await props.token.balanceOfComplex(sender.address);
@@ -93,8 +91,9 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
     timestamp?: number;
   }): Promise<TokenAmounts> {
     const { token, amounts, timestamp } = props;
-    if (amounts.minted > 0) {
-      await proveTx(token.mint(sender.address, amounts.minted));
+    const minted = amounts.total - props.amounts.preminted;
+    if (minted > 0) {
+      await proveTx(token.mint(sender.address, minted));
     }
     if (amounts.preminted > 0) {
       if (timestamp) {
@@ -145,39 +144,44 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
   });
 
   describe("Function 'balancesOfComplex()'", async () => {
-    it("Returns correct values if detained balance is less than total balance", async () => {
+    it("Returns correct values if detained balance is less than the total balance", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await checkComplexBalanceGetter({ token, amounts: { minted: 15, preminted: 5, frozen: 5 } });
+      await checkComplexBalanceGetter({ token, amounts: { total: 20, frozen: 5, preminted: 5 } });
     });
 
-    it("Returns correct values if detained balance is bigger than total balance", async () => {
+    it("Returns correct values if detained balance equals the total balance", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await checkComplexBalanceGetter({ token, amounts: { minted: 15, preminted: 5, frozen: 15 } });
+      await checkComplexBalanceGetter({ token, amounts: { total: 20, frozen: 15, preminted: 5 } });
+    });
+
+    it("Returns correct values if frozen balance is greater than the total balance", async () => {
+      const { token } = await setUpFixture(deployAndConfigureToken);
+      await checkComplexBalanceGetter({ token, amounts: { total: 20, frozen: 25, preminted: 5 } });
     });
 
     it("Returns correct values with no limited balances", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await checkComplexBalanceGetter({ token, amounts: { minted: 15, preminted: 0, frozen: 0 } });
+      await checkComplexBalanceGetter({ token, amounts: { total: 20, frozen: 0, preminted: 0 } });
     });
 
     it("Returns correct values with no free balance", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await checkComplexBalanceGetter({ token, amounts: { minted: 0, preminted: 5, frozen: 5 } });
+      await checkComplexBalanceGetter({ token, amounts: { total: 10, frozen: 5, preminted: 5 } });
     });
 
-    it("Returns correct values with only premint balance", async () => {
+    it("Returns correct values with the preminting balance only", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await checkComplexBalanceGetter({ token, amounts: { minted: 0, preminted: 5, frozen: 0 } });
+      await checkComplexBalanceGetter({ token, amounts: { total: 5, frozen: 0, preminted: 5 } });
     });
 
-    it("Returns correct values with only frozen balance", async () => {
+    it("Returns correct values with the frozen balance only", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await checkComplexBalanceGetter({ token, amounts: { minted: 0, preminted: 0, frozen: 5 } });
+      await checkComplexBalanceGetter({ token, amounts: { total: 0, frozen: 5, preminted: 0 } });
     });
 
     it("Returns correct values with no balances at all", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await checkComplexBalanceGetter({ token, amounts: { minted: 0, preminted: 0, frozen: 0 } });
+      await checkComplexBalanceGetter({ token, amounts: { total: 0, frozen: 0, preminted: 0 } });
     });
   });
 
@@ -201,7 +205,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         [sender, receiver],
         [-transferAmount, transferAmount]
       );
-      amounts.minted -= transferAmount;
+      amounts.total -= transferAmount;
       await checkComplexBalance({ token, amounts });
     }
 
@@ -240,8 +244,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     }
 
-    describe("Executes as expected if there are the free, frozen, premint balances and", async () => {
-      const initialAmounts: TokenAmounts = { minted: 15, preminted: 5, frozen: 5 };
+    describe("Executes as expected if there are the free, frozen, preminting balances and", async () => {
+      const initialAmounts: TokenAmounts = { total: 20, frozen: 5, preminted: 5 };
       let timestamp: number;
       beforeEach(async () => {
         timestamp = (await getLatestBlockTimestamp()) + 100;
@@ -347,8 +351,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       });
     });
 
-    describe("Executes as expected if there are the free and frozen balance, no premint balance, and", async () => {
-      const initialAmounts: TokenAmounts = { minted: 20, preminted: 0, frozen: 10 };
+    describe("Executes as expected if there are the free and frozen balance, no preminted balance, and", async () => {
+      const initialAmounts: TokenAmounts = { total: 20, frozen: 10, preminted: 0 };
 
       // Skipping because it is similar to the next one
       it.skip("5 tokens are transferred", async () => {
@@ -381,8 +385,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       });
     });
 
-    describe("Executes as expected if there are the free and premint balances, no frozen balance, and", async () => {
-      const initialAmounts: TokenAmounts = { minted: 10, preminted: 10, frozen: 0 };
+    describe("Executes as expected if there are the free and preminting balances, no frozen balance, and", async () => {
+      const initialAmounts: TokenAmounts = { total: 20, frozen: 0, preminted: 10 };
       let timestamp: number;
       beforeEach(async () => {
         timestamp = (await getLatestBlockTimestamp()) + 100;
@@ -490,8 +494,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       });
     });
 
-    describe("Executes as expected if there are the frozen and premint balances, no free balance, and", async () => {
-      const initialAmounts: TokenAmounts = { minted: 10, preminted: 10, frozen: 10 };
+    describe("Executes as expected if there are the frozen and preminting balances, no free balance, and", async () => {
+      const initialAmounts: TokenAmounts = { total: 20, frozen: 10, preminted: 10 };
       let timestamp: number;
       beforeEach(async () => {
         timestamp = (await getLatestBlockTimestamp()) + 100;
@@ -603,8 +607,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       });
     });
 
-    describe("Executes as expected if there is the frozen balance only, no free or premint balances, and", async () => {
-      const initialAmounts: TokenAmounts = { minted: 20, preminted: 0, frozen: 20 };
+    describe("Executes as expected if there is the frozen balance only, no other balances, and", async () => {
+      const initialAmounts: TokenAmounts = { total: 20, frozen: 20, preminted: 0 };
 
       it("5 tokens are transferred", async () => {
         await failTransferWithCustomErrorAndCheck({
@@ -649,8 +653,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       });
     });
 
-    describe("Executes as expected if there is the premint balance only, no free or frozen balances, and", async () => {
-      const initialAmounts: TokenAmounts = { minted: 0, preminted: 20, frozen: 0 };
+    describe("Executes as expected if there is the preminting balance only, no other balances, and", async () => {
+      const initialAmounts: TokenAmounts = { total: 20, frozen: 0, preminted: 20 };
       let timestamp: number;
       beforeEach(async () => {
         timestamp = (await getLatestBlockTimestamp()) + 100;
@@ -761,8 +765,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       });
     });
 
-    describe("Executes as expected if there is the free balance only, no frozen or premint balances and", async () => {
-      const initialAmounts: TokenAmounts = { minted: 20, preminted: 0, frozen: 0 };
+    describe("Executes as expected if there is the free balance only, no other balances and", async () => {
+      const initialAmounts: TokenAmounts = { total: 20, frozen: 0, preminted: 0 };
 
       // Skipping because it is similar to the next one
       it.skip("5 tokens are transferred", async () => {
@@ -805,7 +809,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         [-transferAmount, transferAmount]
       );
       amounts.frozen -= transferAmount;
-      amounts.minted -= transferAmount;
+      amounts.total -= transferAmount;
       await checkComplexBalance({ token, amounts });
     }
 
@@ -823,9 +827,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
     }
 
     describe("Executes as expected if there is the frozen balance only and", async () => {
-
       describe("The frozen balance is less than the total one and", async () => {
-        const initialAmounts: TokenAmounts = { minted: 20, preminted: 0, frozen: 5 };
+        const initialAmounts: TokenAmounts = { total: 20, frozen: 5, preminted: 0 };
         it("5 tokens are transferred", async () => {
           await executeTransferFrozenAndCheck({ initialAmounts, transferAmount: 5 });
         });
@@ -840,7 +843,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       });
 
       describe("The frozen balance is greater than the total one", async () => {
-        const initialAmounts: TokenAmounts = { minted: 20, preminted: 0, frozen: 25 };
+        const initialAmounts: TokenAmounts = { total: 20, frozen: 25, preminted: 0 };
 
         it("5 tokens are transferred", async () => {
           await executeTransferFrozenAndCheck({ initialAmounts, transferAmount: 5 });
