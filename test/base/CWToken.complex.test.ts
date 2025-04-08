@@ -11,6 +11,15 @@ interface TokenAmounts {
   preminted: number;
 }
 
+// Skips redundant tests in this file. Those tests that are similar to the next or previous one in a section.
+// The default value is `true`
+const SKIP_REDUNDANT_TESTS: boolean = (process.env.CW_TOKEN_COMPLEX_SKIP_REDUNDANT_TESTS ?? "true") === "true";
+
+// An extension of the `it` function that can skip redundant tests if it is configured
+function it_optional(title: string, fn: () => Promise<void>): Mocha.Test {
+  return SKIP_REDUNDANT_TESTS ? it.skip(title, fn) : it(title, fn);
+}
+
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
     return loadFixture(func);
@@ -252,8 +261,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       });
 
       describe("Tokens are transferred before the preminting release and", async () => {
-        // Skipping because it is similar to the next one
-        it.skip("5 tokens are transferred", async () => {
+        it_optional("5 tokens are transferred", async () => {
           await executeTransferAndCheck({
             initialAmounts,
             transferAmount: 5,
@@ -302,8 +310,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       });
 
       describe("Tokens are transferred after the preminting release and", async () => {
-        // Skipping because it is similar to the next one
-        it.skip("5 tokens are transferred", async () => {
+        it_optional("5 tokens are transferred", async () => {
           await executeTransferAndCheck({
             initialAmounts,
             transferAmount: 5,
@@ -312,8 +319,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
           });
         });
 
-        // Skipping because it is similar to the next one
-        it.skip("10 tokens are transferred", async () => {
+        it_optional("10 tokens are transferred", async () => {
           await executeTransferAndCheck({
             initialAmounts,
             transferAmount: 10,
@@ -355,8 +361,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
     describe("Executes as expected if there are the free and frozen balance, no preminted balance, and", async () => {
       const initialAmounts: TokenAmounts = { total: 20, frozen: 10, preminted: 0 };
 
-      // Skipping because it is similar to the next one
-      it.skip("5 tokens are transferred", async () => {
+      it_optional("5 tokens are transferred", async () => {
         await executeTransferAndCheck({ initialAmounts, transferAmount: 5 });
       });
 
@@ -372,8 +377,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         });
       });
 
-      // Skipping because it is similar to the previous one
-      it.skip("20 tokens are transferred", async () => {
+      it_optional("20 tokens are transferred", async () => {
         await failTransferWithCustomErrorAndCheck({
           errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
@@ -394,8 +398,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       });
 
       describe("Tokens are transferred before the preminting release and", async () => {
-        // Skipping because it is similar to the next one
-        it.skip("5 tokens are transferred", async () => {
+        it_optional("5 tokens are transferred", async () => {
           await executeTransferAndCheck({
             initialAmounts,
             transferAmount: 5,
@@ -423,8 +426,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
           });
         });
 
-        // Skipping because it is similar to the previous one
-        it.skip("20 tokens are transferred", async () => {
+        it_optional("20 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
             errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
             initialAmounts,
@@ -445,8 +447,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       });
 
       describe("Tokens are transferred after the preminting release and", async () => {
-        // Skipping because it is similar to the next one
-        it.skip("5 tokens are transferred", async () => {
+        it_optional("5 tokens are transferred", async () => {
           await executeTransferAndCheck({
             initialAmounts,
             transferAmount: 5,
@@ -513,8 +514,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
           });
         });
 
-        // Skipping because it is similar to the previous one
-        it.skip("10 tokens are transferred", async () => {
+        it_optional("10 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
             errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
             initialAmounts,
@@ -534,8 +534,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
           });
         });
 
-        // Skipping because it is similar to the previous one
-        it.skip("20 tokens are transferred", async () => {
+        it_optional("20 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
             errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
             initialAmounts,
@@ -556,8 +555,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       });
 
       describe("Tokens are transferred after the preminting release and", async () => {
-        // Skipping because it is similar to the next one
-        it.skip("5 tokens are transferred", async () => {
+        it_optional("5 tokens are transferred", async () => {
           await executeTransferAndCheck({
             initialAmounts,
             transferAmount: 5,
@@ -618,8 +616,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         });
       });
 
-      // Skipping because it is similar to the previous one
-      it.skip("10 tokens are transferred", async () => {
+      it_optional("10 tokens are transferred", async () => {
         await failTransferWithCustomErrorAndCheck({
           errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
@@ -627,8 +624,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         });
       });
 
-      // Skipping because it is similar to the previous one
-      it.skip("15 tokens are transferred", async () => {
+      it_optional("15 tokens are transferred", async () => {
         await failTransferWithCustomErrorAndCheck({
           errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
@@ -636,8 +632,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         });
       });
 
-      // Skipping because it is similar to the previous one
-      it.skip("20 tokens are transferred", async () => {
+      it_optional("20 tokens are transferred", async () => {
         await failTransferWithCustomErrorAndCheck({
           errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
@@ -671,8 +666,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
           });
         });
 
-        // Skipping because it is similar to the previous one
-        it.skip("10 tokens are transferred", async () => {
+        it_optional("10 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
             errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
             initialAmounts,
@@ -682,8 +676,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
           });
         });
 
-        // Skipping because it is similar to the previous one
-        it.skip("15 tokens are transferred", async () => {
+        it_optional("15 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
             errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
             initialAmounts,
@@ -693,8 +686,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
           });
         });
 
-        // Skipping because it is similar to the previous one
-        it.skip("20 tokens are transferred", async () => {
+        it_optional("20 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
             errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
             initialAmounts,
@@ -715,8 +707,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       });
 
       describe("Tokens are transferred after the preminting release and", async () => {
-        // Skipping because it is similar to the next one
-        it.skip("5 tokens are transferred", async () => {
+        it_optional("5 tokens are transferred", async () => {
           await executeTransferAndCheck({
             initialAmounts,
             transferAmount: 5,
@@ -725,8 +716,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
           });
         });
 
-        // Skipping because it is similar to the next one
-        it.skip("10 tokens are transferred", async () => {
+        it_optional("10 tokens are transferred", async () => {
           await executeTransferAndCheck({
             initialAmounts,
             transferAmount: 10,
@@ -735,8 +725,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
           });
         });
 
-        // Skipping because it is similar to the next one
-        it.skip("15 tokens are transferred", async () => {
+        it_optional("15 tokens are transferred", async () => {
           await executeTransferAndCheck({
             initialAmounts,
             transferAmount: 15,
@@ -768,18 +757,15 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
     describe("Executes as expected if there is the free balance only, no other balances and", async () => {
       const initialAmounts: TokenAmounts = { total: 20, frozen: 0, preminted: 0 };
 
-      // Skipping because it is similar to the next one
-      it.skip("5 tokens are transferred", async () => {
+      it_optional("5 tokens are transferred", async () => {
         await executeTransferAndCheck({ initialAmounts, transferAmount: 5 });
       });
 
-      // Skipping because it is similar to the next one
-      it.skip("10 tokens are transferred", async () => {
+      it_optional("10 tokens are transferred", async () => {
         await executeTransferAndCheck({ initialAmounts, transferAmount: 10 });
       });
 
-      // Skipping because it is similar to the next one
-      it.skip("15 tokens are transferred", async () => {
+      it_optional("15 tokens are transferred", async () => {
         await executeTransferAndCheck({ initialAmounts, transferAmount: 15 });
       });
 
