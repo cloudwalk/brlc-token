@@ -27,7 +27,7 @@ describe("Contract 'CWToken'", async () => {
   const TOKEN_DECIMALS = 6;
   const EXPECTED_VERSION: Version = {
     major: 1,
-    minor: 3,
+    minor: 2,
     patch: 0
   };
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
