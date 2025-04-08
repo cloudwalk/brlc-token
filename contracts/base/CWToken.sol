@@ -5,12 +5,13 @@ pragma solidity ^0.8.20;
 import { ERC20Base } from "./ERC20Base.sol";
 import { ERC20Mintable } from "./ERC20Mintable.sol";
 import { ERC20Freezable } from "./ERC20Freezable.sol";
-import { ERC20Restrictable } from "./ERC20Restrictable.sol";
 import { ERC20Hookable } from "./ERC20Hookable.sol";
 import { ERC20Trustable } from "./ERC20Trustable.sol";
 import { Versionable } from "./Versionable.sol";
 
 import { IERC20ComplexBalance } from "./interfaces/IERC20ComplexBalance.sol";
+
+import { LegacyRestrictablePlaceholder } from "../legacy/LegacyRestrictablePlaceholder.sol";
 
 /**
  * @title CWToken contract
@@ -21,7 +22,7 @@ contract CWToken is
     ERC20Base,
     ERC20Mintable,
     ERC20Freezable,
-    ERC20Restrictable,
+    LegacyRestrictablePlaceholder,
     ERC20Hookable,
     ERC20Trustable,
     IERC20ComplexBalance,
@@ -63,7 +64,6 @@ contract CWToken is
         __ERC20Base_init_unchained();
         __ERC20Mintable_init_unchained();
         __ERC20Freezable_init_unchained();
-        __ERC20Restrictable_init_unchained();
         __ERC20Hookable_init_unchained();
         __ERC20Trustable_init_unchained();
         __CWToken_init_unchained();
@@ -92,7 +92,6 @@ contract CWToken is
         balance.total = balanceOf(account);
         balance.premint = balanceOfPremint(account);
         balance.frozen = balanceOfFrozen(account);
-        balance.restricted = balanceOfRestricted(account, bytes32(0));
 
         uint256 detained = balance.premint + balance.frozen + balance.restricted;
         balance.free = balance.total > detained ? balance.total - detained : 0;
@@ -113,30 +112,26 @@ contract CWToken is
 
     /**
      * @dev See {ERC20Base-_afterTokenTransfer}
-     * @dev See {ERC20Restrictable-_afterTokenTransfer}
      * @dev See {ERC20Hookable-_afterTokenTransfer}
      */
     function _afterTokenTransfer(
         address from,
         address to,
         uint256 amount
-    ) internal virtual override(ERC20Base, ERC20Restrictable, ERC20Hookable) {
+    ) internal virtual override(ERC20Base, ERC20Hookable) {
         super._afterTokenTransfer(from, to, amount);
 
         uint256 balanceTotal = balanceOf(from);
         uint256 balanceFrozen = balanceOfFrozen(from);
         uint256 balancePreminted = balanceOfPremint(from);
-        uint256 balanceRestricted = balanceOfRestricted(from, bytes32(0));
 
-        if (balanceTotal < balanceFrozen + balancePreminted + balanceRestricted) {
+        if (balanceTotal < balanceFrozen + balancePreminted) {
             uint256 balanceFreezable = (balanceTotal >= balancePreminted) ? balanceTotal - balancePreminted : 0;
 
             if (balanceTotal < balancePreminted) {
                 revert TransferExceededPremintedAmount();
             } else if (balanceFreezable < balanceFrozen && msg.sig != this.transferFrozen.selector) {
                 revert TransferExceededFrozenAmount();
-            } else if (balanceRestricted != 0 && msg.sig != this.transferFrozen.selector) {
-                revert TransferExceededRestrictedAmount();
             }
         }
     }

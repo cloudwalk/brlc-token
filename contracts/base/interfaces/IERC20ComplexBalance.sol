@@ -19,6 +19,7 @@ interface IERC20ComplexBalance {
         // The amount of tokens that are frozen
         uint256 frozen;
         // The total amount of tokens that are restricted (Sum of all restricted balances regardless of purpose)
+        // NOTE: This field is deprecated and was used by the predecessor of the `LegacyRestrictablePlaceholder`
         uint256 restricted;
     }
 
