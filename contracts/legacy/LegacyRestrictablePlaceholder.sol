@@ -35,6 +35,12 @@ abstract contract LegacyRestrictablePlaceholder {
     /// @notice The mapping of the restricted purpose balances: account => purpose => balance
     mapping(address => mapping(bytes32 => uint256)) private _restrictedPurposeBalances;
 
+    /**
+     * @dev This empty reserved space is put in place to allow future versions
+     * to add new variables without shifting down storage in the inheritance chain
+     */
+    uint256[47] private __gap;
+
     // -------------------- Events -----------------------------------
 
     /**
@@ -75,10 +81,4 @@ abstract contract LegacyRestrictablePlaceholder {
 
     /// @notice Thrown when the transfer amount exceeds the restricted balance
     error TransferExceededRestrictedAmount();
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions
-     * to add new variables without shifting down storage in the inheritance chain
-     */
-    uint256[47] private __gap;
 }
