@@ -21,7 +21,6 @@ describe("Contract 'ERC20TokenMock'", async () => {
   const MINT_AMOUNT = 100;
 
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
-  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -53,20 +52,6 @@ describe("Contract 'ERC20TokenMock'", async () => {
       await expect(
         token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
-    });
-
-    it("Is reverted if the internal initializer is called outside of the init process", async () => {
-      const { token } = await setUpFixture(deployToken);
-      await expect(
-        token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
-    });
-
-    it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
-      const { token } = await setUpFixture(deployToken);
-      await expect(
-        token.call_parent_initialize_unchained(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 

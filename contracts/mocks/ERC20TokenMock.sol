@@ -23,25 +23,6 @@ contract ERC20TokenMock is ERC20Upgradeable {
     }
 
     /**
-     * @notice Needed to check that the initialize function of the ancestor contract
-     * has the 'onlyInitializing' modifier
-     *
-     * @param name_ The name of the token
-     * @param symbol_ The symbol of the token
-     */
-    function call_parent_initialize(string memory name_, string memory symbol_) public {
-        __ERC20_init(name_, symbol_);
-    }
-
-    /**
-     * @notice Needed to check that the unchained initialize function of the ancestor contract
-     * has the 'onlyInitializing' modifier
-     */
-    function call_parent_initialize_unchained(string memory name_, string memory symbol_) public {
-        __ERC20_init_unchained(name_, symbol_);
-    }
-
-    /**
      * @notice Calls the appropriate internal function to mint needed amount of tokens for an account
      *
      * @param account The address of an account to mint for
