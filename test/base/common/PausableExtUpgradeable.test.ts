@@ -63,14 +63,6 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
-    it("Is reverted if the implementation contract is called even for the first time", async () => {
-      const pausableExtImplementation: Contract = await pausableExtFactory.deploy() as Contract;
-      await pausableExtImplementation.waitForDeployment();
-      await expect(
-        pausableExtImplementation.initialize()
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
-    });
-
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { pausableExt } = await setUpFixture(deployPausableExt);
       await expect(

@@ -11,18 +11,6 @@ import { ERC20Mintable } from "../../base/ERC20Mintable.sol";
  */
 contract ERC20MintableMock is ERC20Mintable {
     /**
-     * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
-     *
-     * See details
-     * https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable#initializing_the_implementation_contract
-     *
-     * @custom:oz-upgrades-unsafe-allow constructor
-     */
-    constructor() {
-        _disableInitializers();
-    }
-
-    /**
      * @notice The initialize function of the upgradable contract
      *
      * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable

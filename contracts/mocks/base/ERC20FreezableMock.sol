@@ -11,18 +11,6 @@ import { ERC20Freezable } from "../../base/ERC20Freezable.sol";
  */
 contract ERC20FreezableMock is ERC20Freezable {
     /**
-     * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
-     *
-     * See details
-     * https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable#initializing_the_implementation_contract
-     *
-     * @custom:oz-upgrades-unsafe-allow constructor
-     */
-    constructor() {
-        _disableInitializers();
-    }
-
-    /**
      * @notice The initialize function of the upgradable contract
      *
      * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable

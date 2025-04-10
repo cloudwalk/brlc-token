@@ -72,14 +72,6 @@ describe("Contract 'ERC20Bridgeable'", async () => {
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
-    it("Is reverted if the implementation contract is called even for the first time", async () => {
-      const tokenImplementation: Contract = await tokenFactory.deploy() as Contract;
-      await tokenImplementation.waitForDeployment();
-      await expect(
-        tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge1.address)
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
-    });
-
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(

@@ -55,14 +55,6 @@ describe("Contract 'ERC20TokenMock'", async () => {
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
-    it("Is reverted if the implementation contract is called even for the first time", async () => {
-      const tokenImplementation: Contract = await tokenFactory.deploy() as Contract;
-      await tokenImplementation.waitForDeployment();
-      await expect(
-        tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
-    });
-
     it("Is reverted if the internal initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
