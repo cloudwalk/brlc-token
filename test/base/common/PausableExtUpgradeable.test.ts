@@ -71,13 +71,6 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
     });
 
-    it("Is reverted if the internal initializer is called outside of the init process", async () => {
-      const { pausableExt } = await setUpFixture(deployPausableExt);
-      await expect(
-        pausableExt.call_parent_initialize()
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
-    });
-
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { pausableExt } = await setUpFixture(deployPausableExt);
       await expect(

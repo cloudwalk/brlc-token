@@ -58,7 +58,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
   before(async () => {
     [deployer, sender, receiver, freezer] = await ethers.getSigners();
-    tokenFactory = await ethers.getContractFactory("CWToken");
+    tokenFactory = await ethers.getContractFactory("CWTokenMock");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 

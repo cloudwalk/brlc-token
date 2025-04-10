@@ -52,25 +52,18 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
      */
     event AfterTokenTransferHookFailure(address indexed hook, string reason, uint256 code, bytes data);
 
-    // -------------------- Functions --------------------------------
-
-    /**
-     * @notice The internal initializer of the upgradable contract
-     */
-    function __ERC20Hookable_init(string memory name_, string memory symbol_) internal onlyInitializing {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
-        __Pausable_init_unchained();
-        __PausableExt_init_unchained();
-        __ERC20_init_unchained(name_, symbol_);
-        __ERC20Base_init_unchained();
-        __ERC20Hookable_init_unchained();
-    }
+    // -------------------- Initializers -----------------------------
 
     /**
      * @notice The internal unchained initializer of the upgradable contract
+     *
+     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
+     *
+     * Note: The `..._init()` initializer has not been provided as redundant.
      */
     function __ERC20Hookable_init_unchained() internal onlyInitializing {}
+
+    // -------------------- Functions --------------------------------
 
     /**
      * @inheritdoc IERC20Hookable

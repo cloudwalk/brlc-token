@@ -31,13 +31,14 @@ describe("Contract 'CWToken'", async () => {
     patch: 0
   };
   const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
+  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
 
   before(async () => {
     [deployer] = await ethers.getSigners();
-    tokenFactory = await ethers.getContractFactory("CWToken");
+    tokenFactory = await ethers.getContractFactory("CWTokenMock");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
@@ -72,6 +73,20 @@ describe("Contract 'CWToken'", async () => {
       await expect(
         tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
+    });
+
+    it("Is reverted if the internal initializer is called outside of the init process", async () => {
+      const { token } = await setUpFixture(deployToken);
+      await expect(
+        token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
+    });
+
+    it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
+      const { token } = await setUpFixture(deployToken);
+      await expect(
+        token.call_parent_initialize_unchained()
+      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 

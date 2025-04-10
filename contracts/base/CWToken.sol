@@ -18,7 +18,7 @@ import { LegacyRestrictablePlaceholder } from "../legacy/LegacyRestrictablePlace
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @notice The CloudWalk token that extends the standard ERC20 token implementation with additional functionality
  */
-contract CWToken is
+abstract contract CWToken is
     ERC20Base,
     ERC20Mintable,
     ERC20Freezable,
@@ -28,53 +28,31 @@ contract CWToken is
     IERC20ComplexBalance,
     Versionable
 {
-    /**
-     * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
-     *
-     * See details
-     * https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializing_the_implementation_contract
-     *
-     * @custom:oz-upgrades-unsafe-allow constructor
-     */
-    constructor() {
-        _disableInitializers();
-    }
-
-    /**
-     * @notice The initializer of the upgradable contract
-     *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
-     *
-     * @param name_ The name of the token
-     * @param symbol_ The symbol of the token
-     */
-    function initialize(string memory name_, string memory symbol_) external virtual initializer {
-        __CWToken_init(name_, symbol_);
-    }
+    // -------------------- Initializers -----------------------------
 
     /**
      * @notice The internal initializer of the upgradable contract
+     *
+     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
+     * @param name_ The name of the token
+     * @param symbol_ The symbol of the token
      */
     function __CWToken_init(string memory name_, string memory symbol_) internal onlyInitializing {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
-        __Pausable_init_unchained();
-        __PausableExt_init_unchained();
-        __ERC20_init_unchained(name_, symbol_);
-        __ERC20Base_init_unchained();
+        __ERC20Base_init(name_, symbol_);
         __ERC20Mintable_init_unchained();
         __ERC20Freezable_init_unchained();
         __ERC20Hookable_init_unchained();
         __ERC20Trustable_init_unchained();
-        __CWToken_init_unchained();
     }
 
     /**
      * @notice The internal unchained initializer of the upgradable contract
      *
-     * See {CWToken-initialize}
+     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
      */
     function __CWToken_init_unchained() internal onlyInitializing {}
+
+    // -------------------- Functions --------------------------------
 
     /**
      * @inheritdoc IERC20ComplexBalance

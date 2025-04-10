@@ -72,20 +72,11 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     // -------------------- Functions --------------------------------
 
     /**
-     * @notice The internal initializer of the upgradable contract
-     */
-    function __ERC20Freezable_init(string memory name_, string memory symbol_) internal onlyInitializing {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
-        __Pausable_init_unchained();
-        __PausableExt_init_unchained();
-        __ERC20_init_unchained(name_, symbol_);
-        __ERC20Base_init_unchained();
-        __ERC20Freezable_init_unchained();
-    }
-
-    /**
      * @notice The internal unchained initializer of the upgradable contract
+     *
+     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
+     *
+     * Note: The `..._init()` initializer has not been provided as redundant.
      */
     function __ERC20Freezable_init_unchained() internal onlyInitializing {}
 

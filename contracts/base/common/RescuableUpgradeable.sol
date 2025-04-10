@@ -49,25 +49,18 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
         _;
     }
 
-    // -------------------- Functions --------------------------------
-
-    /**
-     * @notice The internal initializer of the upgradable contract
-     *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
-     */
-    function __Rescuable_init() internal onlyInitializing {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
-        __Rescuable_init_unchained();
-    }
+    // -------------------- Initializers -----------------------------
 
     /**
      * @notice The unchained internal initializer of the upgradable contract
      *
-     * See {RescuableUpgradeable-__Rescuable_init}
+     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
+     *
+     * Note: The `..._init()` initializer has not been provided as redundant.
      */
     function __Rescuable_init_unchained() internal onlyInitializing {}
+
+    // -------------------- Functions --------------------------------
 
     /**
      * @notice Withdraws ERC20 tokens locked up in the contract
