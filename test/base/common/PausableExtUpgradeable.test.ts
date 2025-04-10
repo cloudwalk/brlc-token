@@ -36,7 +36,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
   });
 
   async function deployPausableExt(): Promise<{ pausableExt: Contract }> {
-    let pausableExt: Contract = await upgrades.deployProxy(pausableExtFactory);
+    let pausableExt: Contract = await upgrades.deployProxy(pausableExtFactory) as Contract;
     await pausableExt.waitForDeployment();
     pausableExt = connect(pausableExt, deployer); // Explicitly specifying the initial account
     return { pausableExt };
