@@ -32,8 +32,7 @@ abstract contract ERC20Base is
     /**
      * @notice The internal initializer of the upgradable contract
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
-     *
+     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
      * @param name_ The name of the token
      * @param symbol_ The symbol of the token
      */
@@ -44,13 +43,12 @@ abstract contract ERC20Base is
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
-        __ERC20Base_init_unchained();
     }
 
     /**
      * @notice The internal unchained initializer of the upgradable contract
      *
-     * See {ERC20Base-__ERC20Base_init}
+     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
      */
     function __ERC20Base_init_unchained() internal onlyInitializing {}
 

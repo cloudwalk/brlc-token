@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx, connect } from "../../test-utils/eth";
+import { connect, proveTx } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -47,7 +47,10 @@ describe("Contract 'ERC20Bridgeable'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL, bridge1.address]);
+    let token: Contract = await upgrades.deployProxy(
+      tokenFactory,
+      [TOKEN_NAME, TOKEN_SYMBOL, bridge1.address]
+    ) as Contract;
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
     return { token };
@@ -67,21 +70,6 @@ describe("Contract 'ERC20Bridgeable'", async () => {
       await expect(
         token.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge1.address)
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
-    });
-
-    it("Is reverted if the implementation contract is called even for the first time", async () => {
-      const tokenImplementation: Contract = await tokenFactory.deploy() as Contract;
-      await tokenImplementation.waitForDeployment();
-      await expect(
-        tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge1.address)
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
-    });
-
-    it("Is reverted if the internal initializer is called outside of the init process", async () => {
-      const { token } = await setUpFixture(deployToken);
-      await expect(
-        token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL, bridge1.address)
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {

@@ -58,12 +58,12 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
   before(async () => {
     [deployer, sender, receiver, freezer] = await ethers.getSigners();
-    tokenFactory = await ethers.getContractFactory("CWToken");
+    tokenFactory = await ethers.getContractFactory("CWTokenMock");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]);
+    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]) as Contract;
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
     return { token };

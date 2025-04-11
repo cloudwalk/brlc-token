@@ -16,7 +16,7 @@ contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
      * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
      *
      * See details
-     * https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#initializing_the_implementation_contract
+     * https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable#initializing_the_implementation_contract
      *
      * @custom:oz-upgrades-unsafe-allow constructor
      */
@@ -27,7 +27,7 @@ contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
     /**
      * @notice The initializer of the upgradable contract
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
+     * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      *
      * Requirements:
      *
@@ -38,36 +38,10 @@ contract BRLCTokenBridgeable is ERC20Base, ERC20Bridgeable, ERC20Freezable {
      * @param bridge_ The address of the bridge contract
      */
     function initialize(string memory name_, string memory symbol_, address bridge_) external virtual initializer {
-        __BRLCTokenBridgeable_init(name_, symbol_, bridge_);
-    }
-
-    /**
-     * @notice The internal initializer of the upgradable contract
-     *
-     * See {BRLCTokenBridgeable-initialize}
-     */
-    function __BRLCTokenBridgeable_init(
-        string memory name_,
-        string memory symbol_,
-        address bridge_
-    ) internal onlyInitializing {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
-        __Pausable_init_unchained();
-        __PausableExt_init_unchained();
-        __ERC20_init_unchained(name_, symbol_);
-        __ERC20Base_init_unchained();
+        __ERC20Base_init(name_, symbol_);
         __ERC20Bridgeable_init_unchained(bridge_);
         __ERC20Freezable_init_unchained();
-        __BRLCTokenBridgeable_init_unchained();
     }
-
-    /**
-     * @notice The internal unchained initializer of the upgradable contract
-     *
-     * See {BRLCTokenBridgeable-initialize}
-     */
-    function __BRLCTokenBridgeable_init_unchained() internal onlyInitializing {}
 
     /**
      * @notice Returns true if token is BRLCoin implementation

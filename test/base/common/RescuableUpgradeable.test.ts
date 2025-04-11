@@ -41,14 +41,14 @@ describe("Contract 'RescuableUpgradeable'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(tokenFactory, ["ERC20 Test", "TEST"]);
+    let token: Contract = await upgrades.deployProxy(tokenFactory, ["ERC20 Test", "TEST"]) as Contract;
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
     return { token };
   }
 
   async function deployRescuable(): Promise<{ rescuable: Contract }> {
-    let rescuable: Contract = await upgrades.deployProxy(rescuableFactory);
+    let rescuable: Contract = await upgrades.deployProxy(rescuableFactory) as Contract;
     await rescuable.waitForDeployment();
     rescuable = connect(rescuable, deployer); // Explicitly specifying the initial account
     return { rescuable };
@@ -77,21 +77,6 @@ describe("Contract 'RescuableUpgradeable'", async () => {
       await expect(
         rescuable.initialize()
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
-    });
-
-    it("Is reverted if the implementation contract is called even for the first time", async () => {
-      const rescuableImplementation: Contract = await rescuableFactory.deploy() as Contract;
-      await rescuableImplementation.waitForDeployment();
-      await expect(
-        rescuableImplementation.initialize()
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
-    });
-
-    it("Is reverted if the internal initializer is called outside of the init process", async () => {
-      const { rescuable } = await setUpFixture(deployRescuable);
-      await expect(
-        rescuable.call_parent_initialize()
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {

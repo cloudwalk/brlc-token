@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.4;
 
-import { ERC20Base } from "../../base/ERC20Base.sol";
+import { CWToken } from "../../base/CWToken.sol";
 
 /**
- * @title ERC20BaseMock contract
+ * @title CWTokenMock.sol contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice An implementation of the {ERC20Base} contract for testing purposes
+ * @notice An implementation of the {CWToken} contract for testing purposes
  */
-contract ERC20BaseMock is ERC20Base {
+contract CWTokenMock is CWToken {
     /**
      * @notice The initialize function of the upgradable contract
      *
@@ -19,10 +19,10 @@ contract ERC20BaseMock is ERC20Base {
      * @param symbol_ The symbol of the token
      */
     function initialize(string memory name_, string memory symbol_) public initializer {
-        __ERC20Base_init(name_, symbol_);
+        __CWToken_init(name_, symbol_);
 
         // Only to provide the 100 % test coverage
-        __ERC20Base_init_unchained();
+        __CWToken_init_unchained();
     }
 
     /**
@@ -33,7 +33,7 @@ contract ERC20BaseMock is ERC20Base {
      * @param symbol_ The symbol of the token
      */
     function call_parent_initialize(string memory name_, string memory symbol_) public {
-        __ERC20Base_init(name_, symbol_);
+        __CWToken_init(name_, symbol_);
     }
 
     /**
@@ -41,17 +41,6 @@ contract ERC20BaseMock is ERC20Base {
      * has the 'onlyInitializing' modifier
      */
     function call_parent_initialize_unchained() public {
-        __ERC20Base_init_unchained();
-    }
-
-    /**
-     * @notice Calls the appropriate internal function to mint needed amount of tokens for an account
-     *
-     * @param account The address of an account to mint for
-     * @param amount The amount of tokens to mint
-     */
-    function mintForTest(address account, uint256 amount) external returns (bool) {
-        _mint(account, amount);
-        return true;
+        __CWToken_init_unchained();
     }
 }

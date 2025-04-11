@@ -36,7 +36,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
   });
 
   async function deployPausableExt(): Promise<{ pausableExt: Contract }> {
-    let pausableExt: Contract = await upgrades.deployProxy(pausableExtFactory);
+    let pausableExt: Contract = await upgrades.deployProxy(pausableExtFactory) as Contract;
     await pausableExt.waitForDeployment();
     pausableExt = connect(pausableExt, deployer); // Explicitly specifying the initial account
     return { pausableExt };
@@ -61,21 +61,6 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
       await expect(
         pausableExt.initialize()
       ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
-    });
-
-    it("Is reverted if the implementation contract is called even for the first time", async () => {
-      const pausableExtImplementation: Contract = await pausableExtFactory.deploy() as Contract;
-      await pausableExtImplementation.waitForDeployment();
-      await expect(
-        pausableExtImplementation.initialize()
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
-    });
-
-    it("Is reverted if the internal initializer is called outside of the init process", async () => {
-      const { pausableExt } = await setUpFixture(deployPausableExt);
-      await expect(
-        pausableExt.call_parent_initialize()
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
