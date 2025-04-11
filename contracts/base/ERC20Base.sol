@@ -37,6 +37,7 @@ abstract contract ERC20Base is
      * @param symbol_ The symbol of the token
      */
     function __ERC20Base_init(string memory name_, string memory symbol_) internal onlyInitializing {
+        __Context_init_unchained();
         __Ownable_init_unchained();
         __Rescuable_init_unchained();
         __Pausable_init_unchained();
