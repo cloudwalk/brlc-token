@@ -83,7 +83,11 @@ describe("Contract 'ERC20Mintable'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]) as Contract;
+    let token: Contract = await upgrades.deployProxy(
+      tokenFactory,
+      [TOKEN_NAME, TOKEN_SYMBOL],
+      { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
+    ) as Contract;
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
     return { token };
@@ -478,7 +482,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
   describe("Premint functions", async () => {
     let timestamp: number;
-    before(async () => {
+    beforeEach(async () => {
       timestamp = (await getLatestBlockTimestamp()) + 100;
     });
 
@@ -806,7 +810,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
   describe("Function 'reschedulePremintRelease()'", async () => {
     let timestamp: number;
-    before(async () => {
+    beforeEach(async () => {
       timestamp = (await getLatestBlockTimestamp()) + 100;
     });
 
