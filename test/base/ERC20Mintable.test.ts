@@ -482,7 +482,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
   describe("Premint functions", async () => {
     let timestamp: number;
-    before(async () => {
+    beforeEach(async () => {
       timestamp = (await getLatestBlockTimestamp()) + 100;
     });
 
@@ -810,7 +810,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
   describe("Function 'reschedulePremintRelease()'", async () => {
     let timestamp: number;
-    before(async () => {
+    beforeEach(async () => {
       timestamp = (await getLatestBlockTimestamp()) + 100;
     });
 
