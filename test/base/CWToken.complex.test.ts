@@ -63,7 +63,11 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(tokenFactory, [TOKEN_NAME, TOKEN_SYMBOL]) as Contract;
+    let token: Contract = await upgrades.deployProxy(
+      tokenFactory,
+      [TOKEN_NAME, TOKEN_SYMBOL],
+      { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
+    ) as Contract;
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
     return { token };
