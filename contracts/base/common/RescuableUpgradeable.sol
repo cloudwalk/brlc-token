@@ -19,6 +19,15 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
     /// @notice The address of the rescuer that is allowed to rescue tokens locked up in the contract
     address private _rescuer;
 
+    /// @dev [DEPRECATED] This variable arose as a result of contract storage migration. Its value is `false`.
+    bool private _paused;
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions
+     * to add new variables without shifting down storage in the inheritance chain
+     */
+    uint256[49] private __gap;
+
     // -------------------- Events -----------------------------------
 
     /**

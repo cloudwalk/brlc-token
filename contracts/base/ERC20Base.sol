@@ -2,13 +2,15 @@
 
 pragma solidity ^0.8.4;
 
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-
+import { AccessControlExtUpgradeable } from "./common/AccessControlExtUpgradeable.sol";
 import { RescuableUpgradeable } from "./common/RescuableUpgradeable.sol";
 import { PausableExtUpgradeable } from "./common/PausableExtUpgradeable.sol";
 
+import { ERC20Upgradeable } from "../openzeppelin_v4-9-6/ERC20Upgradeable.sol";
+
 import { LegacyBlocklistablePlaceholder } from "../legacy/LegacyBlocklistablePlaceholder.sol";
+import { LegacyInitializablePlaceholder } from "../legacy/LegacyInitializablePlaceholder.sol";
+import { LegacyOwnablePlaceholder } from "../legacy/LegacyOwnablePlaceholder.sol";
 
 /**
  * @title ERC20Base contract
@@ -17,17 +19,30 @@ import { LegacyBlocklistablePlaceholder } from "../legacy/LegacyBlocklistablePla
  * Pausable, and Blocklistable functionality.
  */
 abstract contract ERC20Base is
-    OwnableUpgradeable,
+    AccessControlExtUpgradeable,
+    LegacyInitializablePlaceholder,
+    LegacyOwnablePlaceholder,
     RescuableUpgradeable,
     PausableExtUpgradeable,
     LegacyBlocklistablePlaceholder,
     ERC20Upgradeable
 {
+    /// @dev The role of this contract owner.
+    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
+
     /// @dev Throws if the zero address is passed to the function
     error ZeroAddress();
 
     /// @dev Throws if the zero amount is passed to the function
     error ZeroAmount();
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        _checkRole(OWNER_ROLE);
+        _;
+    }
 
     /**
      * @notice The internal initializer of the upgradable contract
@@ -42,7 +57,7 @@ abstract contract ERC20Base is
         __Rescuable_init_unchained();
         __Pausable_init_unchained();
         __PausableExt_init_unchained();
-        __ERC20_init_unchained(name_, symbol_);
+        __ERC20_init(name_, symbol_);
     }
 
     /**
