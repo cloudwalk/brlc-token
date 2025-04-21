@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx, connect } from "../../test-utils/eth";
+import { connect, proveTx } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -17,16 +17,23 @@ describe("Contract 'ERC20Base'", async () => {
   const TOKEN_NAME = "BRL Coin";
   const TOKEN_SYMBOL = "BRLC";
   const TOKEN_DECIMALS = 6;
+  const ADDRESS_ZERO = ethers.ZeroAddress;
 
   const TOKEN_AMOUNT: number = 100;
   const TOKEN_ALLOWANCE: number = 200;
 
   const EVENT_NAME_APPROVAL = "Approval";
   const EVENT_NAME_TRANSFER = "Transfer";
+  const EVENT_NAME_ROLE_ADMIN_CHANGED = "RoleAdminChanged";
+  const EVENT_NAME_ROLE_GRANTED = "RoleGranted";
 
-  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
-  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
-  const REVERT_MESSAGE_PAUSABLE_PAUSED = "Pausable: paused";
+  // Errors of the lib contracts
+  const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
+  const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
+  const REVERT_ERROR_CONTRACT_IS_PAUSED = "EnforcedPause";
+
+  const DEFAULT_ADMIN_ROLE: string = ethers.ZeroHash;
+  const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -63,7 +70,8 @@ describe("Contract 'ERC20Base'", async () => {
       expect(await token.name()).to.equal(TOKEN_NAME);
       expect(await token.symbol()).to.equal(TOKEN_SYMBOL);
       expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
-      expect(await token.owner()).to.equal(deployer.address);
+      expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
       expect(await token.pauser()).to.equal(ethers.ZeroAddress);
       expect(await token.rescuer()).to.equal(ethers.ZeroAddress);
     });
@@ -72,21 +80,21 @@ describe("Contract 'ERC20Base'", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("Is reverted if the internal initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.call_parent_initialize_unchained()
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -94,6 +102,8 @@ describe("Contract 'ERC20Base'", async () => {
     it("Executes as expected and emits the correct event", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.mintForTest(user1.address, TOKEN_AMOUNT));
+      expect(await token.totalSupply()).to.equal(TOKEN_AMOUNT);
+
       const tx = connect(token, user1).transfer(user2.address, TOKEN_AMOUNT);
       await expect(tx).to.changeTokenBalances(
         token,
@@ -103,6 +113,8 @@ describe("Contract 'ERC20Base'", async () => {
       await expect(tx)
         .to.emit(token, EVENT_NAME_TRANSFER)
         .withArgs(user1.address, user2.address, TOKEN_AMOUNT);
+
+      expect(await token.totalSupply()).to.equal(TOKEN_AMOUNT);
     });
 
     it("Is reverted if the contract is paused", async () => {
@@ -111,7 +123,7 @@ describe("Contract 'ERC20Base'", async () => {
       await proveTx(connect(token, pauser).pause());
       await expect(
         connect(token, user1).transfer(user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
     });
   });
 
@@ -132,7 +144,7 @@ describe("Contract 'ERC20Base'", async () => {
       await proveTx(connect(token, pauser).pause());
       await expect(
         connect(token, user1).approve(user2.address, TOKEN_ALLOWANCE)
-      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
     });
   });
 
@@ -159,7 +171,7 @@ describe("Contract 'ERC20Base'", async () => {
       await proveTx(connect(token, pauser).pause());
       await expect(
         connect(token, user2).transferFrom(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
     });
   });
 
@@ -184,7 +196,7 @@ describe("Contract 'ERC20Base'", async () => {
       await proveTx(connect(token, pauser).pause());
       await expect(
         token.increaseAllowance(user1.address, allowanceAddedValue)
-      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
     });
   });
 
@@ -210,7 +222,37 @@ describe("Contract 'ERC20Base'", async () => {
       await proveTx(connect(token, pauser).pause());
       await expect(
         connect(token, user1).decreaseAllowance(user2.address, allowanceSubtractedValue)
-      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
+    });
+  });
+
+  describe("Function 'migrateStorage()'", async () => {
+    it("Executes as expected and emits the correct events", async () => {
+      const { token } = await setUpFixture(deployToken);
+      expect(await token.getNewStorageInitializedState()).to.eq(1);
+      expect(await token.getOldStorageVariables()).to.deep.eq([0, ADDRESS_ZERO]);
+
+      await proveTx(token.resetStorageValues());
+      expect(await token.getOldStorageVariables()).to.deep.eq([1, deployer.address]);
+
+      // Call the first time
+      const tx1 = token.migrateStorage();
+      await expect(tx1)
+        .to.emit(token, EVENT_NAME_ROLE_ADMIN_CHANGED)
+        .withArgs(OWNER_ROLE, DEFAULT_ADMIN_ROLE, OWNER_ROLE);
+      await expect(tx1)
+        .to.emit(token, EVENT_NAME_ROLE_GRANTED)
+        .withArgs(OWNER_ROLE, deployer.address, deployer.address);
+
+      expect(await token.getOldStorageVariables()).to.deep.eq([0, ADDRESS_ZERO]);
+      expect(await token.getNewStorageInitializedState()).to.eq(1);
+      expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
+
+      // Call the second time
+      const tx2 = token.migrateStorage();
+      await expect(tx2).not.to.emit(token, EVENT_NAME_ROLE_ADMIN_CHANGED);
+      await expect(tx2).not.to.emit(token, EVENT_NAME_ROLE_GRANTED);
     });
   });
 });

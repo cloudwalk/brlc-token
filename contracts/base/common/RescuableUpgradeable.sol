@@ -2,9 +2,10 @@
 
 pragma solidity ^0.8.4;
 
-import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+import { OwnableUpgradeable } from "./OwnableUpgradeable.sol";
 
 /**
  * @title RescuableUpgradeable base contract
@@ -14,10 +15,19 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
  * to rescue tokens locked up in the contract that is inherited from this one.
  */
 abstract contract RescuableUpgradeable is OwnableUpgradeable {
-    using SafeERC20Upgradeable for IERC20Upgradeable;
+    using SafeERC20 for IERC20;
 
     /// @notice The address of the rescuer that is allowed to rescue tokens locked up in the contract
     address private _rescuer;
+
+    /// @dev [DEPRECATED] This variable arose as a result of contract storage migration. Its value is `false`.
+    bool private _paused;
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions
+     * to add new variables without shifting down storage in the inheritance chain
+     */
+    uint256[49] private __gap;
 
     // -------------------- Events -----------------------------------
 
@@ -74,7 +84,7 @@ abstract contract RescuableUpgradeable is OwnableUpgradeable {
      * @param amount The amount of tokens to withdraw
      */
     function rescueERC20(address token, address to, uint256 amount) external onlyRescuer {
-        IERC20Upgradeable(token).safeTransfer(to, amount);
+        IERC20(token).safeTransfer(to, amount);
     }
 
     /**

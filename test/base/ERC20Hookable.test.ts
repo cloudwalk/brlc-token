@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx, connect, getAddress } from "../../test-utils/eth";
+import { connect, getAddress, proveTx } from "../../test-utils/eth";
 
 enum ErrorHandlingPolicy {
   Revert = 0,
@@ -58,18 +58,20 @@ describe("Contract 'ERC20Hookable'", async () => {
   const REVERT_ERROR_TEST_BEFORE_TOKEN_TRANSFER_HOOK = "TestBeforeTokenTransferHookError";
   const REVERT_ERROR_TEST_AFTER_TOKEN_TRANSFER_HOOK = "TestAfterTokenTransferHookError";
 
-  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
-  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
-  const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
+  // Errors of the lib contracts
+  const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
+  const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
+  const REVERT_ERROR_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+
+  const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
 
   let tokenFactory: ContractFactory;
   let hookFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
-  let pauser: HardhatEthersSigner;
   let user: HardhatEthersSigner;
 
   before(async () => {
-    [deployer, pauser, user] = await ethers.getSigners();
+    [deployer, user] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20HookableMock");
     hookFactory = await ethers.getContractFactory("ERC20HookMock");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
@@ -95,7 +97,6 @@ describe("Contract 'ERC20Hookable'", async () => {
     const { token } = await deployToken();
     let hook1: Contract = await hookFactory.deploy() as Contract;
     let hook2: Contract = await hookFactory.deploy() as Contract;
-    await proveTx(token.setPauser(pauser.address));
 
     hook1 = connect(hook1, deployer); // Explicitly specifying the initial account
     hook2 = connect(hook2, deployer); // Explicitly specifying the initial account
@@ -106,7 +107,8 @@ describe("Contract 'ERC20Hookable'", async () => {
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
-      expect(await token.owner()).to.equal(deployer.address);
+      expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
       expect(await token.pauser()).to.equal(ethers.ZeroAddress);
     });
 
@@ -114,14 +116,14 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.call_parent_initialize_unchained()
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -145,7 +147,7 @@ describe("Contract 'ERC20Hookable'", async () => {
       checkHookConfigsEquality(await token.getBeforeTokenTransferHooks(), hooks);
     });
 
-    it("Is reverted if called not by the owner", async () => {
+    it("Is reverted if the caller does not have the owner role", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
@@ -157,9 +159,9 @@ describe("Contract 'ERC20Hookable'", async () => {
           policy: ErrorHandlingPolicy.Revert
         }
       ];
-      await expect(
-        connect(token, user).setBeforeTokenTransferHooks(hooks)
-      ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+      await expect(connect(token, user).setBeforeTokenTransferHooks(hooks))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
+        .withArgs(user.address, OWNER_ROLE);
     });
   });
 
@@ -183,7 +185,7 @@ describe("Contract 'ERC20Hookable'", async () => {
       checkHookConfigsEquality(await token.getAfterTokenTransferHooks(), hooks);
     });
 
-    it("Is reverted if called not by the owner", async () => {
+    it("Is reverted if the caller does not have the owner role", async () => {
       const { token, hook1, hook2 } = await setUpFixture(deployTokenAndHooks);
       const hooks: HookConfig[] = [
         {
@@ -195,9 +197,9 @@ describe("Contract 'ERC20Hookable'", async () => {
           policy: ErrorHandlingPolicy.Revert
         }
       ];
-      await expect(
-        connect(token, user).setAfterTokenTransferHooks(hooks)
-      ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+      await expect(connect(token, user).setAfterTokenTransferHooks(hooks))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
+        .withArgs(user.address, OWNER_ROLE);
     });
   });
 

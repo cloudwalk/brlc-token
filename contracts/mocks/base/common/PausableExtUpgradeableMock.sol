@@ -16,9 +16,11 @@ contract PausableExtUpgradeableMock is PausableExtUpgradeable {
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      */
     function initialize() public initializer {
-        __Ownable_init();
+        __Ownable_init_unchained(); // This is needed only to avoid errors during coverage assessment
         __Pausable_init();
         __PausableExt_init_unchained(); // This is needed only to avoid errors during coverage assessment
+
+        _grantRole(OWNER_ROLE, _msgSender());
     }
 
     /**

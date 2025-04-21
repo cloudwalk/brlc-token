@@ -16,8 +16,10 @@ contract RescuableUpgradeableMock is RescuableUpgradeable {
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      */
     function initialize() public initializer {
-        __Ownable_init();
-        __Rescuable_init_unchained();
+        __Ownable_init_unchained(); // This is needed only to avoid errors during coverage assessment
+        __Rescuable_init_unchained(); // This is needed only to avoid errors during coverage assessment
+
+        _grantRole(OWNER_ROLE, _msgSender());
     }
 
     /**

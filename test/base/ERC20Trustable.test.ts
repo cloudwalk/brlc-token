@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx, connect } from "../../test-utils/eth";
+import { connect, proveTx } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -22,11 +22,15 @@ describe("Contract 'ERC20Trustable'", async () => {
 
   const EVENT_NAME_TRUSTED_ACCOUNT_CONFIGURED = "TrustedAccountConfigured";
 
-  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
-  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
-  const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
+  // Errors of the lib contracts
+  const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
+  const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
+  const REVERT_ERROR_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
+  // Errors of the contracts under test
   const REVERT_ERROR_TRUSTED_ACCOUNT_ALREADY_CONFIGURED = "TrustedAccountAlreadyConfigured";
+
+  const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -52,20 +56,21 @@ describe("Contract 'ERC20Trustable'", async () => {
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
-      expect(await token.owner()).to.equal(deployer.address);
+      expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
       expect(await token.pauser()).to.equal(ethers.ZeroAddress);
     });
 
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL))
-        .to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(token.call_parent_initialize_unchained())
-        .to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -90,18 +95,19 @@ describe("Contract 'ERC20Trustable'", async () => {
       const { token } = await setUpFixture(deployToken);
 
       await proveTx(token.configureTrustedAccount(trustedAccount.address, true));
-      expect(token.configureTrustedAccount(trustedAccount.address, true))
+      await expect(token.configureTrustedAccount(trustedAccount.address, true))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_TRUSTED_ACCOUNT_ALREADY_CONFIGURED);
 
       await proveTx(token.configureTrustedAccount(trustedAccount.address, false));
-      expect(token.configureTrustedAccount(trustedAccount.address, false))
+      await expect(token.configureTrustedAccount(trustedAccount.address, false))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_TRUSTED_ACCOUNT_ALREADY_CONFIGURED);
     });
 
-    it("Is reverted if the caller is not an owner", async () => {
+    it("Is reverted if the caller does not have the owner role", async () => {
       const { token } = await setUpFixture(deployToken);
-      expect(connect(token, user).configureTrustedAccount(trustedAccount.address, true))
-        .to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+      await expect(connect(token, user).configureTrustedAccount(trustedAccount.address, true))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
+        .withArgs(user.address, OWNER_ROLE);
     });
   });
 

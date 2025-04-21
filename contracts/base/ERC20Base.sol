@@ -2,13 +2,15 @@
 
 pragma solidity ^0.8.4;
 
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-
+import { OwnableUpgradeable } from "./common/OwnableUpgradeable.sol";
 import { RescuableUpgradeable } from "./common/RescuableUpgradeable.sol";
 import { PausableExtUpgradeable } from "./common/PausableExtUpgradeable.sol";
 
+import { ERC20Upgradeable } from "../openzeppelin_v4-9-6/ERC20Upgradeable.sol";
+
 import { LegacyBlocklistablePlaceholder } from "../legacy/LegacyBlocklistablePlaceholder.sol";
+import { LegacyInitializablePlaceholder } from "../legacy/LegacyInitializablePlaceholder.sol";
+import { LegacyOwnablePlaceholder } from "../legacy/LegacyOwnablePlaceholder.sol";
 
 /**
  * @title ERC20Base contract
@@ -18,6 +20,8 @@ import { LegacyBlocklistablePlaceholder } from "../legacy/LegacyBlocklistablePla
  */
 abstract contract ERC20Base is
     OwnableUpgradeable,
+    LegacyInitializablePlaceholder,
+    LegacyOwnablePlaceholder,
     RescuableUpgradeable,
     PausableExtUpgradeable,
     LegacyBlocklistablePlaceholder,
@@ -37,12 +41,11 @@ abstract contract ERC20Base is
      * @param symbol_ The symbol of the token
      */
     function __ERC20Base_init(string memory name_, string memory symbol_) internal onlyInitializing {
-        __Context_init_unchained();
-        __Ownable_init_unchained();
-        __Rescuable_init_unchained();
-        __Pausable_init_unchained();
-        __PausableExt_init_unchained();
-        __ERC20_init_unchained(name_, symbol_);
+        __Ownable_init_unchained(); // This is needed only to avoid errors during coverage assessment
+        __Rescuable_init_unchained(); // This is needed only to avoid errors during coverage assessment
+        __PausableExt_init_unchained(); // This is needed only to avoid errors during coverage assessment
+        __ERC20_init(name_, symbol_);
+        __ERC20Base_init_unchained();
     }
 
     /**
@@ -50,7 +53,51 @@ abstract contract ERC20Base is
      *
      * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
      */
-    function __ERC20Base_init_unchained() internal onlyInitializing {}
+    function __ERC20Base_init_unchained() internal onlyInitializing {
+        _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);
+        _grantRole(OWNER_ROLE, _msgSender());
+    }
+
+    /**
+     * @notice Migrates the storage of the contract
+     *
+     * @dev This function is used to migrate the following storage variables to new namespaced storage:
+     *
+     * - _initialized
+     * - _owner
+     */
+    function migrateStorage() external {
+        InitializableStorage storage initializableStorage = _getInitializableStorageInternaly();
+        if (initializableStorage._initialized > 0) {
+            return;
+        }
+        initializableStorage._initialized = uint64(_initialized);
+        _initialized = 0;
+
+        _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);
+        _grantRole(OWNER_ROLE, _owner);
+        _owner = address(0);
+    }
+
+    /**
+     * @notice Returns the old storage variables
+     *
+     * @dev This function is used to get the following old storage variables:
+     *
+     * - _initialized
+     * - _owner
+     */
+    function getOldStorageVariables() external view returns (uint8 initialized_, address owner_) {
+        initialized_ = _initialized;
+        owner_ = _owner;
+    }
+
+    /**
+     * @notice Returns the initialized state of the contract in the new storage
+     */
+    function getNewStorageInitializedState() external view returns (uint256) {
+        return _getInitializableStorageInternaly()._initialized;
+    }
 
     /**
      * @inheritdoc ERC20Upgradeable
@@ -116,5 +163,15 @@ abstract contract ERC20Base is
      */
     function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._afterTokenTransfer(from, to, amount);
+    }
+
+    /**
+     * @dev Returns a pointer to the storage namespace of the Initializable parent smart contract.
+     */
+    function _getInitializableStorageInternaly() internal pure returns (InitializableStorage storage $) {
+        bytes32 slot = _initializableStorageSlot();
+        assembly {
+            $.slot := slot
+        }
     }
 }

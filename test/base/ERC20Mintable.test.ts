@@ -33,13 +33,15 @@ describe("Contract 'ERC20Mintable'", async () => {
   const EVENT_NAME_MINT_FROM_RESERVE = "MintFromReserve";
   const EVENT_NAME_BURN_TO_RESERVE = "BurnToReserve";
 
-  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
-  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
-  const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
-  const REVERT_MESSAGE_PAUSABLE_PAUSED = "Pausable: paused";
+  // Errors of the lib contracts
+  const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
+  const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
+  const REVERT_ERROR_CONTRACT_IS_PAUSED = "EnforcedPause";
+  const REVERT_ERROR_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
   const REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT = "ERC20: mint to the zero address";
   const REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE = "ERC20: burn amount exceeds balance";
 
+  // Errors of the contracts under test
   const REVERT_ERROR_UNAUTHORIZED_MAIN_MINTER = "UnauthorizedMainMinter";
   const REVERT_ERROR_UNAUTHORIZED_MINTER = "UnauthorizedMinter";
   const REVERT_ERROR_ZERO_BURN_AMOUNT = "ZeroBurnAmount";
@@ -57,6 +59,8 @@ describe("Contract 'ERC20Mintable'", async () => {
   const REVERT_ERROR_MAX_PENDING_PREMINTS_COUNT_ALREADY_CONFIGURED = "MaxPendingPremintsCountAlreadyConfigured";
   const REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE = "InappropriateUint64Value";
   const REVERT_ERROR_INSUFFICIENT_RESERVE_SUPPLY = "InsufficientReserveSupply";
+
+  const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
 
   enum PremintFunction {
     Increase = 0,
@@ -105,7 +109,8 @@ describe("Contract 'ERC20Mintable'", async () => {
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
-      expect(await token.owner()).to.eq(deployer.address);
+      expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
       expect(await token.pauser()).to.eq(ethers.ZeroAddress);
       expect(await token.mainMinter()).to.eq(ethers.ZeroAddress);
       expect(await token.maxPendingPremintsCount()).to.eq(0);
@@ -115,14 +120,14 @@ describe("Contract 'ERC20Mintable'", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.call_parent_initialize_unchained()
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -138,11 +143,11 @@ describe("Contract 'ERC20Mintable'", async () => {
       ).not.to.emit(token, EVENT_NAME_MAIN_MINTER_CHANGED);
     });
 
-    it("Is reverted if called not by the owner", async () => {
+    it("Is reverted if the caller does not have the owner role", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(
-        connect(token, user).updateMainMinter(mainMinter.address)
-      ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+      await expect(connect(token, user).updateMainMinter(mainMinter.address))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
+        .withArgs(user.address, OWNER_ROLE);
     });
   });
 
@@ -165,7 +170,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       await proveTx(connect(token, pauser).pause());
       await expect(
         connect(token, mainMinter).configureMinter(minter.address, MINT_ALLOWANCE)
-      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
     });
 
     it("Is reverted if called not by the main minter", async () => {
@@ -222,7 +227,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         await proveTx(connect(token, pauser).pause());
         await expect(
           connect(token, minter).mint(user.address, TOKEN_AMOUNT)
-        ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
       });
 
       it("The caller is not a minter", async () => {
@@ -276,7 +281,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       await proveTx(connect(token, minter).mint(minter.address, TOKEN_AMOUNT));
       await proveTx(connect(token, pauser).pause());
       await expect(connect(token, minter).burn(TOKEN_AMOUNT))
-        .to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
     });
 
     it("Is reverted if the caller is not a minter", async () => {
@@ -342,7 +347,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       await proveTx(connect(token, pauser).pause());
       await expect(
         connect(token, minter).mintFromReserve(user.address, TOKEN_AMOUNT)
-      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
     });
 
     it("Is reverted if the caller is not a minter", async () => {
@@ -412,7 +417,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       await proveTx(connect(token, pauser).pause());
       await expect(
         connect(token, minter).burnToReserve(TOKEN_AMOUNT)
-      ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
     });
 
     it("Is reverted if the caller is not a minter", async () => {
@@ -720,9 +725,9 @@ describe("Contract 'ERC20Mintable'", async () => {
         await proveTx(connect(token, minter).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
         await proveTx(connect(token, pauser).pause());
         await expect(connect(token, minter).premintIncrease(user.address, 1, timestamp))
-          .to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
         await expect(connect(token, minter).premintDecrease(user.address, 1, timestamp))
-          .to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+          .to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
       });
 
       it("The provided release time has passed", async () => {
@@ -987,7 +992,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         await proveTx(connect(token, pauser).pause());
         await expect(
           connect(token, minter).reschedulePremintRelease(originalRelease, targetRelease)
-        ).to.be.revertedWith(REVERT_MESSAGE_PAUSABLE_PAUSED);
+        ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
       });
 
       it("The caller is not a minter", async () => {
@@ -1090,14 +1095,15 @@ describe("Contract 'ERC20Mintable'", async () => {
     it("Is reverted if the limit is already configured with the same number", async () => {
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
-      expect(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT))
+      await expect(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT))
         .to.be.revertedWithCustomError(token, REVERT_ERROR_MAX_PENDING_PREMINTS_COUNT_ALREADY_CONFIGURED);
     });
 
-    it("Is reverted if caller is not an owner", async () => {
+    it("Is reverted if the caller does not have the owner role", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      expect(connect(token, user).configureMaxPendingPremintsCount(0))
-        .to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+      await expect(connect(token, user).configureMaxPendingPremintsCount(0))
+        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
+        .withArgs(user.address, OWNER_ROLE);
     });
   });
 

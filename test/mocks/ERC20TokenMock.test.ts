@@ -20,7 +20,7 @@ describe("Contract 'ERC20TokenMock'", async () => {
 
   const MINT_AMOUNT = 100;
 
-  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
+  const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -55,7 +55,7 @@ describe("Contract 'ERC20TokenMock'", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
+      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID);
     });
   });
 

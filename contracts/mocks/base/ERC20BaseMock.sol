@@ -20,9 +20,6 @@ contract ERC20BaseMock is ERC20Base {
      */
     function initialize(string memory name_, string memory symbol_) public initializer {
         __ERC20Base_init(name_, symbol_);
-
-        // Only to provide the 100 % test coverage
-        __ERC20Base_init_unchained();
     }
 
     /**
@@ -53,5 +50,20 @@ contract ERC20BaseMock is ERC20Base {
     function mintForTest(address account, uint256 amount) external returns (bool) {
         _mint(account, amount);
         return true;
+    }
+
+    /**
+     * @notice Resets values of the contract in the new storage for test purposes
+     *
+     * @dev This function is used to reset values in the new storage and sets the values in the old storage
+     */
+    function resetStorageValues() external {
+        InitializableStorage storage initializableStorage = _getInitializableStorageInternaly();
+        initializableStorage._initialized = 0;
+        _initialized = 1;
+
+        _revokeRole(OWNER_ROLE, _msgSender());
+        _setRoleAdmin(OWNER_ROLE, DEFAULT_ADMIN_ROLE);
+        _owner = _msgSender();
     }
 }

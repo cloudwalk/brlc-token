@@ -19,11 +19,15 @@ describe("Contract 'RescuableUpgradeable'", async () => {
   const EVENT_NAME_TRANSFER = "Transfer";
   const EVENT_NAME_RESCUER_CHANGED = "RescuerChanged";
 
-  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED = "Initializable: contract is already initialized";
-  const REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING = "Initializable: contract is not initializing";
-  const REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER = "Ownable: caller is not the owner";
+  // Errors of the lib contracts
+  const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
+  const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
+  const REVERT_ERROR_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
+  // Errors of the contracts under test
   const REVERT_ERROR_UNAUTHORIZED_RESCUER = "UnauthorizedRescuer";
+
+  const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
 
   let rescuableFactory: ContractFactory;
   let tokenFactory: ContractFactory;
@@ -75,7 +79,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
       const { rescuable } = await setUpFixture(deployRescuable);
-      expect(await rescuable.owner()).to.equal(deployer.address);
+      expect(await rescuable.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
       expect(await rescuable.rescuer()).to.equal(ethers.ZeroAddress);
     });
 
@@ -83,14 +87,14 @@ describe("Contract 'RescuableUpgradeable'", async () => {
       const { rescuable } = await setUpFixture(deployRescuable);
       await expect(
         rescuable.initialize()
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_ALREADY_INITIALIZED);
+      ).to.be.revertedWithCustomError(rescuable, REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { rescuable } = await setUpFixture(deployRescuable);
       await expect(
         rescuable.call_parent_initialize_unchained()
-      ).to.be.revertedWith(REVERT_MESSAGE_INITIALIZABLE_CONTRACT_IS_NOT_INITIALIZING);
+      ).to.be.revertedWithCustomError(rescuable, REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -106,11 +110,11 @@ describe("Contract 'RescuableUpgradeable'", async () => {
       ).not.to.emit(rescuable, EVENT_NAME_RESCUER_CHANGED);
     });
 
-    it("Is reverted if called not by the owner", async () => {
+    it("Is reverted if the caller does not have the owner role", async () => {
       const { rescuable } = await setUpFixture(deployRescuable);
-      await expect(
-        connect(rescuable, rescuer).setRescuer(rescuer.address)
-      ).to.be.revertedWith(REVERT_MESSAGE_OWNABLE_CALLER_IS_NOT_THE_OWNER);
+      await expect(connect(rescuable, rescuer).setRescuer(rescuer.address))
+        .to.be.revertedWithCustomError(rescuable, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
+        .withArgs(rescuer.address, OWNER_ROLE);
     });
   });
 
