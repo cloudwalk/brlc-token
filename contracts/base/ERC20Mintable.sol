@@ -235,7 +235,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The message sender must not be blocklisted
      */
     function mintFromReserve(
-        address account,
+        address account, // Tools: this comment prevents Prettier from formatting into a single line.
         uint256 amount
     ) external whenNotPaused onlyMinter {
         _mintInternal(account, amount);
@@ -257,7 +257,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The number of pending premints must be less than the limit
      */
     function premintIncrease(
-        address account,
+        address account, // Tools: this comment prevents Prettier from formatting into a single line.
         uint256 amount,
         uint256 release
     ) external onlyMinter {
@@ -280,7 +280,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The number of pending premints must be less than the limit
      */
     function premintDecrease(
-        address account,
+        address account, // Tools: this comment prevents Prettier from formatting into a single line.
         uint256 amount,
         uint256 release
     ) external onlyMinter {
@@ -470,7 +470,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     function _premint(
-        address account,
+        address account, // Tools: this comment prevents Prettier from formatting into a single line.
         uint256 amount,
         uint256 release,
         bool decreasing

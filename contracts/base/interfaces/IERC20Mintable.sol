@@ -48,7 +48,7 @@ interface IERC20Mintable {
      * @param newReserveSupply The new total reserve supply
      */
     event MintFromReserve(
-        address indexed minter,
+        address indexed minter, // Tools: this comment prevents Prettier from formatting into a single line.
         address indexed to,
         uint256 amount,
         uint256 newReserveSupply
@@ -64,7 +64,7 @@ interface IERC20Mintable {
      * @param release The timestamp when the tokens will be released
      */
     event Premint(
-        address indexed minter,
+        address indexed minter, // Tools: this comment prevents Prettier from formatting into a single line.
         address indexed to,
         uint256 newAmount,
         uint256 oldAmount,
@@ -102,7 +102,7 @@ interface IERC20Mintable {
      * @param newReserveSupply The new total reserve supply
      */
     event BurnToReserve(
-        address indexed burner,
+        address indexed burner, // Tools: this comment prevents Prettier from formatting into a single line.
         uint256 amount,
         uint256 newReserveSupply
     );
