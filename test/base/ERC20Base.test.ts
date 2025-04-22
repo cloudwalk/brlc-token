@@ -34,6 +34,8 @@ describe("Contract 'ERC20Base'", async () => {
 
   const DEFAULT_ADMIN_ROLE: string = ethers.ZeroHash;
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
+  const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
+  const RESCUER_ROLE: string = ethers.id("RESCUER_ROLE");
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -60,7 +62,7 @@ describe("Contract 'ERC20Base'", async () => {
 
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
-    await proveTx(token.setPauser(pauser.address));
+    await proveTx(token.grantRole(PAUSER_ROLE, pauser.address));
     return { token };
   }
 
@@ -71,9 +73,11 @@ describe("Contract 'ERC20Base'", async () => {
       expect(await token.symbol()).to.equal(TOKEN_SYMBOL);
       expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
       expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(RESCUER_ROLE)).to.equal(OWNER_ROLE);
       expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
-      expect(await token.pauser()).to.equal(ethers.ZeroAddress);
-      expect(await token.rescuer()).to.equal(ethers.ZeroAddress);
+      expect(await token.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
+      expect(await token.hasRole(RESCUER_ROLE, deployer.address)).to.equal(false);
     });
 
     it("Is reverted if called for the second time", async () => {
@@ -230,10 +234,20 @@ describe("Contract 'ERC20Base'", async () => {
     it("Executes as expected and emits the correct events", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.getNewStorageInitializedState()).to.eq(1);
-      expect(await token.getOldStorageVariables()).to.deep.eq([0, ADDRESS_ZERO]);
+      expect(await token.getOldStorageVariables()).to.deep.eq([
+        0, // initialized_
+        ADDRESS_ZERO, // owner_
+        ADDRESS_ZERO, // pasuer_
+        ADDRESS_ZERO // rescuer_
+      ]);
 
-      await proveTx(token.resetStorageValues());
-      expect(await token.getOldStorageVariables()).to.deep.eq([1, deployer.address]);
+      await proveTx(token.configureStorageValuesAsBeforeMigration());
+      expect(await token.getOldStorageVariables()).to.deep.eq([
+        1, // initialized_
+        deployer.address, // owner_
+        deployer.address, // pasuer_
+        deployer.address // rescuer_
+      ]);
 
       // Call the first time
       const tx1 = token.migrateStorage();
@@ -241,13 +255,35 @@ describe("Contract 'ERC20Base'", async () => {
         .to.emit(token, EVENT_NAME_ROLE_ADMIN_CHANGED)
         .withArgs(OWNER_ROLE, DEFAULT_ADMIN_ROLE, OWNER_ROLE);
       await expect(tx1)
+        .to.emit(token, EVENT_NAME_ROLE_ADMIN_CHANGED)
+        .withArgs(PAUSER_ROLE, DEFAULT_ADMIN_ROLE, OWNER_ROLE);
+      await expect(tx1)
+        .to.emit(token, EVENT_NAME_ROLE_ADMIN_CHANGED)
+        .withArgs(RESCUER_ROLE, DEFAULT_ADMIN_ROLE, OWNER_ROLE);
+
+      await expect(tx1)
         .to.emit(token, EVENT_NAME_ROLE_GRANTED)
         .withArgs(OWNER_ROLE, deployer.address, deployer.address);
+      await expect(tx1)
+        .to.emit(token, EVENT_NAME_ROLE_GRANTED)
+        .withArgs(PAUSER_ROLE, deployer.address, deployer.address);
+      await expect(tx1)
+        .to.emit(token, EVENT_NAME_ROLE_GRANTED)
+        .withArgs(RESCUER_ROLE, deployer.address, deployer.address);
 
-      expect(await token.getOldStorageVariables()).to.deep.eq([0, ADDRESS_ZERO]);
+      expect(await token.getOldStorageVariables()).to.deep.eq([
+        0, // initialized_
+        ADDRESS_ZERO, // owner_
+        ADDRESS_ZERO, // pasuer_
+        ADDRESS_ZERO // rescuer_
+      ]);
       expect(await token.getNewStorageInitializedState()).to.eq(1);
       expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(RESCUER_ROLE)).to.equal(OWNER_ROLE);
       expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
+      expect(await token.hasRole(PAUSER_ROLE, deployer.address)).to.equal(true);
+      expect(await token.hasRole(RESCUER_ROLE, deployer.address)).to.equal(true);
 
       // Call the second time
       const tx2 = token.migrateStorage();

@@ -20,8 +20,6 @@ describe("Contract 'ERC20TokenMock'", async () => {
 
   const MINT_AMOUNT = 100;
 
-  const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
-
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
   let user: HardhatEthersSigner;
@@ -33,37 +31,26 @@ describe("Contract 'ERC20TokenMock'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(
-      tokenFactory,
-      [TOKEN_NAME, TOKEN_SYMBOL],
-      { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
-    ) as Contract;
+    let token: Contract = await tokenFactory.deploy(TOKEN_NAME, TOKEN_SYMBOL) as Contract;
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
     return { token };
   }
 
-  describe("Function 'initialize()'", async () => {
+  describe("Constructor", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.name()).to.equal(TOKEN_NAME);
       expect(await token.symbol()).to.equal(TOKEN_SYMBOL);
       expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
     });
-
-    it("Is reverted if called for the second time", async () => {
-      const { token } = await setUpFixture(deployToken);
-      await expect(
-        token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID);
-    });
   });
 
-  describe("Function 'mintForTest()", async () => {
+  describe("Function 'mint()", async () => {
     it("Executes as expected and emits the correct events", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.balanceOf(user.address)).to.equal(0);
-      await proveTx(connect(token, user).mintForTest(user.address, MINT_AMOUNT));
+      await proveTx(connect(token, user).mint(user.address, MINT_AMOUNT));
       expect(await token.balanceOf(user.address)).to.equal(MINT_AMOUNT);
     });
   });

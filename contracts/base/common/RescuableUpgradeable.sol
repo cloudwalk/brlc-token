@@ -1,117 +1,67 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-import { OwnableUpgradeable } from "./OwnableUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 /**
  * @title RescuableUpgradeable base contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice Allows to rescue ERC20 tokens locked up in the contract using the `rescuer` account
- * @dev This contract is used through inheritance. It introduces the `rescuer` role that is allowed
- * to rescue tokens locked up in the contract that is inherited from this one.
+ * @dev Allows to rescue ERC20 tokens locked up in the contract using the {RESCUER_ROLE} role.
  */
-abstract contract RescuableUpgradeable is OwnableUpgradeable {
+abstract contract RescuableUpgradeable is AccessControlUpgradeable {
     using SafeERC20 for IERC20;
 
-    /// @notice The address of the rescuer that is allowed to rescue tokens locked up in the contract
-    address private _rescuer;
+    /// @dev The role of rescuer that is allowed to rescue tokens locked up in the contract.
+    bytes32 public constant RESCUER_ROLE = keccak256("RESCUER_ROLE");
 
-    /// @dev [DEPRECATED] This variable arose as a result of contract storage migration. Its value is `false`.
-    bool private _paused;
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions
-     * to add new variables without shifting down storage in the inheritance chain
-     */
-    uint256[49] private __gap;
-
-    // -------------------- Events -----------------------------------
+    // ------------------ Initializers ---------------------------- //
 
     /**
-     * @notice Emitted when the rescuer is changed
+     * @dev Internal initializer of the upgradable contract.
      *
-     * @param newRescuer The address of the new rescuer
-     */
-    event RescuerChanged(address indexed newRescuer);
-
-    // -------------------- Errors -----------------------------------
-
-    /**
-     * @notice The transaction sender is not a rescuer
+     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      *
-     * @param account The address of the transaction sender
+     * @param rescuerRoleAdmin The admin for the {RESCUER_ROLE} role.
      */
-    error UnauthorizedRescuer(address account);
-
-    // -------------------- Modifiers --------------------------------
-
-    /**
-     * @notice Throws if called by any account other than the rescuer
-     */
-    modifier onlyRescuer() {
-        if (_msgSender() != _rescuer) {
-            revert UnauthorizedRescuer(_msgSender());
-        }
-        _;
+    function __Rescuable_init(bytes32 rescuerRoleAdmin) internal onlyInitializing {
+        __Rescuable_init_unchained(rescuerRoleAdmin);
     }
 
-    // -------------------- Initializers -----------------------------
-
     /**
-     * @notice The unchained internal initializer of the upgradable contract
+     * @dev Unchained internal initializer of the upgradable contract.
      *
-     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
+     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      *
-     * Note: The `..._init()` initializer has not been provided as redundant.
+     * @param rescuerRoleAdmin The admin for the {RESCUER_ROLE} role.
      */
-    function __Rescuable_init_unchained() internal onlyInitializing {}
+    function __Rescuable_init_unchained(bytes32 rescuerRoleAdmin) internal onlyInitializing {
+        _setRoleAdmin(RESCUER_ROLE, rescuerRoleAdmin);
+    }
 
-    // -------------------- Functions --------------------------------
+    // ------------------ Transactional functions ----------------- //
 
     /**
-     * @notice Withdraws ERC20 tokens locked up in the contract
+     * @dev Rescues tokens that accidentally were transferred to this contract.
+     *
+     * Does not emit special events except ones related to the token transfer.
      *
      * Requirements:
      *
-     * - Can only be called by the rescuer account
+     * - The caller must have the {RESCUER_ROLE} role.
+     * - The provided account address must not be zero. It is usually checked inside the token smart-contract.
      *
-     * @param token The address of the ERC20 token contract
-     * @param to The address of the recipient of tokens
-     * @param amount The amount of tokens to withdraw
+     * @param token The address of the token smart contract to rescue its coins from this smart contract's account.
+     * @param account The account to transfer the rescued tokens to.
+     * @param amount The amount the tokens to rescue.
      */
-    function rescueERC20(address token, address to, uint256 amount) external onlyRescuer {
-        IERC20(token).safeTransfer(to, amount);
-    }
-
-    /**
-     * @notice Updates the rescuer address
-     *
-     * Requirements:
-     *
-     * - Can only be called by the contract owner
-     *
-     * Emits a {RescuerChanged} event
-     *
-     * @param newRescuer The address of a new rescuer
-     */
-    function setRescuer(address newRescuer) external onlyOwner {
-        if (_rescuer == newRescuer) {
-            return;
-        }
-
-        _rescuer = newRescuer;
-
-        emit RescuerChanged(newRescuer);
-    }
-
-    /**
-     * @notice Returns the rescuer address
-     */
-    function rescuer() public view virtual returns (address) {
-        return _rescuer;
+    function rescueERC20(
+        address token, // Tools: this comment prevents Prettier from formatting into a single line
+        address account,
+        uint256 amount
+    ) public onlyRole(RESCUER_ROLE) {
+        IERC20(token).safeTransfer(account, amount);
     }
 }

@@ -1,9 +1,9 @@
 import { ethers, network, upgrades } from "hardhat";
 import { expect } from "chai";
-import { Contract, ContractFactory } from "ethers";
+import { Contract } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { connect, proveTx } from "../../../test-utils/eth";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { proveTx, connect } from "../../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -16,120 +16,131 @@ async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
 describe("Contract 'PausableExtUpgradeable'", async () => {
   const EVENT_NAME_PAUSED = "Paused";
   const EVENT_NAME_UNPAUSED = "Unpaused";
-  const EVENT_NAME_PAUSER_CHANGED = "PauserChanged";
 
-  // Errors of the lib contracts
-  const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
-  const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
-  const REVERT_ERROR_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
-
-  // Errors of the contracts under test
-  const REVERT_ERROR_UNAUTHORIZED_PAUSER = "UnauthorizedPauser";
+  const REVERT_ERROR_IF_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
+  const REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
+  const REVERT_ERROR_IF_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
+  const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
 
-  let pausableExtFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
   let pauser: HardhatEthersSigner;
-  let user: HardhatEthersSigner;
 
   before(async () => {
-    [deployer, pauser, user] = await ethers.getSigners();
-    pausableExtFactory = await ethers.getContractFactory("PausableExtUpgradeableMock");
-    pausableExtFactory = pausableExtFactory.connect(deployer); // Explicitly specifying the deployer account
+    [deployer, pauser] = await ethers.getSigners();
   });
 
-  async function deployPausableExt(): Promise<{ pausableExt: Contract }> {
-    let pausableExt: Contract = await upgrades.deployProxy(
-      pausableExtFactory,
-      { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
-    ) as Contract;
-    await pausableExt.waitForDeployment();
-    pausableExt = connect(pausableExt, deployer); // Explicitly specifying the initial account
-    return { pausableExt };
+  async function deployPausableExtMock(): Promise<{ pausableExtMock: Contract }> {
+    // The contract factory with the explicitly specified deployer account
+    let pausableExtMockFactory = await ethers.getContractFactory("PausableExtUpgradeableMock");
+    pausableExtMockFactory = pausableExtMockFactory.connect(deployer);
+
+    // The contract under test with the explicitly specified initial account
+    let pausableExtMock: Contract = await upgrades.deployProxy(pausableExtMockFactory) as Contract;
+    await pausableExtMock.waitForDeployment();
+    pausableExtMock = connect(pausableExtMock, deployer);
+
+    return { pausableExtMock };
   }
 
-  async function deployAndConfigurePausableExt(): Promise<{ pausableExt: Contract }> {
-    const { pausableExt } = await deployPausableExt();
-    await proveTx(pausableExt.setPauser(pauser.address));
-    return { pausableExt };
+  async function deployAndConfigurePausableExtMock(): Promise<{ pausableExtMock: Contract }> {
+    const { pausableExtMock } = await deployPausableExtMock();
+    await proveTx(pausableExtMock.grantRole(PAUSER_ROLE, pauser.address));
+
+    return { pausableExtMock };
   }
 
-  describe("Function 'initialize()'", async () => {
-    it("Configures the contract as expected", async () => {
-      const { pausableExt } = await setUpFixture(deployPausableExt);
-      expect(await pausableExt.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
-      expect(await pausableExt.pauser()).to.equal(ethers.ZeroAddress);
-      expect(await pausableExt.paused()).to.equal(false);
+  describe("Function 'initialize()' and internal initializers", async () => {
+    it("The external initializer configures the contract as expected", async () => {
+      const { pausableExtMock } = await setUpFixture(deployPausableExtMock);
+
+      // The roles
+      expect((await pausableExtMock.OWNER_ROLE()).toLowerCase()).to.equal(OWNER_ROLE);
+      expect((await pausableExtMock.PAUSER_ROLE()).toLowerCase()).to.equal(PAUSER_ROLE);
+
+      // The role admins
+      expect(await pausableExtMock.getRoleAdmin(OWNER_ROLE)).to.equal(ethers.ZeroHash);
+      expect(await pausableExtMock.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
+
+      // The deployer should have the owner role, but not the other roles
+      expect(await pausableExtMock.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
+      expect(await pausableExtMock.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
+
+      // The initial contract state is unpaused
+      expect(await pausableExtMock.paused()).to.equal(false);
     });
 
-    it("Is reverted if called for the second time", async () => {
-      const { pausableExt } = await setUpFixture(deployPausableExt);
+    it("The external initializer is reverted if it is called a second time", async () => {
+      const { pausableExtMock } = await setUpFixture(deployPausableExtMock);
       await expect(
-        pausableExt.initialize()
-      ).to.be.revertedWithCustomError(pausableExt, REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID);
+        pausableExtMock.initialize()
+      ).to.be.revertedWithCustomError(pausableExtMock, REVERT_ERROR_IF_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
-    it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
-      const { pausableExt } = await setUpFixture(deployPausableExt);
+    it("The internal initializer is reverted if it is called outside the init process", async () => {
+      const { pausableExtMock } = await setUpFixture(deployPausableExtMock);
       await expect(
-        pausableExt.call_parent_initialize_unchained()
-      ).to.be.revertedWithCustomError(pausableExt, REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING);
+        pausableExtMock.callParentInitializer()
+      ).to.be.revertedWithCustomError(pausableExtMock, REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING);
     });
-  });
 
-  describe("Function 'setPauser()'", async () => {
-    it("Executes successfully and emits the correct event", async () => {
-      const { pausableExt } = await setUpFixture(deployPausableExt);
-      await expect(pausableExt.setPauser(pauser.address))
-        .to.emit(pausableExt, EVENT_NAME_PAUSER_CHANGED)
-        .withArgs(pauser.address);
-      expect(await pausableExt.pauser()).to.equal(pauser.address);
+    it("The internal unchained initializer is reverted if it is called outside the init process", async () => {
+      const { pausableExtMock } = await setUpFixture(deployPausableExtMock);
       await expect(
-        pausableExt.setPauser(pauser.address)
-      ).not.to.emit(pausableExt, EVENT_NAME_PAUSER_CHANGED);
-    });
-
-    it("Is reverted if the caller does not have the owner role", async () => {
-      const { pausableExt } = await setUpFixture(deployPausableExt);
-      await expect(connect(pausableExt, user).setPauser(pauser.address))
-        .to.be.revertedWithCustomError(pausableExt, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
-        .withArgs(user.address, OWNER_ROLE);
+        pausableExtMock.callParentInitializerUnchained()
+      ).to.be.revertedWithCustomError(pausableExtMock, REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
   describe("Function 'pause()'", async () => {
     it("Executes successfully and emits the correct event", async () => {
-      const { pausableExt } = await setUpFixture(deployAndConfigurePausableExt);
-      await expect(connect(pausableExt, pauser).pause())
-        .to.emit(pausableExt, EVENT_NAME_PAUSED)
-        .withArgs(pauser.address);
-      expect(await pausableExt.paused()).to.equal(true);
+      const { pausableExtMock } = await setUpFixture(deployAndConfigurePausableExtMock);
+
+      await expect(
+        connect(pausableExtMock, pauser).pause()
+      ).to.emit(
+        pausableExtMock,
+        EVENT_NAME_PAUSED
+      ).withArgs(pauser.address);
+
+      expect(await pausableExtMock.paused()).to.equal(true);
     });
 
-    it("Is reverted if called not by the pauser", async () => {
-      const { pausableExt } = await setUpFixture(deployAndConfigurePausableExt);
+    it("Is reverted if it is called by an account without the pauser role", async () => {
+      const { pausableExtMock } = await setUpFixture(deployAndConfigurePausableExtMock);
       await expect(
-        connect(pausableExt, user).pause()
-      ).to.be.revertedWithCustomError(pausableExt, REVERT_ERROR_UNAUTHORIZED_PAUSER);
+        pausableExtMock.pause()
+      ).to.be.revertedWithCustomError(
+        pausableExtMock,
+        REVERT_ERROR_IF_UNAUTHORIZED_ACCOUNT
+      ).withArgs(deployer.address, PAUSER_ROLE);
     });
   });
 
   describe("Function 'unpause()'", async () => {
     it("Executes successfully and emits the correct event", async () => {
-      const { pausableExt } = await setUpFixture(deployAndConfigurePausableExt);
-      await proveTx(connect(pausableExt, pauser).pause());
-      await expect(connect(pausableExt, pauser).unpause())
-        .to.emit(pausableExt, EVENT_NAME_UNPAUSED)
-        .withArgs(pauser.address);
-      expect(await pausableExt.paused()).to.equal(false);
+      const { pausableExtMock } = await setUpFixture(deployAndConfigurePausableExtMock);
+      await proveTx(connect(pausableExtMock, pauser).pause());
+
+      await expect(
+        connect(pausableExtMock, pauser).unpause()
+      ).to.emit(
+        pausableExtMock,
+        EVENT_NAME_UNPAUSED
+      ).withArgs(pauser.address);
+
+      expect(await pausableExtMock.paused()).to.equal(false);
     });
 
-    it("Is reverted if called not by the pauser", async () => {
-      const { pausableExt } = await setUpFixture(deployAndConfigurePausableExt);
+    it("Is reverted if it is called by an account without the pauser role", async () => {
+      const { pausableExtMock } = await setUpFixture(deployAndConfigurePausableExtMock);
       await expect(
-        connect(pausableExt, user).unpause()
-      ).to.be.revertedWithCustomError(pausableExt, REVERT_ERROR_UNAUTHORIZED_PAUSER);
+        pausableExtMock.unpause()
+      ).to.be.revertedWithCustomError(
+        pausableExtMock,
+        REVERT_ERROR_IF_UNAUTHORIZED_ACCOUNT
+      ).withArgs(deployer.address, PAUSER_ROLE);
     });
   });
 });

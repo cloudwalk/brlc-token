@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import { ERC20Base } from "../../base/ERC20Base.sol";
 
@@ -53,17 +53,23 @@ contract ERC20BaseMock is ERC20Base {
     }
 
     /**
-     * @notice Resets values of the contract in the new storage for test purposes
+     * @notice Configures the storage values as before migration to OpenZeppelin V5
      *
      * @dev This function is used to reset values in the new storage and sets the values in the old storage
      */
-    function resetStorageValues() external {
-        InitializableStorage storage initializableStorage = _getInitializableStorageInternaly();
+    function configureStorageValuesAsBeforeMigration() external {
+        InitializableStorage storage initializableStorage = _getInitializableStorageInternally();
         initializableStorage._initialized = 0;
         _initialized = 1;
 
         _revokeRole(OWNER_ROLE, _msgSender());
+        _revokeRole(PAUSER_ROLE, _msgSender());
+        _revokeRole(RESCUER_ROLE, _msgSender());
         _setRoleAdmin(OWNER_ROLE, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(PAUSER_ROLE, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(RESCUER_ROLE, DEFAULT_ADMIN_ROLE);
         _owner = _msgSender();
+        _pauser = _msgSender();
+        _rescuer = _msgSender();
     }
 }

@@ -42,6 +42,7 @@ describe("Contract 'ERC20Freezable'", async () => {
   const REVERT_ERROR_ZERO_ADDRESS = "ZeroAddress";
 
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
+  const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -69,7 +70,7 @@ describe("Contract 'ERC20Freezable'", async () => {
 
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
-    await proveTx(token.setPauser(pauser.address));
+    await proveTx(token.grantRole(PAUSER_ROLE, pauser.address));
     await proveTx(token.configureFreezerBatch([freezer.address], true));
     return { token };
   }
@@ -78,8 +79,9 @@ describe("Contract 'ERC20Freezable'", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
       expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
-      expect(await token.pauser()).to.equal(ethers.ZeroAddress);
+      expect(await token.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
       expect(await token.isFreezer(freezer.address)).to.equal(false);
 
       // To ensure 100% coverage even for the deprecated function
@@ -134,7 +136,7 @@ describe("Contract 'ERC20Freezable'", async () => {
 
     it("Is reverted if contract is paused", async () => {
       const { token } = await setUpFixture(deployToken);
-      await proveTx(token.setPauser(pauser.address));
+      await proveTx(token.grantRole(PAUSER_ROLE, pauser.address));
       await proveTx(connect(token, pauser).pause());
       await expect(
         connect(token, deployer).configureFreezerBatch([user1.address], true)

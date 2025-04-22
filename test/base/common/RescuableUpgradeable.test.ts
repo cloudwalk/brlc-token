@@ -1,9 +1,9 @@
 import { ethers, network, upgrades } from "hardhat";
 import { expect } from "chai";
-import { Contract, ContractFactory } from "ethers";
+import { Contract } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { connect, getAddress, proveTx } from "../../../test-utils/eth";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -14,133 +14,129 @@ async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
 }
 
 describe("Contract 'RescuableUpgradeable'", async () => {
-  const TOKEN_AMOUNT = 100;
-
   const EVENT_NAME_TRANSFER = "Transfer";
-  const EVENT_NAME_RESCUER_CHANGED = "RescuerChanged";
 
-  // Errors of the lib contracts
-  const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
-  const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
-  const REVERT_ERROR_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+  const REVERT_ERROR_IF_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
+  const REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
+  const REVERT_ERROR_IF_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
-  // Errors of the contracts under test
-  const REVERT_ERROR_UNAUTHORIZED_RESCUER = "UnauthorizedRescuer";
+  const OWENER_ROLE: string = ethers.id("OWNER_ROLE");
+  const RESCUER_ROLE: string = ethers.id("RESCUER_ROLE");
 
-  const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
-
-  let rescuableFactory: ContractFactory;
-  let tokenFactory: ContractFactory;
+  const TOKEN_AMOUNT = 123;
 
   let deployer: HardhatEthersSigner;
   let rescuer: HardhatEthersSigner;
-  let user: HardhatEthersSigner;
 
   before(async () => {
-    [deployer, rescuer, user] = await ethers.getSigners();
-    rescuableFactory = await ethers.getContractFactory("RescuableUpgradeableMock");
-    tokenFactory = await ethers.getContractFactory("ERC20TokenMock");
-    rescuableFactory = rescuableFactory.connect(deployer); // Explicitly specifying the deployer account
-    tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
+    [deployer, rescuer] = await ethers.getSigners();
   });
 
-  async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(
-      tokenFactory,
-      ["ERC20 Test", "TEST"],
-      { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
-    ) as Contract;
-    await token.waitForDeployment();
-    token = connect(token, deployer); // Explicitly specifying the initial account
-    return { token };
+  async function deployRescuableMock(): Promise<{ rescuableMock: Contract }> {
+    // The contract factory with the explicitly specified deployer account
+    let rescuableMockFactory = await ethers.getContractFactory("RescuableUpgradeableMock");
+    rescuableMockFactory = rescuableMockFactory.connect(deployer);
+
+    // The contract under test with the explicitly specified initial account
+    let rescuableMock: Contract = await upgrades.deployProxy(rescuableMockFactory) as Contract;
+    await rescuableMock.waitForDeployment();
+    rescuableMock = connect(rescuableMock, deployer); // Explicitly specifying the initial account
+
+    return { rescuableMock };
   }
 
-  async function deployRescuable(): Promise<{ rescuable: Contract }> {
-    let rescuable: Contract = await upgrades.deployProxy(
-      rescuableFactory,
-      { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
-    ) as Contract;
-    await rescuable.waitForDeployment();
-    rescuable = connect(rescuable, deployer); // Explicitly specifying the initial account
-    return { rescuable };
+  async function deployTokenMock(): Promise<{ tokenMock: Contract }> {
+    // The token contract factory with the explicitly specified deployer account
+    let tokenMockFactory = await ethers.getContractFactory("ERC20TokenMock");
+    tokenMockFactory = tokenMockFactory.connect(deployer);
+
+    // The token contract with the explicitly specified initial account
+    let tokenMock: Contract = await tokenMockFactory.deploy("ERC20 Test", "TEST") as Contract;
+    await tokenMock.waitForDeployment();
+    tokenMock = connect(tokenMock, deployer); // Explicitly specifying the initial account
+
+    return { tokenMock };
   }
 
-  async function deployAndConfigure(): Promise<{
-    rescuable: Contract;
-    token: Contract;
+  async function deployAndConfigureAllContracts(): Promise<{
+    rescuableMock: Contract;
+    tokenMock: Contract;
   }> {
-    const { rescuable } = await deployRescuable();
-    const { token } = await deployToken();
-    await proveTx(token.mintForTest(getAddress(rescuable), TOKEN_AMOUNT));
-    await proveTx(rescuable.setRescuer(rescuer.address));
-    return { rescuable, token };
+    const { rescuableMock } = await deployRescuableMock();
+    const { tokenMock } = await deployTokenMock();
+
+    await proveTx(tokenMock.mint(getAddress(rescuableMock), TOKEN_AMOUNT));
+    await proveTx(rescuableMock.grantRole(RESCUER_ROLE, rescuer.address));
+
+    return {
+      rescuableMock,
+      tokenMock
+    };
   }
 
-  describe("Function 'initialize()'", async () => {
-    it("Configures the contract as expected", async () => {
-      const { rescuable } = await setUpFixture(deployRescuable);
-      expect(await rescuable.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
-      expect(await rescuable.rescuer()).to.equal(ethers.ZeroAddress);
+  describe("Function 'initialize()' and internal initializers", async () => {
+    it("The external initializer configures the contract as expected", async () => {
+      const { rescuableMock } = await setUpFixture(deployRescuableMock);
+
+      // The roles
+      expect((await rescuableMock.OWNER_ROLE()).toLowerCase()).to.equal(OWENER_ROLE);
+      expect((await rescuableMock.RESCUER_ROLE()).toLowerCase()).to.equal(RESCUER_ROLE);
+
+      // The role admins
+      expect(await rescuableMock.getRoleAdmin(OWENER_ROLE)).to.equal(ethers.ZeroHash);
+      expect(await rescuableMock.getRoleAdmin(RESCUER_ROLE)).to.equal(OWENER_ROLE);
+
+      // The deployer should have the owner role, but not the other roles
+      expect(await rescuableMock.hasRole(OWENER_ROLE, deployer.address)).to.equal(true);
+      expect(await rescuableMock.hasRole(RESCUER_ROLE, deployer.address)).to.equal(false);
     });
 
-    it("Is reverted if called for the second time", async () => {
-      const { rescuable } = await setUpFixture(deployRescuable);
+    it("The external initializer is reverted if it is called a second time", async () => {
+      const { rescuableMock } = await setUpFixture(deployRescuableMock);
       await expect(
-        rescuable.initialize()
-      ).to.be.revertedWithCustomError(rescuable, REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID);
+        rescuableMock.initialize()
+      ).to.be.revertedWithCustomError(rescuableMock, REVERT_ERROR_IF_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
-    it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
-      const { rescuable } = await setUpFixture(deployRescuable);
+    it("The internal initializer is reverted if it is called outside the init process", async () => {
+      const { rescuableMock } = await setUpFixture(deployRescuableMock);
       await expect(
-        rescuable.call_parent_initialize_unchained()
-      ).to.be.revertedWithCustomError(rescuable, REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING);
+        rescuableMock.callParentInitializer()
+      ).to.be.revertedWithCustomError(rescuableMock, REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING);
     });
-  });
 
-  describe("Function 'setRescuer()'", async () => {
-    it("Executes successfully and emits the correct event", async () => {
-      const { rescuable } = await setUpFixture(deployRescuable);
-      await expect(rescuable.setRescuer(rescuer.address))
-        .to.emit(rescuable, EVENT_NAME_RESCUER_CHANGED)
-        .withArgs(rescuer.address);
-      expect(await rescuable.rescuer()).to.equal(rescuer.address);
+    it("The internal unchained initializer is reverted if it is called outside the init process", async () => {
+      const { rescuableMock } = await setUpFixture(deployRescuableMock);
       await expect(
-        rescuable.setRescuer(rescuer.address)
-      ).not.to.emit(rescuable, EVENT_NAME_RESCUER_CHANGED);
-    });
-
-    it("Is reverted if the caller does not have the owner role", async () => {
-      const { rescuable } = await setUpFixture(deployRescuable);
-      await expect(connect(rescuable, rescuer).setRescuer(rescuer.address))
-        .to.be.revertedWithCustomError(rescuable, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
-        .withArgs(rescuer.address, OWNER_ROLE);
+        rescuableMock.callParentInitializerUnchained()
+      ).to.be.revertedWithCustomError(rescuableMock, REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
   describe("Function 'rescueERC20()'", async () => {
     it("Executes as expected and emits the correct event", async () => {
-      const { rescuable, token } = await setUpFixture(deployAndConfigure);
-      const tx = connect(rescuable, rescuer).rescueERC20(
-        getAddress(token),
-        deployer.address,
-        TOKEN_AMOUNT
-      );
+      const { rescuableMock, tokenMock } = await setUpFixture(deployAndConfigureAllContracts);
+
+      const rescuableMockConnected = connect(rescuableMock, rescuer);
+      const tx = rescuableMockConnected.rescueERC20(getAddress(tokenMock), deployer.address, TOKEN_AMOUNT);
       await expect(tx).to.changeTokenBalances(
-        token,
-        [rescuable, deployer, rescuer],
+        tokenMock,
+        [rescuableMock, deployer, rescuer],
         [-TOKEN_AMOUNT, +TOKEN_AMOUNT, 0]
       );
       await expect(tx)
-        .to.emit(token, EVENT_NAME_TRANSFER)
-        .withArgs(getAddress(rescuable), deployer.address, TOKEN_AMOUNT);
+        .to.emit(tokenMock, EVENT_NAME_TRANSFER)
+        .withArgs(getAddress(rescuableMock), deployer.address, TOKEN_AMOUNT);
     });
 
-    it("Is reverted if called not by the rescuer", async () => {
-      const { rescuable, token } = await setUpFixture(deployAndConfigure);
+    it("Is reverted if it is called by an account without the rescuer role", async () => {
+      const { rescuableMock, tokenMock } = await setUpFixture(deployAndConfigureAllContracts);
       await expect(
-        connect(rescuable, user).rescueERC20(getAddress(token), deployer.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(rescuable, REVERT_ERROR_UNAUTHORIZED_RESCUER);
+        rescuableMock.rescueERC20(getAddress(tokenMock), deployer.address, TOKEN_AMOUNT)
+      ).to.be.revertedWithCustomError(
+        rescuableMock,
+        REVERT_ERROR_IF_UNAUTHORIZED_ACCOUNT
+      ).withArgs(deployer.address, RESCUER_ROLE);
     });
   });
 });

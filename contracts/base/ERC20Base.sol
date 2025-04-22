@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
-import { OwnableUpgradeable } from "./common/OwnableUpgradeable.sol";
+import { AccessControlExtUpgradeable } from "./common/AccessControlExtUpgradeable.sol";
 import { RescuableUpgradeable } from "./common/RescuableUpgradeable.sol";
 import { PausableExtUpgradeable } from "./common/PausableExtUpgradeable.sol";
 
@@ -11,6 +11,8 @@ import { ERC20Upgradeable } from "../openzeppelin_v4-9-6/ERC20Upgradeable.sol";
 import { LegacyBlocklistablePlaceholder } from "../legacy/LegacyBlocklistablePlaceholder.sol";
 import { LegacyInitializablePlaceholder } from "../legacy/LegacyInitializablePlaceholder.sol";
 import { LegacyOwnablePlaceholder } from "../legacy/LegacyOwnablePlaceholder.sol";
+import { LegacyPausablePlaceholder } from "../legacy/LegacyPausablePlaceholder.sol";
+import { LegacyRescuablePlaceholder } from "../legacy/LegacyRescuablePlaceholder.sol";
 
 /**
  * @title ERC20Base contract
@@ -19,19 +21,40 @@ import { LegacyOwnablePlaceholder } from "../legacy/LegacyOwnablePlaceholder.sol
  * Pausable, and Blocklistable functionality.
  */
 abstract contract ERC20Base is
-    OwnableUpgradeable,
     LegacyInitializablePlaceholder,
     LegacyOwnablePlaceholder,
-    RescuableUpgradeable,
-    PausableExtUpgradeable,
+    LegacyRescuablePlaceholder,
+    LegacyPausablePlaceholder,
     LegacyBlocklistablePlaceholder,
+    AccessControlExtUpgradeable,
+    PausableExtUpgradeable,
+    RescuableUpgradeable,
     ERC20Upgradeable
 {
+    // ------------------ Constants ------------------------------- //
+
+    /// @dev The role of this contract owner.
+    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
+
+    // ------------------ Errors ---------------------------------- //
+
     /// @dev Throws if the zero address is passed to the function
     error ZeroAddress();
 
     /// @dev Throws if the zero amount is passed to the function
     error ZeroAmount();
+
+    // ------------------ Modifies -------------------------------- //
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        _checkRole(OWNER_ROLE);
+        _;
+    }
+
+    // ------------------ Initializers ---------------------------- //
 
     /**
      * @notice The internal initializer of the upgradable contract
@@ -41,9 +64,9 @@ abstract contract ERC20Base is
      * @param symbol_ The symbol of the token
      */
     function __ERC20Base_init(string memory name_, string memory symbol_) internal onlyInitializing {
-        __Ownable_init_unchained(); // This is needed only to avoid errors during coverage assessment
-        __Rescuable_init_unchained(); // This is needed only to avoid errors during coverage assessment
-        __PausableExt_init_unchained(); // This is needed only to avoid errors during coverage assessment
+        __AccessControlExt_init_unchained(); // This is needed only to avoid errors during coverage assessment
+        __PausableExt_init(OWNER_ROLE);
+        __Rescuable_init(OWNER_ROLE);
         __ERC20_init(name_, symbol_);
         __ERC20Base_init_unchained();
     }
@@ -58,6 +81,8 @@ abstract contract ERC20Base is
         _grantRole(OWNER_ROLE, _msgSender());
     }
 
+    // ------------------ Transactional functions ----------------- //
+
     /**
      * @notice Migrates the storage of the contract
      *
@@ -67,7 +92,7 @@ abstract contract ERC20Base is
      * - _owner
      */
     function migrateStorage() external {
-        InitializableStorage storage initializableStorage = _getInitializableStorageInternaly();
+        InitializableStorage storage initializableStorage = _getInitializableStorageInternally();
         if (initializableStorage._initialized > 0) {
             return;
         }
@@ -75,9 +100,17 @@ abstract contract ERC20Base is
         _initialized = 0;
 
         _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);
+        _setRoleAdmin(PAUSER_ROLE, OWNER_ROLE);
+        _setRoleAdmin(RESCUER_ROLE, OWNER_ROLE);
         _grantRole(OWNER_ROLE, _owner);
+        _grantRole(PAUSER_ROLE, _pauser);
+        _grantRole(RESCUER_ROLE, _rescuer);
         _owner = address(0);
+        _pauser = address(0);
+        _rescuer = address(0);
     }
+
+    // ------------------ View functions -------------------------- //
 
     /**
      * @notice Returns the old storage variables
@@ -87,16 +120,27 @@ abstract contract ERC20Base is
      * - _initialized
      * - _owner
      */
-    function getOldStorageVariables() external view returns (uint8 initialized_, address owner_) {
+    function getOldStorageVariables()
+        external
+        view
+        returns (
+            uint8 initialized_, // Tools: this comment prevents Prettier from formatting into a single line.
+            address owner_,
+            address pasuer_,
+            address rescuer_
+        )
+    {
         initialized_ = _initialized;
         owner_ = _owner;
+        pasuer_ = _pauser;
+        rescuer_ = _rescuer;
     }
 
     /**
      * @notice Returns the initialized state of the contract in the new storage
      */
     function getNewStorageInitializedState() external view returns (uint256) {
-        return _getInitializableStorageInternaly()._initialized;
+        return _getInitializableStorageInternally()._initialized;
     }
 
     /**
@@ -113,6 +157,8 @@ abstract contract ERC20Base is
         return super.allowance(owner, spender);
     }
 
+    // ------------------ Internal functions ---------------------- //
+
     /**
      * @inheritdoc ERC20Upgradeable
      *
@@ -121,7 +167,7 @@ abstract contract ERC20Base is
      * @dev The `spender` address must not be blocklisted
      */
     function _approve(
-        address owner,
+        address owner, // Tools: this comment prevents Prettier from formatting into a single line.
         address spender,
         uint256 amount
     ) internal virtual override whenNotPaused {
@@ -136,7 +182,7 @@ abstract contract ERC20Base is
      * @dev The `spender` address must not be blocklisted
      */
     function _spendAllowance(
-        address owner,
+        address owner, // Tools: this comment prevents Prettier from formatting into a single line.
         address spender,
         uint256 amount
     ) internal virtual override whenNotPaused {
@@ -151,7 +197,7 @@ abstract contract ERC20Base is
      * @dev The `to` address must not be blocklisted
      */
     function _beforeTokenTransfer(
-        address from,
+        address from, // Tools: this comment prevents Prettier from formatting into a single line.
         address to,
         uint256 amount
     ) internal virtual override whenNotPaused {
@@ -168,7 +214,7 @@ abstract contract ERC20Base is
     /**
      * @dev Returns a pointer to the storage namespace of the Initializable parent smart contract.
      */
-    function _getInitializableStorageInternaly() internal pure returns (InitializableStorage storage $) {
+    function _getInitializableStorageInternally() internal pure returns (InitializableStorage storage $) {
         bytes32 slot = _initializableStorageSlot();
         assembly {
             $.slot := slot

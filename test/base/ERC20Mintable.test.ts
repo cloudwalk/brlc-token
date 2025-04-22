@@ -61,6 +61,7 @@ describe("Contract 'ERC20Mintable'", async () => {
   const REVERT_ERROR_INSUFFICIENT_RESERVE_SUPPLY = "InsufficientReserveSupply";
 
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
+  const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
 
   enum PremintFunction {
     Increase = 0,
@@ -99,7 +100,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
-    await proveTx(token.setPauser(pauser.address));
+    await proveTx(token.grantRole(PAUSER_ROLE, pauser.address));
     await proveTx(token.updateMainMinter(mainMinter.address));
     await proveTx(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
     await proveTx(connect(token, mainMinter).configureMinter(minter.address, MINT_ALLOWANCE));
@@ -110,8 +111,9 @@ describe("Contract 'ERC20Mintable'", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
       expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
-      expect(await token.pauser()).to.eq(ethers.ZeroAddress);
+      expect(await token.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
       expect(await token.mainMinter()).to.eq(ethers.ZeroAddress);
       expect(await token.maxPendingPremintsCount()).to.eq(0);
     });
