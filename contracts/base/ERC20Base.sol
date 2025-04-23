@@ -96,6 +96,7 @@ abstract contract ERC20Base is
         if (initializableStorage._initialized > 0) {
             return;
         }
+        require(_msgSender() == _owner);
         initializableStorage._initialized = uint64(_initialized);
         _initialized = 0;
 

@@ -290,5 +290,11 @@ describe("Contract 'ERC20Base'", async () => {
       await expect(tx2).not.to.emit(token, EVENT_NAME_ROLE_ADMIN_CHANGED);
       await expect(tx2).not.to.emit(token, EVENT_NAME_ROLE_GRANTED);
     });
+
+    it("Is reverted if it is called not by the old owner", async () => {
+      const { token } = await setUpFixture(deployToken);
+      await proveTx(token.configureStorageValuesAsBeforeMigration());
+      await expect(connect(token, user1).migrateStorage()).to.be.reverted;
+    });
   });
 });
