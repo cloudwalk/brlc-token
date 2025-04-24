@@ -77,8 +77,9 @@ abstract contract ERC20Base is
     /**
      * @notice Migrates the storage of the contract
      *
-     * @dev This function is used to migrate the storage of the contract to the new namespaced storage and
-     *      grant needed roles.
+     * @dev This function is used to migrate the storage of the contract to the new namespaced storage,
+     *      set the OWNER_ROLE role as the admin for itself and other roles,
+     *      and grant needed roles to the owner, pauser, and rescuer addresses from the old storage.
      */
     function migrateStorage() external {
         InitializableStorage storage initializableStorage = _getInitializableStorageInternally();
@@ -107,8 +108,10 @@ abstract contract ERC20Base is
      *
      * @dev This function is used to get the following old storage variables:
      *
-     * - _initialized
-     * - _owner
+     * - _initialized;
+     * - _owner;
+     * - _pauser;
+     * - _rescuer.
      */
     function getOldStorageVariables()
         external
