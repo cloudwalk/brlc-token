@@ -6,13 +6,8 @@ import { AccessControlExtUpgradeable } from "./common/AccessControlExtUpgradeabl
 import { RescuableUpgradeable } from "./common/RescuableUpgradeable.sol";
 import { PausableExtUpgradeable } from "./common/PausableExtUpgradeable.sol";
 
+import { LegacyCorePlaceholder } from "../legacy/LegacyCorePlaceholder.sol";
 import { ERC20Upgradeable } from "../openzeppelin_v4-9-6/ERC20Upgradeable.sol";
-
-import { LegacyBlocklistablePlaceholder } from "../legacy/LegacyBlocklistablePlaceholder.sol";
-import { LegacyInitializablePlaceholder } from "../legacy/LegacyInitializablePlaceholder.sol";
-import { LegacyOwnablePlaceholder } from "../legacy/LegacyOwnablePlaceholder.sol";
-import { LegacyPausablePlaceholder } from "../legacy/LegacyPausablePlaceholder.sol";
-import { LegacyRescuablePlaceholder } from "../legacy/LegacyRescuablePlaceholder.sol";
 
 /**
  * @title ERC20Base contract
@@ -21,11 +16,7 @@ import { LegacyRescuablePlaceholder } from "../legacy/LegacyRescuablePlaceholder
  * Pausable, and Blocklistable functionality.
  */
 abstract contract ERC20Base is
-    LegacyInitializablePlaceholder,
-    LegacyOwnablePlaceholder,
-    LegacyRescuablePlaceholder,
-    LegacyPausablePlaceholder,
-    LegacyBlocklistablePlaceholder,
+    LegacyCorePlaceholder,
     AccessControlExtUpgradeable,
     PausableExtUpgradeable,
     RescuableUpgradeable,
