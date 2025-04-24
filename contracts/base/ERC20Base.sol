@@ -94,11 +94,15 @@ abstract contract ERC20Base is
         _setRoleAdmin(PAUSER_ROLE, OWNER_ROLE);
         _setRoleAdmin(RESCUER_ROLE, OWNER_ROLE);
         _grantRole(OWNER_ROLE, _owner);
-        _grantRole(PAUSER_ROLE, _pauser);
-        _grantRole(RESCUER_ROLE, _rescuer);
         _owner = address(0);
-        _pauser = address(0);
-        _rescuer = address(0);
+        if (_pauser != address(0)) {
+            _grantRole(PAUSER_ROLE, _pauser);
+            _pauser = address(0);
+        }
+        if (_rescuer != address(0)) {
+            _grantRole(RESCUER_ROLE, _rescuer);
+            _rescuer = address(0);
+        }
     }
 
     // ------------------ View functions -------------------------- //

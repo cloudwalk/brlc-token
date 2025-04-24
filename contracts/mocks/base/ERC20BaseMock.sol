@@ -57,19 +57,19 @@ contract ERC20BaseMock is ERC20Base {
      *
      * @dev This function is used to reset values in the new storage and sets the values in the old storage
      */
-    function configureStorageValuesAsBeforeMigration() external {
+    function configureStorageValuesAsBeforeMigration(address owner_, address pauser_, address rescuer_) external {
         InitializableStorage storage initializableStorage = _getInitializableStorageInternally();
         initializableStorage._initialized = 0;
         _initialized = 1;
 
-        _revokeRole(OWNER_ROLE, _msgSender());
-        _revokeRole(PAUSER_ROLE, _msgSender());
-        _revokeRole(RESCUER_ROLE, _msgSender());
+        _revokeRole(OWNER_ROLE, owner_);
+        _revokeRole(PAUSER_ROLE, pauser_);
+        _revokeRole(RESCUER_ROLE, rescuer_);
         _setRoleAdmin(OWNER_ROLE, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(PAUSER_ROLE, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(RESCUER_ROLE, DEFAULT_ADMIN_ROLE);
-        _owner = _msgSender();
-        _pauser = _msgSender();
-        _rescuer = _msgSender();
+        _owner = owner_;
+        _pauser = pauser_;
+        _rescuer = rescuer_;
     }
 }
