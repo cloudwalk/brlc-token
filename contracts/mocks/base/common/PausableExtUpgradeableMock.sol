@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import { PausableExtUpgradeable } from "../../../base/common/PausableExtUpgradeable.sol";
+import { PausableExtUpgradeable } from "../../../base/core/PausableExtUpgradeable.sol";
 
 /**
  * @title PausableExtUpgradeableMock contract
