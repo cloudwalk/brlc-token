@@ -19,6 +19,8 @@ pragma solidity ^0.8.0;
  * 2. This contract should be removed for new deployments.
  */
 abstract contract LegacyInitializablePlaceholder {
+    // ------------------ Storage variables ----------------------- //
+
     /**
      * @dev Indicates that the contract has been initialized.
      * @custom:oz-retyped-from bool
@@ -36,7 +38,7 @@ abstract contract LegacyInitializablePlaceholder {
      */
     uint256[50] private __gap;
 
-    // -------------------- Events -----------------------------------
+    // -------------------- Events -------------------------------- //
 
     /**
      * @dev Triggered when the contract has been initialized or reinitialized.

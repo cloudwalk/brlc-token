@@ -19,10 +19,12 @@ pragma solidity ^0.8.4;
  * 2. This contract should be removed for new deployments.
  */
 abstract contract LegacyRescuablePlaceholder {
+    // ------------------ Storage variables ----------------------- //
+
     /// @notice The address of the rescuer that is allowed to rescue tokens locked up in the contract
     address internal _rescuer;
 
-    // -------------------- Events -----------------------------------
+    // -------------------- Events -------------------------------- //
 
     /**
      * @notice Emitted when the rescuer is changed
@@ -31,7 +33,7 @@ abstract contract LegacyRescuablePlaceholder {
      */
     event RescuerChanged(address indexed newRescuer);
 
-    // -------------------- Errors -----------------------------------
+    // -------------------- Errors -------------------------------- //
 
     /**
      * @notice The transaction sender is not a rescuer

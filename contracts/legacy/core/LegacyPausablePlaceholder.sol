@@ -19,6 +19,8 @@ pragma solidity ^0.8.4;
  * 2. This contract should be removed for new deployments.
  */
 abstract contract LegacyPausablePlaceholder {
+    // ------------------ Storage variables ----------------------- //
+
     /// @dev The paused state of the contract
     bool private _paused;
 
@@ -31,7 +33,7 @@ abstract contract LegacyPausablePlaceholder {
     /// @notice The address of the pauser that is allowed to trigger the paused or unpaused state of the contract
     address internal _pauser;
 
-    // -------------------- Events -----------------------------------
+    // -------------------- Events -------------------------------- //
 
     /**
      * @notice Emitted when the pauser is changed
@@ -40,7 +42,7 @@ abstract contract LegacyPausablePlaceholder {
      */
     event PauserChanged(address indexed pauser);
 
-    // -------------------- Errors -----------------------------------
+    // -------------------- Errors -------------------------------- //
 
     /**
      * @notice The transaction sender is not a pauser

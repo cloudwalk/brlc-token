@@ -12,7 +12,11 @@ import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/ac
  * @dev Allows to rescue ERC20 tokens locked up in the contract using the {RESCUER_ROLE} role.
  */
 abstract contract RescuableUpgradeable is AccessControlUpgradeable {
+    // ------------------ Types ----------------------------------- //
+
     using SafeERC20 for IERC20;
+
+    // ------------------ Constants ------------------------------- //
 
     /// @dev The role of rescuer that is allowed to rescue tokens locked up in the contract.
     bytes32 public constant RESCUER_ROLE = keccak256("RESCUER_ROLE");

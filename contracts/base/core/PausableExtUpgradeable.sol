@@ -12,6 +12,8 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/P
  *      the external pausing and unpausing functions.
  */
 abstract contract PausableExtUpgradeable is AccessControlUpgradeable, PausableUpgradeable {
+    // ------------------ Constants ------------------------------- //
+
     /// @dev The role of pauser that is allowed to trigger the paused or unpaused state of the contract.
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 

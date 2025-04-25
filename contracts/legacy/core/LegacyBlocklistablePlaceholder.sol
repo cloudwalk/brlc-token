@@ -24,6 +24,8 @@ pragma solidity ^0.8.4;
  * 2. This contract should be removed for new deployments.
  */
 abstract contract LegacyBlocklistablePlaceholder {
+    // ------------------ Types ----------------------------------- //
+
     /// @notice The structure that represents blocklistable contract storage
     struct BlocklistableStorageSlot {
         /// @notice The mapping of presence in the blocklist for a given address
@@ -32,9 +34,13 @@ abstract contract LegacyBlocklistablePlaceholder {
         bool enabled;
     }
 
+    // ------------------ Constants ------------------------------- //
+
     /// @notice The memory slot used to store the blocklistable contract storage
     bytes32 private constant _BLOCKLISTABLE_STORAGE_SLOT =
         0xff11fdfa16fed3260ed0e7147f7cc6da11a60208b5b9406d12a635614ffd9141;
+
+    // ------------------ Storage variables ----------------------- //
 
     /// @notice The address of the blocklister that is allowed to add and remove accounts from the blocklist
     address private _mainBlocklister;
@@ -42,7 +48,7 @@ abstract contract LegacyBlocklistablePlaceholder {
     /// @notice Mapping of presence in the blocklist for a given address
     mapping(address => bool) private _blocklisted;
 
-    // -------------------- Events -----------------------------------
+    // -------------------- Events -------------------------------- //
 
     /**
      * @notice Emitted when an account is blocklisted
@@ -87,7 +93,7 @@ abstract contract LegacyBlocklistablePlaceholder {
      */
     event BlocklistEnabled(bool indexed status);
 
-    // -------------------- Obsolete Events --------------------------
+    // -------------------- Obsolete Events ----------------------- //
 
     /**
      * @dev The same as the `Blocklisted` event above but with the obsolete name.
@@ -119,7 +125,7 @@ abstract contract LegacyBlocklistablePlaceholder {
      */
     event BlacklistEnabled(bool indexed status);
 
-    // -------------------- Errors -----------------------------------
+    // -------------------- Errors -------------------------------- //
 
     /**
      * @notice The transaction sender is not a blocklister

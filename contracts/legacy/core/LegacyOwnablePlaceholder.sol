@@ -19,6 +19,8 @@ pragma solidity ^0.8.0;
  * 2. This contract should be removed for new deployments.
  */
 abstract contract LegacyOwnablePlaceholder {
+    // ------------------ Storage variables ----------------------- //
+
     /// @notice The owner of the smart contract
     address internal _owner;
 
@@ -28,7 +30,7 @@ abstract contract LegacyOwnablePlaceholder {
      */
     uint256[49] private __gap;
 
-    // -------------------- Events -----------------------------------
+    // -------------------- Events -------------------------------- //
 
     /**
      * @notice Emitted when the owner of this contract has been changed.

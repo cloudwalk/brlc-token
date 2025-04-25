@@ -26,6 +26,8 @@ pragma solidity ^0.8.4;
  * 2. This contract should be removed for new deployments.
  */
 abstract contract LegacyRestrictablePlaceholder {
+    // ------------------ Storage variables ----------------------- //
+
     /// @notice The mapping of the assigned purposes: account => purposes
     mapping(address => bytes32[]) private _purposeAssignments;
 
@@ -41,7 +43,7 @@ abstract contract LegacyRestrictablePlaceholder {
      */
     uint256[47] private __gap;
 
-    // -------------------- Events -----------------------------------
+    // -------------------- Events -------------------------------- //
 
     /**
      * @notice Emitted when the restriction purposes are assigned to an account
@@ -62,7 +64,7 @@ abstract contract LegacyRestrictablePlaceholder {
      */
     event RestrictionUpdated(address indexed account, bytes32 indexed purpose, uint256 newBalance, uint256 oldBalance);
 
-    // -------------------- Obsolete Events --------------------------
+    // -------------------- Obsolete Events ----------------------- //
 
     /**
      * @dev The same as the `PurposesAssigned` event above but with the obsolete name.
@@ -74,7 +76,7 @@ abstract contract LegacyRestrictablePlaceholder {
      */
     event UpdateRestriction(address indexed account, bytes32 indexed purpose, uint256 newBalance, uint256 oldBalance);
 
-    // -------------------- Errors -----------------------------------
+    // -------------------- Errors -------------------------------- //
 
     /// @notice Thrown when the zero restriction purpose is passed to the function
     error ZeroPurpose();
