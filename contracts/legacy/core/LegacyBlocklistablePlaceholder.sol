@@ -24,21 +24,19 @@ pragma solidity ^0.8.4;
  * 2. This contract should be removed for new deployments.
  */
 abstract contract LegacyBlocklistablePlaceholder {
-    // ------------------ Types ----------------------------------- //
+    // ------------------ Namespaced storage layout --------------- //
 
-    /// @notice The structure that represents blocklistable contract storage
+    /// @notice The storage slot where additional blocklistable contract storage starts
+    bytes32 private constant _BLOCKLISTABLE_STORAGE_SLOT =
+        0xff11fdfa16fed3260ed0e7147f7cc6da11a60208b5b9406d12a635614ffd9141;
+
+    /// @notice The structure that represents additional blocklistable contract storage
     struct BlocklistableStorageSlot {
         /// @notice The mapping of presence in the blocklist for a given address
         mapping(address => bool) blocklisters;
         /// @notice The enabled/disabled status of the blocklist
         bool enabled;
     }
-
-    // ------------------ Constants ------------------------------- //
-
-    /// @notice The memory slot used to store the blocklistable contract storage
-    bytes32 private constant _BLOCKLISTABLE_STORAGE_SLOT =
-        0xff11fdfa16fed3260ed0e7147f7cc6da11a60208b5b9406d12a635614ffd9141;
 
     // ------------------ Storage variables ----------------------- //
 
