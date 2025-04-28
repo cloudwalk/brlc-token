@@ -16,6 +16,6 @@ abstract contract Versionable is IVersionable {
      * @inheritdoc IVersionable
      */
     function $__VERSION() external pure returns (Version memory) {
-        return Version(1, 3, 0);
+        return Version(1, 4, 0);
     }
 }
