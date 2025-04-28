@@ -153,11 +153,11 @@ async function main() {
 
   logger.log("▶ Checking the network...");
   await checkNetwork(owner);
-  logger.log("✅ Done. The network has been reset successfully");
+  logger.log("✅ Done. The network has been checked successfully");
 
   logger.log("▶ Checking the contract version...");
   await checkContractVersion(contract);
-  logger.log("✅ Done. The contract version is correct for executing this script.");
+  logger.log("✅ Done. The contract version is correct for executing this script");
 
   logger.log("▶ Checking if the owner has the right to configure the contract...");
   await checkAndConfigureOwnerRolesOnTheContract(contract, owner);
@@ -185,7 +185,7 @@ async function main() {
 
   logger.log("▶ Checking if the contract state is the same as before the migration...");
   checkEquality(stateAfterMigration, stateBeforeMigration);
-  logger.log("✅ Done. The contract state is the same as before the migration.");
+  logger.log("✅ Done. The contract state is the same as before the migration");
 
   logger.log("▶ Upgrading contract for the second time...");
   await upgradeContract(contract, factory);
@@ -197,9 +197,9 @@ async function main() {
 
   logger.log("▶ Checking if the contract state is the same as before the migration...");
   checkEquality(stateAfterSecondUpgrade, stateBeforeMigration);
-  logger.log("✅ Done. The contract state is the same as before the migration.");
+  logger.log("✅ Done. The contract state is the same as before the migration");
 
-  logger.log("🎉 Everything is done.");
+  logger.log("🎉 Everything is done successfully");
 }
 
 main().then().catch(err => {
