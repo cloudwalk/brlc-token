@@ -105,6 +105,17 @@ abstract contract ERC20Base is
         }
     }
 
+    /**
+     * @notice Sets the admin role for a given role
+     *
+     * @dev This function is used to set the admin role for a given role
+     * @param role The role to set the admin role for
+     * @param adminRole The admin role to set
+     */
+    function setRoleAdmin(bytes32 role, bytes32 adminRole) external onlyOwner {
+        _setRoleAdmin(role, adminRole);
+    }
+
     // ------------------ View functions -------------------------- //
 
     /**
