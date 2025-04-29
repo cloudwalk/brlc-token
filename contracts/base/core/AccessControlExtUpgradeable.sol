@@ -70,4 +70,13 @@ abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
             }
         }
     }
+
+    /**
+     * @dev Sets the admin role for a given role.
+     * @param role The role to set the admin role for.
+     * @param adminRole The admin role to set.
+     */
+    function setRoleAdmin(bytes32 role, bytes32 adminRole) external onlyRole(OWNER_ROLE) {
+        _setRoleAdmin(role, adminRole);
+    }
 }

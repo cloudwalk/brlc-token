@@ -23,15 +23,12 @@ describe("Contract 'ERC20Base'", async () => {
 
   const EVENT_NAME_APPROVAL = "Approval";
   const EVENT_NAME_TRANSFER = "Transfer";
-  const EVENT_NAME_ROLE_ADMIN_CHANGED = "RoleAdminChanged";
 
   // Errors of the lib contracts
   const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
   const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
   const REVERT_ERROR_CONTRACT_IS_PAUSED = "EnforcedPause";
-  const REVERT_ERROR_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
-  const DEFAULT_ADMIN_ROLE: string = ethers.ZeroHash;
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
   const RESCUER_ROLE: string = ethers.id("RESCUER_ROLE");
@@ -226,32 +223,6 @@ describe("Contract 'ERC20Base'", async () => {
       await expect(
         connect(token, user1).decreaseAllowance(user2.address, allowanceSubtractedValue)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
-    });
-  });
-
-  describe("Function 'setRoleAdmin()'", async () => {
-    it("Executes as expected for a non-exiting role", async () => {
-      const { token } = await setUpFixture(deployAndConfigureToken);
-      const role = ethers.id("SOME_ROLE");
-      const tx1 = token.setRoleAdmin(role, OWNER_ROLE);
-
-      await expect(tx1)
-        .to.emit(token, EVENT_NAME_ROLE_ADMIN_CHANGED)
-        .withArgs(role, DEFAULT_ADMIN_ROLE, OWNER_ROLE);
-      expect(await token.getRoleAdmin(role)).to.equal(OWNER_ROLE);
-
-      const tx2 = token.setRoleAdmin(role, role);
-      await expect(tx2)
-        .to.emit(token, EVENT_NAME_ROLE_ADMIN_CHANGED)
-        .withArgs(role, OWNER_ROLE, role);
-      expect(await token.getRoleAdmin(role)).to.equal(role);
-    });
-
-    it("Is reverted if the called does not have the owner role", async () => {
-      const { token } = await setUpFixture(deployToken);
-      await expect(connect(token, user1).setRoleAdmin(PAUSER_ROLE, OWNER_ROLE))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
-        .withArgs(user1.address, OWNER_ROLE);
     });
   });
 });
