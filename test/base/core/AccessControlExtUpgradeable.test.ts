@@ -21,7 +21,6 @@ describe("Contract 'AccessControlExtUpgradeable'", async () => {
   const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
   const REVERT_ERROR_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
-  const DEFAULT_ADMIN_ROLE: string = ethers.ZeroHash;
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const USER_ROLE: string = ethers.id("USER_ROLE");
 
@@ -57,7 +56,7 @@ describe("Contract 'AccessControlExtUpgradeable'", async () => {
       expect((await accessControlExtMock.USER_ROLE()).toLowerCase()).to.equal(USER_ROLE);
 
       // The role admins
-      expect(await accessControlExtMock.getRoleAdmin(OWNER_ROLE)).to.equal(DEFAULT_ADMIN_ROLE);
+      expect(await accessControlExtMock.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
       expect(await accessControlExtMock.getRoleAdmin(USER_ROLE)).to.equal(OWNER_ROLE);
 
       // The deployer should have the owner role, but not the other roles

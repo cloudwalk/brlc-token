@@ -83,7 +83,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
       expect((await rescuableMock.RESCUER_ROLE()).toLowerCase()).to.equal(RESCUER_ROLE);
 
       // The role admins
-      expect(await rescuableMock.getRoleAdmin(OWENER_ROLE)).to.equal(ethers.ZeroHash);
+      expect(await rescuableMock.getRoleAdmin(OWENER_ROLE)).to.equal(OWENER_ROLE);
       expect(await rescuableMock.getRoleAdmin(RESCUER_ROLE)).to.equal(OWENER_ROLE);
 
       // The deployer should have the owner role, but not the other roles
@@ -96,13 +96,6 @@ describe("Contract 'RescuableUpgradeable'", async () => {
       await expect(
         rescuableMock.initialize()
       ).to.be.revertedWithCustomError(rescuableMock, REVERT_ERROR_IF_CONTRACT_INITIALIZATION_IS_INVALID);
-    });
-
-    it("The internal initializer is reverted if it is called outside the init process", async () => {
-      const { rescuableMock } = await setUpFixture(deployRescuableMock);
-      await expect(
-        rescuableMock.callParentInitializer()
-      ).to.be.revertedWithCustomError(rescuableMock, REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("The internal unchained initializer is reverted if it is called outside the init process", async () => {

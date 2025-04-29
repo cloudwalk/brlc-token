@@ -60,7 +60,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
       expect((await pausableExtMock.PAUSER_ROLE()).toLowerCase()).to.equal(PAUSER_ROLE);
 
       // The role admins
-      expect(await pausableExtMock.getRoleAdmin(OWNER_ROLE)).to.equal(ethers.ZeroHash);
+      expect(await pausableExtMock.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
       expect(await pausableExtMock.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
 
       // The deployer should have the owner role, but not the other roles
@@ -76,13 +76,6 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
       await expect(
         pausableExtMock.initialize()
       ).to.be.revertedWithCustomError(pausableExtMock, REVERT_ERROR_IF_CONTRACT_INITIALIZATION_IS_INVALID);
-    });
-
-    it("The internal initializer is reverted if it is called outside the init process", async () => {
-      const { pausableExtMock } = await setUpFixture(deployPausableExtMock);
-      await expect(
-        pausableExtMock.callParentInitializer()
-      ).to.be.revertedWithCustomError(pausableExtMock, REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("The internal unchained initializer is reverted if it is called outside the init process", async () => {

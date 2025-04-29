@@ -12,9 +12,6 @@ import { PausableExtUpgradeable } from "../../../base/core/PausableExtUpgradeabl
  * @dev An implementation of the {PausableExtUpgradeable} contract for test purposes.
  */
 contract PausableExtUpgradeableMock is PausableExtUpgradeable, UUPSUpgradeable {
-    /// @dev The role of this contract owner.
-    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
-
     // ------------------ Initializers ---------------------------- //
 
     /**
@@ -23,7 +20,8 @@ contract PausableExtUpgradeableMock is PausableExtUpgradeable, UUPSUpgradeable {
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      */
     function initialize() public initializer {
-        __PausableExt_init(OWNER_ROLE);
+        __AccessControlExt_init_unchained();
+        __PausableExt_init_unchained();
 
         _grantRole(OWNER_ROLE, _msgSender());
 
@@ -33,14 +31,9 @@ contract PausableExtUpgradeableMock is PausableExtUpgradeable, UUPSUpgradeable {
 
     // ------------------ Transactional functions ----------------- //
 
-    /// @dev Calls the parent internal initializing function to verify the 'onlyInitializing' modifier.
-    function callParentInitializer() external {
-        __PausableExt_init(OWNER_ROLE);
-    }
-
     /// @dev Calls the parent internal unchained initializing function to verify the 'onlyInitializing' modifier.
     function callParentInitializerUnchained() external {
-        __PausableExt_init_unchained(OWNER_ROLE);
+        __PausableExt_init_unchained();
     }
 
     // ------------------ Internal functions ---------------------- //

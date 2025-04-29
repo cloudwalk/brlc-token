@@ -4,14 +4,15 @@ pragma solidity ^0.8.20;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+
+import { AccessControlExtUpgradeable } from "./AccessControlExtUpgradeable.sol";
 
 /**
  * @title RescuableUpgradeable base contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @dev Allows to rescue ERC20 tokens locked up in the contract using the {RESCUER_ROLE} role.
  */
-abstract contract RescuableUpgradeable is AccessControlUpgradeable {
+abstract contract RescuableUpgradeable is AccessControlExtUpgradeable {
     // ------------------ Types ----------------------------------- //
 
     using SafeERC20 for IERC20;
@@ -24,25 +25,14 @@ abstract contract RescuableUpgradeable is AccessControlUpgradeable {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev Internal initializer of the upgradable contract.
+     * @dev The unchained internal initializer of the upgradable contract
      *
      * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      *
-     * @param rescuerRoleAdmin The admin for the {RESCUER_ROLE} role.
+     * Note: The `..._init()` initializer has not been provided as redundant.
      */
-    function __Rescuable_init(bytes32 rescuerRoleAdmin) internal onlyInitializing {
-        __Rescuable_init_unchained(rescuerRoleAdmin);
-    }
-
-    /**
-     * @dev Unchained internal initializer of the upgradable contract.
-     *
-     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
-     *
-     * @param rescuerRoleAdmin The admin for the {RESCUER_ROLE} role.
-     */
-    function __Rescuable_init_unchained(bytes32 rescuerRoleAdmin) internal onlyInitializing {
-        _setRoleAdmin(RESCUER_ROLE, rescuerRoleAdmin);
+    function __Rescuable_init_unchained() internal onlyInitializing {
+        _setRoleAdmin(RESCUER_ROLE, OWNER_ROLE);
     }
 
     // ------------------ Transactional functions ----------------- //

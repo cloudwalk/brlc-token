@@ -2,8 +2,9 @@
 
 pragma solidity ^0.8.20;
 
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+
+import { AccessControlExtUpgradeable } from "./AccessControlExtUpgradeable.sol";
 
 /**
  * @title PausableExtUpgradeable base contract
@@ -11,7 +12,7 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/P
  * @dev Extends the OpenZeppelin's {PausableUpgradeable} contract by adding the {PAUSER_ROLE} role and implementing
  *      the external pausing and unpausing functions.
  */
-abstract contract PausableExtUpgradeable is AccessControlUpgradeable, PausableUpgradeable {
+abstract contract PausableExtUpgradeable is AccessControlExtUpgradeable, PausableUpgradeable {
     // ------------------ Constants ------------------------------- //
 
     /// @dev The role of pauser that is allowed to trigger the paused or unpaused state of the contract.
@@ -20,25 +21,14 @@ abstract contract PausableExtUpgradeable is AccessControlUpgradeable, PausableUp
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev Internal initializer of the upgradable contract.
+     * @dev The unchained internal initializer of the upgradable contract
      *
      * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      *
-     * @param pauserRoleAdmin The admin for the {PAUSER_ROLE} role.
+     * Note: The `..._init()` initializer has not been provided as redundant.
      */
-    function __PausableExt_init(bytes32 pauserRoleAdmin) internal onlyInitializing {
-        __PausableExt_init_unchained(pauserRoleAdmin);
-    }
-
-    /**
-     * @dev Unchained internal initializer of the upgradable contract.
-     *
-     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
-     *
-     * @param pauserRoleAdmin The admin for the {PAUSER_ROLE} role.
-     */
-    function __PausableExt_init_unchained(bytes32 pauserRoleAdmin) internal onlyInitializing {
-        _setRoleAdmin(PAUSER_ROLE, pauserRoleAdmin);
+    function __PausableExt_init_unchained() internal onlyInitializing {
+        _setRoleAdmin(PAUSER_ROLE, OWNER_ROLE);
     }
 
     // ------------------ Transactional functions ----------------- //

@@ -22,11 +22,6 @@ abstract contract ERC20Base is
     RescuableUpgradeable,
     ERC20Upgradeable
 {
-    // ------------------ Constants ------------------------------- //
-
-    /// @dev The role of this contract owner.
-    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
-
     // ------------------ Errors ---------------------------------- //
 
     /// @dev Throws if the zero address is passed to the function
@@ -45,9 +40,9 @@ abstract contract ERC20Base is
      * @param symbol_ The symbol of the token
      */
     function __ERC20Base_init(string memory name_, string memory symbol_) internal onlyInitializing {
-        __AccessControlExt_init_unchained(); // This is needed only to avoid errors during coverage assessment
-        __PausableExt_init(OWNER_ROLE);
-        __Rescuable_init(OWNER_ROLE);
+        __AccessControlExt_init_unchained();
+        __PausableExt_init_unchained();
+        __Rescuable_init_unchained();
         __ERC20_init(name_, symbol_);
         __ERC20Base_init_unchained();
     }
@@ -58,7 +53,6 @@ abstract contract ERC20Base is
      * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
      */
     function __ERC20Base_init_unchained() internal onlyInitializing {
-        _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);
         _grantRole(OWNER_ROLE, _msgSender());
     }
 

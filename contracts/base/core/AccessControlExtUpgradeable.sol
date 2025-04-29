@@ -11,6 +11,11 @@ import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/ac
  *      for granting and revoking roles in batch.
  */
 abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
+    // ------------------ Constants ------------------------------- //
+
+    /// @dev The role of this contract owner.
+    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
+
     // ------------------ Initializers ---------------------------- //
 
     /**
@@ -20,7 +25,9 @@ abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
      *
      * Note: The `..._init()` initializer has not been provided as redundant.
      */
-    function __AccessControlExt_init_unchained() internal onlyInitializing {}
+    function __AccessControlExt_init_unchained() internal onlyInitializing {
+        _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);
+    }
 
     // ------------------ Transactional functions ----------------- //
 
