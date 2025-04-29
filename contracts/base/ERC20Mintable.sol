@@ -11,6 +11,26 @@ import { ERC20Base } from "./ERC20Base.sol";
  * @notice The ERC20 token implementation that supports the mint, premint, and burn operations
  */
 abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
+    // ------------------ Types ----------------------------------- //
+
+    /// @notice The structure that represents an array of premint records
+    struct PremintState {
+        PremintRecord[] premintRecords;
+    }
+
+    /// @notice The structure that represents a premint record
+    struct PremintRecord {
+        uint64 amount;
+        uint64 release;
+    }
+
+    // ------------------ Constants ------------------------------- //
+
+    /// @notice The role of a minter. Accounts with this role are allowed to mint and burn tokens
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
+    // ------------------ Namespaced storage layout --------------- //
+
     /// @notice The memory slot used to extend the contract storage with extra variables
     // keccak256(abi.encode(uint256(keccak256("erc20.mintable.extended.storage")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 private constant _EXTENDED_STORAGE_SLOT =
@@ -26,44 +46,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         uint256 totalReserveSupply;
     }
 
-    /// @notice The structure that represents an array of premint records
-    struct PremintState {
-        PremintRecord[] premintRecords;
-    }
-
-    /// @notice The structure that represents a premint record
-    struct PremintRecord {
-        uint64 amount;
-        uint64 release;
-    }
-
-    /// @notice The address of the main minter
-    address private _mainMinter;
-
-    /// @notice The mapping of the configured minters
-    mapping(address => bool) private _minters;
-
-    /// @notice The mapping of the configured mint allowances
-    mapping(address => uint256) private _mintersAllowance;
-
-    // -------------------- Errors -----------------------------------
-
-    /**
-     * @notice The transaction sender is not a main minter
-     *
-     * @param account The address of the transaction sender
-     */
-    error UnauthorizedMainMinter(address account);
-
-    /**
-     * @notice The transaction sender is not a minter
-     *
-     * @param account The address of the transaction sender
-     */
-    error UnauthorizedMinter(address account);
-
-    /// @notice The mint allowance is exceeded during the mint operation
-    error ExceededMintAllowance();
+    // -------------------- Errors -------------------------------- //
 
     /// @notice The zero amount of tokens is passed during the mint operation
     error ZeroMintAmount();
@@ -110,29 +93,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /// @notice The amount of tokens to burn is greater than the total reserve supply
     error InsufficientReserveSupply();
 
-    // -------------------- Modifiers --------------------------------
-
-    /**
-     * @notice Throws if called by any account other than the main minter
-     */
-    modifier onlyMainMinter() {
-        if (_msgSender() != _mainMinter) {
-            revert UnauthorizedMainMinter(_msgSender());
-        }
-        _;
-    }
-
-    /**
-     * @notice Throws if called by any account other than the minter
-     */
-    modifier onlyMinter() {
-        if (!_minters[_msgSender()]) {
-            revert UnauthorizedMinter(_msgSender());
-        }
-        _;
-    }
-
-    // -------------------- Initializers -----------------------------
+    // -------------------- Initializers -------------------------- //
 
     /**
      * @notice The internal unchained initializer of the upgradable contract
@@ -141,60 +102,11 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      *
      * Note: The `..._init()` initializer has not been provided as redundant.
      */
-    function __ERC20Mintable_init_unchained() internal onlyInitializing {}
-
-    // -------------------- Functions --------------------------------
-
-    /**
-     * @inheritdoc IERC20Mintable
-     *
-     * @dev Can only be called by the contract owner
-     */
-    function updateMainMinter(address newMainMinter) public onlyOwner {
-        if (_mainMinter == newMainMinter) {
-            return;
-        }
-
-        _mainMinter = newMainMinter;
-
-        emit MainMinterChanged(_mainMinter);
+    function __ERC20Mintable_init_unchained() internal onlyInitializing {
+        _setRoleAdmin(MINTER_ROLE, OWNER_ROLE);
     }
 
-    /**
-     * @inheritdoc IERC20Mintable
-     *
-     * @dev The contract must not be paused
-     * @dev Can only be called by the main minter
-     */
-    function configureMinter(
-        address minter,
-        uint256 mintAllowance
-    ) external override whenNotPaused onlyMainMinter returns (bool) {
-        _minters[minter] = true;
-        _mintersAllowance[minter] = mintAllowance;
-
-        emit MinterConfigured(minter, mintAllowance);
-
-        return true;
-    }
-
-    /**
-     * @inheritdoc IERC20Mintable
-     *
-     * @dev Can only be called by the main minter
-     */
-    function removeMinter(address minter) external onlyMainMinter returns (bool) {
-        if (!_minters[minter]) {
-            return true;
-        }
-
-        _minters[minter] = false;
-        _mintersAllowance[minter] = 0;
-
-        emit MinterRemoved(minter);
-
-        return true;
-    }
+    // ------------------ Transactional functions ----------------- //
 
     /**
      * @inheritdoc IERC20Mintable
@@ -202,7 +114,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev Can only be called by the contract owner
      * @dev The same limit cannot be configured twice
      */
-    function configureMaxPendingPremintsCount(uint16 newLimit) external onlyOwner {
+    function configureMaxPendingPremintsCount(uint16 newLimit) external onlyRole(OWNER_ROLE) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
         if (storageSlot.maxPendingPremintsCount == newLimit) {
             revert MaxPendingPremintsCountAlreadyConfigured();
@@ -223,7 +135,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The `amount` value must be greater than zero and not
      * greater than the mint allowance of the minter
      */
-    function mint(address account, uint256 amount) external onlyMinter returns (bool) {
+    function mint(address account, uint256 amount) external onlyRole(MINTER_ROLE) returns (bool) {
         return _mintInternal(account, amount);
     }
 
@@ -237,7 +149,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     function mintFromReserve(
         address account, // Tools: this comment prevents Prettier from formatting into a single line.
         uint256 amount
-    ) external whenNotPaused onlyMinter {
+    ) external whenNotPaused onlyRole(MINTER_ROLE) {
         _mintInternal(account, amount);
 
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
@@ -260,7 +172,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         address account, // Tools: this comment prevents Prettier from formatting into a single line.
         uint256 amount,
         uint256 release
-    ) external onlyMinter {
+    ) external onlyRole(MINTER_ROLE) {
         _premint(
             account,
             amount,
@@ -283,7 +195,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         address account, // Tools: this comment prevents Prettier from formatting into a single line.
         uint256 amount,
         uint256 release
-    ) external onlyMinter {
+    ) external onlyRole(MINTER_ROLE) {
         _premint(
             account,
             amount,
@@ -307,7 +219,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     function reschedulePremintRelease(
         uint256 originalRelease,
         uint256 targetRelease
-    ) external whenNotPaused onlyMinter {
+    ) external whenNotPaused onlyRole(MINTER_ROLE) {
         _reschedulePremintRelease(originalRelease, targetRelease);
     }
 
@@ -319,7 +231,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The message sender must not be blocklisted
      * @dev The `amount` value must be greater than zero
      */
-    function burn(uint256 amount) external onlyMinter {
+    function burn(uint256 amount) external onlyRole(MINTER_ROLE) {
         _burnInternal(_msgSender(), amount);
     }
 
@@ -331,7 +243,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The message sender must not be blocklisted
      * @dev The amount of tokens to burn must be less than or equal to the total reserve supply
      */
-    function burnToReserve(uint256 amount) external whenNotPaused onlyMinter {
+    function burnToReserve(uint256 amount) external whenNotPaused onlyRole(MINTER_ROLE) {
         _burnInternal(_msgSender(), amount);
 
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
@@ -346,6 +258,8 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
         emit BurnToReserve(_msgSender(), amount, storageSlot.totalReserveSupply);
     }
+
+    // ------------------ View functions -------------------------- //
 
     /**
      * @notice Returns the total amount of preminted tokens
@@ -406,43 +320,18 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      */
-    function mainMinter() external view returns (address) {
-        return _mainMinter;
-    }
-
-    /**
-     * @inheritdoc IERC20Mintable
-     */
-    function isMinter(address account) external view returns (bool) {
-        return _minters[account];
-    }
-
-    /**
-     * @inheritdoc IERC20Mintable
-     */
-    function minterAllowance(address minter) external view returns (uint256) {
-        return _mintersAllowance[minter];
-    }
-
-    /**
-     * @inheritdoc IERC20Mintable
-     */
     function totalReserveSupply() external view returns (uint256) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
         return storageSlot.totalReserveSupply;
     }
+
+    // ------------------ Internal functions ---------------------- //
 
     function _mintInternal(address account, uint256 amount) internal returns (bool) {
         if (amount == 0) {
             revert ZeroMintAmount();
         }
 
-        uint256 mintAllowance = _mintersAllowance[_msgSender()];
-        if (amount > mintAllowance) {
-            revert ExceededMintAllowance();
-        }
-
-        _mintersAllowance[_msgSender()] = mintAllowance - amount;
         emit Mint(_msgSender(), account, amount);
 
         _mint(account, amount);

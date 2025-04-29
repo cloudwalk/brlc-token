@@ -21,8 +21,11 @@ describe("Contract 'BRLCToken'", async () => {
   const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
 
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
+  const FREEZER_ROLE: string = ethers.id("FREEZER_ROLE");
+  const MINTER_ROLE: string = ethers.id("MINTER_ROLE");
   const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
   const RESCUER_ROLE: string = ethers.id("RESCUER_ROLE");
+  const TRUSTED_SPENDER_ROLE: string = ethers.id("TRUSTED_SPENDER_ROLE");
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -51,12 +54,17 @@ describe("Contract 'BRLCToken'", async () => {
       expect(await token.symbol()).to.equal(TOKEN_SYMBOL);
       expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
       expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(FREEZER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(MINTER_ROLE)).to.equal(OWNER_ROLE);
       expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
       expect(await token.getRoleAdmin(RESCUER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(TRUSTED_SPENDER_ROLE)).to.equal(OWNER_ROLE);
       expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
+      expect(await token.hasRole(FREEZER_ROLE, deployer.address)).to.equal(false);
+      expect(await token.hasRole(MINTER_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(RESCUER_ROLE, deployer.address)).to.equal(false);
-      expect(await token.mainMinter()).to.equal(ethers.ZeroAddress);
+      expect(await token.hasRole(TRUSTED_SPENDER_ROLE, deployer.address)).to.equal(false);
     });
 
     it("Is reverted if called for the second time", async () => {

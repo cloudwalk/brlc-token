@@ -35,16 +35,6 @@ abstract contract ERC20Base is
     /// @dev Throws if the zero amount is passed to the function
     error ZeroAmount();
 
-    // ------------------ Modifies -------------------------------- //
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        _checkRole(OWNER_ROLE);
-        _;
-    }
-
     // ------------------ Initializers ---------------------------- //
 
     /**
@@ -81,7 +71,7 @@ abstract contract ERC20Base is
      * @param role The role to set the admin role for
      * @param adminRole The admin role to set
      */
-    function setRoleAdmin(bytes32 role, bytes32 adminRole) external onlyOwner {
+    function setRoleAdmin(bytes32 role, bytes32 adminRole) external onlyRole(OWNER_ROLE) {
         _setRoleAdmin(role, adminRole);
     }
 

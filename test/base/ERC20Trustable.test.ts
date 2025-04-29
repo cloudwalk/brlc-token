@@ -20,18 +20,13 @@ describe("Contract 'ERC20Trustable'", async () => {
   const APPROVE_AMOUNT = 123;
   const MAX_APPROVE_AMOUNT = ethers.MaxUint256;
 
-  const EVENT_NAME_TRUSTED_ACCOUNT_CONFIGURED = "TrustedAccountConfigured";
-
   // Errors of the lib contracts
   const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
   const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
-  const REVERT_ERROR_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
-
-  // Errors of the contracts under test
-  const REVERT_ERROR_TRUSTED_ACCOUNT_ALREADY_CONFIGURED = "TrustedAccountAlreadyConfigured";
 
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
+  const TRUSTED_SPENDER_ROLE: string = ethers.id("TRUSTED_SPENDER_ROLE");
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -59,8 +54,10 @@ describe("Contract 'ERC20Trustable'", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
       expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(TRUSTED_SPENDER_ROLE)).to.equal(OWNER_ROLE);
       expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
       expect(await token.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
+      expect(await token.hasRole(TRUSTED_SPENDER_ROLE, deployer.address)).to.equal(false);
     });
 
     it("Is reverted if called for the second time", async () => {
@@ -76,43 +73,6 @@ describe("Contract 'ERC20Trustable'", async () => {
     });
   });
 
-  describe("Function 'configureTrustedAccount()'", async () => {
-    it("Executes as expected and emits the event", async () => {
-      const { token } = await setUpFixture(deployToken);
-
-      expect(await token.isTrustedAccount(trustedAccount.address)).to.eq(false);
-
-      expect(await token.configureTrustedAccount(trustedAccount.address, true))
-        .to.emit(token, EVENT_NAME_TRUSTED_ACCOUNT_CONFIGURED)
-        .withArgs(trustedAccount, true);
-      expect(await token.isTrustedAccount(trustedAccount.address)).to.eq(true);
-
-      expect(await token.configureTrustedAccount(trustedAccount.address, false))
-        .to.emit(token, EVENT_NAME_TRUSTED_ACCOUNT_CONFIGURED)
-        .withArgs(trustedAccount, false);
-      expect(await token.isTrustedAccount(trustedAccount.address)).to.eq(false);
-    });
-
-    it("Is reverted if the account is already configured", async () => {
-      const { token } = await setUpFixture(deployToken);
-
-      await proveTx(token.configureTrustedAccount(trustedAccount.address, true));
-      await expect(token.configureTrustedAccount(trustedAccount.address, true))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_TRUSTED_ACCOUNT_ALREADY_CONFIGURED);
-
-      await proveTx(token.configureTrustedAccount(trustedAccount.address, false));
-      await expect(token.configureTrustedAccount(trustedAccount.address, false))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_TRUSTED_ACCOUNT_ALREADY_CONFIGURED);
-    });
-
-    it("Is reverted if the caller does not have the owner role", async () => {
-      const { token } = await setUpFixture(deployToken);
-      await expect(connect(token, user).configureTrustedAccount(trustedAccount.address, true))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
-        .withArgs(user.address, OWNER_ROLE);
-    });
-  });
-
   describe("Function 'allowance()'", async () => {
     it("Returns correct allowance if spender is marked as trusted", async () => {
       const { token } = await setUpFixture(deployToken);
@@ -124,7 +84,7 @@ describe("Contract 'ERC20Trustable'", async () => {
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(APPROVE_AMOUNT);
 
-      await proveTx(token.configureTrustedAccount(trustedAccount.address, true));
+      await proveTx(token.grantRole(TRUSTED_SPENDER_ROLE, trustedAccount.address));
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(MAX_APPROVE_AMOUNT);
 
@@ -132,7 +92,7 @@ describe("Contract 'ERC20Trustable'", async () => {
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(MAX_APPROVE_AMOUNT);
 
-      await proveTx(token.configureTrustedAccount(trustedAccount.address, false));
+      await proveTx(token.revokeRole(TRUSTED_SPENDER_ROLE, trustedAccount.address));
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(APPROVE_AMOUNT * 2);
     });

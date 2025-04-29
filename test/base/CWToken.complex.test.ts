@@ -50,6 +50,10 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
   const REVERT_MESSAGE_INSUFFICIENT_ALLOWANCE = "ERC20: insufficient allowance";
   const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
 
+  const FREEZER_ROLE: string = ethers.id("FREEZER_ROLE");
+  const MINTER_ROLE: string = ethers.id("MINTER_ROLE");
+  const TRUSTED_SPENDER_ROLE: string = ethers.id("TRUSTED_SPENDER_ROLE");
+
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
   let sender: HardhatEthersSigner;
@@ -75,9 +79,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
-    await proveTx(token.configureFreezerBatch([deployer.address, freezer.address], true));
-    await proveTx(token.updateMainMinter(deployer.address));
-    await proveTx(token.configureMinter(deployer.address, 20));
+    await proveTx(token.grantRoleBatch(FREEZER_ROLE, [deployer.address, freezer.address]));
+    await proveTx(token.grantRole(MINTER_ROLE, deployer.address));
     await proveTx(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
     return { token };
   }
@@ -136,19 +139,17 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
   describe("Function 'transferFrom()'", async () => {
     it("Executes as expected for non-trusted and trusted accounts", async () => {
-      const maxAmount = ethers.MaxUint256;
       const userBalance = 123;
 
       const { token } = await setUpFixture(deployToken);
-      await proveTx(token.updateMainMinter(deployer.address));
-      await proveTx(token.configureMinter(deployer.address, maxAmount));
+      await proveTx(token.grantRole(MINTER_ROLE, deployer.address));
       await proveTx(token.mint(sender.address, userBalance));
 
       await expect(
         token.transferFrom(sender.address, deployer.address, userBalance)
       ).to.be.revertedWith(REVERT_MESSAGE_INSUFFICIENT_ALLOWANCE);
 
-      await proveTx(token.configureTrustedAccount(deployer.address, true));
+      await proveTx(token.grantRole(TRUSTED_SPENDER_ROLE, deployer.address));
 
       await expect(
         token.transferFrom(sender.address, deployer.address, userBalance)
