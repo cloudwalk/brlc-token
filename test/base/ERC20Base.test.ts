@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { connect, getNumberOfEvents, proveTx } from "../../test-utils/eth";
+import { connect, proveTx } from "../../test-utils/eth";
 
 async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
   if (network.name === "hardhat") {
@@ -17,7 +17,6 @@ describe("Contract 'ERC20Base'", async () => {
   const TOKEN_NAME = "BRL Coin";
   const TOKEN_SYMBOL = "BRLC";
   const TOKEN_DECIMALS = 6;
-  const ADDRESS_ZERO = ethers.ZeroAddress;
 
   const TOKEN_AMOUNT: number = 100;
   const TOKEN_ALLOWANCE: number = 200;
@@ -25,7 +24,6 @@ describe("Contract 'ERC20Base'", async () => {
   const EVENT_NAME_APPROVAL = "Approval";
   const EVENT_NAME_TRANSFER = "Transfer";
   const EVENT_NAME_ROLE_ADMIN_CHANGED = "RoleAdminChanged";
-  const EVENT_NAME_ROLE_GRANTED = "RoleGranted";
 
   // Errors of the lib contracts
   const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
@@ -228,111 +226,6 @@ describe("Contract 'ERC20Base'", async () => {
       await expect(
         connect(token, user1).decreaseAllowance(user2.address, allowanceSubtractedValue)
       ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
-    });
-  });
-
-  describe("Function 'migrateStorage()'", async () => {
-    async function executeAndCheck(props: { pauserAddress: string; rescuerAddress: string }) {
-      const { token } = await setUpFixture(deployToken);
-      const ownerAddress = deployer.address;
-      const { pauserAddress, rescuerAddress } = props;
-      expect(await token.getNewStorageInitializedState()).to.eq(1);
-      expect(await token.getOldStorageVariables()).to.deep.eq([
-        0, // initialized_
-        ADDRESS_ZERO, // owner_
-        ADDRESS_ZERO, // pasuer_
-        ADDRESS_ZERO // rescuer_
-      ]);
-
-      await proveTx(token.configureStorageValuesAsBeforeMigration(ownerAddress, pauserAddress, rescuerAddress));
-      expect(await token.getOldStorageVariables()).to.deep.eq([
-        1n, // initialized_
-        ownerAddress,
-        pauserAddress,
-        rescuerAddress
-      ]);
-
-      // Call the first time
-      const tx1 = token.migrateStorage();
-      await expect(tx1)
-        .to.emit(token, EVENT_NAME_ROLE_ADMIN_CHANGED)
-        .withArgs(OWNER_ROLE, DEFAULT_ADMIN_ROLE, OWNER_ROLE);
-      await expect(tx1)
-        .to.emit(token, EVENT_NAME_ROLE_ADMIN_CHANGED)
-        .withArgs(PAUSER_ROLE, DEFAULT_ADMIN_ROLE, OWNER_ROLE);
-      await expect(tx1)
-        .to.emit(token, EVENT_NAME_ROLE_ADMIN_CHANGED)
-        .withArgs(RESCUER_ROLE, DEFAULT_ADMIN_ROLE, OWNER_ROLE);
-
-      let numberOfEvents = 1;
-      await expect(tx1)
-        .to.emit(token, EVENT_NAME_ROLE_GRANTED)
-        .withArgs(OWNER_ROLE, ownerAddress, deployer.address);
-      if (pauserAddress != ADDRESS_ZERO) {
-        await expect(tx1)
-          .to.emit(token, EVENT_NAME_ROLE_GRANTED)
-          .withArgs(PAUSER_ROLE, pauserAddress, deployer.address);
-        ++numberOfEvents;
-      }
-      if (rescuerAddress != ADDRESS_ZERO) {
-        await expect(tx1)
-          .to.emit(token, EVENT_NAME_ROLE_GRANTED)
-          .withArgs(RESCUER_ROLE, rescuerAddress, deployer.address);
-        ++numberOfEvents;
-      }
-      expect(await getNumberOfEvents(tx1, token, EVENT_NAME_ROLE_GRANTED)).to.eq(numberOfEvents);
-
-      expect(await token.getOldStorageVariables()).to.deep.eq([
-        0, // initialized_
-        ADDRESS_ZERO, // owner_
-        ADDRESS_ZERO, // pasuer_
-        ADDRESS_ZERO // rescuer_
-      ]);
-      expect(await token.getNewStorageInitializedState()).to.eq(1);
-      expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
-      expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
-      expect(await token.getRoleAdmin(RESCUER_ROLE)).to.equal(OWNER_ROLE);
-      expect(await token.hasRole(OWNER_ROLE, ownerAddress)).to.equal(true);
-      if (pauserAddress != ADDRESS_ZERO) {
-        expect(await token.hasRole(PAUSER_ROLE, pauserAddress)).to.equal(true);
-      } else {
-        expect(await token.hasRole(PAUSER_ROLE, pauserAddress)).to.equal(false);
-      }
-      if (rescuerAddress != ADDRESS_ZERO) {
-        expect(await token.hasRole(RESCUER_ROLE, rescuerAddress)).to.equal(true);
-      } else {
-        expect(await token.hasRole(RESCUER_ROLE, rescuerAddress)).to.equal(false);
-      }
-
-      // Call the second time
-      const tx2 = token.migrateStorage();
-      await expect(tx2).not.to.emit(token, EVENT_NAME_ROLE_ADMIN_CHANGED);
-      await expect(tx2).not.to.emit(token, EVENT_NAME_ROLE_GRANTED);
-    }
-
-    it("Executes as expected if the pauser and rescuer addresses are NOT zero", async () => {
-      await executeAndCheck({ pauserAddress: pauser.address, rescuerAddress: user1.address });
-    });
-
-    it("Executes as expected if the pauser address is ZERO but rescuer one is NOT zero", async () => {
-      await executeAndCheck({ pauserAddress: ADDRESS_ZERO, rescuerAddress: user1.address });
-    });
-
-    it("Executes as expected if the pauser address is NOT zero but rescuer one is ZERO", async () => {
-      await executeAndCheck({ pauserAddress: pauser.address, rescuerAddress: ADDRESS_ZERO });
-    });
-
-    it("Executes as expected if the pauser and rescuer addresses are both ZERO", async () => {
-      await executeAndCheck({ pauserAddress: ADDRESS_ZERO, rescuerAddress: ADDRESS_ZERO });
-    });
-
-    it("Is reverted if it is called not by the old owner", async () => {
-      const { token } = await setUpFixture(deployToken);
-      const ownerAddress = deployer.address;
-      const pauserAddress = pauser.address;
-      const rescuerAddress = user1.address;
-      await proveTx(token.configureStorageValuesAsBeforeMigration(ownerAddress, pauserAddress, rescuerAddress));
-      await expect(connect(token, user1).migrateStorage()).to.be.reverted;
     });
   });
 
