@@ -28,7 +28,7 @@ describe("Contract 'CWToken'", async () => {
   const EXPECTED_VERSION: Version = {
     major: 1,
     minor: 4,
-    patch: 0
+    patch: 1
   };
   // Errors of the lib contracts
   const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
