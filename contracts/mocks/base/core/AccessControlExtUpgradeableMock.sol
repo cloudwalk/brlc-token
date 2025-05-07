@@ -25,7 +25,7 @@ contract AccessControlExtUpgradeableMock is AccessControlExtUpgradeable, UUPSUpg
     function initialize() public initializer {
         __AccessControlExt_init_unchained(); // This is needed only to avoid errors during coverage assessment
 
-        _setRoleAdmin(USER_ROLE, OWNER_ROLE);
+        _setRoleAdmin(USER_ROLE, GRANTOR_ROLE);
         _grantRole(OWNER_ROLE, _msgSender());
 
         // Only to provide the 100 % test coverage

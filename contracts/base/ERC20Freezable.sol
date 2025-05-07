@@ -78,7 +78,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * Note: The `..._init()` initializer has not been provided as redundant.
      */
     function __ERC20Freezable_init_unchained() internal onlyInitializing {
-        _setRoleAdmin(FREEZER_ROLE, OWNER_ROLE);
+        _setRoleAdmin(FREEZER_ROLE, GRANTOR_ROLE);
     }
 
     // ------------------ Transactional functions ----------------- //

@@ -50,6 +50,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
   const REVERT_MESSAGE_INSUFFICIENT_ALLOWANCE = "ERC20: insufficient allowance";
   const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
 
+  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const FREEZER_ROLE: string = ethers.id("FREEZER_ROLE");
   const MINTER_ROLE: string = ethers.id("MINTER_ROLE");
   const TRUSTED_SPENDER_ROLE: string = ethers.id("TRUSTED_SPENDER_ROLE");
@@ -79,6 +80,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
+    await proveTx(token.grantRole(GRANTOR_ROLE, deployer.address));
     await proveTx(token.grantRoleBatch(FREEZER_ROLE, [deployer.address, freezer.address]));
     await proveTx(token.grantRole(MINTER_ROLE, deployer.address));
     await proveTx(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
@@ -142,6 +144,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       const userBalance = 123;
 
       const { token } = await setUpFixture(deployToken);
+      await proveTx(token.grantRole(GRANTOR_ROLE, deployer.address));
       await proveTx(token.grantRole(MINTER_ROLE, deployer.address));
       await proveTx(token.mint(sender.address, userBalance));
 

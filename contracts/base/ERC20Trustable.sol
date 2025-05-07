@@ -26,7 +26,7 @@ abstract contract ERC20Trustable is ERC20Base {
      * Note: The `..._init()` initializer has not been provided as redundant.
      */
     function __ERC20Trustable_init_unchained() internal onlyInitializing {
-        _setRoleAdmin(TRUSTED_SPENDER_ROLE, OWNER_ROLE);
+        _setRoleAdmin(TRUSTED_SPENDER_ROLE, GRANTOR_ROLE);
     }
 
     // ------------------ View functions -------------------------- //

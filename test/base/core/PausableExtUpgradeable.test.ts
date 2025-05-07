@@ -21,6 +21,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
   const REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
   const REVERT_ERROR_IF_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
+  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
 
@@ -46,6 +47,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
 
   async function deployAndConfigurePausableExtMock(): Promise<{ pausableExtMock: Contract }> {
     const { pausableExtMock } = await deployPausableExtMock();
+    await proveTx(pausableExtMock.grantRole(GRANTOR_ROLE, deployer.address));
     await proveTx(pausableExtMock.grantRole(PAUSER_ROLE, pauser.address));
 
     return { pausableExtMock };
@@ -55,16 +57,19 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
     it("The external initializer configures the contract as expected", async () => {
       const { pausableExtMock } = await setUpFixture(deployPausableExtMock);
 
-      // The roles
+      // The role hashes
       expect((await pausableExtMock.OWNER_ROLE()).toLowerCase()).to.equal(OWNER_ROLE);
+      expect((await pausableExtMock.GRANTOR_ROLE()).toLowerCase()).to.equal(GRANTOR_ROLE);
       expect((await pausableExtMock.PAUSER_ROLE()).toLowerCase()).to.equal(PAUSER_ROLE);
 
       // The role admins
       expect(await pausableExtMock.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
-      expect(await pausableExtMock.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await pausableExtMock.getRoleAdmin(GRANTOR_ROLE)).to.equal(OWNER_ROLE);
+      expect(await pausableExtMock.getRoleAdmin(PAUSER_ROLE)).to.equal(GRANTOR_ROLE);
 
       // The deployer should have the owner role, but not the other roles
       expect(await pausableExtMock.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
+      expect(await pausableExtMock.hasRole(GRANTOR_ROLE, deployer.address)).to.equal(false);
       expect(await pausableExtMock.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
 
       // The initial contract state is unpaused

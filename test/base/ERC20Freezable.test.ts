@@ -37,9 +37,11 @@ describe("Contract 'ERC20Freezable'", async () => {
   const REVERT_ERROR_ZERO_AMOUNT = "ZeroAmount";
   const REVERT_ERROR_ZERO_ADDRESS = "ZeroAddress";
 
+  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
+  const FREEZER_ROLE: string = ethers.id("FREEZER_ROLE");
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
-  const FREEZER_ROLE: string = ethers.id("FREEZER_ROLE");
+  const RESCUER_ROLE: string = ethers.id("RESCUER_ROLE");
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -67,6 +69,7 @@ describe("Contract 'ERC20Freezable'", async () => {
 
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
+    await proveTx(token.grantRole(GRANTOR_ROLE, deployer.address));
     await proveTx(token.grantRole(PAUSER_ROLE, pauser.address));
     await proveTx(token.grantRole(FREEZER_ROLE, freezer.address));
     return { token };
@@ -75,12 +78,27 @@ describe("Contract 'ERC20Freezable'", async () => {
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
+
+      // The role hashes
+      expect(await token.OWNER_ROLE()).to.equal(OWNER_ROLE);
+      expect(await token.GRANTOR_ROLE()).to.equal(GRANTOR_ROLE);
+      expect(await token.FREEZER_ROLE()).to.equal(FREEZER_ROLE);
+      expect(await token.PAUSER_ROLE()).to.equal(PAUSER_ROLE);
+      expect(await token.RESCUER_ROLE()).to.equal(RESCUER_ROLE);
+
+      // The role admins
       expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
-      expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
-      expect(await token.getRoleAdmin(FREEZER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(GRANTOR_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(FREEZER_ROLE)).to.equal(GRANTOR_ROLE);
+      expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(GRANTOR_ROLE);
+      expect(await token.getRoleAdmin(RESCUER_ROLE)).to.equal(GRANTOR_ROLE);
+
+      // The deployer should have the owner role, but not the other roles
       expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
-      expect(await token.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
+      expect(await token.hasRole(GRANTOR_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(FREEZER_ROLE, deployer.address)).to.equal(false);
+      expect(await token.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
+      expect(await token.hasRole(RESCUER_ROLE, deployer.address)).to.equal(false);
 
       // To ensure 100% coverage even for the deprecated function
       expect(await token.frozenBalance(user1.address)).to.equal(0);

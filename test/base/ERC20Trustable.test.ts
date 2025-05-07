@@ -24,8 +24,10 @@ describe("Contract 'ERC20Trustable'", async () => {
   const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
   const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
 
+  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
+  const RESCUER_ROLE: string = ethers.id("RESCUER_ROLE");
   const TRUSTED_SPENDER_ROLE: string = ethers.id("TRUSTED_SPENDER_ROLE");
 
   let tokenFactory: ContractFactory;
@@ -52,11 +54,26 @@ describe("Contract 'ERC20Trustable'", async () => {
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
+
+      // The role hashes
+      expect(await token.OWNER_ROLE()).to.equal(OWNER_ROLE);
+      expect(await token.GRANTOR_ROLE()).to.equal(GRANTOR_ROLE);
+      expect(await token.PAUSER_ROLE()).to.equal(PAUSER_ROLE);
+      expect(await token.RESCUER_ROLE()).to.equal(RESCUER_ROLE);
+      expect(await token.TRUSTED_SPENDER_ROLE()).to.equal(TRUSTED_SPENDER_ROLE);
+
+      // The role admins
       expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
-      expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
-      expect(await token.getRoleAdmin(TRUSTED_SPENDER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(GRANTOR_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(GRANTOR_ROLE);
+      expect(await token.getRoleAdmin(RESCUER_ROLE)).to.equal(GRANTOR_ROLE);
+      expect(await token.getRoleAdmin(TRUSTED_SPENDER_ROLE)).to.equal(GRANTOR_ROLE);
+
+      // The deployer should have the owner role, but not the other roles
       expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
+      expect(await token.hasRole(GRANTOR_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
+      expect(await token.hasRole(RESCUER_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(TRUSTED_SPENDER_ROLE, deployer.address)).to.equal(false);
     });
 
@@ -84,6 +101,7 @@ describe("Contract 'ERC20Trustable'", async () => {
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(APPROVE_AMOUNT);
 
+      await proveTx(token.grantRole(GRANTOR_ROLE, deployer.address));
       await proveTx(token.grantRole(TRUSTED_SPENDER_ROLE, trustedAccount.address));
       expect(await (token.allowance(user.address, trustedAccount.address)))
         .to.eq(MAX_APPROVE_AMOUNT);

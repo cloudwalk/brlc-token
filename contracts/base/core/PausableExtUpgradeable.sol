@@ -28,7 +28,7 @@ abstract contract PausableExtUpgradeable is AccessControlExtUpgradeable, Pausabl
      * Note: The `..._init()` initializer has not been provided as redundant.
      */
     function __PausableExt_init_unchained() internal onlyInitializing {
-        _setRoleAdmin(PAUSER_ROLE, OWNER_ROLE);
+        _setRoleAdmin(PAUSER_ROLE, GRANTOR_ROLE);
     }
 
     // ------------------ Transactional functions ----------------- //

@@ -32,7 +32,7 @@ abstract contract RescuableUpgradeable is AccessControlExtUpgradeable {
      * Note: The `..._init()` initializer has not been provided as redundant.
      */
     function __Rescuable_init_unchained() internal onlyInitializing {
-        _setRoleAdmin(RESCUER_ROLE, OWNER_ROLE);
+        _setRoleAdmin(RESCUER_ROLE, GRANTOR_ROLE);
     }
 
     // ------------------ Transactional functions ----------------- //

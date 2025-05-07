@@ -16,6 +16,9 @@ abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
     /// @dev The role of this contract owner.
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
 
+    /// @dev The role of grantor that is allowed to grant and revoke other roles, except itself and the owner one.
+    bytes32 public constant GRANTOR_ROLE = keccak256("GRANTOR_ROLE");
+
     // ------------------ Initializers ---------------------------- //
 
     /**
@@ -27,6 +30,7 @@ abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
      */
     function __AccessControlExt_init_unchained() internal onlyInitializing {
         _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);
+        _setRoleAdmin(GRANTOR_ROLE, OWNER_ROLE);
     }
 
     // ------------------ Transactional functions ----------------- //

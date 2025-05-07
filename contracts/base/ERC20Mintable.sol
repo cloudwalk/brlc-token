@@ -103,7 +103,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * Note: The `..._init()` initializer has not been provided as redundant.
      */
     function __ERC20Mintable_init_unchained() internal onlyInitializing {
-        _setRoleAdmin(MINTER_ROLE, OWNER_ROLE);
+        _setRoleAdmin(MINTER_ROLE, GRANTOR_ROLE);
     }
 
     // ------------------ Transactional functions ----------------- //

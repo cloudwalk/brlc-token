@@ -63,8 +63,10 @@ describe("Contract 'ERC20Hookable'", async () => {
   const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
   const REVERT_ERROR_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
+  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
+  const RESCUER_ROLE: string = ethers.id("RESCUER_ROLE");
 
   let tokenFactory: ContractFactory;
   let hookFactory: ContractFactory;
@@ -108,10 +110,24 @@ describe("Contract 'ERC20Hookable'", async () => {
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
+
+      // The role hashes
+      expect(await token.OWNER_ROLE()).to.equal(OWNER_ROLE);
+      expect(await token.GRANTOR_ROLE()).to.equal(GRANTOR_ROLE);
+      expect(await token.PAUSER_ROLE()).to.equal(PAUSER_ROLE);
+      expect(await token.RESCUER_ROLE()).to.equal(RESCUER_ROLE);
+
+      // The role admins
       expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
-      expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(GRANTOR_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(GRANTOR_ROLE);
+      expect(await token.getRoleAdmin(RESCUER_ROLE)).to.equal(GRANTOR_ROLE);
+
+      // The deployer should have the owner role, but not the other roles
       expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
+      expect(await token.hasRole(GRANTOR_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
+      expect(await token.hasRole(RESCUER_ROLE, deployer.address)).to.equal(false);
     });
 
     it("Is reverted if called for the second time", async () => {

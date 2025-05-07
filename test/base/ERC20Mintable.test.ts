@@ -53,9 +53,11 @@ describe("Contract 'ERC20Mintable'", async () => {
   const REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE = "InappropriateUint64Value";
   const REVERT_ERROR_INSUFFICIENT_RESERVE_SUPPLY = "InsufficientReserveSupply";
 
+  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
+  const MINTER_ROLE: string = ethers.id("MINTER_ROLE");
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
-  const MINTER_ROLE: string = ethers.id("MINTER_ROLE");
+  const RESCUER_ROLE: string = ethers.id("RESCUER_ROLE");
 
   enum PremintFunction {
     Increase = 0,
@@ -94,6 +96,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
+    await proveTx(token.grantRole(GRANTOR_ROLE, deployer.address));
     await proveTx(token.grantRole(PAUSER_ROLE, pauser.address));
     await proveTx(token.grantRole(MINTER_ROLE, minter.address));
     await proveTx(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
@@ -103,12 +106,27 @@ describe("Contract 'ERC20Mintable'", async () => {
   describe("Function 'initialize()'", async () => {
     it("Configures the contract as expected", async () => {
       const { token } = await setUpFixture(deployToken);
+
+      // The role hashes
+      expect(await token.OWNER_ROLE()).to.equal(OWNER_ROLE);
+      expect(await token.GRANTOR_ROLE()).to.equal(GRANTOR_ROLE);
+      expect(await token.MINTER_ROLE()).to.equal(MINTER_ROLE);
+      expect(await token.PAUSER_ROLE()).to.equal(PAUSER_ROLE);
+      expect(await token.RESCUER_ROLE()).to.equal(RESCUER_ROLE);
+      // The role admins
       expect(await token.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
-      expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
-      expect(await token.getRoleAdmin(MINTER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(GRANTOR_ROLE)).to.equal(OWNER_ROLE);
+      expect(await token.getRoleAdmin(MINTER_ROLE)).to.equal(GRANTOR_ROLE);
+      expect(await token.getRoleAdmin(PAUSER_ROLE)).to.equal(GRANTOR_ROLE);
+      expect(await token.getRoleAdmin(RESCUER_ROLE)).to.equal(GRANTOR_ROLE);
+
+      // The deployer should have the owner role, but not the other roles
       expect(await token.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
-      expect(await token.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
+      expect(await token.hasRole(GRANTOR_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(MINTER_ROLE, deployer.address)).to.equal(false);
+      expect(await token.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
+      expect(await token.hasRole(RESCUER_ROLE, deployer.address)).to.equal(false);
+
       expect(await token.maxPendingPremintsCount()).to.eq(0);
     });
 
