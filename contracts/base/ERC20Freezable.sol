@@ -13,8 +13,11 @@ import { ERC20Base } from "./ERC20Base.sol";
 abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     // ------------------ Constants ------------------------------- //
 
-    /// @notice The role of a freezer. Accounts with this role are allowed to execute freezing operations.
-    bytes32 public constant FREEZER_ROLE = keccak256("FREEZER_ROLE");
+    /// @notice The role of a freezer-agent that is allowed to freeze or unfreeze tokens of other accounts.
+    bytes32 public constant FREEZER_AGENT_ROLE = keccak256("FREEZER_AGENT_ROLE");
+
+    /// @notice The role of a freezer-transferor that is allowed to transfer previously frozen tokens.
+    bytes32 public constant FREEZER_TRANSFEROR_ROLE = keccak256("FREEZER_TRANSFEROR_ROLE");
 
     // ------------------ Types ----------------------------------- //
 
@@ -78,7 +81,8 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      * Note: The `..._init()` initializer has not been provided as redundant.
      */
     function __ERC20Freezable_init_unchained() internal onlyInitializing {
-        _setRoleAdmin(FREEZER_ROLE, GRANTOR_ROLE);
+        _setRoleAdmin(FREEZER_AGENT_ROLE, GRANTOR_ROLE);
+        _setRoleAdmin(FREEZER_TRANSFEROR_ROLE, GRANTOR_ROLE);
     }
 
     // ------------------ Transactional functions ----------------- //
@@ -113,7 +117,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     function freeze(
         address account,
         uint256 amount
-    ) external whenNotPaused onlyRole(FREEZER_ROLE) returns (uint256 newBalance, uint256 oldBalance) {
+    ) external whenNotPaused onlyRole(FREEZER_AGENT_ROLE) returns (uint256 newBalance, uint256 oldBalance) {
         return _updateFrozen(account, amount, uint256(FrozenBalanceUpdateType.Replacement));
     }
 
@@ -128,7 +132,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     function freezeIncrease(
         address account,
         uint256 amount
-    ) external whenNotPaused onlyRole(FREEZER_ROLE) returns (uint256 newBalance, uint256 oldBalance) {
+    ) external whenNotPaused onlyRole(FREEZER_AGENT_ROLE) returns (uint256 newBalance, uint256 oldBalance) {
         return _updateFrozen(account, amount, uint256(FrozenBalanceUpdateType.Increase));
     }
 
@@ -143,7 +147,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     function freezeDecrease(
         address account,
         uint256 amount
-    ) external whenNotPaused onlyRole(FREEZER_ROLE) returns (uint256 newBalance, uint256 oldBalance) {
+    ) external whenNotPaused onlyRole(FREEZER_AGENT_ROLE) returns (uint256 newBalance, uint256 oldBalance) {
         return _updateFrozen(account, amount, uint256(FrozenBalanceUpdateType.Decrease));
     }
 
@@ -158,7 +162,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         address from,
         address to,
         uint256 amount
-    ) public virtual whenNotPaused onlyRole(FREEZER_ROLE) returns (uint256 newBalance, uint256 oldBalance) {
+    ) public virtual whenNotPaused onlyRole(FREEZER_TRANSFEROR_ROLE) returns (uint256 newBalance, uint256 oldBalance) {
         oldBalance = _frozenBalances[from];
 
         if (amount > oldBalance) {

@@ -51,8 +51,10 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
   const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
 
   const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
-  const FREEZER_ROLE: string = ethers.id("FREEZER_ROLE");
-  const MINTER_ROLE: string = ethers.id("MINTER_ROLE");
+  const FREEZER_AGENT_ROLE: string = ethers.id("FREEZER_AGENT_ROLE");
+  const FREEZER_TRANSFEROR_ROLE: string = ethers.id("FREEZER_TRANSFEROR_ROLE");
+  const MINTER_ORDINARY_ROLE: string = ethers.id("MINTER_ORDINARY_ROLE");
+  const PREMINTER_AGENT_ROLE: string = ethers.id("PREMINTER_AGENT_ROLE");
   const TRUSTED_SPENDER_ROLE: string = ethers.id("TRUSTED_SPENDER_ROLE");
 
   let tokenFactory: ContractFactory;
@@ -81,8 +83,10 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
     await proveTx(token.grantRole(GRANTOR_ROLE, deployer.address));
-    await proveTx(token.grantRoleBatch(FREEZER_ROLE, [deployer.address, freezer.address]));
-    await proveTx(token.grantRole(MINTER_ROLE, deployer.address));
+    await proveTx(token.grantRoleBatch(FREEZER_AGENT_ROLE, [deployer.address, freezer.address]));
+    await proveTx(token.grantRole(FREEZER_TRANSFEROR_ROLE, freezer.address));
+    await proveTx(token.grantRole(MINTER_ORDINARY_ROLE, deployer.address));
+    await proveTx(token.grantRole(PREMINTER_AGENT_ROLE, deployer.address));
     await proveTx(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
     return { token };
   }
@@ -145,7 +149,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
       const { token } = await setUpFixture(deployToken);
       await proveTx(token.grantRole(GRANTOR_ROLE, deployer.address));
-      await proveTx(token.grantRole(MINTER_ROLE, deployer.address));
+      await proveTx(token.grantRole(MINTER_ORDINARY_ROLE, deployer.address));
       await proveTx(token.mint(sender.address, userBalance));
 
       await expect(

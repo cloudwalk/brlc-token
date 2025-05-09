@@ -29,8 +29,8 @@ describe("Contract 'ERC20Base'", async () => {
   const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
   const REVERT_ERROR_CONTRACT_IS_PAUSED = "EnforcedPause";
 
-  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
+  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
   const RESCUER_ROLE: string = ethers.id("RESCUER_ROLE");
 
@@ -72,9 +72,9 @@ describe("Contract 'ERC20Base'", async () => {
       expect(await token.decimals()).to.equal(TOKEN_DECIMALS);
 
       // The role hashes
-      expect((await token.OWNER_ROLE()).toLowerCase()).to.equal(OWNER_ROLE);
-      expect((await token.GRANTOR_ROLE()).toLowerCase()).to.equal(GRANTOR_ROLE);
-      expect((await token.PAUSER_ROLE()).toLowerCase()).to.equal(PAUSER_ROLE);
+      expect(await token.OWNER_ROLE()).to.equal(OWNER_ROLE);
+      expect(await token.GRANTOR_ROLE()).to.equal(GRANTOR_ROLE);
+      expect(await token.PAUSER_ROLE()).to.equal(PAUSER_ROLE);
       expect(await token.RESCUER_ROLE()).to.equal(RESCUER_ROLE);
 
       // The role admins
