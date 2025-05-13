@@ -7,8 +7,8 @@ import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/ac
 /**
  * @title AccessControlExtUpgradeable base contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @dev Extends the OpenZeppelin's {AccessControlUpgradeable} contract by adding the functions
- *      for granting and revoking roles in batch.
+ * @dev Extends the OpenZeppelin's {AccessControlUpgradeable} contract by introducing new roles and
+ *      adding the functions for granting and revoking roles in batch.
  */
 abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
     // ------------------ Constants ------------------------------- //
