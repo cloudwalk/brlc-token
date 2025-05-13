@@ -20,8 +20,8 @@ describe("Contract 'RescuableUpgradeable'", async () => {
   const REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
   const REVERT_ERROR_IF_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
-  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
+  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const RESCUER_ROLE: string = ethers.id("RESCUER_ROLE");
 
   const TOKEN_AMOUNT = 123;

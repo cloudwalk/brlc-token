@@ -21,8 +21,8 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
   const REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
   const REVERT_ERROR_IF_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
-  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
+  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
 
   let deployer: HardhatEthersSigner;

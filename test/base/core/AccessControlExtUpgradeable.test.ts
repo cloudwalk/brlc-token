@@ -23,8 +23,8 @@ describe("Contract 'AccessControlExtUpgradeable'", async () => {
   const REVERT_ERROR_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
   const DEFAULT_ADMIN_ROLE: string = ethers.ZeroHash;
-  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
+  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const USER_ROLE: string = ethers.id("USER_ROLE");
 
   let deployer: HardhatEthersSigner;
