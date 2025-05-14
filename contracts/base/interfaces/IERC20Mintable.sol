@@ -8,27 +8,7 @@ pragma solidity ^0.8.0;
  * @notice The interface of a token that supports mint and burn operations
  */
 interface IERC20Mintable {
-    /**
-     * @notice Emitted when the main minter is changed
-     *
-     * @param newMainMinter The address of a new main minter
-     */
-    event MainMinterChanged(address indexed newMainMinter);
-
-    /**
-     * @notice Emitted when a minter account is configured
-     *
-     * @param minter The address of the minter to configure
-     * @param mintAllowance The mint allowance
-     */
-    event MinterConfigured(address indexed minter, uint256 mintAllowance);
-
-    /**
-     * @notice Emitted when a minter account is removed
-     *
-     * @param oldMinter The address of the minter to remove
-     */
-    event MinterRemoved(address indexed oldMinter);
+    // ------------------ Events ---------------------------------- //
 
     /**
      * @notice Emitted when tokens are minted
@@ -114,63 +94,7 @@ interface IERC20Mintable {
      */
     event MaxPendingPremintsCountConfigured(uint256 newLimit);
 
-    /**
-     * @notice Returns the main minter address
-     */
-    function mainMinter() external view returns (address);
-
-    /**
-     * @notice Checks if the account is configured as a minter
-     *
-     * @param account The address to check
-     * @return True if the account is a minter
-     */
-    function isMinter(address account) external view returns (bool);
-
-    /**
-     * @notice Returns the mint allowance of a minter
-     *
-     * @param minter The minter to check
-     * @return The mint allowance of the minter
-     */
-    function minterAllowance(address minter) external view returns (uint256);
-
-    /**
-     * @notice Returns the total reserve supply
-     *
-     * @return The total reserve supply
-     */
-    function totalReserveSupply() external view returns (uint256);
-
-    /**
-     * @notice Updates the main minter address
-     *
-     * Emits a {MainMinterChanged} event
-     *
-     * @param newMainMinter The address of a new main minter
-     */
-    function updateMainMinter(address newMainMinter) external;
-
-    /**
-     * @notice Configures a minter
-     *
-     * Emits a {MinterConfigured} event
-     *
-     * @param minter The address of the minter to configure
-     * @param mintAllowance The mint allowance
-     * @return True if the operation was successful
-     */
-    function configureMinter(address minter, uint256 mintAllowance) external returns (bool);
-
-    /**
-     * @notice Removes a minter
-     *
-     * Emits a {MinterRemoved} event
-     *
-     * @param minter The address of the minter to remove
-     * @return True if the operation was successful
-     */
-    function removeMinter(address minter) external returns (bool);
+    // ------------------ Transactional functions ----------------- //
 
     /**
      * @notice Configures the max count of pending premints
@@ -259,4 +183,13 @@ interface IERC20Mintable {
      * @param amount The amount of tokens to burn
      */
     function burnToReserve(uint256 amount) external;
+
+    // ------------------ View functions -------------------------- //
+
+    /**
+     * @notice Returns the total reserve supply
+     *
+     * @return The total reserve supply
+     */
+    function totalReserveSupply() external view returns (uint256);
 }

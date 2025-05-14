@@ -1,17 +1,9 @@
-import { ethers, network, upgrades } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 import { Contract } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { connect, proveTx } from "../../../test-utils/eth";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-
-async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
-  if (network.name === "hardhat") {
-    return loadFixture(func);
-  } else {
-    return func();
-  }
-}
+import { setUpFixture } from "../../../test-utils/common";
 
 describe("Contract 'PausableExtUpgradeable'", async () => {
   const EVENT_NAME_PAUSED = "Paused";
@@ -22,6 +14,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
   const REVERT_ERROR_IF_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
+  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const PAUSER_ROLE: string = ethers.id("PAUSER_ROLE");
 
   let deployer: HardhatEthersSigner;
@@ -46,6 +39,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
 
   async function deployAndConfigurePausableExtMock(): Promise<{ pausableExtMock: Contract }> {
     const { pausableExtMock } = await deployPausableExtMock();
+    await proveTx(pausableExtMock.grantRole(GRANTOR_ROLE, deployer.address));
     await proveTx(pausableExtMock.grantRole(PAUSER_ROLE, pauser.address));
 
     return { pausableExtMock };
@@ -55,16 +49,19 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
     it("The external initializer configures the contract as expected", async () => {
       const { pausableExtMock } = await setUpFixture(deployPausableExtMock);
 
-      // The roles
+      // The role hashes
       expect((await pausableExtMock.OWNER_ROLE()).toLowerCase()).to.equal(OWNER_ROLE);
+      expect((await pausableExtMock.GRANTOR_ROLE()).toLowerCase()).to.equal(GRANTOR_ROLE);
       expect((await pausableExtMock.PAUSER_ROLE()).toLowerCase()).to.equal(PAUSER_ROLE);
 
       // The role admins
-      expect(await pausableExtMock.getRoleAdmin(OWNER_ROLE)).to.equal(ethers.ZeroHash);
-      expect(await pausableExtMock.getRoleAdmin(PAUSER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await pausableExtMock.getRoleAdmin(OWNER_ROLE)).to.equal(OWNER_ROLE);
+      expect(await pausableExtMock.getRoleAdmin(GRANTOR_ROLE)).to.equal(OWNER_ROLE);
+      expect(await pausableExtMock.getRoleAdmin(PAUSER_ROLE)).to.equal(GRANTOR_ROLE);
 
       // The deployer should have the owner role, but not the other roles
       expect(await pausableExtMock.hasRole(OWNER_ROLE, deployer.address)).to.equal(true);
+      expect(await pausableExtMock.hasRole(GRANTOR_ROLE, deployer.address)).to.equal(false);
       expect(await pausableExtMock.hasRole(PAUSER_ROLE, deployer.address)).to.equal(false);
 
       // The initial contract state is unpaused
@@ -76,13 +73,6 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
       await expect(
         pausableExtMock.initialize()
       ).to.be.revertedWithCustomError(pausableExtMock, REVERT_ERROR_IF_CONTRACT_INITIALIZATION_IS_INVALID);
-    });
-
-    it("The internal initializer is reverted if it is called outside the init process", async () => {
-      const { pausableExtMock } = await setUpFixture(deployPausableExtMock);
-      await expect(
-        pausableExtMock.callParentInitializer()
-      ).to.be.revertedWithCustomError(pausableExtMock, REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("The internal unchained initializer is reverted if it is called outside the init process", async () => {

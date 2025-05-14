@@ -1,9 +1,9 @@
-import { ethers, network, upgrades } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { connect, getLatestBlockTimestamp, increaseBlockTimestampTo, proveTx } from "../../test-utils/eth";
+import { setUpFixture } from "../../test-utils/common";
 
 interface TokenAmounts {
   total: number;
@@ -18,14 +18,6 @@ const SKIP_REDUNDANT_TESTS: boolean = (process.env.CW_TOKEN_COMPLEX_SKIP_REDUNDA
 // An extension of the `it` function that can skip redundant tests if it is configured
 function it_optional(title: string, fn: () => Promise<void>): Mocha.Test {
   return SKIP_REDUNDANT_TESTS ? it.skip(title, fn) : it(title, fn);
-}
-
-async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
-  if (network.name === "hardhat") {
-    return loadFixture(func);
-  } else {
-    return func();
-  }
 }
 
 function processPremintingRelease(amounts: TokenAmounts) {
@@ -49,6 +41,13 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
   const REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
   const REVERT_MESSAGE_INSUFFICIENT_ALLOWANCE = "ERC20: insufficient allowance";
   const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
+
+  const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
+  const BALANCE_FREEZER_ROLE: string = ethers.id("BALANCE_FREEZER_ROLE");
+  const FROZEN_TRANSFEROR_ROLE: string = ethers.id("FROZEN_TRANSFEROR_ROLE");
+  const MINTER_ROLE: string = ethers.id("MINTER_ROLE");
+  const PREMINT_MANGER_ROLE: string = ethers.id("PREMINT_MANGER_ROLE");
+  const TRUSTED_SPENDER_ROLE: string = ethers.id("TRUSTED_SPENDER_ROLE");
 
   let tokenFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -75,9 +74,11 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
   async function deployAndConfigureToken(): Promise<{ token: Contract }> {
     const { token } = await deployToken();
-    await proveTx(token.configureFreezerBatch([deployer.address, freezer.address], true));
-    await proveTx(token.updateMainMinter(deployer.address));
-    await proveTx(token.configureMinter(deployer.address, 20));
+    await proveTx(token.grantRole(GRANTOR_ROLE, deployer.address));
+    await proveTx(token.grantRoleBatch(BALANCE_FREEZER_ROLE, [deployer.address, freezer.address]));
+    await proveTx(token.grantRole(FROZEN_TRANSFEROR_ROLE, freezer.address));
+    await proveTx(token.grantRole(MINTER_ROLE, deployer.address));
+    await proveTx(token.grantRole(PREMINT_MANGER_ROLE, deployer.address));
     await proveTx(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
     return { token };
   }
@@ -136,19 +137,18 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
   describe("Function 'transferFrom()'", async () => {
     it("Executes as expected for non-trusted and trusted accounts", async () => {
-      const maxAmount = ethers.MaxUint256;
       const userBalance = 123;
 
       const { token } = await setUpFixture(deployToken);
-      await proveTx(token.updateMainMinter(deployer.address));
-      await proveTx(token.configureMinter(deployer.address, maxAmount));
+      await proveTx(token.grantRole(GRANTOR_ROLE, deployer.address));
+      await proveTx(token.grantRole(MINTER_ROLE, deployer.address));
       await proveTx(token.mint(sender.address, userBalance));
 
       await expect(
         token.transferFrom(sender.address, deployer.address, userBalance)
       ).to.be.revertedWith(REVERT_MESSAGE_INSUFFICIENT_ALLOWANCE);
 
-      await proveTx(token.configureTrustedAccount(deployer.address, true));
+      await proveTx(token.grantRole(TRUSTED_SPENDER_ROLE, deployer.address));
 
       await expect(
         token.transferFrom(sender.address, deployer.address, userBalance)

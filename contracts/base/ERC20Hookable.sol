@@ -12,11 +12,15 @@ import { ERC20Base } from "./ERC20Base.sol";
  * @notice The ERC20 token implementation that supports hooking operations
  */
 abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
+    // ------------------ Storage variables ----------------------- //
+
     /// @notice The array of the attached hook contracts that are triggered before the token transfer
     Hook[] private _beforeTokenTransferHooks;
 
     /// @notice The array of the attached hook contracts that are triggered after the token transfer
     Hook[] private _afterTokenTransferHooks;
+
+    // ------------------ Events ---------------------------------- //
 
     /**
      * @notice Emitted when the `beforeTokenTransfer` hooks are updated
@@ -52,7 +56,7 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
      */
     event AfterTokenTransferHookFailure(address indexed hook, string reason, uint256 code, bytes data);
 
-    // -------------------- Initializers -----------------------------
+    // -------------------- Initializers -------------------------- //
 
     /**
      * @notice The internal unchained initializer of the upgradable contract
@@ -63,12 +67,12 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
      */
     function __ERC20Hookable_init_unchained() internal onlyInitializing {}
 
-    // -------------------- Functions --------------------------------
+    // ------------------ Transactional functions ----------------- //
 
     /**
      * @inheritdoc IERC20Hookable
      */
-    function setBeforeTokenTransferHooks(Hook[] calldata hooks) external onlyOwner {
+    function setBeforeTokenTransferHooks(Hook[] calldata hooks) external onlyRole(OWNER_ROLE) {
         delete _beforeTokenTransferHooks;
         for (uint i = 0; i < hooks.length; ++i) {
             _beforeTokenTransferHooks.push(hooks[i]);
@@ -79,13 +83,15 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
     /**
      * @inheritdoc IERC20Hookable
      */
-    function setAfterTokenTransferHooks(Hook[] calldata hooks) external onlyOwner {
+    function setAfterTokenTransferHooks(Hook[] calldata hooks) external onlyRole(OWNER_ROLE) {
         delete _afterTokenTransferHooks;
         for (uint i = 0; i < hooks.length; ++i) {
             _afterTokenTransferHooks.push(hooks[i]);
         }
         emit AfterTokenTransferHooksSet(hooks);
     }
+
+    // ------------------ View functions -------------------------- //
 
     /**
      * @inheritdoc IERC20Hookable
@@ -100,6 +106,8 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
     function getAfterTokenTransferHooks() external view returns (Hook[] memory) {
         return _afterTokenTransferHooks;
     }
+
+    // ------------------ Internal functions ---------------------- //
 
     /**
      * @dev Overrides the `_beforeTokenTransfer` function by calling attached hooks after the base logic

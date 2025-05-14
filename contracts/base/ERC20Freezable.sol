@@ -11,6 +11,16 @@ import { ERC20Base } from "./ERC20Base.sol";
  * @notice The ERC20 token implementation that supports the freezing operations
  */
 abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
+    // ------------------ Constants ------------------------------- //
+
+    /// @notice The role of a balance freezer that is allowed to freeze or unfreeze tokens of other accounts.
+    bytes32 public constant BALANCE_FREEZER_ROLE = keccak256("BALANCE_FREEZER_ROLE");
+
+    /// @notice The role of a frozen balance transferor that is allowed to transfer previously frozen tokens.
+    bytes32 public constant FROZEN_TRANSFEROR_ROLE = keccak256("FROZEN_TRANSFEROR_ROLE");
+
+    // ------------------ Types ----------------------------------- //
+
     /**
      * @dev Possible types of a frozen balance update operation
      *
@@ -26,16 +36,19 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         Replacement
     }
 
+    // ------------------ Storage variables ----------------------- //
+
     /// @notice [DEPRECATED] The mapping of the freeze approvals. No longer in use
     mapping(address => bool) private _freezeApprovals;
 
     /// @notice The mapping of the frozen balances
     mapping(address => uint256) private _frozenBalances;
 
-    /// @notice The mapping of the configured freezers
+    /// @notice [DEPRECATED] The mapping of the configured freezers. No longer in use.
+    ///         Replaced with `BALANCE_FREEZER_ROLE` or `FROZEN_TRANSFEROR_ROLE`.
     mapping(address => bool) private _freezers;
 
-    // -------------------- Errors -----------------------------------
+    // -------------------- Errors -------------------------------- //
 
     /// @notice [DEPRECATED] The token freezing operation is not approved by the account. No longer in use
     /// @dev Kept for backward compatibility with transaction analysis tools
@@ -51,25 +64,15 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     /// @notice The transfer amount exceeded the frozen amount
     error TransferExceededFrozenAmount();
 
-    /// @notice The transaction sender is not a freezer
+    /// @notice [DEPRECATED] The transaction sender is not a freezer. No longer in use
+    /// @dev Kept for backward compatibility with transaction analysis tools.
+    ///      Replaced by an appropriate error from the `AccessControl` library smart contract.
     error UnauthorizedFreezer();
 
     /// @notice The provided address belongs to a contract so its balance cannot be frozen
     error ContractBalanceFreezingAttempt();
 
-    // -------------------- Modifiers --------------------------------
-
-    /**
-     * @notice Throws if called by any account other than the freezer
-     */
-    modifier onlyFreezer() {
-        if (!_freezers[_msgSender()]) {
-            revert UnauthorizedFreezer();
-        }
-        _;
-    }
-
-    // -------------------- Functions --------------------------------
+    // -------------------- Initializers -------------------------- //
 
     /**
      * @notice The internal unchained initializer of the upgradable contract
@@ -78,24 +81,12 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      *
      * Note: The `..._init()` initializer has not been provided as redundant.
      */
-    function __ERC20Freezable_init_unchained() internal onlyInitializing {}
-
-    /**
-     * @inheritdoc IERC20Freezable
-     *
-     * @dev The contract must not be paused
-     * @dev Can only be called by the owner
-     * @dev Each freezer from the array must not already have the provided status
-     * @dev HISTORICAL NOTE: The previous function name was: `configureFreezers()`
-     */
-    function configureFreezerBatch(
-        address[] calldata freezers, // Tools: this comment prevents Prettier from formatting into a single line.
-        bool status
-    ) external whenNotPaused onlyOwner {
-        for (uint256 i = 0; i < freezers.length; i++) {
-            _configureFreezer(freezers[i], status); // reverts if the freezer is already configured
-        }
+    function __ERC20Freezable_init_unchained() internal onlyInitializing {
+        _setRoleAdmin(BALANCE_FREEZER_ROLE, GRANTOR_ROLE);
+        _setRoleAdmin(FROZEN_TRANSFEROR_ROLE, GRANTOR_ROLE);
     }
+
+    // ------------------ Transactional functions ----------------- //
 
     /**
      * @dev [DEPRECATED] Approves token freezing for the caller
@@ -127,7 +118,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     function freeze(
         address account,
         uint256 amount
-    ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance) {
+    ) external whenNotPaused onlyRole(BALANCE_FREEZER_ROLE) returns (uint256 newBalance, uint256 oldBalance) {
         return _updateFrozen(account, amount, uint256(FrozenBalanceUpdateType.Replacement));
     }
 
@@ -142,7 +133,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     function freezeIncrease(
         address account,
         uint256 amount
-    ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance) {
+    ) external whenNotPaused onlyRole(BALANCE_FREEZER_ROLE) returns (uint256 newBalance, uint256 oldBalance) {
         return _updateFrozen(account, amount, uint256(FrozenBalanceUpdateType.Increase));
     }
 
@@ -157,7 +148,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     function freezeDecrease(
         address account,
         uint256 amount
-    ) external whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance) {
+    ) external whenNotPaused onlyRole(BALANCE_FREEZER_ROLE) returns (uint256 newBalance, uint256 oldBalance) {
         return _updateFrozen(account, amount, uint256(FrozenBalanceUpdateType.Decrease));
     }
 
@@ -172,7 +163,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         address from,
         address to,
         uint256 amount
-    ) public virtual whenNotPaused onlyFreezer returns (uint256 newBalance, uint256 oldBalance) {
+    ) public virtual whenNotPaused onlyRole(FROZEN_TRANSFEROR_ROLE) returns (uint256 newBalance, uint256 oldBalance) {
         oldBalance = _frozenBalances[from];
 
         if (amount > oldBalance) {
@@ -190,12 +181,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         _transfer(from, to, amount);
     }
 
-    /**
-     * @inheritdoc IERC20Freezable
-     */
-    function isFreezer(address account) external view returns (bool) {
-        return _freezers[account];
-    }
+    // ------------------ View functions -------------------------- //
 
     /**
      * @notice [DEPRECATED] Checks if token freezing is approved for an account
@@ -224,22 +210,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         return balanceOfFrozen(account);
     }
 
-    /**
-     * @dev Configures a freezer internally
-     */
-    function _configureFreezer(address freezer, bool status) internal {
-        if (_freezers[freezer] == status) {
-            revert AlreadyConfigured();
-        }
-
-        _freezers[freezer] = status;
-
-        if (status == true) {
-            emit FreezerAssigned(freezer);
-        } else {
-            emit FreezerRemoved(freezer);
-        }
-    }
+    // ------------------ Internal functions ---------------------- //
 
     /**
      * @dev Updates the frozen balance

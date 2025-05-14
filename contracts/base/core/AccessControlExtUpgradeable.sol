@@ -7,10 +7,18 @@ import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/ac
 /**
  * @title AccessControlExtUpgradeable base contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @dev Extends the OpenZeppelin's {AccessControlUpgradeable} contract by adding the functions
- *      for granting and revoking roles in batch.
+ * @dev Extends the OpenZeppelin's {AccessControlUpgradeable} contract by introducing new roles and
+ *      adding the functions for granting and revoking roles in batch.
  */
 abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
+    // ------------------ Constants ------------------------------- //
+
+    /// @dev The role of this contract owner.
+    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
+
+    /// @dev The role of grantor that is allowed to grant and revoke other roles, except itself and the owner one.
+    bytes32 public constant GRANTOR_ROLE = keccak256("GRANTOR_ROLE");
+
     // ------------------ Initializers ---------------------------- //
 
     /**
@@ -20,7 +28,10 @@ abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
      *
      * Note: The `..._init()` initializer has not been provided as redundant.
      */
-    function __AccessControlExt_init_unchained() internal onlyInitializing {}
+    function __AccessControlExt_init_unchained() internal onlyInitializing {
+        _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);
+        _setRoleAdmin(GRANTOR_ROLE, OWNER_ROLE);
+    }
 
     // ------------------ Transactional functions ----------------- //
 
@@ -62,5 +73,14 @@ abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
                 ++i;
             }
         }
+    }
+
+    /**
+     * @dev Sets the admin role for a given role.
+     * @param role The role to set the admin role for.
+     * @param adminRole The admin role to set.
+     */
+    function setRoleAdmin(bytes32 role, bytes32 adminRole) external onlyRole(OWNER_ROLE) {
+        _setRoleAdmin(role, adminRole);
     }
 }

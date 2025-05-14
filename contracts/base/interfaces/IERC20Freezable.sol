@@ -8,15 +8,21 @@ pragma solidity ^0.8.0;
  * @notice The interface of a token that supports freezing operations
  */
 interface IERC20Freezable {
+    // ------------------ Events ---------------------------------- //
+
     /**
-     * @notice Emitted when an account is assigned as a freezer
+     * @notice [DEPRECATED] Emitted when an account is assigned as a freezer. No longer in use
+     * @dev Kept for backward compatibility with transaction analysis tools
+     *      Replaced by an appropriate role granting event from the `AccessControl` library smart contract.
      *
      * @param freezer The address of the assigned freezer
      */
     event FreezerAssigned(address indexed freezer);
 
     /**
-     * @notice Emitted when an account is removed as a freezer
+     * @notice [DEPRECATED] Emitted when an account is removed as a freezer. . No longer in use
+     * @dev Kept for backward compatibility with transaction analysis tools
+     *      Replaced by an appropriate role revocation event from the `AccessControl` library smart contract.
      *
      * @param freezer The address of the removed freezer
      */
@@ -47,19 +53,7 @@ interface IERC20Freezable {
      */
     event Freeze(address indexed account, uint256 newFrozenBalance, uint256 oldFrozenBalance);
 
-    /**
-     * @notice Configures a batch of freezers
-     *
-     * Emits a {FreezerAssigned} event for each assigned freezer
-     *
-     * Emits a {FreezerRemoved} event for each removed freezer
-     *
-     * HISTORICAL NOTE: The previous function name was: `configureFreezers()`
-     *
-     * @param freezers The array of freezer addresses to configure
-     * @param status The new status of the freezers: `true` is to assign freezers, `false` is to remove freezers
-     */
-    function configureFreezerBatch(address[] calldata freezers, bool status) external;
+    // ------------------ Transactional functions ----------------- //
 
     /**
      * @notice Transfers frozen tokens on behalf of an account
@@ -108,13 +102,7 @@ interface IERC20Freezable {
         uint256 amount
     ) external returns (uint256 newBalance, uint256 oldBalance);
 
-    /**
-     * @notice Checks if the account is configured as a freezer
-     *
-     * @param account The address to check
-     * @return True if the account is configured as a freezer
-     */
-    function isFreezer(address account) external view returns (bool);
+    // ------------------ View functions -------------------------- //
 
     /**
      * @notice Retrieves the frozen balance of an account

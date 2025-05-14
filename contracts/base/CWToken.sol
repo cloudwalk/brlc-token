@@ -11,7 +11,9 @@ import { Versionable } from "./Versionable.sol";
 
 import { IERC20ComplexBalance } from "./interfaces/IERC20ComplexBalance.sol";
 
+import { LegacyMintablePlaceholder } from "../legacy/LegacyMintablePlaceholder.sol";
 import { LegacyRestrictablePlaceholder } from "../legacy/LegacyRestrictablePlaceholder.sol";
+import { LegacyTrustablePlaceholder } from "../legacy/LegacyTrustablePlaceholder.sol";
 
 /**
  * @title CWToken contract
@@ -20,15 +22,17 @@ import { LegacyRestrictablePlaceholder } from "../legacy/LegacyRestrictablePlace
  */
 abstract contract CWToken is
     ERC20Base,
+    LegacyMintablePlaceholder,
     ERC20Mintable,
     ERC20Freezable,
     LegacyRestrictablePlaceholder,
     ERC20Hookable,
+    LegacyTrustablePlaceholder,
     ERC20Trustable,
     IERC20ComplexBalance,
     Versionable
 {
-    // -------------------- Initializers -----------------------------
+    // -------------------- Initializers -------------------------- //
 
     /**
      * @notice The internal initializer of the upgradable contract
@@ -52,7 +56,7 @@ abstract contract CWToken is
      */
     function __CWToken_init_unchained() internal onlyInitializing {}
 
-    // -------------------- Functions --------------------------------
+    // -------------------- View functions ------------------------ //
 
     /**
      * @inheritdoc IERC20ComplexBalance
@@ -60,6 +64,19 @@ abstract contract CWToken is
     function balanceOfComplex(address account) external view returns (ComplexBalance memory) {
         return _calculateComplexBalance(account);
     }
+
+    /**
+     * @dev See {ERC20Base-allowance}
+     * @dev See {ERC20Trustable-allowance}
+     */
+    function allowance(
+        address owner,
+        address spender
+    ) public view override(ERC20Base, ERC20Trustable) returns (uint256) {
+        return super.allowance(owner, spender);
+    }
+
+    // -------------------- Internal functions ------------------------ //
 
     /**
      * @dev Returns the current state of the account`s balances
@@ -112,16 +129,5 @@ abstract contract CWToken is
                 revert TransferExceededFrozenAmount();
             }
         }
-    }
-
-    /**
-     * @dev See {ERC20Base-allowance}
-     * @dev See {ERC20Trustable-allowance}
-     */
-    function allowance(
-        address owner,
-        address spender
-    ) public view override(ERC20Base, ERC20Trustable) returns (uint256) {
-        return super.allowance(owner, spender);
     }
 }
