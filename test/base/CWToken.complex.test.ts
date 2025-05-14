@@ -1,9 +1,9 @@
-import { ethers, network, upgrades } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { connect, getLatestBlockTimestamp, increaseBlockTimestampTo, proveTx } from "../../test-utils/eth";
+import { setUpFixture } from "../../test-utils/common";
 
 interface TokenAmounts {
   total: number;
@@ -18,14 +18,6 @@ const SKIP_REDUNDANT_TESTS: boolean = (process.env.CW_TOKEN_COMPLEX_SKIP_REDUNDA
 // An extension of the `it` function that can skip redundant tests if it is configured
 function it_optional(title: string, fn: () => Promise<void>): Mocha.Test {
   return SKIP_REDUNDANT_TESTS ? it.skip(title, fn) : it(title, fn);
-}
-
-async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
-  if (network.name === "hardhat") {
-    return loadFixture(func);
-  } else {
-    return func();
-  }
 }
 
 function processPremintingRelease(amounts: TokenAmounts) {

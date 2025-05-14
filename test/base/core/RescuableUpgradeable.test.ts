@@ -1,17 +1,9 @@
-import { ethers, network, upgrades } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 import { Contract } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { connect, getAddress, proveTx } from "../../../test-utils/eth";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-
-async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
-  if (network.name === "hardhat") {
-    return loadFixture(func);
-  } else {
-    return func();
-  }
-}
+import { setUpFixture } from "../../../test-utils/common";
 
 describe("Contract 'RescuableUpgradeable'", async () => {
   const EVENT_NAME_TRANSFER = "Transfer";

@@ -1,9 +1,9 @@
-import { ethers, network, upgrades } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { connect } from "../../test-utils/eth";
+import { setUpFixture } from "../../test-utils/common";
 
 interface Version {
   major: number;
@@ -11,14 +11,6 @@ interface Version {
   patch: number;
 
   [key: string]: number; // Indexing signature to ensure that fields are iterated over in a key-value style
-}
-
-async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
-  if (network.name === "hardhat") {
-    return loadFixture(func);
-  } else {
-    return func();
-  }
 }
 
 describe("Contract 'CWToken'", async () => {

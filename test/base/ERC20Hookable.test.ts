@@ -1,9 +1,9 @@
-import { ethers, network, upgrades } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { connect, getAddress, proveTx } from "../../test-utils/eth";
+import { setUpFixture } from "../../test-utils/common";
 
 enum ErrorHandlingPolicy {
   Revert = 0,
@@ -13,14 +13,6 @@ enum ErrorHandlingPolicy {
 interface HookConfig {
   account: string;
   policy: ErrorHandlingPolicy;
-}
-
-async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
-  if (network.name === "hardhat") {
-    return loadFixture(func);
-  } else {
-    return func();
-  }
 }
 
 function checkHookConfigEquality(actualHookConfig: Record<string, unknown>, expectedHookConfig: HookConfig) {

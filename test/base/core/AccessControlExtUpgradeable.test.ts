@@ -1,17 +1,9 @@
-import { ethers, network, upgrades } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
 import { Contract, TransactionResponse } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { connect, proveTx } from "../../../test-utils/eth";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-
-async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
-  if (network.name === "hardhat") {
-    return loadFixture(func);
-  } else {
-    return func();
-  }
-}
+import { setUpFixture } from "../../../test-utils/common";
 
 describe("Contract 'AccessControlExtUpgradeable'", async () => {
   const EVENT_NAME_ROLE_ADMIN_CHANGED = "RoleAdminChanged";
