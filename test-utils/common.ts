@@ -8,3 +8,7 @@ export async function setUpFixture<T>(func: () => Promise<T>): Promise<T> {
     return func();
   }
 }
+
+export function maxUintForBits(numberOfBits: number): bigint {
+  return 2n ** BigInt(numberOfBits) - 1n;
+}

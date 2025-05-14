@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { Contract, ContractFactory, TransactionResponse } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { connect, getLatestBlockTimestamp, increaseBlockTimestampTo, proveTx } from "../../test-utils/eth";
-import { setUpFixture } from "../../test-utils/common";
+import { maxUintForBits, setUpFixture } from "../../test-utils/common";
 
 describe("Contract 'ERC20Mintable'", async () => {
   const TOKEN_NAME = "BRL Coin";
@@ -703,7 +703,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The amount of premint is greater than 64-bit unsigned integer", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        const overflowAmount = BigInt("18446744073709551616"); // uint64 max + 1
+        const overflowAmount = maxUintForBits(64) + 1n;
         await expect(connect(token, preminterAgent).premintIncrease(user.address, overflowAmount, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE)
           .withArgs(overflowAmount);
@@ -1045,7 +1045,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The provided original release time is greater than 64-bit unsigned integer", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        const originalRelease = BigInt("18446744073709551616"); // uint64 max + 1
+        const originalRelease = maxUintForBits(64) + 1n;
         const targetRelease = timestamp + 1;
         await expect(connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE)
@@ -1055,7 +1055,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       it("The provided target release time is greater than 64-bit unsigned integer", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalRelease = timestamp;
-        const targetRelease = BigInt("18446744073709551616"); // uint64 max + 1
+        const targetRelease = maxUintForBits(64) + 1n;
         await expect(connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_INAPPROPRIATE_UINT64_VALUE)
           .withArgs(targetRelease);
