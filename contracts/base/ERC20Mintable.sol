@@ -27,22 +27,22 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     // ------------------ Constants ------------------------------- //
 
     /// @notice The role of an ordinary minter that is allowed to mint tokens without additional logic
-    bytes32 public constant MINTER_ORDINARY_ROLE = keccak256("MINTER_ORDINARY_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     /// @notice The role of an ordinary burner that is allowed to burn tokens without additional logic
-    bytes32 public constant BURNER_ORDINARY_ROLE = keccak256("BURNER_ORDINARY_ROLE");
+    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
     /// @notice The role of a reserve minter that is allowed to mint tokens from reserve
-    bytes32 public constant MINTER_RESERVE_ROLE = keccak256("MINTER_RESERVE_ROLE");
+    bytes32 public constant RESERVE_MINTER_ROLE = keccak256("RESERVE_MINTER_ROLE");
 
     /// @notice The role of a reserve burner that is allowed to burn tokens to reserve
-    bytes32 public constant BURNER_RESERVE_ROLE = keccak256("BURNER_RESERVE_ROLE");
+    bytes32 public constant RESERVE_BURNER_ROLE = keccak256("RESERVE_BURNER_ROLE");
 
-    /// @notice The role of a preminter-agent that is allowed to premint tokens or decrease the preminted amount
-    bytes32 public constant PREMINTER_AGENT_ROLE = keccak256("PREMINTER_AGENT_ROLE");
+    /// @notice The role of a premint manager that is allowed to increase or decrease the preminted amount of tokens
+    bytes32 public constant PREMINT_MANGER_ROLE = keccak256("PREMINT_MANGER_ROLE");
 
-    /// @notice The role of a preminter-resheduler that is allowed to change the release time of premints
-    bytes32 public constant PREMINTER_RESCHEDULER_ROLE = keccak256("PREMINTER_RESCHEDULER_ROLE");
+    /// @notice The role of a premint scheduler that is allowed to change the release time of premints
+    bytes32 public constant PREMINT_SCHEDULER_ROLE = keccak256("PREMINT_SCHEDULER_ROLE");
 
     // ------------------ Namespaced storage layout --------------- //
 
@@ -118,12 +118,12 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * Note: The `..._init()` initializer has not been provided as redundant.
      */
     function __ERC20Mintable_init_unchained() internal onlyInitializing {
-        _setRoleAdmin(MINTER_ORDINARY_ROLE, GRANTOR_ROLE);
-        _setRoleAdmin(BURNER_ORDINARY_ROLE, GRANTOR_ROLE);
-        _setRoleAdmin(MINTER_RESERVE_ROLE, GRANTOR_ROLE);
-        _setRoleAdmin(BURNER_RESERVE_ROLE, GRANTOR_ROLE);
-        _setRoleAdmin(PREMINTER_AGENT_ROLE, GRANTOR_ROLE);
-        _setRoleAdmin(PREMINTER_RESCHEDULER_ROLE, GRANTOR_ROLE);
+        _setRoleAdmin(MINTER_ROLE, GRANTOR_ROLE);
+        _setRoleAdmin(BURNER_ROLE, GRANTOR_ROLE);
+        _setRoleAdmin(RESERVE_MINTER_ROLE, GRANTOR_ROLE);
+        _setRoleAdmin(RESERVE_BURNER_ROLE, GRANTOR_ROLE);
+        _setRoleAdmin(PREMINT_MANGER_ROLE, GRANTOR_ROLE);
+        _setRoleAdmin(PREMINT_SCHEDULER_ROLE, GRANTOR_ROLE);
     }
 
     // ------------------ Transactional functions ----------------- //
@@ -155,7 +155,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The `amount` value must be greater than zero and not
      * greater than the mint allowance of the minter
      */
-    function mint(address account, uint256 amount) external onlyRole(MINTER_ORDINARY_ROLE) returns (bool) {
+    function mint(address account, uint256 amount) external onlyRole(MINTER_ROLE) returns (bool) {
         return _mintInternal(account, amount);
     }
 
@@ -169,7 +169,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     function mintFromReserve(
         address account, // Tools: this comment prevents Prettier from formatting into a single line.
         uint256 amount
-    ) external whenNotPaused onlyRole(MINTER_RESERVE_ROLE) {
+    ) external whenNotPaused onlyRole(RESERVE_MINTER_ROLE) {
         _mintInternal(account, amount);
 
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
@@ -192,7 +192,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         address account, // Tools: this comment prevents Prettier from formatting into a single line.
         uint256 amount,
         uint256 release
-    ) external onlyRole(PREMINTER_AGENT_ROLE) {
+    ) external onlyRole(PREMINT_MANGER_ROLE) {
         _premint(
             account,
             amount,
@@ -215,7 +215,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         address account, // Tools: this comment prevents Prettier from formatting into a single line.
         uint256 amount,
         uint256 release
-    ) external onlyRole(PREMINTER_AGENT_ROLE) {
+    ) external onlyRole(PREMINT_MANGER_ROLE) {
         _premint(
             account,
             amount,
@@ -239,7 +239,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     function reschedulePremintRelease(
         uint256 originalRelease,
         uint256 targetRelease
-    ) external whenNotPaused onlyRole(PREMINTER_RESCHEDULER_ROLE) {
+    ) external whenNotPaused onlyRole(PREMINT_SCHEDULER_ROLE) {
         _reschedulePremintRelease(originalRelease, targetRelease);
     }
 
@@ -251,7 +251,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The message sender must not be blocklisted
      * @dev The `amount` value must be greater than zero
      */
-    function burn(uint256 amount) external onlyRole(BURNER_ORDINARY_ROLE) {
+    function burn(uint256 amount) external onlyRole(BURNER_ROLE) {
         _burnInternal(_msgSender(), amount);
     }
 
@@ -263,7 +263,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * @dev The message sender must not be blocklisted
      * @dev The amount of tokens to burn must be less than or equal to the total reserve supply
      */
-    function burnToReserve(uint256 amount) external whenNotPaused onlyRole(BURNER_RESERVE_ROLE) {
+    function burnToReserve(uint256 amount) external whenNotPaused onlyRole(RESERVE_BURNER_ROLE) {
         _burnInternal(_msgSender(), amount);
 
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
