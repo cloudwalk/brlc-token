@@ -25,7 +25,7 @@ abstract contract RescuableUpgradeable is AccessControlExtUpgradeable {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The unchained internal initializer of the upgradable contract
+     * @dev The unchained internal initializer of the upgradeable contract
      *
      * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      *

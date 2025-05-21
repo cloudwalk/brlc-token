@@ -19,7 +19,7 @@ abstract contract ERC20Trustable is ERC20Base {
     // -------------------- Initializers -------------------------- //
 
     /**
-     * @notice The internal unchained initializer of the upgradable contract
+     * @notice The internal unchained initializer of the upgradeable contract
      *
      * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
      *

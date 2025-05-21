@@ -22,7 +22,7 @@ abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The unchained internal initializer of the upgradable contract
+     * @dev The unchained internal initializer of the upgradeable contract
      *
      * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      *
@@ -56,7 +56,7 @@ abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
     }
 
     /**
-     * @dev Revokes a role to accounts in batch.
+     * @dev Revokes a role from accounts in batch.
      *
      * Emits a {RoleRevoked} event for each account that has the provided role previously.
      *

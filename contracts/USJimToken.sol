@@ -11,7 +11,7 @@ import { CWToken } from "./base/CWToken.sol";
  */
 contract USJimToken is CWToken {
     /**
-     * @notice Constructor that prohibits the initialization of the implementation of the upgradable contract
+     * @notice Constructor that prohibits the initialization of the implementation of the upgradeable contract
      *
      * See details
      * https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable#initializing_the_implementation_contract
@@ -23,7 +23,7 @@ contract USJimToken is CWToken {
     }
 
     /**
-     * @notice The initializer of the upgradable contract
+     * @notice The initializer of the upgradeable contract
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      *

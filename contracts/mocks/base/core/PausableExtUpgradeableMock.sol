@@ -15,7 +15,7 @@ contract PausableExtUpgradeableMock is PausableExtUpgradeable, UUPSUpgradeable {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The initialize function of the upgradable contract.
+     * @dev The initialize function of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      */

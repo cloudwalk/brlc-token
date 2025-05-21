@@ -75,7 +75,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     // -------------------- Initializers -------------------------- //
 
     /**
-     * @notice The internal unchained initializer of the upgradable contract
+     * @notice The internal unchained initializer of the upgradeable contract
      *
      * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
      *
