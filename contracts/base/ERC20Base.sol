@@ -33,7 +33,7 @@ abstract contract ERC20Base is
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @notice The internal initializer of the upgradable contract
+     * @notice The internal initializer of the upgradeable contract
      *
      * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
      * @param name_ The name of the token
@@ -48,7 +48,7 @@ abstract contract ERC20Base is
     }
 
     /**
-     * @notice The internal unchained initializer of the upgradable contract
+     * @notice The internal unchained initializer of the upgradeable contract
      *
      * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
      */

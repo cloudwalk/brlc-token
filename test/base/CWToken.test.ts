@@ -20,7 +20,7 @@ describe("Contract 'CWToken'", async () => {
   const EXPECTED_VERSION: Version = {
     major: 1,
     minor: 5,
-    patch: 0
+    patch: 1
   };
   // Errors of the lib contracts
   const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
@@ -34,7 +34,7 @@ describe("Contract 'CWToken'", async () => {
   const BURNER_ROLE: string = ethers.id("BURNER_ROLE");
   const RESERVE_MINTER_ROLE: string = ethers.id("RESERVE_MINTER_ROLE");
   const RESERVE_BURNER_ROLE: string = ethers.id("RESERVE_BURNER_ROLE");
-  const PREMINT_MANGER_ROLE: string = ethers.id("PREMINT_MANGER_ROLE");
+  const PREMINT_MANAGER_ROLE: string = ethers.id("PREMINT_MANAGER_ROLE");
   const PREMINT_SCHEDULER_ROLE: string = ethers.id("PREMINT_SCHEDULER_ROLE");
   const BALANCE_FREEZER_ROLE: string = ethers.id("BALANCE_FREEZER_ROLE");
   const FROZEN_TRANSFEROR_ROLE: string = ethers.id("FROZEN_TRANSFEROR_ROLE");
@@ -76,7 +76,7 @@ describe("Contract 'CWToken'", async () => {
       expect(await token.BURNER_ROLE()).to.equal(BURNER_ROLE);
       expect(await token.RESERVE_MINTER_ROLE()).to.equal(RESERVE_MINTER_ROLE);
       expect(await token.RESERVE_BURNER_ROLE()).to.equal(RESERVE_BURNER_ROLE);
-      expect(await token.PREMINT_MANGER_ROLE()).to.equal(PREMINT_MANGER_ROLE);
+      expect(await token.PREMINT_MANAGER_ROLE()).to.equal(PREMINT_MANAGER_ROLE);
       expect(await token.PREMINT_SCHEDULER_ROLE()).to.equal(PREMINT_SCHEDULER_ROLE);
       expect(await token.BALANCE_FREEZER_ROLE()).to.equal(BALANCE_FREEZER_ROLE);
       expect(await token.FROZEN_TRANSFEROR_ROLE()).to.equal(FROZEN_TRANSFEROR_ROLE);
@@ -91,7 +91,7 @@ describe("Contract 'CWToken'", async () => {
       expect(await token.getRoleAdmin(BURNER_ROLE)).to.equal(GRANTOR_ROLE);
       expect(await token.getRoleAdmin(RESERVE_MINTER_ROLE)).to.equal(GRANTOR_ROLE);
       expect(await token.getRoleAdmin(RESERVE_BURNER_ROLE)).to.equal(GRANTOR_ROLE);
-      expect(await token.getRoleAdmin(PREMINT_MANGER_ROLE)).to.equal(GRANTOR_ROLE);
+      expect(await token.getRoleAdmin(PREMINT_MANAGER_ROLE)).to.equal(GRANTOR_ROLE);
       expect(await token.getRoleAdmin(PREMINT_SCHEDULER_ROLE)).to.equal(GRANTOR_ROLE);
       expect(await token.getRoleAdmin(BALANCE_FREEZER_ROLE)).to.equal(GRANTOR_ROLE);
       expect(await token.getRoleAdmin(FROZEN_TRANSFEROR_ROLE)).to.equal(GRANTOR_ROLE);
@@ -106,7 +106,7 @@ describe("Contract 'CWToken'", async () => {
       expect(await token.hasRole(BURNER_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(RESERVE_MINTER_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(RESERVE_BURNER_ROLE, deployer.address)).to.equal(false);
-      expect(await token.hasRole(PREMINT_MANGER_ROLE, deployer.address)).to.equal(false);
+      expect(await token.hasRole(PREMINT_MANAGER_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(PREMINT_SCHEDULER_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(BALANCE_FREEZER_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(FROZEN_TRANSFEROR_ROLE, deployer.address)).to.equal(false);

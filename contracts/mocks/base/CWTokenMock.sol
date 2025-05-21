@@ -11,7 +11,7 @@ import { CWToken } from "../../base/CWToken.sol";
  */
 contract CWTokenMock is CWToken {
     /**
-     * @notice The initialize function of the upgradable contract
+     * @notice The initialize function of the upgradeable contract
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      *

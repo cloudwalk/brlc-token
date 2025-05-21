@@ -11,7 +11,7 @@ import { ERC20Base } from "../../base/ERC20Base.sol";
  */
 contract ERC20BaseMock is ERC20Base {
     /**
-     * @notice The initialize function of the upgradable contract
+     * @notice The initialize function of the upgradeable contract
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      *

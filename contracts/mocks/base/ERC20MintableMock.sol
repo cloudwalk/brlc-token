@@ -11,7 +11,7 @@ import { ERC20Mintable } from "../../base/ERC20Mintable.sol";
  */
 contract ERC20MintableMock is ERC20Mintable {
     /**
-     * @notice The initialize function of the upgradable contract
+     * @notice The initialize function of the upgradeable contract
      *
      * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
      *

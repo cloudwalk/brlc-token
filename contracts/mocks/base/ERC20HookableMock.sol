@@ -11,7 +11,7 @@ import { ERC20Hookable } from "../../base/ERC20Hookable.sol";
  */
 contract ERC20HookableMock is ERC20Hookable {
     /**
-     * @notice The initialize function of the upgradable contract
+     * @notice The initialize function of the upgradeable contract
      *
      * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
      *

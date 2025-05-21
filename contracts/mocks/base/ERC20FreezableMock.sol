@@ -11,7 +11,7 @@ import { ERC20Freezable } from "../../base/ERC20Freezable.sol";
  */
 contract ERC20FreezableMock is ERC20Freezable {
     /**
-     * @notice The initialize function of the upgradable contract
+     * @notice The initialize function of the upgradeable contract
      *
      * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
      *

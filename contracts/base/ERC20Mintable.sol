@@ -39,7 +39,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     bytes32 public constant RESERVE_BURNER_ROLE = keccak256("RESERVE_BURNER_ROLE");
 
     /// @notice The role of a premint manager that is allowed to increase or decrease the preminted amount of tokens
-    bytes32 public constant PREMINT_MANGER_ROLE = keccak256("PREMINT_MANGER_ROLE");
+    bytes32 public constant PREMINT_MANAGER_ROLE = keccak256("PREMINT_MANAGER_ROLE");
 
     /// @notice The role of a premint scheduler that is allowed to change the release time of premints
     bytes32 public constant PREMINT_SCHEDULER_ROLE = keccak256("PREMINT_SCHEDULER_ROLE");
@@ -111,7 +111,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     // -------------------- Initializers -------------------------- //
 
     /**
-     * @notice The internal unchained initializer of the upgradable contract
+     * @notice The internal unchained initializer of the upgradeable contract
      *
      * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
      *
@@ -122,7 +122,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         _setRoleAdmin(BURNER_ROLE, GRANTOR_ROLE);
         _setRoleAdmin(RESERVE_MINTER_ROLE, GRANTOR_ROLE);
         _setRoleAdmin(RESERVE_BURNER_ROLE, GRANTOR_ROLE);
-        _setRoleAdmin(PREMINT_MANGER_ROLE, GRANTOR_ROLE);
+        _setRoleAdmin(PREMINT_MANAGER_ROLE, GRANTOR_ROLE);
         _setRoleAdmin(PREMINT_SCHEDULER_ROLE, GRANTOR_ROLE);
     }
 
@@ -192,7 +192,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         address account, // Tools: this comment prevents Prettier from formatting into a single line.
         uint256 amount,
         uint256 release
-    ) external onlyRole(PREMINT_MANGER_ROLE) {
+    ) external onlyRole(PREMINT_MANAGER_ROLE) {
         _premint(
             account,
             amount,
@@ -215,7 +215,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         address account, // Tools: this comment prevents Prettier from formatting into a single line.
         uint256 amount,
         uint256 release
-    ) external onlyRole(PREMINT_MANGER_ROLE) {
+    ) external onlyRole(PREMINT_MANAGER_ROLE) {
         _premint(
             account,
             amount,
