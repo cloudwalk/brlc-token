@@ -46,7 +46,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
   const BALANCE_FREEZER_ROLE: string = ethers.id("BALANCE_FREEZER_ROLE");
   const FROZEN_TRANSFEROR_ROLE: string = ethers.id("FROZEN_TRANSFEROR_ROLE");
   const MINTER_ROLE: string = ethers.id("MINTER_ROLE");
-  const PREMINT_MANGER_ROLE: string = ethers.id("PREMINT_MANGER_ROLE");
+  const PREMINT_MANAGER_ROLE: string = ethers.id("PREMINT_MANAGER_ROLE");
   const TRUSTED_SPENDER_ROLE: string = ethers.id("TRUSTED_SPENDER_ROLE");
 
   let tokenFactory: ContractFactory;
@@ -78,7 +78,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
     await proveTx(token.grantRoleBatch(BALANCE_FREEZER_ROLE, [deployer.address, freezer.address]));
     await proveTx(token.grantRole(FROZEN_TRANSFEROR_ROLE, freezer.address));
     await proveTx(token.grantRole(MINTER_ROLE, deployer.address));
-    await proveTx(token.grantRole(PREMINT_MANGER_ROLE, deployer.address));
+    await proveTx(token.grantRole(PREMINT_MANAGER_ROLE, deployer.address));
     await proveTx(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
     return { token };
   }

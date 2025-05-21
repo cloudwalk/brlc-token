@@ -53,7 +53,7 @@ describe("Contract 'ERC20Mintable'", async () => {
   const BURNER_ROLE: string = ethers.id("BURNER_ROLE");
   const RESERVE_MINTER_ROLE: string = ethers.id("RESERVE_MINTER_ROLE");
   const RESERVE_BURNER_ROLE: string = ethers.id("RESERVE_BURNER_ROLE");
-  const PREMINT_MANGER_ROLE: string = ethers.id("PREMINT_MANGER_ROLE");
+  const PREMINT_MANAGER_ROLE: string = ethers.id("PREMINT_MANAGER_ROLE");
   const PREMINT_SCHEDULER_ROLE: string = ethers.id("PREMINT_SCHEDULER_ROLE");
 
   enum PremintFunction {
@@ -114,7 +114,7 @@ describe("Contract 'ERC20Mintable'", async () => {
     await proveTx(token.grantRole(BURNER_ROLE, burnerOrdinary.address));
     await proveTx(token.grantRole(RESERVE_MINTER_ROLE, minterReserve.address));
     await proveTx(token.grantRole(RESERVE_BURNER_ROLE, burnerReserve.address));
-    await proveTx(token.grantRole(PREMINT_MANGER_ROLE, preminterAgent.address));
+    await proveTx(token.grantRole(PREMINT_MANAGER_ROLE, preminterAgent.address));
     await proveTx(token.grantRole(PREMINT_SCHEDULER_ROLE, preminterRescheduler.address));
     await proveTx(token.configureMaxPendingPremintsCount(MAX_PENDING_PREMINTS_COUNT));
     return { token };
@@ -133,7 +133,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       expect(await token.BURNER_ROLE()).to.equal(BURNER_ROLE);
       expect(await token.RESERVE_MINTER_ROLE()).to.equal(RESERVE_MINTER_ROLE);
       expect(await token.RESERVE_BURNER_ROLE()).to.equal(RESERVE_BURNER_ROLE);
-      expect(await token.PREMINT_MANGER_ROLE()).to.equal(PREMINT_MANGER_ROLE);
+      expect(await token.PREMINT_MANAGER_ROLE()).to.equal(PREMINT_MANAGER_ROLE);
       expect(await token.PREMINT_SCHEDULER_ROLE()).to.equal(PREMINT_SCHEDULER_ROLE);
 
       // The role admins
@@ -145,7 +145,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       expect(await token.getRoleAdmin(BURNER_ROLE)).to.equal(GRANTOR_ROLE);
       expect(await token.getRoleAdmin(RESERVE_MINTER_ROLE)).to.equal(GRANTOR_ROLE);
       expect(await token.getRoleAdmin(RESERVE_BURNER_ROLE)).to.equal(GRANTOR_ROLE);
-      expect(await token.getRoleAdmin(PREMINT_MANGER_ROLE)).to.equal(GRANTOR_ROLE);
+      expect(await token.getRoleAdmin(PREMINT_MANAGER_ROLE)).to.equal(GRANTOR_ROLE);
       expect(await token.getRoleAdmin(PREMINT_SCHEDULER_ROLE)).to.equal(GRANTOR_ROLE);
 
       // The deployer should have the owner role, but not the other roles
@@ -157,7 +157,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       expect(await token.hasRole(BURNER_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(RESERVE_MINTER_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(RESERVE_BURNER_ROLE, deployer.address)).to.equal(false);
-      expect(await token.hasRole(PREMINT_MANGER_ROLE, deployer.address)).to.equal(false);
+      expect(await token.hasRole(PREMINT_MANAGER_ROLE, deployer.address)).to.equal(false);
       expect(await token.hasRole(PREMINT_SCHEDULER_ROLE, deployer.address)).to.equal(false);
 
       expect(await token.maxPendingPremintsCount()).to.eq(0);
@@ -713,17 +713,17 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(connect(token, user).premintIncrease(user.address, TOKEN_AMOUNT, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
-          .withArgs(user.address, PREMINT_MANGER_ROLE);
+          .withArgs(user.address, PREMINT_MANAGER_ROLE);
         await expect(connect(token, user).premintDecrease(user.address, TOKEN_AMOUNT, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
-          .withArgs(user.address, PREMINT_MANGER_ROLE);
+          .withArgs(user.address, PREMINT_MANAGER_ROLE);
 
         await expect(connect(token, deployer).premintIncrease(deployer.address, TOKEN_AMOUNT, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
-          .withArgs(deployer.address, PREMINT_MANGER_ROLE);
+          .withArgs(deployer.address, PREMINT_MANAGER_ROLE);
         await expect(connect(token, deployer).premintIncrease(deployer.address, TOKEN_AMOUNT, timestamp))
           .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
-          .withArgs(deployer.address, PREMINT_MANGER_ROLE);
+          .withArgs(deployer.address, PREMINT_MANAGER_ROLE);
       });
 
       it("The recipient address is zero", async () => {
