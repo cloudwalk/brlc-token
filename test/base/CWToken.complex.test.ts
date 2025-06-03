@@ -36,11 +36,12 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
   const TOKEN_SYMBOL = "CWT";
   const MAX_PENDING_PREMINTS_COUNT = 5;
 
-  const ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT = "TransferExceededFrozenAmount";
-  const ERROR_NAME_TRANSFER_EXCEEDED_PREMINT_AMOUNT = "TransferExceededPremintedAmount";
   const ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
   const ERROR_MESSAGE_INSUFFICIENT_ALLOWANCE = "ERC20: insufficient allowance";
+
   const ERROR_NAME_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
+  const ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT = "TransferExceededFrozenAmount";
+  const ERROR_NAME_TRANSFER_EXCEEDED_PREMINT_AMOUNT = "TransferExceededPremintedAmount";
 
   const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const BALANCE_FREEZER_ROLE: string = ethers.id("BALANCE_FREEZER_ROLE");

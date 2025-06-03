@@ -12,38 +12,40 @@ describe("Contract 'ERC20Mintable'", async () => {
   const TOKEN_AMOUNT = 100;
   const MAX_PENDING_PREMINTS_COUNT = 5;
 
-  const EVENT_NAME_MINT = "Mint";
   const EVENT_NAME_BURN = "Burn";
-  const EVENT_NAME_TRANSFER = "Transfer";
-  const EVENT_NAME_PREMINT = "Premint";
-  const EVENT_NAME_MAX_PENDING_PREMINTS_COUNT_CONFIGURED = "MaxPendingPremintsCountConfigured";
-  const EVENT_NAME_PREMINT_RELEASE_RESCHEDULED = "PremintReleaseRescheduled";
-  const EVENT_NAME_MINT_FROM_RESERVE = "MintFromReserve";
   const EVENT_NAME_BURN_TO_RESERVE = "BurnToReserve";
+  const EVENT_NAME_MAX_PENDING_PREMINTS_COUNT_CONFIGURED = "MaxPendingPremintsCountConfigured";
+  const EVENT_NAME_MINT = "Mint";
+  const EVENT_NAME_MINT_FROM_RESERVE = "MintFromReserve";
+  const EVENT_NAME_PREMINT = "Premint";
+  const EVENT_NAME_PREMINT_RELEASE_RESCHEDULED = "PremintReleaseRescheduled";
+  const EVENT_NAME_TRANSFER = "Transfer";
+
+  // Error messages of the lib contracts
+  const ERROR_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE = "ERC20: burn amount exceeds balance";
+  const ERROR_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT = "ERC20: mint to the zero address";
 
   // Errors of the lib contracts
   const ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
   const ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
   const ERROR_NAME_CONTRACT_IS_PAUSED = "EnforcedPause";
   const ERROR_NAME_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
-  const ERROR_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT = "ERC20: mint to the zero address";
-  const ERROR_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE = "ERC20: burn amount exceeds balance";
 
   // Errors of the contracts under test
+  const ERROR_NAME_INAPPROPRIATE_UINT64_VALUE = "InappropriateUint64Value";
+  const ERROR_NAME_INSUFFICIENT_RESERVE_SUPPLY = "InsufficientReserveSupply";
+  const ERROR_NAME_PREMINT_INSUFFICIENT_AMOUNT = "PremintInsufficientAmount";
+  const ERROR_NAME_PREMINT_NON_EXISTENT = "PremintNonExistent";
+  const ERROR_NAME_PREMINT_RELEASE_TIME_PASSED = "PremintReleaseTimePassed";
+  const ERROR_NAME_PREMINT_RESCHEDULING_ALREADY_CONFIGURED = "PremintReschedulingAlreadyConfigured";
+  const ERROR_NAME_PREMINT_RESCHEDULING_CHAIN = "PremintReschedulingChain";
+  const ERROR_NAME_PREMINT_RESCHEDULING_TIME_PASSED = "PremintReschedulingTimePassed";
+  const ERROR_NAME_PREMINT_UNCHANGED = "PremintUnchanged";
+  const ERROR_NAME_MAX_PENDING_PREMINTS_COUNT_ALREADY_CONFIGURED = "MaxPendingPremintsCountAlreadyConfigured";
+  const ERROR_NAME_MAX_PENDING_PREMINTS_LIMIT_REACHED = "MaxPendingPremintsLimitReached";
   const ERROR_NAME_ZERO_BURN_AMOUNT = "ZeroBurnAmount";
   const ERROR_NAME_ZERO_MINT_AMOUNT = "ZeroMintAmount";
   const ERROR_NAME_ZERO_PREMINT_AMOUNT = "ZeroPremintAmount";
-  const ERROR_NAME_PREMINT_INSUFFICIENT_AMOUNT = "PremintInsufficientAmount";
-  const ERROR_NAME_PREMINT_NON_EXISTENT = "PremintNonExistent";
-  const ERROR_NAME_PREMINT_UNCHANGED = "PremintUnchanged";
-  const ERROR_NAME_PREMINT_RELEASE_TIME_PASSED = "PremintReleaseTimePassed";
-  const ERROR_NAME_PREMINT_RESCHEDULING_ALREADY_CONFIGURED = "PremintReschedulingAlreadyConfigured";
-  const ERROR_NAME_PREMINT_RESCHEDULING_TIME_PASSED = "PremintReschedulingTimePassed";
-  const ERROR_NAME_PREMINT_RESCHEDULING_CHAIN = "PremintReschedulingChain";
-  const ERROR_NAME_MAX_PENDING_PREMINTS_LIMIT_REACHED = "MaxPendingPremintsLimitReached";
-  const ERROR_NAME_MAX_PENDING_PREMINTS_COUNT_ALREADY_CONFIGURED = "MaxPendingPremintsCountAlreadyConfigured";
-  const ERROR_NAME_INAPPROPRIATE_UINT64_VALUE = "InappropriateUint64Value";
-  const ERROR_NAME_INSUFFICIENT_RESERVE_SUPPLY = "InsufficientReserveSupply";
 
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");

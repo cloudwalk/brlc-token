@@ -16,12 +16,14 @@ describe("Contract 'ERC20Freezable'", async () => {
   const EVENT_NAME_FREEZE = "Freeze";
   const EVENT_NAME_FREEZE_TRANSFER = "FreezeTransfer";
 
-  // Errors of the lib contracts
+  // Error messages of the lib contracts
+  const ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
+
+  // Error of the lib contracts
   const ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
   const ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
   const ERROR_NAME_CONTRACT_IS_PAUSED = "EnforcedPause";
   const ERROR_NAME_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
-  const ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
 
   // Errors of the contracts under test
   const ERROR_NAME_CONTRACT_BALANCE_FREEZING_ATTEMPT = "ContractBalanceFreezingAttempt";
