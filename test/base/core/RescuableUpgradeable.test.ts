@@ -119,7 +119,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
         .withArgs(getAddress(rescuableMock), deployer.address, TOKEN_AMOUNT);
     });
 
-    it("Is reverted if it is called by an account without the rescuer role", async () => {
+    it("Is reverted if the caller does not have the rescuer role", async () => {
       const { rescuableMock, tokenMock } = await setUpFixture(deployAndConfigureAllContracts);
       await expect(
         rescuableMock.rescueERC20(getAddress(tokenMock), deployer.address, TOKEN_AMOUNT)

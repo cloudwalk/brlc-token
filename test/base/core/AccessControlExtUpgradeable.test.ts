@@ -136,7 +136,7 @@ describe("Contract 'AccessControlExtUpgradeable'", async () => {
     });
 
     describe("Is reverted if", async () => {
-      it("The sender does not have the expected admin role", async () => {
+      it("The caller does not have the expected admin role", async () => {
         const { accessControlExtMock } = await setUpFixture(deployAndConfigureAccessControlExtMock);
 
         await expect(
@@ -202,7 +202,7 @@ describe("Contract 'AccessControlExtUpgradeable'", async () => {
     });
 
     describe("Is reverted if", async () => {
-      it("The sender does not have the expected admin role", async () => {
+      it("The caller does not have the expected admin role", async () => {
         const { accessControlExtMock } = await setUpFixture(deployAndConfigureAccessControlExtMock);
 
         await expect(
