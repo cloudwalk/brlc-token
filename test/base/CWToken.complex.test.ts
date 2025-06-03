@@ -38,8 +38,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
   const ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT = "TransferExceededFrozenAmount";
   const ERROR_NAME_TRANSFER_EXCEEDED_PREMINT_AMOUNT = "TransferExceededPremintedAmount";
-  const REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
-  const REVERT_MESSAGE_INSUFFICIENT_ALLOWANCE = "ERC20: insufficient allowance";
+  const ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
+  const ERROR_MESSAGE_INSUFFICIENT_ALLOWANCE = "ERC20: insufficient allowance";
   const ERROR_NAME_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
 
   const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
@@ -146,7 +146,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
       await expect(
         token.transferFrom(sender.address, deployer.address, userBalance)
-      ).to.be.revertedWith(REVERT_MESSAGE_INSUFFICIENT_ALLOWANCE);
+      ).to.be.revertedWith(ERROR_MESSAGE_INSUFFICIENT_ALLOWANCE);
 
       await proveTx(token.grantRole(TRUSTED_SPENDER_ROLE, deployer.address));
 
@@ -254,7 +254,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       }
       await expect(
         connect(token, sender).transfer(receiver.address, transferAmount)
-      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
+      ).to.be.revertedWith(ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     }
 
     describe("Executes as expected if there are the free, frozen, preminting balances and", async () => {
@@ -848,7 +848,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
           await setUpComplexBalances({ token, amounts: { ...initialAmounts } });
           await expect(
             connect(token, freezer).transferFrozen(sender, receiver.address, 25)
-          ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
+          ).to.be.revertedWith(ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
         });
       });
     });

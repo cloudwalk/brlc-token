@@ -26,8 +26,8 @@ describe("Contract 'ERC20Mintable'", async () => {
   const ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
   const ERROR_NAME_CONTRACT_IS_PAUSED = "EnforcedPause";
   const ERROR_NAME_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
-  const REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT = "ERC20: mint to the zero address";
-  const REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE = "ERC20: burn amount exceeds balance";
+  const ERROR_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT = "ERC20: mint to the zero address";
+  const ERROR_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE = "ERC20: burn amount exceeds balance";
 
   // Errors of the contracts under test
   const ERROR_NAME_ZERO_BURN_AMOUNT = "ZeroBurnAmount";
@@ -214,7 +214,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(
           connect(token, minterOrdinary).mint(ethers.ZeroAddress, TOKEN_AMOUNT)
-        ).to.be.revertedWith(REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
+        ).to.be.revertedWith(ERROR_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
       });
 
       it("The mint amount is zero", async () => {
@@ -274,7 +274,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       await proveTx(connect(token, minterOrdinary).mint(burnerOrdinary.address, TOKEN_AMOUNT));
       await expect(
         connect(token, burnerOrdinary).burn(TOKEN_AMOUNT + 1)
-      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
+      ).to.be.revertedWith(ERROR_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
     });
   });
 
@@ -408,7 +408,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       await proveTx(connect(token, minterReserve).mintFromReserve(burnerReserve.address, TOKEN_AMOUNT));
       await expect(
         connect(token, burnerReserve).burnToReserve(TOKEN_AMOUNT + 1)
-      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
+      ).to.be.revertedWith(ERROR_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Is reverted if the burn amount exceeds the total reserve supply", async () => {
@@ -730,7 +730,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(
           connect(token, preminterAgent).premintIncrease(ethers.ZeroAddress, TOKEN_AMOUNT, timestamp)
-        ).to.be.revertedWith(REVERT_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
+        ).to.be.revertedWith(ERROR_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
       });
 
       it("The amount of a new premint is zero", async () => {

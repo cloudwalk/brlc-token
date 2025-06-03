@@ -21,7 +21,7 @@ describe("Contract 'ERC20Freezable'", async () => {
   const ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
   const ERROR_NAME_CONTRACT_IS_PAUSED = "EnforcedPause";
   const ERROR_NAME_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
-  const REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
+  const ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
 
   // Errors of the contracts under test
   const ERROR_NAME_CONTRACT_BALANCE_FREEZING_ATTEMPT = "ContractBalanceFreezingAttempt";
@@ -442,7 +442,7 @@ describe("Contract 'ERC20Freezable'", async () => {
         await proveTx(connect(token, freezerAgent).freeze(user1.address, TOKEN_AMOUNT + 1));
         await expect(
           connect(token, freezerTransferor).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT + 1)
-        ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
+        ).to.be.revertedWith(ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
       });
     });
   });
