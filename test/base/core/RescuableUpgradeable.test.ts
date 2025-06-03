@@ -8,9 +8,9 @@ import { setUpFixture } from "../../../test-utils/common";
 describe("Contract 'RescuableUpgradeable'", async () => {
   const EVENT_NAME_TRANSFER = "Transfer";
 
-  const ERROR_NAME_IF_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
-  const ERROR_NAME_IF_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
-  const ERROR_NAME_IF_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+  const ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
+  const ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
+  const ERROR_NAME_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
@@ -92,14 +92,14 @@ describe("Contract 'RescuableUpgradeable'", async () => {
       const { rescuableMock } = await setUpFixture(deployRescuableMock);
       await expect(
         rescuableMock.initialize()
-      ).to.be.revertedWithCustomError(rescuableMock, ERROR_NAME_IF_CONTRACT_INITIALIZATION_IS_INVALID);
+      ).to.be.revertedWithCustomError(rescuableMock, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("The internal unchained initializer is reverted if it is called outside the init process", async () => {
       const { rescuableMock } = await setUpFixture(deployRescuableMock);
       await expect(
         rescuableMock.callParentInitializerUnchained()
-      ).to.be.revertedWithCustomError(rescuableMock, ERROR_NAME_IF_CONTRACT_IS_NOT_INITIALIZING);
+      ).to.be.revertedWithCustomError(rescuableMock, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -125,7 +125,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
         rescuableMock.rescueERC20(getAddress(tokenMock), deployer.address, TOKEN_AMOUNT)
       ).to.be.revertedWithCustomError(
         rescuableMock,
-        ERROR_NAME_IF_UNAUTHORIZED_ACCOUNT
+        ERROR_NAME_UNAUTHORIZED_ACCOUNT
       ).withArgs(deployer.address, RESCUER_ROLE);
     });
   });
