@@ -14,8 +14,8 @@ describe("Contract 'ERC20HookMock'", async () => {
   const EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK = "TestBeforeTokenTransferHookEvent";
   const EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK = "TestAfterTokenTransferHookEvent";
 
-  const REVERT_ERROR_TEST_BEFORE_TOKEN_TRANSFER_HOOK = "TestBeforeTokenTransferHookError";
-  const REVERT_ERROR_TEST_AFTER_TOKEN_TRANSFER_HOOK = "TestAfterTokenTransferHookError";
+  const ERROR_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK = "TestBeforeTokenTransferHookError";
+  const ERROR_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK = "TestAfterTokenTransferHookError";
 
   let hookFactory: ContractFactory;
   let deployer: HardhatEthersSigner;
@@ -87,7 +87,7 @@ describe("Contract 'ERC20HookMock'", async () => {
       await proveTx(hookable.setRevertWithoutReasonMessage(true));
       await expect(
         hookable.beforeTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(hookable, REVERT_ERROR_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
+      ).to.be.revertedWithCustomError(hookable, ERROR_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
       await proveTx(hookable.setRevertWithoutReasonMessage(false));
       await expect(
         hookable.beforeTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT)
@@ -114,7 +114,7 @@ describe("Contract 'ERC20HookMock'", async () => {
       await proveTx(hookable.setRevertWithoutReasonMessage(true));
       await expect(
         hookable.afterTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(hookable, REVERT_ERROR_TEST_AFTER_TOKEN_TRANSFER_HOOK);
+      ).to.be.revertedWithCustomError(hookable, ERROR_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK);
       await proveTx(hookable.setRevertWithoutReasonMessage(false));
       await expect(
         hookable.afterTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT)

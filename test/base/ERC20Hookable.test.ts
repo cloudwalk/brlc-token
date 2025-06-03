@@ -47,13 +47,13 @@ describe("Contract 'ERC20Hookable'", async () => {
   const EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOK_FAILURE = "AfterTokenTransferHookFailure";
   const EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK = "TestAfterTokenTransferHookEvent";
 
-  const REVERT_ERROR_TEST_BEFORE_TOKEN_TRANSFER_HOOK = "TestBeforeTokenTransferHookError";
-  const REVERT_ERROR_TEST_AFTER_TOKEN_TRANSFER_HOOK = "TestAfterTokenTransferHookError";
+  const ERROR_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK = "TestBeforeTokenTransferHookError";
+  const ERROR_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK = "TestAfterTokenTransferHookError";
 
   // Errors of the lib contracts
-  const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
-  const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
-  const REVERT_ERROR_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+  const ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
+  const ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
+  const ERROR_NAME_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
 
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
@@ -126,14 +126,14 @@ describe("Contract 'ERC20Hookable'", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID);
+      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.call_parent_initialize_unchained()
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING);
+      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -170,7 +170,7 @@ describe("Contract 'ERC20Hookable'", async () => {
         }
       ];
       await expect(connect(token, user).setBeforeTokenTransferHooks(hooks))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
         .withArgs(user.address, OWNER_ROLE);
     });
   });
@@ -208,7 +208,7 @@ describe("Contract 'ERC20Hookable'", async () => {
         }
       ];
       await expect(connect(token, user).setAfterTokenTransferHooks(hooks))
-        .to.be.revertedWithCustomError(token, REVERT_ERROR_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
         .withArgs(user.address, OWNER_ROLE);
     });
   });
@@ -276,7 +276,7 @@ describe("Contract 'ERC20Hookable'", async () => {
       await proveTx(hook2.setRevertWithoutReasonMessage(true));
       await expect(
         connect(token, user).transfer(user.address, 0)
-      ).to.be.revertedWithCustomError(hook2, REVERT_ERROR_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
+      ).to.be.revertedWithCustomError(hook2, ERROR_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
     });
 
     it("Emit if reverted with panic error", async () => {
@@ -465,7 +465,7 @@ describe("Contract 'ERC20Hookable'", async () => {
       await proveTx(hook2.setRevertWithoutReasonMessage(true));
       await expect(connect(token, user).transfer(user.address, 0)).to.be.revertedWithCustomError(
         hook2,
-        REVERT_ERROR_TEST_AFTER_TOKEN_TRANSFER_HOOK
+        ERROR_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK
       );
     });
 

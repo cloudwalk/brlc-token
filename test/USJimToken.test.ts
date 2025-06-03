@@ -10,7 +10,7 @@ describe("Contract 'USJimToken'", async () => {
   const TOKEN_SYMBOL = "USJIM";
   const TOKEN_DECIMALS = 6;
 
-  const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
+  const ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
 
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
@@ -104,7 +104,7 @@ describe("Contract 'USJimToken'", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID);
+      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("Is reverted if the contract implementation is called even for the first time", async () => {
@@ -112,7 +112,7 @@ describe("Contract 'USJimToken'", async () => {
       await tokenImplementation.waitForDeployment();
       await expect(
         tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWithCustomError(tokenImplementation, REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID);
+      ).to.be.revertedWithCustomError(tokenImplementation, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
     });
   });
 

@@ -17,9 +17,9 @@ describe("Contract 'ERC20Base'", async () => {
   const EVENT_NAME_TRANSFER = "Transfer";
 
   // Errors of the lib contracts
-  const REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
-  const REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
-  const REVERT_ERROR_CONTRACT_IS_PAUSED = "EnforcedPause";
+  const ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
+  const ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
+  const ERROR_NAME_CONTRACT_IS_PAUSED = "EnforcedPause";
 
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
@@ -86,21 +86,21 @@ describe("Contract 'ERC20Base'", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_INITIALIZATION_IS_INVALID);
+      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("Is reverted if the internal initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.call_parent_initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING);
+      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(
         token.call_parent_initialize_unchained()
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_NOT_INITIALIZING);
+      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -129,7 +129,7 @@ describe("Contract 'ERC20Base'", async () => {
       await proveTx(connect(token, pauser).pause());
       await expect(
         connect(token, user1).transfer(user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
+      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
     });
   });
 
@@ -150,7 +150,7 @@ describe("Contract 'ERC20Base'", async () => {
       await proveTx(connect(token, pauser).pause());
       await expect(
         connect(token, user1).approve(user2.address, TOKEN_ALLOWANCE)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
+      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
     });
   });
 
@@ -177,7 +177,7 @@ describe("Contract 'ERC20Base'", async () => {
       await proveTx(connect(token, pauser).pause());
       await expect(
         connect(token, user2).transferFrom(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
+      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
     });
   });
 
@@ -202,7 +202,7 @@ describe("Contract 'ERC20Base'", async () => {
       await proveTx(connect(token, pauser).pause());
       await expect(
         token.increaseAllowance(user1.address, allowanceAddedValue)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
+      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
     });
   });
 
@@ -228,7 +228,7 @@ describe("Contract 'ERC20Base'", async () => {
       await proveTx(connect(token, pauser).pause());
       await expect(
         connect(token, user1).decreaseAllowance(user2.address, allowanceSubtractedValue)
-      ).to.be.revertedWithCustomError(token, REVERT_ERROR_CONTRACT_IS_PAUSED);
+      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
     });
   });
 });
