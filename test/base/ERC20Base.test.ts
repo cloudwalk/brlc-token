@@ -39,7 +39,7 @@ describe("Contract 'ERC20Base'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(
+    let token = await upgrades.deployProxy(
       tokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL],
       { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks

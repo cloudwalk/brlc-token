@@ -29,7 +29,7 @@ describe("Contract 'ERC20HookMock'", async () => {
   });
 
   async function deployHookable(): Promise<{ hookable: Contract }> {
-    let hookable: Contract = await hookFactory.deploy() as Contract;
+    let hookable = await hookFactory.deploy() as Contract;
     await hookable.waitForDeployment();
     hookable = connect(hookable, deployer); // Explicitly specifying the initial account
     return { hookable };

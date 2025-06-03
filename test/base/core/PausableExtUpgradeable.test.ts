@@ -30,7 +30,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
     pausableExtMockFactory = pausableExtMockFactory.connect(deployer);
 
     // The contract under test with the explicitly specified initial account
-    let pausableExtMock: Contract = await upgrades.deployProxy(pausableExtMockFactory) as Contract;
+    let pausableExtMock = await upgrades.deployProxy(pausableExtMockFactory) as Contract;
     await pausableExtMock.waitForDeployment();
     pausableExtMock = connect(pausableExtMock, deployer);
 

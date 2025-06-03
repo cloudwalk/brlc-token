@@ -74,7 +74,7 @@ describe("Contract 'ERC20Hookable'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(
+    let token = await upgrades.deployProxy(
       tokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL],
       { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
@@ -90,8 +90,8 @@ describe("Contract 'ERC20Hookable'", async () => {
     hook2: Contract;
   }> {
     const { token } = await deployToken();
-    let hook1: Contract = await hookFactory.deploy() as Contract;
-    let hook2: Contract = await hookFactory.deploy() as Contract;
+    let hook1 = await hookFactory.deploy() as Contract;
+    let hook2 = await hookFactory.deploy() as Contract;
 
     hook1 = connect(hook1, deployer); // Explicitly specifying the initial account
     hook2 = connect(hook2, deployer); // Explicitly specifying the initial account

@@ -36,7 +36,7 @@ describe("Contract 'USJimToken'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(
+    let token = await upgrades.deployProxy(
       tokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL],
       { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
@@ -108,7 +108,7 @@ describe("Contract 'USJimToken'", async () => {
     });
 
     it("Is reverted if the contract implementation is called even for the first time", async () => {
-      const tokenImplementation: Contract = await tokenFactory.deploy() as Contract;
+      const tokenImplementation = await tokenFactory.deploy() as Contract;
       await tokenImplementation.waitForDeployment();
       await expect(
         tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
