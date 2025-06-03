@@ -26,21 +26,19 @@ contract CWTokenMock is CWToken {
     }
 
     /**
-     * @notice Needed to check that the initialize function of the ancestor contract
-     * has the 'onlyInitializing' modifier
+     * @notice Calls the parent internal initializing function to verify the 'onlyInitializing' modifier
      *
      * @param name_ The name of the token
      * @param symbol_ The symbol of the token
      */
-    function call_parent_initialize(string memory name_, string memory symbol_) public {
+    function callParentInitializer(string memory name_, string memory symbol_) public {
         __CWToken_init(name_, symbol_);
     }
 
     /**
-     * @notice Needed to check that the unchained initialize function of the ancestor contract
-     * has the 'onlyInitializing' modifier
+     * @notice Calls the parent internal unchained initializing function to verify the 'onlyInitializing' modifier
      */
-    function call_parent_initialize_unchained() public {
+    function callParentInitializerUnchained() public {
         __CWToken_init_unchained();
     }
 }

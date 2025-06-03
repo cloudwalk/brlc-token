@@ -77,7 +77,7 @@ describe("Contract 'ERC20Trustable'", async () => {
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(token.call_parent_initialize_unchained())
+      await expect(token.callParentInitializerUnchained())
         .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
