@@ -122,14 +122,14 @@ describe("Contract 'ERC20Freezable'", async () => {
   describe("Function 'freeze()'", async () => {
     it("Freezes tokens and emits the correct events for an externally owned account", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      const tokenUnderFreezer: Contract = connect(token, freezerAgent);
+      const tokenViaFreezer: Contract = connect(token, freezerAgent);
 
       expect(await token.balanceOf(user1.address)).to.eq(0);
 
       expect(
-        await tokenUnderFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT)
+        await tokenViaFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT)
       ).to.deep.eq([TOKEN_AMOUNT, 0]);
-      await expect(tokenUnderFreezer.freeze(user1.address, TOKEN_AMOUNT))
+      await expect(tokenViaFreezer.freeze(user1.address, TOKEN_AMOUNT))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNT, 0);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT);
@@ -137,17 +137,17 @@ describe("Contract 'ERC20Freezable'", async () => {
       await proveTx(token.mint(user1.address, TOKEN_AMOUNT));
       expect(await token.balanceOf(user1.address)).to.eq(TOKEN_AMOUNT);
       expect(
-        await tokenUnderFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT + 1)
+        await tokenViaFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT + 1)
       ).to.deep.eq([TOKEN_AMOUNT + 1, TOKEN_AMOUNT]);
-      await expect(tokenUnderFreezer.freeze(user1.address, TOKEN_AMOUNT + 1))
+      await expect(tokenViaFreezer.freeze(user1.address, TOKEN_AMOUNT + 1))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNT + 1, TOKEN_AMOUNT);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT + 1);
 
       expect(
-        await tokenUnderFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT + 2)
+        await tokenViaFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT + 2)
       ).to.deep.eq([TOKEN_AMOUNT + 2, TOKEN_AMOUNT + 1]);
-      await expect(tokenUnderFreezer.freeze(user1.address, TOKEN_AMOUNT - 2))
+      await expect(tokenViaFreezer.freeze(user1.address, TOKEN_AMOUNT - 2))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNT - 2, TOKEN_AMOUNT + 1);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT - 2);
@@ -195,21 +195,21 @@ describe("Contract 'ERC20Freezable'", async () => {
   describe("Function 'freezeIncrease()'", async () => {
     it("Increase frozen balance and emits the correct event", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      const tokenUnderFreezer: Contract = connect(token, freezerAgent);
+      const tokenViaFreezer: Contract = connect(token, freezerAgent);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(0);
 
       expect(
-        await tokenUnderFreezer.freezeIncrease.staticCall(user1.address, TOKEN_AMOUNT)
+        await tokenViaFreezer.freezeIncrease.staticCall(user1.address, TOKEN_AMOUNT)
       ).to.deep.eq([TOKEN_AMOUNT, 0]);
-      await expect(tokenUnderFreezer.freezeIncrease(user1.address, TOKEN_AMOUNT))
+      await expect(tokenViaFreezer.freezeIncrease(user1.address, TOKEN_AMOUNT))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNT, 0);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT);
 
       expect(
-        await tokenUnderFreezer.freezeIncrease.staticCall(user1.address, TOKEN_AMOUNTx2)
+        await tokenViaFreezer.freezeIncrease.staticCall(user1.address, TOKEN_AMOUNTx2)
       ).to.deep.eq([TOKEN_AMOUNTx3, TOKEN_AMOUNT]);
-      await expect(tokenUnderFreezer.freezeIncrease(user1.address, TOKEN_AMOUNTx2))
+      await expect(tokenViaFreezer.freezeIncrease(user1.address, TOKEN_AMOUNTx2))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNTx3, TOKEN_AMOUNT);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNTx3);
@@ -254,22 +254,22 @@ describe("Contract 'ERC20Freezable'", async () => {
   describe("Function 'freezeDecrease()'", async () => {
     it("Decrease frozen balance and emits the correct event", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      const tokenUnderFreezer: Contract = connect(token, freezerAgent);
+      const tokenViaFreezer: Contract = connect(token, freezerAgent);
 
-      await proveTx(tokenUnderFreezer.freezeIncrease(user1.address, TOKEN_AMOUNTx3));
+      await proveTx(tokenViaFreezer.freezeIncrease(user1.address, TOKEN_AMOUNTx3));
 
       expect(
-        await tokenUnderFreezer.freezeDecrease.staticCall(user1.address, TOKEN_AMOUNT)
+        await tokenViaFreezer.freezeDecrease.staticCall(user1.address, TOKEN_AMOUNT)
       ).to.deep.eq([TOKEN_AMOUNTx2, TOKEN_AMOUNTx3]);
-      await expect(tokenUnderFreezer.freezeDecrease(user1.address, TOKEN_AMOUNT))
+      await expect(tokenViaFreezer.freezeDecrease(user1.address, TOKEN_AMOUNT))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, TOKEN_AMOUNTx2, TOKEN_AMOUNTx3);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNTx2);
 
       expect(
-        await tokenUnderFreezer.freezeDecrease.staticCall(user1.address, TOKEN_AMOUNTx2)
+        await tokenViaFreezer.freezeDecrease.staticCall(user1.address, TOKEN_AMOUNTx2)
       ).to.deep.eq([0, TOKEN_AMOUNTx2]);
-      await expect(tokenUnderFreezer.freezeDecrease(user1.address, TOKEN_AMOUNTx2))
+      await expect(tokenViaFreezer.freezeDecrease(user1.address, TOKEN_AMOUNTx2))
         .to.emit(token, EVENT_NAME_FREEZE)
         .withArgs(user1.address, 0, TOKEN_AMOUNTx2);
       expect(await token.balanceOfFrozen(user1.address)).to.eq(0);
