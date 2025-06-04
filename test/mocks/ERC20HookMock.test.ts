@@ -75,23 +75,19 @@ describe("Contract 'ERC20HookMock'", async () => {
       expect(await hookable.revertWithReasonMessage()).to.equal(false);
       expect(await hookable.revertWithoutReasonMessage()).to.equal(false);
       await proveTx(hookable.setRevertWithPanic(true));
-      await expect(
-        hookable.beforeTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithPanic(PANIC_ERROR_CODE);
+      await expect(hookable.beforeTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT))
+        .to.be.revertedWithPanic(PANIC_ERROR_CODE);
       await proveTx(hookable.setRevertWithPanic(false));
       await proveTx(hookable.setRevertWithReasonMessage(true));
-      await expect(
-        hookable.beforeTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWith(REVERT_REASON_MESSAGE);
+      await expect(hookable.beforeTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT))
+        .to.be.revertedWith(REVERT_REASON_MESSAGE);
       await proveTx(hookable.setRevertWithReasonMessage(false));
       await proveTx(hookable.setRevertWithoutReasonMessage(true));
-      await expect(
-        hookable.beforeTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(hookable, ERROR_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
+      await expect(hookable.beforeTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(hookable, ERROR_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
       await proveTx(hookable.setRevertWithoutReasonMessage(false));
-      await expect(
-        hookable.beforeTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.emit(hookable, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
+      await expect(hookable.beforeTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT))
+        .to.emit(hookable, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
     });
   });
 
@@ -102,23 +98,19 @@ describe("Contract 'ERC20HookMock'", async () => {
       expect(await hookable.revertWithReasonMessage()).to.equal(false);
       expect(await hookable.revertWithoutReasonMessage()).to.equal(false);
       await proveTx(hookable.setRevertWithPanic(true));
-      await expect(
-        hookable.afterTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithPanic(PANIC_ERROR_CODE);
+      await expect(hookable.afterTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT))
+        .to.be.revertedWithPanic(PANIC_ERROR_CODE);
       await proveTx(hookable.setRevertWithPanic(false));
       await proveTx(hookable.setRevertWithReasonMessage(true));
-      await expect(
-        hookable.afterTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWith(REVERT_REASON_MESSAGE);
+      await expect(hookable.afterTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT))
+        .to.be.revertedWith(REVERT_REASON_MESSAGE);
       await proveTx(hookable.setRevertWithReasonMessage(false));
       await proveTx(hookable.setRevertWithoutReasonMessage(true));
-      await expect(
-        hookable.afterTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(hookable, ERROR_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK);
+      await expect(hookable.afterTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(hookable, ERROR_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK);
       await proveTx(hookable.setRevertWithoutReasonMessage(false));
-      await expect(
-        hookable.afterTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.emit(hookable, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK);
+      await expect(hookable.afterTokenTransfer(user1.address, user2.address, TOKEN_AMOUNT))
+        .to.emit(hookable, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK);
     });
   });
 });

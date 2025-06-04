@@ -167,16 +167,14 @@ describe("Contract 'ERC20Mintable'", async () => {
 
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(
-        token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
+      await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL))
+        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(
-        token.callParentInitializerUnchained()
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
+      await expect(token.callParentInitializerUnchained())
+        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -197,9 +195,8 @@ describe("Contract 'ERC20Mintable'", async () => {
       it("The contract is paused", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(connect(token, pauser).pause());
-        await expect(
-          connect(token, minterOrdinary).mint(user.address, TOKEN_AMOUNT)
-        ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+        await expect(connect(token, minterOrdinary).mint(user.address, TOKEN_AMOUNT))
+          .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
       });
 
       it("The caller does not have the ordinary minter role", async () => {
@@ -214,16 +211,14 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The destination address is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(
-          connect(token, minterOrdinary).mint(ethers.ZeroAddress, TOKEN_AMOUNT)
-        ).to.be.revertedWith(ERROR_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
+        await expect(connect(token, minterOrdinary).mint(ethers.ZeroAddress, TOKEN_AMOUNT))
+          .to.be.revertedWith(ERROR_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
       });
 
       it("The mint amount is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(
-          connect(token, minterOrdinary).mint(user.address, 0)
-        ).to.be.revertedWithCustomError(token, ERROR_NAME_ZERO_MINT_AMOUNT);
+        await expect(connect(token, minterOrdinary).mint(user.address, 0))
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ZERO_MINT_AMOUNT);
       });
     });
   });
@@ -274,9 +269,8 @@ describe("Contract 'ERC20Mintable'", async () => {
     it("Is reverted if the burn amount exceeds the caller token balance", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, minterOrdinary).mint(burnerOrdinary.address, TOKEN_AMOUNT));
-      await expect(
-        connect(token, burnerOrdinary).burn(TOKEN_AMOUNT + 1)
-      ).to.be.revertedWith(ERROR_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
+      await expect(connect(token, burnerOrdinary).burn(TOKEN_AMOUNT + 1))
+        .to.be.revertedWith(ERROR_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
     });
   });
 
@@ -315,9 +309,8 @@ describe("Contract 'ERC20Mintable'", async () => {
     it("Is reverted if the contract is paused", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, pauser).pause());
-      await expect(
-        connect(token, minterOrdinary).mintFromReserve(user.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+      await expect(connect(token, minterOrdinary).mintFromReserve(user.address, TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
     });
 
     it("Is reverted if the caller does not have the reserve minter role", async () => {
@@ -332,9 +325,8 @@ describe("Contract 'ERC20Mintable'", async () => {
 
     it("Is reverted if the mint amount is zero", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
-      await expect(
-        connect(token, minterReserve).mintFromReserve(user.address, 0)
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_ZERO_MINT_AMOUNT);
+      await expect(connect(token, minterReserve).mintFromReserve(user.address, 0))
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ZERO_MINT_AMOUNT);
     });
   });
 
@@ -381,9 +373,8 @@ describe("Contract 'ERC20Mintable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, minterReserve).mintFromReserve(burnerReserve.address, TOKEN_AMOUNT));
       await proveTx(connect(token, pauser).pause());
-      await expect(
-        connect(token, burnerReserve).burnToReserve(TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+      await expect(connect(token, burnerReserve).burnToReserve(TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
     });
 
     it("Is reverted if the caller does not have the reserve burner role", async () => {
@@ -408,9 +399,8 @@ describe("Contract 'ERC20Mintable'", async () => {
     it("Is reverted if the burn amount exceeds the caller token balance", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, minterReserve).mintFromReserve(burnerReserve.address, TOKEN_AMOUNT));
-      await expect(
-        connect(token, burnerReserve).burnToReserve(TOKEN_AMOUNT + 1)
-      ).to.be.revertedWith(ERROR_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
+      await expect(connect(token, burnerReserve).burnToReserve(TOKEN_AMOUNT + 1))
+        .to.be.revertedWith(ERROR_MESSAGE_ERC20_BURN_AMOUNT_EXCEEDS_BALANCE);
     });
 
     it("Is reverted if the burn amount exceeds the total reserve supply", async () => {
@@ -423,9 +413,8 @@ describe("Contract 'ERC20Mintable'", async () => {
       await proveTx(connect(token, minterReserve).mintFromReserve(burnerReserve.address, 1));
 
       // try to burn more than the reserve supply
-      await expect(
-        connect(token, burnerReserve).burnToReserve(2)
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_INSUFFICIENT_RESERVE_SUPPLY);
+      await expect(connect(token, burnerReserve).burnToReserve(2))
+        .to.be.revertedWithCustomError(token, ERROR_NAME_INSUFFICIENT_RESERVE_SUPPLY);
     });
   });
 
@@ -730,9 +719,8 @@ describe("Contract 'ERC20Mintable'", async () => {
 
       it("The recipient address is zero", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(
-          connect(token, preminterAgent).premintIncrease(ethers.ZeroAddress, TOKEN_AMOUNT, timestamp)
-        ).to.be.revertedWith(ERROR_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
+        await expect(connect(token, preminterAgent).premintIncrease(ethers.ZeroAddress, TOKEN_AMOUNT, timestamp))
+          .to.be.revertedWith(ERROR_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT);
       });
 
       it("The amount of a new premint is zero", async () => {
@@ -747,9 +735,8 @@ describe("Contract 'ERC20Mintable'", async () => {
         for (; i < MAX_PENDING_PREMINTS_COUNT; i++) {
           await proveTx(connect(token, preminterAgent).premintIncrease(user.address, TOKEN_AMOUNT, timestamp + i * 10));
         }
-        await expect(
-          connect(token, preminterAgent).premintIncrease(user.address, TOKEN_AMOUNT, timestamp + i * 10)
-        ).to.be.revertedWithCustomError(token, ERROR_NAME_MAX_PENDING_PREMINTS_LIMIT_REACHED);
+        await expect(connect(token, preminterAgent).premintIncrease(user.address, TOKEN_AMOUNT, timestamp + i * 10))
+          .to.be.revertedWithCustomError(token, ERROR_NAME_MAX_PENDING_PREMINTS_LIMIT_REACHED);
       });
 
       it("The caller changes an existing premint with the same amount", async () => {
@@ -770,9 +757,8 @@ describe("Contract 'ERC20Mintable'", async () => {
       it("The caller tries to decrease the amount of a premint below the existing amount", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(connect(token, preminterAgent).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
-        await expect(
-          connect(token, preminterAgent).premintDecrease(user.address, TOKEN_AMOUNT + 1, timestamp)
-        ).to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_INSUFFICIENT_AMOUNT);
+        await expect(connect(token, preminterAgent).premintDecrease(user.address, TOKEN_AMOUNT + 1, timestamp))
+          .to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_INSUFFICIENT_AMOUNT);
       });
     });
   });
@@ -970,9 +956,8 @@ describe("Contract 'ERC20Mintable'", async () => {
         const originalRelease = timestamp;
         const targetRelease = timestamp + 1;
         await proveTx(connect(token, pauser).pause());
-        await expect(
-          connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease)
-        ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+        await expect(connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease))
+          .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
       });
 
       it("The caller does not have the preminter-rescheduler role", async () => {
@@ -991,18 +976,16 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalRelease = timestamp;
         const targetRelease = await getLatestBlockTimestamp() - 1;
-        await expect(
-          connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease)
-        ).to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_RESCHEDULING_TIME_PASSED);
+        await expect(connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease))
+          .to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_RESCHEDULING_TIME_PASSED);
       });
 
       it("The provided original release time has passed", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const originalRelease = await getLatestBlockTimestamp() - 1;
         const targetRelease = originalRelease + 1000;
-        await expect(
-          connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease)
-        ).to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_RELEASE_TIME_PASSED);
+        await expect(connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease))
+          .to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_RELEASE_TIME_PASSED);
       });
 
       it("The provided resolved original release time has passed", async () => {
@@ -1012,16 +995,14 @@ describe("Contract 'ERC20Mintable'", async () => {
         const targetRelease2 = originalRelease + 1000;
         await proveTx(connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease1));
         await increaseBlockTimestampTo(targetRelease1);
-        await expect(
-          connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease2)
-        ).to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_RELEASE_TIME_PASSED);
+        await expect(connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease2))
+          .to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_RELEASE_TIME_PASSED);
       });
 
       it("The provided original release time equals the provided target release time", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
-        await expect(
-          connect(token, preminterRescheduler).reschedulePremintRelease(timestamp, timestamp)
-        ).to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_RESCHEDULING_ALREADY_CONFIGURED);
+        await expect(connect(token, preminterRescheduler).reschedulePremintRelease(timestamp, timestamp))
+          .to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_RESCHEDULING_ALREADY_CONFIGURED);
       });
 
       it("The provided target release time is already configured", async () => {
@@ -1029,9 +1010,8 @@ describe("Contract 'ERC20Mintable'", async () => {
         const originalRelease = timestamp;
         const targetRelease = timestamp + 1;
         await proveTx(connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease));
-        await expect(
-          connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease)
-        ).to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_RESCHEDULING_ALREADY_CONFIGURED);
+        await expect(connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease))
+          .to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_RESCHEDULING_ALREADY_CONFIGURED);
       });
 
       it("A rescheduling chain will be made in result", async () => {
@@ -1040,9 +1020,8 @@ describe("Contract 'ERC20Mintable'", async () => {
         const targetRelease1 = timestamp + 1;
         const targetRelease2 = timestamp + 2;
         await proveTx(connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease1));
-        await expect(
-          connect(token, preminterRescheduler).reschedulePremintRelease(targetRelease1, targetRelease2)
-        ).to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_RESCHEDULING_CHAIN);
+        await expect(connect(token, preminterRescheduler).reschedulePremintRelease(targetRelease1, targetRelease2))
+          .to.be.revertedWithCustomError(token, ERROR_NAME_PREMINT_RESCHEDULING_CHAIN);
       });
 
       it("The provided original release time is greater than 64-bit unsigned integer", async () => {

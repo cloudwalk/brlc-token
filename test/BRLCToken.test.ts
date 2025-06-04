@@ -102,17 +102,15 @@ describe("Contract 'BRLCToken'", async () => {
 
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(
-        token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
+      await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL))
+        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("Is reverted if the contract implementation is called even for the first time", async () => {
       const tokenImplementation = await tokenFactory.deploy() as Contract;
       await tokenImplementation.waitForDeployment();
-      await expect(
-        tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWithCustomError(tokenImplementation, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
+      await expect(tokenImplementation.initialize(TOKEN_NAME, TOKEN_SYMBOL))
+        .to.be.revertedWithCustomError(tokenImplementation, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
     });
   });
 

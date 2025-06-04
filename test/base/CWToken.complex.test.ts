@@ -145,15 +145,13 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       await proveTx(token.grantRole(MINTER_ROLE, deployer.address));
       await proveTx(token.mint(sender.address, userBalance));
 
-      await expect(
-        token.transferFrom(sender.address, deployer.address, userBalance)
-      ).to.be.revertedWith(ERROR_MESSAGE_INSUFFICIENT_ALLOWANCE);
+      await expect(token.transferFrom(sender.address, deployer.address, userBalance))
+        .to.be.revertedWith(ERROR_MESSAGE_INSUFFICIENT_ALLOWANCE);
 
       await proveTx(token.grantRole(TRUSTED_SPENDER_ROLE, deployer.address));
 
-      await expect(
-        token.transferFrom(sender.address, deployer.address, userBalance)
-      ).to.be.changeTokenBalances(token, [sender, deployer], [-userBalance, +userBalance]);
+      await expect(token.transferFrom(sender.address, deployer.address, userBalance))
+        .to.be.changeTokenBalances(token, [sender, deployer], [-userBalance, +userBalance]);
     });
   });
 
@@ -212,9 +210,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       if (timestamp && awaitPreminting) {
         await awaitPremintingRelease({ timestamp, amounts });
       }
-      await expect(
-        connect(token, sender).transfer(receiver.address, transferAmount)
-      ).to.changeTokenBalances(
+      await expect(connect(token, sender).transfer(receiver.address, transferAmount)).to.changeTokenBalances(
         token,
         [sender, receiver],
         [-transferAmount, transferAmount]
@@ -236,9 +232,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       if (timestamp && awaitPreminting) {
         await awaitPremintingRelease({ timestamp });
       }
-      await expect(
-        connect(token, sender).transfer(receiver.address, transferAmount)
-      ).to.be.revertedWithCustomError(token, errorName);
+      await expect(connect(token, sender).transfer(receiver.address, transferAmount))
+        .to.be.revertedWithCustomError(token, errorName);
     }
 
     async function failTransferDueToLackOfBalanceAndCheck(props: {
@@ -253,9 +248,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       if (timestamp && awaitPreminting) {
         await awaitPremintingRelease({ timestamp });
       }
-      await expect(
-        connect(token, sender).transfer(receiver.address, transferAmount)
-      ).to.be.revertedWith(ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
+      await expect(connect(token, sender).transfer(receiver.address, transferAmount))
+        .to.be.revertedWith(ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     }
 
     describe("Executes as expected if there are the free, frozen, preminting balances and", async () => {
@@ -812,9 +806,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       const { token } = await setUpFixture(deployAndConfigureToken);
       const { initialAmounts, transferAmount, errorName } = props;
       await setUpComplexBalances({ token, amounts: { ...initialAmounts } });
-      await expect(
-        connect(token, freezer).transferFrozen(sender.address, receiver.address, transferAmount)
-      ).to.be.revertedWithCustomError(token, errorName);
+      await expect(connect(token, freezer).transferFrozen(sender.address, receiver.address, transferAmount))
+        .to.be.revertedWithCustomError(token, errorName);
     }
 
     describe("Executes as expected if there is the frozen balance only and", async () => {
@@ -847,9 +840,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         it("25 tokens are transferred", async () => {
           const { token } = await setUpFixture(deployAndConfigureToken);
           await setUpComplexBalances({ token, amounts: { ...initialAmounts } });
-          await expect(
-            connect(token, freezer).transferFrozen(sender, receiver.address, 25)
-          ).to.be.revertedWith(ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
+          await expect(connect(token, freezer).transferFrozen(sender, receiver.address, 25))
+            .to.be.revertedWith(ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
         });
       });
     });

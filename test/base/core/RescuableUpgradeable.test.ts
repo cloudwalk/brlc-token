@@ -90,16 +90,14 @@ describe("Contract 'RescuableUpgradeable'", async () => {
 
     it("The external initializer is reverted if it is called a second time", async () => {
       const { rescuableMock } = await setUpFixture(deployRescuableMock);
-      await expect(
-        rescuableMock.initialize()
-      ).to.be.revertedWithCustomError(rescuableMock, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
+      await expect(rescuableMock.initialize())
+        .to.be.revertedWithCustomError(rescuableMock, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("The internal unchained initializer is reverted if it is called outside the init process", async () => {
       const { rescuableMock } = await setUpFixture(deployRescuableMock);
-      await expect(
-        rescuableMock.callParentInitializerUnchained()
-      ).to.be.revertedWithCustomError(rescuableMock, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
+      await expect(rescuableMock.callParentInitializerUnchained())
+        .to.be.revertedWithCustomError(rescuableMock, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -121,12 +119,9 @@ describe("Contract 'RescuableUpgradeable'", async () => {
 
     it("Is reverted if the caller does not have the rescuer role", async () => {
       const { rescuableMock, tokenMock } = await setUpFixture(deployAndConfigureAllContracts);
-      await expect(
-        rescuableMock.rescueERC20(getAddress(tokenMock), deployer.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(
-        rescuableMock,
-        ERROR_NAME_UNAUTHORIZED_ACCOUNT
-      ).withArgs(deployer.address, RESCUER_ROLE);
+      await expect(rescuableMock.rescueERC20(getAddress(tokenMock), deployer.address, TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(rescuableMock, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .withArgs(deployer.address, RESCUER_ROLE);
     });
   });
 });

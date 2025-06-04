@@ -84,23 +84,20 @@ describe("Contract 'ERC20Base'", async () => {
 
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(
-        token.initialize(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
+      await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL))
+        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("Is reverted if the internal initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(
-        token.callParentInitializer(TOKEN_NAME, TOKEN_SYMBOL)
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
+      await expect(token.callParentInitializer(TOKEN_NAME, TOKEN_SYMBOL))
+        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
-      await expect(
-        token.callParentInitializerUnchained()
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
+      await expect(token.callParentInitializerUnchained())
+        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -127,9 +124,8 @@ describe("Contract 'ERC20Base'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(token.mintForTest(user1.address, TOKEN_AMOUNT));
       await proveTx(connect(token, pauser).pause());
-      await expect(
-        connect(token, user1).transfer(user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+      await expect(connect(token, user1).transfer(user2.address, TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
     });
   });
 
@@ -148,9 +144,8 @@ describe("Contract 'ERC20Base'", async () => {
     it("Is reverted if the contract is paused", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, pauser).pause());
-      await expect(
-        connect(token, user1).approve(user2.address, TOKEN_ALLOWANCE)
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+      await expect(connect(token, user1).approve(user2.address, TOKEN_ALLOWANCE))
+        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
     });
   });
 
@@ -175,9 +170,8 @@ describe("Contract 'ERC20Base'", async () => {
       await proveTx(token.mintForTest(user1.address, TOKEN_AMOUNT));
       await proveTx(connect(token, user1).approve(user2.address, TOKEN_AMOUNT));
       await proveTx(connect(token, pauser).pause());
-      await expect(
-        connect(token, user2).transferFrom(user1.address, user2.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+      await expect(connect(token, user2).transferFrom(user1.address, user2.address, TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
     });
   });
 
@@ -200,9 +194,8 @@ describe("Contract 'ERC20Base'", async () => {
     it("Is reverted if the contract is paused", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, pauser).pause());
-      await expect(
-        token.increaseAllowance(user1.address, allowanceAddedValue)
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+      await expect(token.increaseAllowance(user1.address, allowanceAddedValue))
+        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
     });
   });
 
@@ -226,9 +219,8 @@ describe("Contract 'ERC20Base'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, user1).approve(user2.address, initialAllowance));
       await proveTx(connect(token, pauser).pause());
-      await expect(
-        connect(token, user1).decreaseAllowance(user2.address, allowanceSubtractedValue)
-      ).to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+      await expect(connect(token, user1).decreaseAllowance(user2.address, allowanceSubtractedValue))
+        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
     });
   });
 });

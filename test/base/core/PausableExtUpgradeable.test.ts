@@ -70,16 +70,14 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
 
     it("The external initializer is reverted if it is called a second time", async () => {
       const { pausableExtMock } = await setUpFixture(deployPausableExtMock);
-      await expect(
-        pausableExtMock.initialize()
-      ).to.be.revertedWithCustomError(pausableExtMock, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
+      await expect(pausableExtMock.initialize())
+        .to.be.revertedWithCustomError(pausableExtMock, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
     });
 
     it("The internal unchained initializer is reverted if it is called outside the init process", async () => {
       const { pausableExtMock } = await setUpFixture(deployPausableExtMock);
-      await expect(
-        pausableExtMock.callParentInitializerUnchained()
-      ).to.be.revertedWithCustomError(pausableExtMock, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
+      await expect(pausableExtMock.callParentInitializerUnchained())
+        .to.be.revertedWithCustomError(pausableExtMock, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
     });
   });
 
@@ -87,24 +85,19 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
     it("Executes successfully and emits the correct event", async () => {
       const { pausableExtMock } = await setUpFixture(deployAndConfigurePausableExtMock);
 
-      await expect(
-        connect(pausableExtMock, pauser).pause()
-      ).to.emit(
-        pausableExtMock,
-        EVENT_NAME_PAUSED
-      ).withArgs(pauser.address);
+      await expect(connect(pausableExtMock, pauser).pause())
+        .to.emit(pausableExtMock, EVENT_NAME_PAUSED)
+        .withArgs(pauser.address);
 
       expect(await pausableExtMock.paused()).to.equal(true);
     });
 
     it("Is reverted if it is called by an account without the pauser role", async () => {
       const { pausableExtMock } = await setUpFixture(deployAndConfigurePausableExtMock);
-      await expect(
-        pausableExtMock.pause()
-      ).to.be.revertedWithCustomError(
-        pausableExtMock,
-        ERROR_NAME_UNAUTHORIZED_ACCOUNT
-      ).withArgs(deployer.address, PAUSER_ROLE);
+
+      await expect(pausableExtMock.pause())
+        .to.be.revertedWithCustomError(pausableExtMock, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .withArgs(deployer.address, PAUSER_ROLE);
     });
   });
 
@@ -113,24 +106,19 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
       const { pausableExtMock } = await setUpFixture(deployAndConfigurePausableExtMock);
       await proveTx(connect(pausableExtMock, pauser).pause());
 
-      await expect(
-        connect(pausableExtMock, pauser).unpause()
-      ).to.emit(
-        pausableExtMock,
-        EVENT_NAME_UNPAUSED
-      ).withArgs(pauser.address);
+      await expect(connect(pausableExtMock, pauser).unpause())
+        .to.emit(pausableExtMock, EVENT_NAME_UNPAUSED)
+        .withArgs(pauser.address);
 
       expect(await pausableExtMock.paused()).to.equal(false);
     });
 
     it("Is reverted if the caller does not have the pauser role", async () => {
       const { pausableExtMock } = await setUpFixture(deployAndConfigurePausableExtMock);
-      await expect(
-        pausableExtMock.unpause()
-      ).to.be.revertedWithCustomError(
-        pausableExtMock,
-        ERROR_NAME_UNAUTHORIZED_ACCOUNT
-      ).withArgs(deployer.address, PAUSER_ROLE);
+
+      await expect(pausableExtMock.unpause())
+        .to.be.revertedWithCustomError(pausableExtMock, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .withArgs(deployer.address, PAUSER_ROLE);
     });
   });
 });
