@@ -6,13 +6,15 @@ import { connect, proveTx } from "../../../test-utils/eth";
 import { setUpFixture } from "../../../test-utils/common";
 
 describe("Contract 'AccessControlExtUpgradeable'", async () => {
+  // Events of the lib contracts
   const EVENT_NAME_ROLE_ADMIN_CHANGED = "RoleAdminChanged";
   const EVENT_NAME_ROLE_GRANTED = "RoleGranted";
   const EVENT_NAME_ROLE_REVOKED = "RoleRevoked";
 
-  const ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
-  const ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
-  const ERROR_NAME_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+  // Errors of the lib contracts
+  const ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+  const ERROR_NAME_INVALID_INITIALIZATION = "InvalidInitialization";
+  const ERROR_NAME_NOT_INITIALIZING = "NotInitializing";
 
   const DEFAULT_ADMIN_ROLE: string = ethers.ZeroHash;
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
@@ -72,13 +74,13 @@ describe("Contract 'AccessControlExtUpgradeable'", async () => {
     it("The external initializer is reverted if it is called a second time", async () => {
       const { accessControlExtMock } = await setUpFixture(deployAccessControlExtMock);
       await expect(accessControlExtMock.initialize())
-        .to.be.revertedWithCustomError(accessControlExtMock, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
+        .to.be.revertedWithCustomError(accessControlExtMock, ERROR_NAME_INVALID_INITIALIZATION);
     });
 
     it("The internal unchained initializer is reverted if it is called outside the init process", async () => {
       const { accessControlExtMock } = await setUpFixture(deployAccessControlExtMock);
       await expect(accessControlExtMock.callParentInitializerUnchained())
-        .to.be.revertedWithCustomError(accessControlExtMock, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
+        .to.be.revertedWithCustomError(accessControlExtMock, ERROR_NAME_NOT_INITIALIZING);
     });
   });
 
@@ -134,7 +136,7 @@ describe("Contract 'AccessControlExtUpgradeable'", async () => {
 
         const accessControlExtMockViaAttacker = connect(accessControlExtMock, attacker);
         await expect(accessControlExtMockViaAttacker.grantRoleBatch(USER_ROLE, []))
-          .to.be.revertedWithCustomError(accessControlExtMock, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+          .to.be.revertedWithCustomError(accessControlExtMock, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
           .withArgs(attacker.address, GRANTOR_ROLE);
       });
     });
@@ -193,7 +195,7 @@ describe("Contract 'AccessControlExtUpgradeable'", async () => {
 
         const accessControlExtMockViaAttacker = connect(accessControlExtMock, attacker);
         await expect(accessControlExtMockViaAttacker.revokeRoleBatch(USER_ROLE, []))
-          .to.be.revertedWithCustomError(accessControlExtMock, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+          .to.be.revertedWithCustomError(accessControlExtMock, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
           .withArgs(attacker.address, GRANTOR_ROLE);
       });
     });
@@ -221,7 +223,7 @@ describe("Contract 'AccessControlExtUpgradeable'", async () => {
       const { accessControlExtMock } = await setUpFixture(deployAccessControlExtMock);
       const someRole = ethers.id("SOME_ROLE");
       await expect(connect(accessControlExtMock, attacker).setRoleAdmin(OWNER_ROLE, someRole))
-        .to.be.revertedWithCustomError(accessControlExtMock, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(accessControlExtMock, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(attacker.address, OWNER_ROLE);
     });
   });

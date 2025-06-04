@@ -11,9 +11,11 @@ describe("Contract 'ERC20HookMock'", async () => {
   const PANIC_ERROR_CODE = "0x1";
   const REVERT_REASON_MESSAGE = "error message";
 
+  // Events of the contracts under test
   const EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK = "TestAfterTokenTransferHookEvent";
   const EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK = "TestBeforeTokenTransferHookEvent";
 
+  // Errors of the contracts under test
   const ERROR_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK = "TestAfterTokenTransferHookError";
   const ERROR_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK = "TestBeforeTokenTransferHookError";
 

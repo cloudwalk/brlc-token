@@ -12,6 +12,7 @@ describe("Contract 'ERC20Mintable'", async () => {
   const TOKEN_AMOUNT = 100;
   const MAX_PENDING_PREMINTS_COUNT = 5;
 
+  // Events of the contracts under test
   const EVENT_NAME_BURN = "Burn";
   const EVENT_NAME_BURN_TO_RESERVE = "BurnToReserve";
   const EVENT_NAME_MAX_PENDING_PREMINTS_COUNT_CONFIGURED = "MaxPendingPremintsCountConfigured";
@@ -26,10 +27,10 @@ describe("Contract 'ERC20Mintable'", async () => {
   const ERROR_MESSAGE_ERC20_MINT_TO_THE_ZERO_ACCOUNT = "ERC20: mint to the zero address";
 
   // Errors of the lib contracts
-  const ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
-  const ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
-  const ERROR_NAME_CONTRACT_IS_PAUSED = "EnforcedPause";
-  const ERROR_NAME_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+  const ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+  const ERROR_NAME_ENFORCED_PAUSE = "EnforcedPause";
+  const ERROR_NAME_INVALID_INITIALIZATION = "InvalidInitialization";
+  const ERROR_NAME_NOT_INITIALIZING = "NotInitializing";
 
   // Errors of the contracts under test
   const ERROR_NAME_INAPPROPRIATE_UINT64_VALUE = "InappropriateUint64Value";
@@ -168,13 +169,13 @@ describe("Contract 'ERC20Mintable'", async () => {
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_INVALID_INITIALIZATION);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(token.callParentInitializerUnchained())
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_NOT_INITIALIZING);
     });
   });
 
@@ -196,16 +197,16 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(connect(token, pauser).pause());
         await expect(connect(token, minterOrdinary).mint(user.address, TOKEN_AMOUNT))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ENFORCED_PAUSE);
       });
 
       it("The caller does not have the ordinary minter role", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(connect(token, user).mint(user.address, TOKEN_AMOUNT))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
           .withArgs(user.address, MINTER_ROLE);
         await expect(connect(token, deployer).mint(user.address, TOKEN_AMOUNT))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
           .withArgs(deployer.address, MINTER_ROLE);
       });
 
@@ -244,19 +245,19 @@ describe("Contract 'ERC20Mintable'", async () => {
       await proveTx(connect(token, minterOrdinary).mint(burnerOrdinary.address, TOKEN_AMOUNT));
       await proveTx(connect(token, pauser).pause());
       await expect(connect(token, burnerOrdinary).burn(TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ENFORCED_PAUSE);
     });
 
     it("Is reverted if the caller does not have the ordinary burner role", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, minterOrdinary).mint(user.address, TOKEN_AMOUNT));
       await expect(connect(token, user).burn(TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(user.address, BURNER_ROLE);
 
       await proveTx(connect(token, minterOrdinary).mint(deployer.address, TOKEN_AMOUNT));
       await expect(connect(token, deployer).burn(TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(deployer.address, BURNER_ROLE);
     });
 
@@ -310,16 +311,16 @@ describe("Contract 'ERC20Mintable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, pauser).pause());
       await expect(connect(token, minterOrdinary).mintFromReserve(user.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ENFORCED_PAUSE);
     });
 
     it("Is reverted if the caller does not have the reserve minter role", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await expect(connect(token, user).mintFromReserve(user.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(user.address, RESERVE_MINTER_ROLE);
       await expect(connect(token, deployer).mintFromReserve(user.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(deployer.address, RESERVE_MINTER_ROLE);
     });
 
@@ -374,19 +375,19 @@ describe("Contract 'ERC20Mintable'", async () => {
       await proveTx(connect(token, minterReserve).mintFromReserve(burnerReserve.address, TOKEN_AMOUNT));
       await proveTx(connect(token, pauser).pause());
       await expect(connect(token, burnerReserve).burnToReserve(TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ENFORCED_PAUSE);
     });
 
     it("Is reverted if the caller does not have the reserve burner role", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, minterReserve).mintFromReserve(user.address, TOKEN_AMOUNT));
       await expect(connect(token, user).burnToReserve(TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(user.address, RESERVE_BURNER_ROLE);
 
       await proveTx(connect(token, minterReserve).mintFromReserve(deployer.address, TOKEN_AMOUNT));
       await expect(connect(token, deployer).burnToReserve(TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(deployer.address, RESERVE_BURNER_ROLE);
     });
 
@@ -678,9 +679,9 @@ describe("Contract 'ERC20Mintable'", async () => {
         await proveTx(connect(token, preminterAgent).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
         await proveTx(connect(token, pauser).pause());
         await expect(connect(token, preminterAgent).premintIncrease(user.address, 1, timestamp))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ENFORCED_PAUSE);
         await expect(connect(token, preminterAgent).premintDecrease(user.address, 1, timestamp))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ENFORCED_PAUSE);
       });
 
       it("The provided release time has passed", async () => {
@@ -703,17 +704,17 @@ describe("Contract 'ERC20Mintable'", async () => {
       it("The caller does not have the preminter-agent role", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await expect(connect(token, user).premintIncrease(user.address, TOKEN_AMOUNT, timestamp))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
           .withArgs(user.address, PREMINT_MANAGER_ROLE);
         await expect(connect(token, user).premintDecrease(user.address, TOKEN_AMOUNT, timestamp))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
           .withArgs(user.address, PREMINT_MANAGER_ROLE);
 
         await expect(connect(token, deployer).premintIncrease(deployer.address, TOKEN_AMOUNT, timestamp))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
           .withArgs(deployer.address, PREMINT_MANAGER_ROLE);
         await expect(connect(token, deployer).premintIncrease(deployer.address, TOKEN_AMOUNT, timestamp))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
           .withArgs(deployer.address, PREMINT_MANAGER_ROLE);
       });
 
@@ -957,7 +958,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const targetRelease = timestamp + 1;
         await proveTx(connect(token, pauser).pause());
         await expect(connect(token, preminterRescheduler).reschedulePremintRelease(originalRelease, targetRelease))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ENFORCED_PAUSE);
       });
 
       it("The caller does not have the preminter-rescheduler role", async () => {
@@ -965,10 +966,10 @@ describe("Contract 'ERC20Mintable'", async () => {
         const originalRelease = timestamp;
         const targetRelease = timestamp + 1;
         await expect(connect(token, user).reschedulePremintRelease(originalRelease, targetRelease))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
           .withArgs(user.address, PREMINT_SCHEDULER_ROLE);
         await expect(connect(token, deployer).reschedulePremintRelease(originalRelease, targetRelease))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
           .withArgs(deployer.address, PREMINT_SCHEDULER_ROLE);
       });
 
@@ -1064,7 +1065,7 @@ describe("Contract 'ERC20Mintable'", async () => {
     it("Is reverted if the caller does not have the owner role", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await expect(connect(token, user).configureMaxPendingPremintsCount(0))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(user.address, OWNER_ROLE);
     });
   });

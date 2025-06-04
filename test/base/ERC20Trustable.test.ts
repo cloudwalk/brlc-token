@@ -13,8 +13,8 @@ describe("Contract 'ERC20Trustable'", async () => {
   const MAX_APPROVE_AMOUNT = ethers.MaxUint256;
 
   // Errors of the lib contracts
-  const ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
-  const ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
+  const ERROR_NAME_INVALID_INITIALIZATION = "InvalidInitialization";
+  const ERROR_NAME_NOT_INITIALIZING = "NotInitializing";
 
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
@@ -72,13 +72,13 @@ describe("Contract 'ERC20Trustable'", async () => {
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_INVALID_INITIALIZATION);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(token.callParentInitializerUnchained())
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_NOT_INITIALIZING);
     });
   });
 

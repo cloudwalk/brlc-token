@@ -40,6 +40,7 @@ describe("Contract 'ERC20Hookable'", async () => {
   const ZERO_REVERT_LOW_LEVEL_DATA = "0x";
   const ZERO_REVERT_REASON_MESSAGE = "";
 
+  // Events of the contracts under test
   const EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOKS_UPDATED = "BeforeTokenTransferHooksSet";
   const EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOK_FAILURE = "BeforeTokenTransferHookFailure";
   const EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK = "TestBeforeTokenTransferHookEvent";
@@ -48,9 +49,9 @@ describe("Contract 'ERC20Hookable'", async () => {
   const EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK = "TestAfterTokenTransferHookEvent";
 
   // Errors of the lib contracts
-  const ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
-  const ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
-  const ERROR_NAME_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+  const ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+  const ERROR_NAME_INVALID_INITIALIZATION = "InvalidInitialization";
+  const ERROR_NAME_NOT_INITIALIZING = "NotInitializing";
 
   // Errors of the contracts under test
   const ERROR_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK = "TestAfterTokenTransferHookError";
@@ -126,13 +127,13 @@ describe("Contract 'ERC20Hookable'", async () => {
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_INVALID_INITIALIZATION);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(token.callParentInitializerUnchained())
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_NOT_INITIALIZING);
     });
   });
 
@@ -168,7 +169,7 @@ describe("Contract 'ERC20Hookable'", async () => {
         }
       ];
       await expect(connect(token, user).setBeforeTokenTransferHooks(hooks))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(user.address, OWNER_ROLE);
     });
   });
@@ -205,7 +206,7 @@ describe("Contract 'ERC20Hookable'", async () => {
         }
       ];
       await expect(connect(token, user).setAfterTokenTransferHooks(hooks))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(user.address, OWNER_ROLE);
     });
   });

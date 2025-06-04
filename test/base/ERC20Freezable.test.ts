@@ -13,17 +13,18 @@ describe("Contract 'ERC20Freezable'", async () => {
   const TOKEN_AMOUNTx2 = TOKEN_AMOUNT * 2;
   const TOKEN_AMOUNTx3 = TOKEN_AMOUNT * 3;
 
+  // Events of the contracts under test
   const EVENT_NAME_FREEZE = "Freeze";
   const EVENT_NAME_FREEZE_TRANSFER = "FreezeTransfer";
 
   // Error messages of the lib contracts
   const ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
 
-  // Error of the lib contracts
-  const ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
-  const ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
-  const ERROR_NAME_CONTRACT_IS_PAUSED = "EnforcedPause";
-  const ERROR_NAME_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+  // Errors of the lib contracts
+  const ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+  const ERROR_NAME_ENFORCED_PAUSE = "EnforcedPause";
+  const ERROR_NAME_INVALID_INITIALIZATION = "InvalidInitialization";
+  const ERROR_NAME_NOT_INITIALIZING = "NotInitializing";
 
   // Errors of the contracts under test
   const ERROR_NAME_CONTRACT_BALANCE_FREEZING_ATTEMPT = "ContractBalanceFreezingAttempt";
@@ -109,13 +110,13 @@ describe("Contract 'ERC20Freezable'", async () => {
     it("Is reverted if called for the second time", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(token.initialize(TOKEN_NAME, TOKEN_SYMBOL))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_INITIALIZATION_IS_INVALID);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_INVALID_INITIALIZATION);
     });
 
     it("Is reverted if the internal unchained initializer is called outside of the init process", async () => {
       const { token } = await setUpFixture(deployToken);
       await expect(token.callParentInitializerUnchained())
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_NOT_INITIALIZING);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_NOT_INITIALIZING);
     });
   });
 
@@ -166,16 +167,16 @@ describe("Contract 'ERC20Freezable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, pauser).pause());
       await expect(connect(token, freezerAgent).freeze(user1.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ENFORCED_PAUSE);
     });
 
     it("Is reverted if the caller does not have the freezer-agent role", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await expect(connect(token, user1).freeze(user2.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(user1.address, BALANCE_FREEZER_ROLE);
       await expect(connect(token, deployer).freeze(user2.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(deployer.address, BALANCE_FREEZER_ROLE);
     });
 
@@ -219,16 +220,16 @@ describe("Contract 'ERC20Freezable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, pauser).pause());
       await expect(connect(token, freezerAgent).freezeIncrease(user1.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ENFORCED_PAUSE);
     });
 
     it("Is reverted if the caller does not have the freezer-agent role", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await expect(connect(token, user1).freezeIncrease(user2.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(user1.address, BALANCE_FREEZER_ROLE);
       await expect(connect(token, deployer).freezeIncrease(user2.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(deployer.address, BALANCE_FREEZER_ROLE);
     });
 
@@ -288,16 +289,16 @@ describe("Contract 'ERC20Freezable'", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await proveTx(connect(token, pauser).pause());
       await expect(connect(token, freezerAgent).freezeDecrease(user1.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ENFORCED_PAUSE);
     });
 
     it("Is reverted if the caller does not have the freezer-agent role", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       await expect(connect(token, user1).freezeDecrease(user1.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(user1.address, BALANCE_FREEZER_ROLE);
       await expect(connect(token, deployer).freezeDecrease(user1.address, TOKEN_AMOUNT))
-        .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+        .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
         .withArgs(deployer.address, BALANCE_FREEZER_ROLE);
     });
 
@@ -399,10 +400,10 @@ describe("Contract 'ERC20Freezable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         await proveTx(token.mint(user1.address, TOKEN_AMOUNT));
         await expect(connect(token, user2).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
           .withArgs(user2.address, FROZEN_TRANSFEROR_ROLE);
         await expect(connect(token, deployer).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_UNAUTHORIZED_ACCOUNT)
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
           .withArgs(deployer.address, FROZEN_TRANSFEROR_ROLE);
       });
 
@@ -411,7 +412,7 @@ describe("Contract 'ERC20Freezable'", async () => {
         await proveTx(token.mint(user1.address, TOKEN_AMOUNT));
         await proveTx(connect(token, pauser).pause());
         await expect(connect(token, freezerTransferor).transferFrozen(user1.address, user2.address, TOKEN_AMOUNT))
-          .to.be.revertedWithCustomError(token, ERROR_NAME_CONTRACT_IS_PAUSED);
+          .to.be.revertedWithCustomError(token, ERROR_NAME_ENFORCED_PAUSE);
       });
 
       it("There is a lack of frozen balance", async () => {
