@@ -219,7 +219,7 @@ describe("Contract 'AccessControlExtUpgradeable'", async () => {
       expect(await accessControlExtMock.getRoleAdmin(role)).to.equal(role);
     });
 
-    it("Is reverted if the called does not have the owner role", async () => {
+    it("Is reverted if the caller does not have the owner role", async () => {
       const { accessControlExtMock } = await setUpFixture(deployAccessControlExtMock);
       const someRole = ethers.id("SOME_ROLE");
       await expect(connect(accessControlExtMock, attacker).setRoleAdmin(OWNER_ROLE, someRole))
