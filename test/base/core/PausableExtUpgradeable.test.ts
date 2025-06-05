@@ -94,7 +94,7 @@ describe("Contract 'PausableExtUpgradeable'", async () => {
       expect(await pausableExtMock.paused()).to.equal(true);
     });
 
-    it("Is reverted if it is called by an account without the pauser role", async () => {
+    it("Is reverted if the caller does not have the pauser role", async () => {
       const { pausableExtMock } = await setUpFixture(deployAndConfigurePausableExtMock);
 
       await expect(pausableExtMock.pause())
