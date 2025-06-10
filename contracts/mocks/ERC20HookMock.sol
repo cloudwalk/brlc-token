@@ -10,17 +10,7 @@ import { IERC20Hook } from "./../base/interfaces/IERC20Hook.sol";
  * @notice An implementation of the {IERC20Hook} contract for testing purposes
  */
 contract ERC20HookMock is IERC20Hook {
-    /// @notice Emitted when the `beforeTokenTransfer` hook function is successfully executed
-    event TestBeforeTokenTransferHookEvent();
-
-    /// @notice Emitted when the `afterTokenTransfer` hook function is successfully executed
-    event TestAfterTokenTransferHookEvent();
-
-    /// @notice Custom error to be reverted with from the `beforeTokenTransfer` hook function
-    error TestBeforeTokenTransferHookError();
-
-    /// @notice Custom error to be reverted with from the `afterTokenTransfer` hook function
-    error TestAfterTokenTransferHookError();
+    // ------------------ Storage --------------------------------- //
 
     /// @notice Flag indicating whether hook functions should revert with panic
     bool public revertWithPanic;
@@ -30,6 +20,24 @@ contract ERC20HookMock is IERC20Hook {
 
     /// @notice Flag indicating whether hook functions should revert without reason message
     bool public revertWithoutReasonMessage;
+
+    // ------------------ Events ---------------------------------- //
+
+    /// @notice Emitted when the `beforeTokenTransfer` hook function is successfully executed
+    event TestBeforeTokenTransferHookEvent();
+
+    /// @notice Emitted when the `afterTokenTransfer` hook function is successfully executed
+    event TestAfterTokenTransferHookEvent();
+
+    // ------------------ Errors ---------------------------------- //
+
+    /// @notice Custom error to be reverted with from the `beforeTokenTransfer` hook function
+    error TestBeforeTokenTransferHookError();
+
+    /// @notice Custom error to be reverted with from the `afterTokenTransfer` hook function
+    error TestAfterTokenTransferHookError();
+
+    // ------------------ Transactional functions ----------------- //
 
     /**
      * @notice Sets the flag indicating whether hook functions should revert with panic
