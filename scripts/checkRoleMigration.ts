@@ -7,7 +7,7 @@ import { expect } from "chai";
 // Script input parameters
 const CONTRACT_NAME: string = process.env.SP_CONTRACT_NAME ?? "BRLCToken";
 const PROXY_ADDRESS: string = process.env.SP_PROXY_ADDRESS ?? ""; // TBD: Enter proxy address
-const CHAIN_ID: number = parseInt(process.env.SP_CHAIN_ID ?? ""); // TBD: Enter proxy address
+const CHAIN_ID: number = parseInt(process.env.SP_CHAIN_ID ?? ""); // TBD: Enter chain ID
 
 class Logger {
   logSingleLevelIndent: string;
