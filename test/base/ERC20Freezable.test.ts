@@ -154,7 +154,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT - 2);
     });
 
-    it("Executes as expected is the target account is a contract and the new balance is zero", async () => {
+    it("Executes as expected if the target account is a contract and the new balance is zero", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       const tokenAddress = getAddress(token);
       await proveTx(token.setFrozenBalance(tokenAddress, TOKEN_AMOUNT));
@@ -276,7 +276,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       expect(await token.balanceOfFrozen(user1.address)).to.eq(0);
     });
 
-    it("Executes as expected is the target account is a contract and the new balance is zero", async () => {
+    it("Executes as expected if the target account is a contract and the new balance is zero", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
       const tokenAddress = getAddress(token);
       await proveTx(token.setFrozenBalance(tokenAddress, TOKEN_AMOUNT));
@@ -322,7 +322,7 @@ describe("Contract 'ERC20Freezable'", async () => {
         .to.be.revertedWithCustomError(token, ERROR_NAME_ZERO_AMOUNT);
     });
 
-    it("Is reverted if the provided amount is greater then old balance", async () => {
+    it("Is reverted if the provided amount is greater than old balance", async () => {
       const { token } = await setUpFixture(deployAndConfigureToken);
 
       await proveTx(connect(token, freezerAgent).freezeIncrease(user1.address, TOKEN_AMOUNT));

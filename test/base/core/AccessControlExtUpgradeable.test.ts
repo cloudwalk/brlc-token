@@ -202,7 +202,7 @@ describe("Contract 'AccessControlExtUpgradeable'", async () => {
   });
 
   describe("Function 'setRoleAdmin()'", async () => {
-    it("Executes as expected for a non-exiting role", async () => {
+    it("Executes as expected for a non-existing role", async () => {
       const { accessControlExtMock } = await setUpFixture(deployAccessControlExtMock);
       const role = ethers.id("SOME_ROLE");
       const tx1 = accessControlExtMock.setRoleAdmin(role, OWNER_ROLE);

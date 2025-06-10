@@ -38,7 +38,7 @@ describe("Contract 'ERC20TokenMock'", async () => {
     });
   });
 
-  describe("Function 'mint()", async () => {
+  describe("Function 'mint()'", async () => {
     it("Executes as expected and emits the correct events", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.balanceOf(user.address)).to.equal(0);
