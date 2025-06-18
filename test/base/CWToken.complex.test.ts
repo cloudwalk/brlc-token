@@ -36,11 +36,14 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
   const TOKEN_SYMBOL = "CWT";
   const MAX_PENDING_PREMINTS_COUNT = 5;
 
-  const REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT = "TransferExceededFrozenAmount";
-  const REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT = "TransferExceededPremintedAmount";
-  const REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
-  const REVERT_MESSAGE_INSUFFICIENT_ALLOWANCE = "ERC20: insufficient allowance";
-  const REVERT_ERROR_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
+  // Error messages of the lib contracts
+  const ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE = "ERC20: transfer amount exceeds balance";
+  const ERROR_MESSAGE_ERC20_INSUFFICIENT_ALLOWANCE = "ERC20: insufficient allowance";
+
+  // Errors of the contracts under test
+  const ERROR_NAME_LACK_OF_FROZEN_BALANCE = "LackOfFrozenBalance";
+  const ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT = "TransferExceededFrozenAmount";
+  const ERROR_NAME_TRANSFER_EXCEEDED_PREMINTED_AMOUNT = "TransferExceededPremintedAmount";
 
   const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
   const BALANCE_FREEZER_ROLE: string = ethers.id("BALANCE_FREEZER_ROLE");
@@ -62,7 +65,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await upgrades.deployProxy(
+    let token = await upgrades.deployProxy(
       tokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL],
       { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
@@ -144,15 +147,13 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       await proveTx(token.grantRole(MINTER_ROLE, deployer.address));
       await proveTx(token.mint(sender.address, userBalance));
 
-      await expect(
-        token.transferFrom(sender.address, deployer.address, userBalance)
-      ).to.be.revertedWith(REVERT_MESSAGE_INSUFFICIENT_ALLOWANCE);
+      await expect(token.transferFrom(sender.address, deployer.address, userBalance))
+        .to.be.revertedWith(ERROR_MESSAGE_ERC20_INSUFFICIENT_ALLOWANCE);
 
       await proveTx(token.grantRole(TRUSTED_SPENDER_ROLE, deployer.address));
 
-      await expect(
-        token.transferFrom(sender.address, deployer.address, userBalance)
-      ).to.be.changeTokenBalances(token, [sender, deployer], [-userBalance, +userBalance]);
+      await expect(token.transferFrom(sender.address, deployer.address, userBalance))
+        .to.be.changeTokenBalances(token, [sender, deployer], [-userBalance, +userBalance]);
     });
   });
 
@@ -211,9 +212,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       if (timestamp && awaitPreminting) {
         await awaitPremintingRelease({ timestamp, amounts });
       }
-      await expect(
-        connect(token, sender).transfer(receiver.address, transferAmount)
-      ).to.changeTokenBalances(
+      await expect(connect(token, sender).transfer(receiver.address, transferAmount)).to.changeTokenBalances(
         token,
         [sender, receiver],
         [-transferAmount, transferAmount]
@@ -235,9 +234,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       if (timestamp && awaitPreminting) {
         await awaitPremintingRelease({ timestamp });
       }
-      await expect(
-        connect(token, sender).transfer(receiver.address, transferAmount)
-      ).to.be.revertedWithCustomError(token, errorName);
+      await expect(connect(token, sender).transfer(receiver.address, transferAmount))
+        .to.be.revertedWithCustomError(token, errorName);
     }
 
     async function failTransferDueToLackOfBalanceAndCheck(props: {
@@ -252,9 +250,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       if (timestamp && awaitPreminting) {
         await awaitPremintingRelease({ timestamp });
       }
-      await expect(
-        connect(token, sender).transfer(receiver.address, transferAmount)
-      ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
+      await expect(connect(token, sender).transfer(receiver.address, transferAmount))
+        .to.be.revertedWith(ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
     }
 
     describe("Executes as expected if there are the free, frozen, preminting balances and", async () => {
@@ -285,7 +282,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
         it("15 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
             initialAmounts,
             transferAmount: 15,
             timestamp,
@@ -295,7 +292,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
         it("20 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_PREMINTED_AMOUNT,
             initialAmounts,
             transferAmount: 20,
             timestamp,
@@ -343,7 +340,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
         it("20 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
             initialAmounts,
             transferAmount: 20,
             timestamp,
@@ -375,7 +372,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
       it("15 tokens are transferred", async () => {
         await failTransferWithCustomErrorAndCheck({
-          errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
+          errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
           transferAmount: 15
         });
@@ -383,7 +380,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
       it_optional("20 tokens are transferred", async () => {
         await failTransferWithCustomErrorAndCheck({
-          errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
+          errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
           transferAmount: 20
         });
@@ -422,7 +419,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
         it("15 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_PREMINTED_AMOUNT,
             initialAmounts,
             transferAmount: 15,
             timestamp,
@@ -432,7 +429,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
         it_optional("20 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_PREMINTED_AMOUNT,
             initialAmounts,
             transferAmount: 20,
             timestamp,
@@ -510,7 +507,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       describe("Tokens are transferred before the preminting release and", async () => {
         it("5 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
             initialAmounts,
             transferAmount: 5,
             timestamp,
@@ -520,7 +517,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
         it_optional("10 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
             initialAmounts,
             transferAmount: 10,
             timestamp,
@@ -530,7 +527,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
         it("15 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_PREMINTED_AMOUNT,
             initialAmounts,
             transferAmount: 15,
             timestamp,
@@ -540,7 +537,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
         it_optional("20 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_PREMINTED_AMOUNT,
             initialAmounts,
             transferAmount: 20,
             timestamp,
@@ -579,7 +576,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
         it("15 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
             initialAmounts,
             transferAmount: 15,
             timestamp,
@@ -590,7 +587,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         // Skipping because it is similar to the previous one
         it("20 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
             initialAmounts,
             transferAmount: 20,
             timestamp,
@@ -614,7 +611,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
       it("5 tokens are transferred", async () => {
         await failTransferWithCustomErrorAndCheck({
-          errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
+          errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
           transferAmount: 5
         });
@@ -622,7 +619,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
       it_optional("10 tokens are transferred", async () => {
         await failTransferWithCustomErrorAndCheck({
-          errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
+          errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
           transferAmount: 10
         });
@@ -630,7 +627,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
       it_optional("15 tokens are transferred", async () => {
         await failTransferWithCustomErrorAndCheck({
-          errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
+          errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
           transferAmount: 15
         });
@@ -638,7 +635,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
       it_optional("20 tokens are transferred", async () => {
         await failTransferWithCustomErrorAndCheck({
-          errorName: REVERT_ERROR_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
+          errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
           transferAmount: 20
         });
@@ -662,7 +659,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       describe("Tokens are transferred before the preminting release and", async () => {
         it("5 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_PREMINTED_AMOUNT,
             initialAmounts,
             transferAmount: 5,
             timestamp,
@@ -672,7 +669,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
         it_optional("10 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_PREMINTED_AMOUNT,
             initialAmounts,
             transferAmount: 10,
             timestamp,
@@ -682,7 +679,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
         it_optional("15 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_PREMINTED_AMOUNT,
             initialAmounts,
             transferAmount: 15,
             timestamp,
@@ -692,7 +689,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
         it_optional("20 tokens are transferred", async () => {
           await failTransferWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_TRANSFER_EXCEEDED_PREMINT_AMOUNT,
+            errorName: ERROR_NAME_TRANSFER_EXCEEDED_PREMINTED_AMOUNT,
             initialAmounts,
             transferAmount: 20,
             timestamp,
@@ -811,9 +808,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       const { token } = await setUpFixture(deployAndConfigureToken);
       const { initialAmounts, transferAmount, errorName } = props;
       await setUpComplexBalances({ token, amounts: { ...initialAmounts } });
-      await expect(
-        connect(token, freezer).transferFrozen(sender.address, receiver.address, transferAmount)
-      ).to.be.revertedWithCustomError(token, errorName);
+      await expect(connect(token, freezer).transferFrozen(sender.address, receiver.address, transferAmount))
+        .to.be.revertedWithCustomError(token, errorName);
     }
 
     describe("Executes as expected if there is the frozen balance only and", async () => {
@@ -825,7 +821,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
 
         it("10 tokens are transferred", async () => {
           await failTransferFrozenWithCustomErrorAndCheck({
-            errorName: REVERT_ERROR_LACK_OF_FROZEN_BALANCE,
+            errorName: ERROR_NAME_LACK_OF_FROZEN_BALANCE,
             initialAmounts,
             transferAmount: 10
           });
@@ -846,9 +842,8 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         it("25 tokens are transferred", async () => {
           const { token } = await setUpFixture(deployAndConfigureToken);
           await setUpComplexBalances({ token, amounts: { ...initialAmounts } });
-          await expect(
-            connect(token, freezer).transferFrozen(sender, receiver.address, 25)
-          ).to.be.revertedWith(REVERT_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
+          await expect(connect(token, freezer).transferFrozen(sender, receiver.address, 25))
+            .to.be.revertedWith(ERROR_MESSAGE_ERC20_TRANSFER_AMOUNT_EXCEEDS_BALANCE);
         });
       });
     });

@@ -23,7 +23,7 @@ describe("Contract 'ERC20TokenMock'", async () => {
   });
 
   async function deployToken(): Promise<{ token: Contract }> {
-    let token: Contract = await tokenFactory.deploy(TOKEN_NAME, TOKEN_SYMBOL) as Contract;
+    let token = await tokenFactory.deploy(TOKEN_NAME, TOKEN_SYMBOL) as Contract;
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
     return { token };
@@ -38,7 +38,7 @@ describe("Contract 'ERC20TokenMock'", async () => {
     });
   });
 
-  describe("Function 'mint()", async () => {
+  describe("Function 'mint()'", async () => {
     it("Executes as expected and emits the correct events", async () => {
       const { token } = await setUpFixture(deployToken);
       expect(await token.balanceOf(user.address)).to.equal(0);

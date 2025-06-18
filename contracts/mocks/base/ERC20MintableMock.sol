@@ -24,10 +24,9 @@ contract ERC20MintableMock is ERC20Mintable {
     }
 
     /**
-     * @notice Needed to check that the unchained initialize function of the ancestor contract
-     * has the 'onlyInitializing' modifier
+     * @notice Calls the parent internal unchained initializing function to verify the 'onlyInitializing' modifier
      */
-    function call_parent_initialize_unchained() public {
+    function callParentInitializerUnchained() public {
         __ERC20Mintable_init_unchained();
     }
 }

@@ -6,11 +6,13 @@ import { connect, getAddress, proveTx } from "../../../test-utils/eth";
 import { setUpFixture } from "../../../test-utils/common";
 
 describe("Contract 'RescuableUpgradeable'", async () => {
+  // Events of the lib contracts
   const EVENT_NAME_TRANSFER = "Transfer";
 
-  const REVERT_ERROR_IF_CONTRACT_INITIALIZATION_IS_INVALID = "InvalidInitialization";
-  const REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING = "NotInitializing";
-  const REVERT_ERROR_IF_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+  // Errors of the lib contracts
+  const ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT = "AccessControlUnauthorizedAccount";
+  const ERROR_NAME_INVALID_INITIALIZATION = "InvalidInitialization";
+  const ERROR_NAME_NOT_INITIALIZING = "NotInitializing";
 
   const OWNER_ROLE: string = ethers.id("OWNER_ROLE");
   const GRANTOR_ROLE: string = ethers.id("GRANTOR_ROLE");
@@ -31,7 +33,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
     rescuableMockFactory = rescuableMockFactory.connect(deployer);
 
     // The contract under test with the explicitly specified initial account
-    let rescuableMock: Contract = await upgrades.deployProxy(rescuableMockFactory) as Contract;
+    let rescuableMock = await upgrades.deployProxy(rescuableMockFactory) as Contract;
     await rescuableMock.waitForDeployment();
     rescuableMock = connect(rescuableMock, deployer); // Explicitly specifying the initial account
 
@@ -44,7 +46,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
     tokenMockFactory = tokenMockFactory.connect(deployer);
 
     // The token contract with the explicitly specified initial account
-    let tokenMock: Contract = await tokenMockFactory.deploy("ERC20 Test", "TEST") as Contract;
+    let tokenMock = await tokenMockFactory.deploy("ERC20 Test", "TEST") as Contract;
     await tokenMock.waitForDeployment();
     tokenMock = connect(tokenMock, deployer); // Explicitly specifying the initial account
 
@@ -90,16 +92,14 @@ describe("Contract 'RescuableUpgradeable'", async () => {
 
     it("The external initializer is reverted if it is called a second time", async () => {
       const { rescuableMock } = await setUpFixture(deployRescuableMock);
-      await expect(
-        rescuableMock.initialize()
-      ).to.be.revertedWithCustomError(rescuableMock, REVERT_ERROR_IF_CONTRACT_INITIALIZATION_IS_INVALID);
+      await expect(rescuableMock.initialize())
+        .to.be.revertedWithCustomError(rescuableMock, ERROR_NAME_INVALID_INITIALIZATION);
     });
 
     it("The internal unchained initializer is reverted if it is called outside the init process", async () => {
       const { rescuableMock } = await setUpFixture(deployRescuableMock);
-      await expect(
-        rescuableMock.callParentInitializerUnchained()
-      ).to.be.revertedWithCustomError(rescuableMock, REVERT_ERROR_IF_CONTRACT_IS_NOT_INITIALIZING);
+      await expect(rescuableMock.callParentInitializerUnchained())
+        .to.be.revertedWithCustomError(rescuableMock, ERROR_NAME_NOT_INITIALIZING);
     });
   });
 
@@ -119,14 +119,11 @@ describe("Contract 'RescuableUpgradeable'", async () => {
         .withArgs(getAddress(rescuableMock), deployer.address, TOKEN_AMOUNT);
     });
 
-    it("Is reverted if it is called by an account without the rescuer role", async () => {
+    it("Is reverted if the caller does not have the rescuer role", async () => {
       const { rescuableMock, tokenMock } = await setUpFixture(deployAndConfigureAllContracts);
-      await expect(
-        rescuableMock.rescueERC20(getAddress(tokenMock), deployer.address, TOKEN_AMOUNT)
-      ).to.be.revertedWithCustomError(
-        rescuableMock,
-        REVERT_ERROR_IF_UNAUTHORIZED_ACCOUNT
-      ).withArgs(deployer.address, RESCUER_ROLE);
+      await expect(rescuableMock.rescueERC20(getAddress(tokenMock), deployer.address, TOKEN_AMOUNT))
+        .to.be.revertedWithCustomError(rescuableMock, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
+        .withArgs(deployer.address, RESCUER_ROLE);
     });
   });
 });
