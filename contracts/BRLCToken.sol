@@ -7,13 +7,15 @@ import { CWToken } from "./base/CWToken.sol";
 /**
  * @title BRLCToken contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice The BRLC token implementation
+ * @dev The BRLC token implementation.
  */
 contract BRLCToken is CWToken {
+    // ------------------ Constructor ----------------------------- //
+
     /**
-     * @notice Constructor that prohibits the initialization of the implementation of the upgradeable contract
+     * @dev Constructor that prohibits the initialization of the implementation of the upgradeable contract.
      *
-     * See details
+     * See details:
      * https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable#initializing_the_implementation_contract
      *
      * @custom:oz-upgrades-unsafe-allow constructor
@@ -21,6 +23,8 @@ contract BRLCToken is CWToken {
     constructor() {
         _disableInitializers();
     }
+
+    // ------------------ Initializers ---------------------------- //
 
     /**
      * @notice The initializer of the upgradeable contract
@@ -33,6 +37,8 @@ contract BRLCToken is CWToken {
     function initialize(string memory name_, string memory symbol_) external initializer {
         __CWToken_init(name_, symbol_);
     }
+
+    // ------------------ Pure functions -------------------------- //
 
     /**
      * @notice Returns true if token is BRLCoin implementation

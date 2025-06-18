@@ -5,11 +5,11 @@ pragma solidity ^0.8.0;
 /**
  * @title IERC20ComplexBalance interface
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice The interface of a token that supports complex balance tracking
+ * @dev The interface of a token that supports complex balance tracking.
  */
 interface IERC20ComplexBalance {
     /**
-     * @notice The complex balance of an accounts.
+     * @dev The complex balance of an accounts.
      *
      * The fields:
      *
@@ -31,10 +31,9 @@ interface IERC20ComplexBalance {
     }
 
     /**
-     * @notice Retrieves the state of the complex balance for an account
-     *
-     * @param account The account to get the complex balance of
-     * @return The struct containing the current state of complex balance
+     * @dev Retrieves the state of the complex balance for an account.
+     * @param account The account to get the complex balance of.
+     * @return The struct containing the current state of complex balance.
      */
     function balanceOfComplex(address account) external view returns (ComplexBalance memory);
 }

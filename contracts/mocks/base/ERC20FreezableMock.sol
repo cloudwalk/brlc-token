@@ -7,16 +7,16 @@ import { ERC20Freezable } from "../../base/ERC20Freezable.sol";
 /**
  * @title ERC20FreezableMock contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice An implementation of the {ERC20Freezable} contract for testing purposes
+ * @dev An implementation of the {ERC20Freezable} contract for testing purposes.
  */
 contract ERC20FreezableMock is ERC20Freezable {
     /**
-     * @notice The initialize function of the upgradeable contract
+     * @dev The initialize function of the upgradeable contract.
      *
-     * See details https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable
+     * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      *
-     * @param name_ The name of the token
-     * @param symbol_ The symbol of the token
+     * @param name_ The name of the token.
+     * @param symbol_ The symbol of the token.
      */
     function initialize(string memory name_, string memory symbol_) public initializer {
         __ERC20Base_init(name_, symbol_);
@@ -24,17 +24,16 @@ contract ERC20FreezableMock is ERC20Freezable {
     }
 
     /**
-     * @notice Calls the parent internal unchained initializing function to verify the 'onlyInitializing' modifier
+     * @dev Calls the parent internal unchained initializing function to verify the 'onlyInitializing' modifier.
      */
     function callParentInitializerUnchained() public {
         __ERC20Freezable_init_unchained();
     }
 
     /**
-     * @notice Calls the appropriate internal function to mint needed amount of tokens for an account
-     *
-     * @param account The address of an account to mint for
-     * @param amount The amount of tokens to mint
+     * @dev Calls the appropriate internal function to mint needed amount of tokens for an account.
+     * @param account The address of an account to mint for.
+     * @param amount The amount of tokens to mint.
      */
     function mint(address account, uint256 amount) external returns (bool) {
         _mint(account, amount);
@@ -42,10 +41,9 @@ contract ERC20FreezableMock is ERC20Freezable {
     }
 
     /**
-     * @notice Directly sets the frozen balance for an account ignoring any checks
-     *
-     * @param account The address of an account to set the frozen balance
-     * @param newBalance The value of the frozen balance to set
+     * @dev Directly sets the frozen balance for an account ignoring any checks.
+     * @param account The address of an account to set the frozen balance.
+     * @param newBalance The value of the frozen balance to set.
      */
     function setFrozenBalance(address account, uint256 newBalance) external {
         _freeze(account, newBalance, balanceOfFrozen(account));

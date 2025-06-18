@@ -11,9 +11,10 @@ import { LegacyRescuablePlaceholder } from "./core/LegacyRescuablePlaceholder.so
 /**
  * @title LegacyCorePlaceholder contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice Safely replaces the storage of the several obsolete core smart contracts.
- * @dev This contract is used through inheritance. It has the same storage as the smart contracts it replaces,
- *      and also contains all of its events and custom errors for backward compatibility when searching in databases.
+ * @dev Safely replaces the storage of the several obsolete core smart contracts.
+ *
+ * This contract is used through inheritance. It has the same storage as the smart contracts it replaces,
+ * and also contains all of its events and custom errors for backward compatibility when searching in databases.
  *
  * For details see each legacy placeholder contract that this contract inherits from.
  */

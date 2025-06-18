@@ -8,13 +8,13 @@ import { ERC20Base } from "./ERC20Base.sol";
 /**
  * @title ERC20Mintable contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice The ERC20 token implementation that supports the mint, premint, and burn operations
+ * @dev The ERC20 token implementation that supports the mint, premint, and burn operations.
  */
 abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     // ------------------ Types ----------------------------------- //
 
     /**
-     * @notice The premint state of a single account.
+     * @dev The premint state of a single account.
      *
      * The fields:
      *
@@ -26,7 +26,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @notice The data of a single premint record.
+     * @dev The data of a single premint record.
      *
      * The fields:
      *
@@ -43,28 +43,32 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
     // ------------------ Constants ------------------------------- //
 
-    /// @notice The role of an ordinary minter that is allowed to mint tokens without additional logic
+    /// @dev The role of an ordinary minter that is allowed to mint tokens without additional logic.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    /// @notice The role of an ordinary burner that is allowed to burn tokens without additional logic
+    /// @dev The role of an ordinary burner that is allowed to burn tokens without additional logic.
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
-    /// @notice The role of a reserve minter that is allowed to mint tokens from reserve
+    /// @dev The role of a reserve minter that is allowed to mint tokens from reserve.
     bytes32 public constant RESERVE_MINTER_ROLE = keccak256("RESERVE_MINTER_ROLE");
 
-    /// @notice The role of a reserve burner that is allowed to burn tokens to reserve
+    /// @dev The role of a reserve burner that is allowed to burn tokens to reserve.
     bytes32 public constant RESERVE_BURNER_ROLE = keccak256("RESERVE_BURNER_ROLE");
 
-    /// @notice The role of a premint manager that is allowed to increase or decrease the preminted amount of tokens
+    /// @dev The role of a premint manager that is allowed to increase or decrease the preminted amount of tokens.
     bytes32 public constant PREMINT_MANAGER_ROLE = keccak256("PREMINT_MANAGER_ROLE");
 
-    /// @notice The role of a premint scheduler that is allowed to change the release time of premints
+    /// @dev The role of a premint scheduler that is allowed to change the release time of premints.
     bytes32 public constant PREMINT_SCHEDULER_ROLE = keccak256("PREMINT_SCHEDULER_ROLE");
 
     // ------------------ Namespaced storage layout --------------- //
 
-    /// @notice The memory slot used to extend the contract storage with extra variables
-    // keccak256(abi.encode(uint256(keccak256("erc20.mintable.extended.storage")) - 1)) & ~bytes32(uint256(0xff));
+    /**
+     * @dev The memory slot used to extend the contract storage with extra variables.
+     *
+     * The value is the same as
+     * `keccak256(abi.encode(uint256(keccak256("erc20.mintable.extended.storage")) - 1)) & ~bytes32(uint256(0xff))`.
+     */
     bytes32 private constant _EXTENDED_STORAGE_SLOT =
         0xcffb5f8035ad3742159fc75053ecd1333a8c2fb755e4113d8e5d284905de8700;
 
@@ -105,57 +109,57 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
     // -------------------- Errors -------------------------------- //
 
-    /// @notice The zero amount of tokens is passed during the mint operation
+    /// @dev The zero amount of tokens is passed during the mint operation.
     error ZeroMintAmount();
 
-    /// @notice The zero amount of tokens is passed during the burn operation
+    /// @dev The zero amount of tokens is passed during the burn operation.
     error ZeroBurnAmount();
 
-    /// @notice The zero amount of tokens is passed during the premint operation
+    /// @dev The zero amount of tokens is passed during the premint operation.
     error ZeroPremintAmount();
 
-    /// @notice The transfer amount exceeded the preminted (not available) amount
+    /// @dev The transfer amount exceeded the preminted (not available) amount.
     error TransferExceededPremintedAmount();
 
-    /// @notice The same maximum count of pending premints is already configured
+    /// @dev The same maximum count of pending premints is already configured.
     error MaxPendingPremintsCountAlreadyConfigured();
 
-    /// @notice The maximum number of pending premints has been reached
+    /// @dev The maximum number of pending premints has been reached.
     error MaxPendingPremintsLimitReached();
 
-    /// @notice The premint release timestamp must be in the future
+    /// @dev The premint release timestamp must be in the future.
     error PremintReleaseTimePassed();
 
-    /// @notice The premint rescheduling with the provided parameters is already configured
+    /// @dev The premint rescheduling with the provided parameters is already configured.
     error PremintReschedulingAlreadyConfigured();
 
-    /// @notice The target premint release timestamp for the premint rescheduling must be in the future
+    /// @dev The target premint release timestamp for the premint rescheduling must be in the future.
     error PremintReschedulingTimePassed();
 
-    /// @notice The premint rescheduling leads to a rescheduling chain like A => B => C that is prohibited
+    /// @dev The premint rescheduling leads to a rescheduling chain like A => B => C that is prohibited.
     error PremintReschedulingChain();
 
-    /// @notice The premint operation assumes changing of an existing premint, but it is not found
+    /// @dev The premint operation assumes changing of an existing premint, but it is not found.
     error PremintNonExistent();
 
-    /// @notice The premint operation assumes decreasing an existing premint amount but it is too small
+    /// @dev The premint operation assumes decreasing an existing premint amount but it is too small.
     error PremintInsufficientAmount();
 
-    /// @notice The existing premint has not been changed during the operation
+    /// @dev The existing premint has not been changed during the operation.
     error PremintUnchanged();
 
-    /// @notice The provided value cannot be cast to uint64 type
+    /// @dev The provided value cannot be cast to uint64 type.
     error InappropriateUint64Value(uint256 value);
 
-    /// @notice The amount of tokens to burn is greater than the total reserve supply
+    /// @dev The amount of tokens to burn is greater than the total reserve supply.
     error InsufficientReserveSupply();
 
     // -------------------- Initializers -------------------------- //
 
     /**
-     * @notice The internal unchained initializer of the upgradeable contract
+     * @dev The unchained internal initializer of the upgradeable contract.
      *
-     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
+     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      *
      * Note: The `..._init()` initializer has not been provided as redundant.
      */
@@ -173,8 +177,10 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @dev Can only be called by the contract owner
-     * @dev The same limit cannot be configured twice
+     * @dev Requirements:
+     *
+     * - The caller must have the {OWNER_ROLE} role.
+     * - The same limit cannot be configured twice.
      */
     function configureMaxPendingPremintsCount(uint16 newLimit) external onlyRole(OWNER_ROLE) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
@@ -190,12 +196,11 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @dev The contract must not be paused
-     * @dev Can only be called by a minter account
-     * @dev The message sender must not be blocklisted
-     * @dev The `account` address must not be blocklisted
-     * @dev The `amount` value must be greater than zero and not
-     * greater than the mint allowance of the minter
+     * @dev Requirements:
+     *
+     * - The contract must not be paused.
+     * - The caller must have the {MINTER_ROLE} role.
+     * - The `amount` value must be greater than zero.
      */
     function mint(address account, uint256 amount) external onlyRole(MINTER_ROLE) returns (bool) {
         return _mintInternal(account, amount);
@@ -204,9 +209,11 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @dev The contract must not be paused
-     * @dev Can only be called by a minter account
-     * @dev The message sender must not be blocklisted
+     * @dev Requirements:
+     *
+     * - The contract must not be paused.
+     * - The caller must have the {RESERVE_MINTER_ROLE} role.
+     * - The `amount` value must be greater than zero.
      */
     function mintFromReserve(
         address account, // Tools: this comment prevents Prettier from formatting into a single line.
@@ -223,12 +230,13 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @dev Can only be called by a minter account
-     * @dev The message sender must not be blocklisted
-     * @dev The `account` address must not be blocklisted
-     * @dev The `amount` and `release` values must be less or equal to uint64 max value
-     * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
-     * @dev The number of pending premints must be less than the limit
+     * @dev Requirements:
+     *
+     * - The contract must not be paused.
+     * - The caller must have the {PREMINT_MANAGER_ROLE} role.
+     * - The `amount` value must be greater than zero.
+     * - The `amount` and `release` values must be less or equal to uint64 max value.
+     * - The number of pending premints must be less than the limit.
      */
     function premintIncrease(
         address account, // Tools: this comment prevents Prettier from formatting into a single line.
@@ -246,12 +254,13 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @dev Can only be called by a minter account
-     * @dev The message sender must not be blocklisted
-     * @dev The `account` address must not be blocklisted
-     * @dev The `amount` and `release` values must be less or equal to uint64 max value
-     * @dev The `amount` value must be greater than zero and not greater than the mint allowance of the minter
-     * @dev The number of pending premints must be less than the limit
+     * @dev Requirements:
+     *
+     * - The contract must not be paused.
+     * - The caller must have the {PREMINT_MANAGER_ROLE} role.
+     * - The `amount` value must be greater than zero.
+     * - The `amount` and `release` values must be less or equal to uint64 max value.
+     * - The number of pending premints must be less than the limit.
      */
     function premintDecrease(
         address account, // Tools: this comment prevents Prettier from formatting into a single line.
@@ -269,14 +278,15 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @dev The contract must not be paused
-     * @dev Can only be called by a minter account
-     * @dev The message sender must not be blocklisted
-     * @dev The provided target release timestamp must be in the future
-     * @dev The being rescheduled release must be in the future taking into account existing reschedulings if any
-     * @dev The rescheduling with the provided parameters must not be already configured
-     * @dev The rescheduling must not make a chain of reschedulings, like A => B => C
-     * @dev The original and target release timestamps must be not greater than uint64 max value
+     * @dev Requirements:
+     *
+     * - The contract must not be paused.
+     * - The caller must have the {PREMINT_SCHEDULER_ROLE} role.
+     * - The provided target release timestamp must be in the future.
+     * - The being rescheduled release must be in the future taking into account existing reschedulings if any.
+     * - The rescheduling with the provided parameters must not be already configured.
+     * - The rescheduling must not make a chain of reschedulings, like A => B => C.
+     * - The original and target release timestamps must be not greater than uint64 max value.
      */
     function reschedulePremintRelease(
         uint256 originalRelease,
@@ -288,10 +298,11 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @dev The contract must not be paused
-     * @dev Can only be called by a minter account
-     * @dev The message sender must not be blocklisted
-     * @dev The `amount` value must be greater than zero
+     * @dev Requirements:
+     *
+     * - The contract must not be paused.
+     * - The caller must have the {BURNER_ROLE} role.
+     * - The `amount` value must be greater than zero.
      */
     function burn(uint256 amount) external onlyRole(BURNER_ROLE) {
         _burnInternal(_msgSender(), amount);
@@ -300,10 +311,12 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @inheritdoc IERC20Mintable
      *
-     * @dev The contract must not be paused
-     * @dev Can only be called by a minter account
-     * @dev The message sender must not be blocklisted
-     * @dev The amount of tokens to burn must be less than or equal to the total reserve supply
+     * @dev Requirements:
+     *
+     * - The contract must not be paused.
+     * - The caller must have the {RESERVE_BURNER_ROLE} role.
+     * - The `amount` value must be greater than zero.
+     * - The amount of tokens to burn must be less than or equal to the total reserve supply.
      */
     function burnToReserve(uint256 amount) external whenNotPaused onlyRole(RESERVE_BURNER_ROLE) {
         _burnInternal(_msgSender(), amount);
@@ -324,8 +337,8 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     // ------------------ View functions -------------------------- //
 
     /**
-     * @notice Returns the total amount of preminted tokens
-     * @param account The account to check the preminted balance for
+     * @dev Returns the total amount of preminted tokens.
+     * @param account The account to check the preminted balance for.
      */
     function balanceOfPremint(address account) public view returns (uint256 balance) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
@@ -339,8 +352,8 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @notice Returns the array of premint records for a given account including release reschedulings
-     * @param account The address of the account to get the premint records for
+     * @dev Returns the array of premint records for a given account including release reschedulings.
+     * @param account The address of the account to get the premint records for.
      */
     function getPremints(address account) external view returns (PremintRecord[] memory) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
@@ -354,7 +367,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @notice Returns the maximum number of pending premints
+     * @dev Returns the maximum number of pending premints.
      */
     function maxPendingPremintsCount() external view returns (uint256) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
@@ -362,8 +375,8 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @notice Returns the target premint release timestamp corresponding to a provided one with possible reschedulings
-     * @param release The original premint release timestamp to check
+     * @dev Returns the target premint release timestamp corresponding to a provided one with possible reschedulings.
+     * @param release The original premint release timestamp to check.
      */
     function resolvePremintRelease(uint256 release) external view returns (uint256) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
@@ -371,8 +384,8 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     /**
-     * @notice Returns the number of original premint releases that have been rescheduled to a provided release
-     * @param release The premint release timestamp to check for usage as a target release in existing reschedulings
+     * @dev Returns the number of original premint releases that have been rescheduled to a provided release.
+     * @param release The premint release timestamp to check for usage as a target release in existing reschedulings.
      */
     function getPremintReschedulingCounter(uint256 release) external view returns (uint256) {
         ExtendedStorageSlot storage storageSlot = _getExtendedStorageSlot();
