@@ -8,17 +8,29 @@ pragma solidity ^0.8.0;
  * @notice The interface of a token that supports hooking operations
  */
 interface IERC20Hookable {
-    /// @notice An enum describing the error handling policy
+    /**
+     * @notice Possible policies of the hook error handling.
+     *
+     * The values:
+     *
+     * - Revert = 0 -- Revert the transaction if the hook fails.
+     * - Event = 1 --- Emit an event if the hook fails.
+     */
     enum ErrorHandlingPolicy {
         Revert,
         Event
     }
 
-    /// @notice A structure describing a hook
+    /**
+     * @dev The data of a single hook.
+     *
+     * The fields:
+     *
+     * - account -- The address of the contract to call the hook.
+     * - policy --- The error handling policy of the hook.
+     */
     struct Hook {
-        /// @notice The address of the hook contract
         address account;
-        /// @notice The error handling policy of the hook
         ErrorHandlingPolicy policy;
     }
 

@@ -8,18 +8,25 @@ pragma solidity ^0.8.0;
  * @notice The interface of a token that supports complex balance tracking
  */
 interface IERC20ComplexBalance {
-    /// @notice A struct that defines the current state of the complex balance of the account
+    /**
+     * @notice The complex balance of an accounts.
+     *
+     * The fields:
+     *
+     * - total ------- The total amount of tokens that is equal the value returned by the usual `balanceOf()` function.
+     * - free -------- The amount of tokens that are available without any limitations described in next fields.
+     * - premint ----- The total amount of pre-minted tokens of the account that have not been released yet.
+     * - frozen ------ The amount of tokens that are frozen.
+     * - restricted -- The total amount of tokens that are restricted (the sum regardless of purposes).
+     *
+     * NOTE: This `restricted` field is deprecated and is always zero.
+     *       See the `LegacyRestrictablePlaceholder` base contract for details.
+     */
     struct ComplexBalance {
-        // The total amount of tokens that is equal the value returned by the usual `ERC20.balanceOf()` function
         uint256 total;
-        // The amount of tokens that are available without any limitations described in the subsequent fields
         uint256 free;
-        // The total amount of pre-minted tokens of the account that have not been released yet
         uint256 premint;
-        // The amount of tokens that are frozen
         uint256 frozen;
-        // The total amount of tokens that are restricted (Sum of all restricted balances regardless of purpose)
-        // NOTE: This field is deprecated and was used by the predecessor of the `LegacyRestrictablePlaceholder`
         uint256 restricted;
     }
 

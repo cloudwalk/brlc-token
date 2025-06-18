@@ -13,15 +13,32 @@ import { ERC20Base } from "./ERC20Base.sol";
 abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     // ------------------ Types ----------------------------------- //
 
-    /// @notice The structure that represents an array of premint records
+    /**
+     * @notice The premint state of a single account.
+     *
+     * The fields:
+     *
+     * - premintRecords -- The array of premint records.
+     *
+     */
     struct PremintState {
         PremintRecord[] premintRecords;
     }
 
-    /// @notice The structure that represents a premint record
+    /**
+     * @notice The data of a single premint record.
+     *
+     * The fields:
+     *
+     * - amount --- The amount of tokens to premint.
+     * - release -- The release timestamp of the premint.
+     *
+     */
     struct PremintRecord {
+        // Slot 1
         uint64 amount;
         uint64 release;
+        // uint128 __reserved1; // Reserved for future use until the end of the storage slot
     }
 
     // ------------------ Constants ------------------------------- //
@@ -51,14 +68,39 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     bytes32 private constant _EXTENDED_STORAGE_SLOT =
         0xcffb5f8035ad3742159fc75053ecd1333a8c2fb755e4113d8e5d284905de8700;
 
-    /// @notice The structure that represents the premintable storage slot
-    //  @custom:storage-location erc7201:erc20.mintable.extended.storage
+    /**
+     * @dev Defines the storage of the ERC20Mintable base contract.
+     *
+     * The fields:
+     *
+     * - premints --------------------- The mapping of premint states for accounts.
+     * - maxPendingPremintsCount ------ The maximum number of pending premints.
+     * - premintReschedulings --------- The mapping of premint reschedulings (original release => target release).
+     * - premintReschedulingCounters -- The mapping of premint rescheduling counters (target release => count).
+     * - totalReserveSupply ----------- The total amount of tokens in the reserve.
+     *
+     * @custom:storage-location erc7201:erc20.mintable.extended.storage
+     */
     struct ExtendedStorageSlot {
+        // Slot 1
         mapping(address => PremintState) premints;
+        // No reserve until the end of the storage slot
+
+        // Slot 2
         uint16 maxPendingPremintsCount;
+        // uint240 __reserved1; // Reserved for future use until the end of the storage slot
+
+        // Slot 3
         mapping(uint256 => uint256) premintReschedulings;
+        // No reserve until the end of the storage slot
+
+        // Slot 4
         mapping(uint256 => uint256) premintReschedulingCounters;
+        // No reserve until the end of the storage slot
+
+        // Slot 5
         uint256 totalReserveSupply;
+        // No reserve until the end of the storage slot
     }
 
     // -------------------- Errors -------------------------------- //

@@ -31,11 +31,24 @@ abstract contract LegacyBlocklistablePlaceholder {
         0xff11fdfa16fed3260ed0e7147f7cc6da11a60208b5b9406d12a635614ffd9141;
 
     /// @notice The structure that represents additional blocklistable contract storage
+
+    /**
+     * @notice Defines the additional storage of the Blocklistable base contract.
+     *
+     * The fields:
+     *
+     * - blocklisters -- The mapping of presence in the blocklist for a given address.
+     * - enabled ------- The enabled/disabled status of the blocklist.
+     *
+     */
     struct BlocklistableStorageSlot {
-        /// @notice The mapping of presence in the blocklist for a given address
+        // Slot 1
         mapping(address => bool) blocklisters;
-        /// @notice The enabled/disabled status of the blocklist
+        // No reserve until the end of the storage slot
+
+        // Slot 2
         bool enabled;
+        // uint248 __reserved1; // Reserved for future use until the end of the storage slot
     }
 
     // ------------------ Storage variables ----------------------- //
