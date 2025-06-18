@@ -8,7 +8,7 @@ import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/ac
  * @title AccessControlExtUpgradeable base contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
  * @dev Extends the OpenZeppelin's {AccessControlUpgradeable} contract by introducing new roles and
- *      adding the functions for granting and revoking roles in batch.
+ *      adding functions for granting and revoking roles in batch.
  */
 abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
     // ------------------ Constants ------------------------------- //
@@ -16,7 +16,7 @@ abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
     /// @dev The role of this contract owner.
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
 
-    /// @dev The role of grantor that is allowed to grant and revoke other roles, except itself and the owner one.
+    /// @dev The role of a grantor that is allowed to grant and revoke other roles, except itself and the owner role.
     bytes32 public constant GRANTOR_ROLE = keccak256("GRANTOR_ROLE");
 
     // ------------------ Initializers ---------------------------- //

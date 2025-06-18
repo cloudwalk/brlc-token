@@ -10,7 +10,7 @@ import { AccessControlExtUpgradeable } from "./AccessControlExtUpgradeable.sol";
 /**
  * @title RescuableUpgradeable base contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @dev Allows to rescue ERC20 tokens locked up in the contract using the {RESCUER_ROLE} role.
+ * @dev Allows rescuing ERC20 tokens locked in the contract using the {RESCUER_ROLE} role.
  */
 abstract contract RescuableUpgradeable is AccessControlExtUpgradeable {
     // ------------------ Types ----------------------------------- //
@@ -19,7 +19,7 @@ abstract contract RescuableUpgradeable is AccessControlExtUpgradeable {
 
     // ------------------ Constants ------------------------------- //
 
-    /// @dev The role of rescuer that is allowed to rescue tokens locked up in the contract.
+    /// @dev The role of a rescuer that is allowed to rescue tokens locked in the contract.
     bytes32 public constant RESCUER_ROLE = keccak256("RESCUER_ROLE");
 
     // ------------------ Initializers ---------------------------- //
@@ -38,7 +38,7 @@ abstract contract RescuableUpgradeable is AccessControlExtUpgradeable {
     // ------------------ Transactional functions ----------------- //
 
     /**
-     * @dev Rescues tokens that accidentally were transferred to this contract.
+     * @dev Rescues tokens that were accidentally transferred to this contract.
      *
      * Does not emit special events except ones related to the token transfer.
      *
@@ -49,7 +49,7 @@ abstract contract RescuableUpgradeable is AccessControlExtUpgradeable {
      *
      * @param token The address of the token smart contract to rescue its coins from this smart contract's account.
      * @param account The account to transfer the rescued tokens to.
-     * @param amount The amount the tokens to rescue.
+     * @param amount The amount of tokens to rescue.
      */
     function rescueERC20(
         address token, // Tools: this comment prevents Prettier from formatting into a single line

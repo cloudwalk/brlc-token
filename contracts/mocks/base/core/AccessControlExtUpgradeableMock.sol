@@ -28,13 +28,13 @@ contract AccessControlExtUpgradeableMock is AccessControlExtUpgradeable, UUPSUpg
         _setRoleAdmin(USER_ROLE, GRANTOR_ROLE);
         _grantRole(OWNER_ROLE, _msgSender());
 
-        // Only to provide the 100 % test coverage
+        // Only to provide 100% test coverage
         _authorizeUpgrade(address(0));
     }
 
     // ------------------ Transactional functions ----------------- //
 
-    /// @dev Calls the parent internal unchained initializing function to verify the 'onlyInitializing' modifier.
+    /// @dev Calls the parent internal unchained initialization function to verify the 'onlyInitializing' modifier.
     function callParentInitializerUnchained() external {
         __AccessControlExt_init_unchained();
     }
@@ -42,7 +42,7 @@ contract AccessControlExtUpgradeableMock is AccessControlExtUpgradeable, UUPSUpg
     // ------------------ Internal functions ---------------------- //
 
     /**
-     * @dev The implementation of the upgrade authorization function of the parent UUPSProxy contract.
+     * @dev The implementation of the upgrade authorization function of the parent UUPSUpgradeable contract.
      * @param newImplementation The address of the new implementation.
      */
     function _authorizeUpgrade(address newImplementation) internal pure override {
