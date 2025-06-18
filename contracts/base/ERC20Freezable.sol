@@ -51,6 +51,12 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
      */
     mapping(address => bool) private _freezers;
 
+    /**
+     * @dev This empty reserved space is put in place to allow future versions
+     * to add new variables without shifting down storage in the inheritance chain.
+     */
+    uint256[47] private __gap;
+
     // -------------------- Errors -------------------------------- //
 
     /**
@@ -270,10 +276,4 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
         }
         _freeze(account, newBalance, oldBalance);
     }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions
-     * to add new variables without shifting down storage in the inheritance chain.
-     */
-    uint256[47] private __gap;
 }
