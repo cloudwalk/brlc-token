@@ -18,7 +18,7 @@ import { LegacyTrustablePlaceholder } from "../legacy/LegacyTrustablePlaceholder
 /**
  * @title CWToken contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice The CloudWalk token that extends the standard ERC20 token implementation with additional functionality
+ * @dev The CloudWalk token that extends the standard ERC20 token implementation with additional functionality.
  */
 abstract contract CWToken is
     ERC20Base,
@@ -35,11 +35,12 @@ abstract contract CWToken is
     // -------------------- Initializers -------------------------- //
 
     /**
-     * @notice The internal initializer of the upgradeable contract
+     * @dev The internal initializer of the upgradeable contract.
      *
-     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
-     * @param name_ The name of the token
-     * @param symbol_ The symbol of the token
+     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
+     *
+     * @param name_ The name of the token.
+     * @param symbol_ The symbol of the token.
      */
     function __CWToken_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __ERC20Base_init(name_, symbol_);
@@ -50,9 +51,9 @@ abstract contract CWToken is
     }
 
     /**
-     * @notice The internal unchained initializer of the upgradeable contract
+     * @dev The unchained internal initializer of the upgradeable contract.
      *
-     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
+     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      */
     function __CWToken_init_unchained() internal onlyInitializing {}
 
@@ -66,8 +67,7 @@ abstract contract CWToken is
     }
 
     /**
-     * @dev See {ERC20Base-allowance}
-     * @dev See {ERC20Trustable-allowance}
+     * @dev See {ERC20Base-allowance} and {ERC20Trustable-allowance}.
      */
     function allowance(
         address owner,
@@ -79,7 +79,7 @@ abstract contract CWToken is
     // -------------------- Internal functions ------------------------ //
 
     /**
-     * @dev Returns the current state of the account`s balances
+     * @dev Returns the current state of the account`s balances.
      */
     function _calculateComplexBalance(address account) internal view returns (ComplexBalance memory) {
         ComplexBalance memory balance;
@@ -94,8 +94,7 @@ abstract contract CWToken is
     }
 
     /**
-     * @dev See {ERC20Base-_beforeTokenTransfer}
-     * @dev See {ERC20Hookable-_beforeTokenTransfer}
+     * @dev See {ERC20Base-_beforeTokenTransfer} and {ERC20Hookable-_beforeTokenTransfer}.
      */
     function _beforeTokenTransfer(
         address from,
@@ -106,8 +105,7 @@ abstract contract CWToken is
     }
 
     /**
-     * @dev See {ERC20Base-_afterTokenTransfer}
-     * @dev See {ERC20Hookable-_afterTokenTransfer}
+     * @dev See {ERC20Base-_afterTokenTransfer} and {ERC20Hookable-_afterTokenTransfer}.
      */
     function _afterTokenTransfer(
         address from,

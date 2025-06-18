@@ -7,60 +7,57 @@ import { IERC20Hook } from "./../base/interfaces/IERC20Hook.sol";
 /**
  * @title ERC20HookMock contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice An implementation of the {IERC20Hook} contract for testing purposes
+ * @dev An implementation of the {IERC20Hook} contract for testing purposes.
  */
 contract ERC20HookMock is IERC20Hook {
     // ------------------ Storage --------------------------------- //
 
-    /// @notice Flag indicating whether hook functions should revert with panic
+    /// @dev Flag indicating whether hook functions should revert with panic.
     bool public revertWithPanic;
 
-    /// @notice Flag indicating whether hook functions should revert with reason message
+    /// @dev Flag indicating whether hook functions should revert with reason message.
     bool public revertWithReasonMessage;
 
-    /// @notice Flag indicating whether hook functions should revert without reason message
+    /// @dev Flag indicating whether hook functions should revert without reason message.
     bool public revertWithoutReasonMessage;
 
     // ------------------ Events ---------------------------------- //
 
-    /// @notice Emitted when the `beforeTokenTransfer` hook function is successfully executed
+    /// @dev Emitted when the `beforeTokenTransfer` hook function is successfully executed.
     event TestBeforeTokenTransferHookEvent();
 
-    /// @notice Emitted when the `afterTokenTransfer` hook function is successfully executed
+    /// @dev Emitted when the `afterTokenTransfer` hook function is successfully executed.
     event TestAfterTokenTransferHookEvent();
 
     // ------------------ Errors ---------------------------------- //
 
-    /// @notice Custom error to be reverted with from the `beforeTokenTransfer` hook function
+    /// @dev Custom error to be reverted with from the `beforeTokenTransfer` hook function.
     error TestBeforeTokenTransferHookError();
 
-    /// @notice Custom error to be reverted with from the `afterTokenTransfer` hook function
+    /// @dev Custom error to be reverted with from the `afterTokenTransfer` hook function.
     error TestAfterTokenTransferHookError();
 
     // ------------------ Transactional functions ----------------- //
 
     /**
-     * @notice Sets the flag indicating whether hook functions should revert with panic
-     *
-     * @param value The value to set the flag to
+     * @dev Sets the flag indicating whether hook functions should revert with panic.
+     * @param value The value to set the flag to.
      */
     function setRevertWithPanic(bool value) external {
         revertWithPanic = value;
     }
 
     /**
-     * @notice Sets the flag indicating whether hook functions should revert with reason message
-     *
-     * @param value The value to set the flag to
+     * @dev Sets the flag indicating whether hook functions should revert with reason message.
+     * @param value The value to set the flag to.
      */
     function setRevertWithReasonMessage(bool value) external {
         revertWithReasonMessage = value;
     }
 
     /**
-     * @notice Sets the flag indicating whether hook functions should revert without reason message
-     *
-     * @param value The value to set the flag to
+     * @dev Sets the flag indicating whether hook functions should revert without reason message.
+     * @param value The value to set the flag to.
      */
     function setRevertWithoutReasonMessage(bool value) external {
         revertWithoutReasonMessage = value;

@@ -7,13 +7,15 @@ import { CWToken } from "./base/CWToken.sol";
 /**
  * @title USJimToken contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice The USJim token implementation
+ * @dev The USJim token implementation.
  */
 contract USJimToken is CWToken {
+    // ------------------ Constructor ----------------------------- //
+
     /**
-     * @notice Constructor that prohibits the initialization of the implementation of the upgradeable contract
+     * @dev Constructor that prohibits the initialization of the implementation of the upgradeable contract.
      *
-     * See details
+     * See details:
      * https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable#initializing_the_implementation_contract
      *
      * @custom:oz-upgrades-unsafe-allow constructor
@@ -22,20 +24,24 @@ contract USJimToken is CWToken {
         _disableInitializers();
     }
 
+    // ------------------ Initializers ---------------------------- //
+
     /**
-     * @notice The initializer of the upgradeable contract
+     * @dev The initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      *
-     * @param name_ The name of the token
-     * @param symbol_ The symbol of the token
+     * @param name_ The name of the token.
+     * @param symbol_ The symbol of the token.
      */
     function initialize(string memory name_, string memory symbol_) external initializer {
         __CWToken_init(name_, symbol_);
     }
 
+    // ------------------ Pure functions -------------------------- //
+
     /**
-     * @notice Returns true if token is USJim implementation
+     * @dev Returns true if token is USJim implementation.
      */
     function isUSJim() external pure returns (bool) {
         return true;

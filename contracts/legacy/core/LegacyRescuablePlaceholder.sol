@@ -5,9 +5,10 @@ pragma solidity ^0.8.4;
 /**
  * @title LegacyRescuablePlaceholder contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice Safely replaces the storage of the obsolete basic smart contract `RescuableUpgradeable`.
- * @dev This contract is used through inheritance. It has the same storage as the smart contract it replaces,
- *      and also contains all of its events and custom errors for backward compatibility when searching in databases.
+ * @dev Safely replaces the storage of the obsolete basic smart contract `RescuableUpgradeable`.
+ *
+ * This contract is used through inheritance. It has the same storage as the smart contract it replaces,
+ * and also contains all of its events and custom errors for backward compatibility when searching in databases.
  *
  * IMPORTANT! The storage slots of this smart contract are not empty and may contain data
  * from the obsolete library smart contract.
@@ -21,24 +22,22 @@ pragma solidity ^0.8.4;
 abstract contract LegacyRescuablePlaceholder {
     // ------------------ Storage variables ----------------------- //
 
-    /// @notice The address of the rescuer that is allowed to rescue tokens locked up in the contract
+    /// @dev The address of the rescuer that is allowed to rescue tokens locked up in the contract.
     address internal _rescuer;
 
     // -------------------- Events -------------------------------- //
 
     /**
-     * @notice Emitted when the rescuer is changed
-     *
-     * @param newRescuer The address of the new rescuer
+     * @dev Emitted when the rescuer is changed.
+     * @param newRescuer The address of the new rescuer.
      */
     event RescuerChanged(address indexed newRescuer);
 
     // -------------------- Errors -------------------------------- //
 
     /**
-     * @notice The transaction sender is not a rescuer
-     *
-     * @param account The address of the transaction sender
+     * @dev The transaction sender is not a rescuer.
+     * @param account The address of the transaction sender.
      */
     error UnauthorizedRescuer(address account);
 }

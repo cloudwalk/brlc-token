@@ -12,8 +12,8 @@ import { ERC20Upgradeable } from "../openzeppelin_v4-9-6/ERC20Upgradeable.sol";
 /**
  * @title ERC20Base contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice This contract is base implementation of the BRLC token with inherited Rescuable,
- * Pausable, and Blocklistable functionality.
+ * @dev This contract is base implementation of the BRLC token with inherited AccessControl, Rescuable,
+ * Pausable functionality.
  */
 abstract contract ERC20Base is
     LegacyCorePlaceholder,
@@ -24,20 +24,21 @@ abstract contract ERC20Base is
 {
     // ------------------ Errors ---------------------------------- //
 
-    /// @dev Throws if the zero address is passed to the function
+    /// @dev Throws if the zero address is passed to the function.
     error ZeroAddress();
 
-    /// @dev Throws if the zero amount is passed to the function
+    /// @dev Throws if the zero amount is passed to the function.
     error ZeroAmount();
 
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @notice The internal initializer of the upgradeable contract
+     * @dev The internal initializer of the upgradeable contract.
      *
-     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
-     * @param name_ The name of the token
-     * @param symbol_ The symbol of the token
+     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
+     *
+     * @param name_ The name of the token.
+     * @param symbol_ The symbol of the token.
      */
     function __ERC20Base_init(string memory name_, string memory symbol_) internal onlyInitializing {
         __AccessControlExt_init_unchained();
@@ -48,9 +49,9 @@ abstract contract ERC20Base is
     }
 
     /**
-     * @notice The internal unchained initializer of the upgradeable contract
+     * @dev The unchained internal initializer of the upgradeable contract.
      *
-     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
+     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      */
     function __ERC20Base_init_unchained() internal onlyInitializing {
         _grantRole(OWNER_ROLE, _msgSender());
@@ -77,9 +78,7 @@ abstract contract ERC20Base is
     /**
      * @inheritdoc ERC20Upgradeable
      *
-     * @dev The contract must not be paused
-     * @dev The `owner` address must not be blocklisted
-     * @dev The `spender` address must not be blocklisted
+     * @dev Requirement: the contract must not be paused.
      */
     function _approve(
         address owner, // Tools: this comment prevents Prettier from formatting into a single line.
@@ -92,9 +91,7 @@ abstract contract ERC20Base is
     /**
      * @inheritdoc ERC20Upgradeable
      *
-     * @dev The contract must not be paused
-     * @dev The `owner` address must not be blocklisted
-     * @dev The `spender` address must not be blocklisted
+     * @dev Requirements: The contract must not be paused.
      */
     function _spendAllowance(
         address owner, // Tools: this comment prevents Prettier from formatting into a single line.
@@ -107,9 +104,7 @@ abstract contract ERC20Base is
     /**
      * @inheritdoc ERC20Upgradeable
      *
-     * @dev The contract must not be paused
-     * @dev The `from` address must not be blocklisted
-     * @dev The `to` address must not be blocklisted
+     * @dev Requirements: The contract must not be paused.
      */
     function _beforeTokenTransfer(
         address from, // Tools: this comment prevents Prettier from formatting into a single line.

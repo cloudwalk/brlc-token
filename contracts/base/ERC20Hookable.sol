@@ -9,59 +9,55 @@ import { ERC20Base } from "./ERC20Base.sol";
 /**
  * @title ERC20Hookable contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice The ERC20 token implementation that supports hooking operations
+ * @dev The ERC20 token implementation that supports hooking operations.
  */
 abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
     // ------------------ Storage variables ----------------------- //
 
-    /// @notice The array of the attached hook contracts that are triggered before the token transfer
+    /// @dev The array of the attached hook contracts that are triggered before the token transfer.
     Hook[] private _beforeTokenTransferHooks;
 
-    /// @notice The array of the attached hook contracts that are triggered after the token transfer
+    /// @dev The array of the attached hook contracts that are triggered after the token transfer.
     Hook[] private _afterTokenTransferHooks;
 
     // ------------------ Events ---------------------------------- //
 
     /**
-     * @notice Emitted when the `beforeTokenTransfer` hooks are updated
-     *
-     * @param hooks The array of the updated hooks
+     * @dev Emitted when the `beforeTokenTransfer` hooks are updated.
+     * @param hooks The array of the updated hooks.
      */
     event BeforeTokenTransferHooksSet(Hook[] hooks);
 
     /**
-     * @notice Emitted when the `afterTokenTransfer` hooks are updated
-     *
-     * @param hooks The array of the updated hooks
+     * @dev Emitted when the `afterTokenTransfer` hooks are updated.
+     * @param hooks The array of the updated hooks.
      */
     event AfterTokenTransferHooksSet(Hook[] hooks);
 
     /**
-     * @notice Emitted when a call of the `beforeTokenTransfer` hook failed
-     *
-     * @param hook The address of the hook contract that was called
-     * @param reason The reason message of the hook failure
-     * @param code The error code of the hook failure
-     * @param data The low level error data
+     * @dev Emitted when a call of the `beforeTokenTransfer` hook failed.
+     * @param hook The address of the hook contract that was called.
+     * @param reason The reason message of the hook failure.
+     * @param code The error code of the hook failure.
+     * @param data The low level error data.
      */
     event BeforeTokenTransferHookFailure(address indexed hook, string reason, uint256 code, bytes data);
 
     /**
-     * @notice Emitted when a call of the `afterTokenTransfer` hook failed
-     *
-     * @param hook The address of the hook contract that was called
-     * @param reason The reason message of the hook failure
-     * @param code The error code of the hook failure
-     * @param data The low level error data
+     * @dev Emitted when a call of the `afterTokenTransfer` hook failed.
+     * @param hook The address of the hook contract that was called.
+     * @param reason The reason message of the hook failure.
+     * @param code The error code of the hook failure.
+     * @param data The low level error data.
      */
     event AfterTokenTransferHookFailure(address indexed hook, string reason, uint256 code, bytes data);
 
     // -------------------- Initializers -------------------------- //
 
     /**
-     * @notice The internal unchained initializer of the upgradeable contract
+     * @dev The unchained internal initializer of the upgradeable contract.
      *
-     * @dev See details: https://docs.openzeppelin.com/contracts/4.x/upgradeable#multiple-inheritance
+     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      *
      * Note: The `..._init()` initializer has not been provided as redundant.
      */
@@ -110,7 +106,7 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
     // ------------------ Internal functions ---------------------- //
 
     /**
-     * @dev Overrides the `_beforeTokenTransfer` function by calling attached hooks after the base logic
+     * @dev Overrides the `_beforeTokenTransfer` function by calling attached hooks after the base logic.
      */
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override(ERC20Base) {
         super._beforeTokenTransfer(from, to, amount);
@@ -133,7 +129,7 @@ abstract contract ERC20Hookable is ERC20Base, IERC20Hookable {
     }
 
     /**
-     * @dev Overrides the `_afterTokenTransfer` function by calling attached hooks after the base logic
+     * @dev Overrides the `_afterTokenTransfer` function by calling attached hooks after the base logic.
      */
     function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._afterTokenTransfer(from, to, amount);

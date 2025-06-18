@@ -15,13 +15,13 @@ import { AccessControlExtUpgradeable } from "./AccessControlExtUpgradeable.sol";
 abstract contract PausableExtUpgradeable is AccessControlExtUpgradeable, PausableUpgradeable {
     // ------------------ Constants ------------------------------- //
 
-    /// @dev The role of pauser that is allowed to trigger the paused or unpaused state of the contract.
+    /// @dev The role of a pauser that is allowed to trigger the paused or unpaused state of the contract.
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The unchained internal initializer of the upgradeable contract
+     * @dev The unchained internal initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      *

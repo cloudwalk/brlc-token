@@ -5,9 +5,10 @@ pragma solidity ^0.8.0;
 /**
  * @title LegacyInitializablePlaceholder contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice Safely replaces the storage of the obsolete smart contract `Initializable` from OpenZeppelin lib v4.
- * @dev This contract is used through inheritance. It has the same storage as the smart contract it replaces,
- *      and also contains all of its events for backward compatibility when searching in databases.
+ * @dev Safely replaces the storage of the obsolete smart contract `Initializable` from OpenZeppelin lib v4.
+ *
+ * This contract is used through inheritance. It has the same storage as the smart contract it replaces,
+ * and also contains all of its events for backward compatibility when searching in databases.
  *
  * IMPORTANT! The storage slots of this smart contract are not empty and may contain data
  * from the obsolete library smart contract.
@@ -34,7 +35,7 @@ abstract contract LegacyInitializablePlaceholder {
 
     /**
      * @dev This empty reserved space is put in place to allow future versions
-     * to add new variables without shifting down storage in the inheritance chain
+     * to add new variables without shifting down storage in the inheritance chain.
      */
     uint256[50] private __gap;
 

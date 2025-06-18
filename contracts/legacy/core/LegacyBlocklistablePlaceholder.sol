@@ -5,9 +5,10 @@ pragma solidity ^0.8.4;
 /**
  * @title LegacyBlocklistablePlaceholder contract
  * @author CloudWalk Inc. (See https://www.cloudwalk.io)
- * @notice Safely replaces the storage of the obsolete basic account blacklisting smart contract.
- * @dev This contract is used through inheritance. It has the same storage as the smart contract it replaces,
- *      and also contains all of its events and custom errors for backward compatibility when searching in databases.
+ * @dev Safely replaces the storage of the obsolete basic account blocklisting smart contract.
+ *
+ * This contract is used through inheritance. It has the same storage as the smart contract it replaces,
+ * and also contains all of its events and custom errors for backward compatibility when searching in databases.
  *
  * IMPORTANT! The storage slots of this smart contract are not empty and may contain data
  * from the obsolete base smart contract.
@@ -26,68 +27,73 @@ pragma solidity ^0.8.4;
 abstract contract LegacyBlocklistablePlaceholder {
     // ------------------ Namespaced storage layout --------------- //
 
-    /// @notice The storage slot where additional blocklistable contract storage starts
+    /// @dev The storage slot where additional blocklistable contract storage starts.
     bytes32 private constant _BLOCKLISTABLE_STORAGE_SLOT =
         0xff11fdfa16fed3260ed0e7147f7cc6da11a60208b5b9406d12a635614ffd9141;
 
-    /// @notice The structure that represents additional blocklistable contract storage
+    /**
+     * @dev Defines the additional storage of the Blocklistable base contract.
+     *
+     * The fields:
+     *
+     * - blocklisters -- The mapping of presence in the blocklist for a given address.
+     * - enabled ------- The enabled/disabled status of the blocklist.
+     *
+     */
     struct BlocklistableStorageSlot {
-        /// @notice The mapping of presence in the blocklist for a given address
+        // Slot 1
         mapping(address => bool) blocklisters;
-        /// @notice The enabled/disabled status of the blocklist
+        // No reserve until the end of the storage slot
+
+        // Slot 2
         bool enabled;
+        // uint248 __reserved1; // Reserved for future use until the end of the storage slot
     }
 
     // ------------------ Storage variables ----------------------- //
 
-    /// @notice The address of the blocklister that is allowed to add and remove accounts from the blocklist
+    /// @dev The address of the blocklister that is allowed to add and remove accounts from the blocklist.
     address private _mainBlocklister;
 
-    /// @notice Mapping of presence in the blocklist for a given address
+    /// @dev Mapping of presence in the blocklist for a given address.
     mapping(address => bool) private _blocklisted;
 
     // -------------------- Events -------------------------------- //
 
     /**
-     * @notice Emitted when an account is blocklisted
-     *
-     * @param account The address of the blocklisted account
+     * @dev Emitted when an account is blocklisted.
+     * @param account The address of the blocklisted account.
      */
     event Blocklisted(address indexed account);
 
     /**
-     * @notice Emitted when an account is unblocklisted
-     *
-     * @param account The address of the unblocklisted account
+     * @dev Emitted when an account is unblocklisted.
+     * @param account The address of the unblocklisted account.
      */
     event UnBlocklisted(address indexed account);
 
     /**
-     * @notice Emitted when an account is self blocklisted
-     *
-     * @param account The address of the self blocklisted account
+     * @dev Emitted when an account is self blocklisted.
+     * @param account The address of the self blocklisted account.
      */
     event SelfBlocklisted(address indexed account);
 
     /**
-     * @notice Emitted when the main blocklister was changed
-     *
-     * @param newMainBlocklister The address of the new main blocklister
+     * @dev Emitted when the main blocklister was changed.
+     * @param newMainBlocklister The address of the new main blocklister.
      */
     event MainBlockListerChanged(address indexed newMainBlocklister);
 
     /**
-     * @notice Emitted when the blocklister configuration is updated
-     *
-     * @param blocklister The address of the blocklister
-     * @param status The new status of the blocklister
+     * @dev Emitted when the blocklister configuration is updated.
+     * @param blocklister The address of the blocklister.
+     * @param status The new status of the blocklister.
      */
     event BlocklisterConfigured(address indexed blocklister, bool status);
 
     /**
-     * @notice Emitted when the blocklist is enabled or disabled
-     *
-     * @param status The new enabled/disabled status of the blocklist
+     * @dev Emitted when the blocklist is enabled or disabled.
+     * @param status The new enabled/disabled status of the blocklist.
      */
     event BlocklistEnabled(bool indexed status);
 
@@ -126,33 +132,30 @@ abstract contract LegacyBlocklistablePlaceholder {
     // -------------------- Errors -------------------------------- //
 
     /**
-     * @notice The transaction sender is not a blocklister
-     *
-     * @param account The address of the transaction sender
+     * @dev The transaction sender is not a blocklister.
+     * @param account The address of the transaction sender.
      */
     error UnauthorizedBlocklister(address account);
 
     /**
-     * @notice The transaction sender is not a main blocklister
-     *
-     * @param account The address of the transaction sender
+     * @dev The transaction sender is not a main blocklister.
+     * @param account The address of the transaction sender.
      */
     error UnauthorizedMainBlocklister(address account);
 
     /**
-     * @notice The account is blocklisted
-     *
-     * @param account The address of the blocklisted account
+     * @dev The account is blocklisted.
+     * @param account The address of the blocklisted account.
      */
     error BlocklistedAccount(address account);
 
     /**
-     * @notice The address to blocklist is zero address
+     * @dev The address to blocklist is zero address.
      */
     error ZeroAddressToBlocklist();
 
     /**
-     * @notice The account is already configured
+     * @dev The account is already configured.
      */
     error AlreadyConfigured();
 }
