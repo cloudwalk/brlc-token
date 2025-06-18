@@ -20,7 +20,7 @@ describe("Contract 'CWToken'", async () => {
   const EXPECTED_VERSION: Version = {
     major: 1,
     minor: 5,
-    patch: 1
+    patch: 2
   };
 
   // Errors of the lib contracts
