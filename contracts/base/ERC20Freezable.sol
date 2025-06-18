@@ -22,7 +22,7 @@ abstract contract ERC20Freezable is ERC20Base, IERC20Freezable {
     // ------------------ Types ----------------------------------- //
 
     /**
-     * @dev Possible types of a frozen balance update operation
+     * @dev Possible types of a frozen balance update operation.
      *
      * The values:
      *

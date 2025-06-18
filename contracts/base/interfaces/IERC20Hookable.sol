@@ -41,18 +41,18 @@ interface IERC20Hookable {
     function setBeforeTokenTransferHooks(Hook[] calldata hooks) external;
 
     /**
-     * @notice Updates the `afterTokenTransfer` hooks attached to the token.
+     * @dev Updates the `afterTokenTransfer` hooks attached to the token.
      * @param hooks The hooks to be attached.
      */
     function setAfterTokenTransferHooks(Hook[] calldata hooks) external;
 
     /**
-     * @notice Returns the array of `beforeTokenTransfer` hooks attached to the token.
+     * @dev Returns the array of `beforeTokenTransfer` hooks attached to the token.
      */
     function getBeforeTokenTransferHooks() external view returns (Hook[] memory);
 
     /**
-     * @notice Returns the array of `afterTokenTransfer` hooks attached to the token.
+     * @dev Returns the array of `afterTokenTransfer` hooks attached to the token.
      */
     function getAfterTokenTransferHooks() external view returns (Hook[] memory);
 }

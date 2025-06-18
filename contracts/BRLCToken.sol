@@ -27,12 +27,12 @@ contract BRLCToken is CWToken {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @notice The initializer of the upgradeable contract
+     * @dev The initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      *
-     * @param name_ The name of the token
-     * @param symbol_ The symbol of the token
+     * @param name_ The name of the token.
+     * @param symbol_ The symbol of the token.
      */
     function initialize(string memory name_, string memory symbol_) external initializer {
         __CWToken_init(name_, symbol_);
@@ -41,7 +41,7 @@ contract BRLCToken is CWToken {
     // ------------------ Pure functions -------------------------- //
 
     /**
-     * @notice Returns true if token is BRLCoin implementation
+     * @dev Returns true if token is BRLCoin implementation.
      */
     function isBRLCoin() external pure returns (bool) {
         return true;
