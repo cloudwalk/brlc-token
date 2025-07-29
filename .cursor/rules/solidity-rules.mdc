@@ -1,0 +1,244 @@
+---
+description: Rules for the solidity files
+globs: *.sol
+alwaysApply: false
+---
+
+# 1. General Instructions
+
+1.  Act as an expert in Solidity and smart contract security.
+
+2.  Follow the structure, development approaches, styles, formatting, comments according to the `Blueprint` project
+    that can be found here: https://github.com/cloudwalk/brlc-blueprint
+
+3.  Follow the Solidity Style Guide from the language official documentation.
+
+4.  Follow best practices and security recommendations from reputable companies and individuals.
+
+5.  Use abstract contracts for base functionality that will be inherited.
+
+6.  Use the base `Version` contract to add version information to production contracts.
+    Do NOT add the version to intermediate and basic contracts.
+
+7.  Separate storage layouts into dedicated contracts (like `BlueprintStorage`).
+
+8.  Follow a consistent pattern for contract inheritance.
+
+9.  Use interfaces to define external contract interactions.
+
+10. For upgradeable production contracts:
+    - If using OpenZeppelin < 5.x, add storage gap variables (e.g. `uint256[46] private __gap`).
+    - If using OpenZeppelin >= 5.x, follow the ERC-7201: Namespaced Storage Layout approach.
+    - Do NOT add gap variables or ERC-7201 storage to intermediate or basic contracts.
+
+11. Create testable versions of contracts with additional helper functions if needed.
+
+12. Use mock contracts for testing base functionality.
+
+
+# 2. Initializers Rules
+
+1.  Upgradable abstract contracts must include one or two internal initializer function:
+    unchained one (mandatory) and main one (optional). 
+    E.g. for the `SomeContractUpgradable` abstract smart contract must have the following unchained initializer:
+    `__SomeContract_init_unchained()`. Also, it may have the following main initializer: `__SomeContract_init()`.
+
+2.  The main initializer of an upgradable abstract contract must call all NON-EMPTY initializers (unchained or main) of
+    all parent smart contracts.
+
+3.  EMPTY unchained initializers of all parent contracts must NOT be called,
+    including one from the current smart contract.
+
+4.  If both (main and unchained) internal initializers of an upgradable abstract contract are empty then
+    only the unchained initializer must be kept. The main initializer must be removed.
+    A comment can be added about that, like: `Note: The "..._init()" initializer has not been provided as redundant`.
+
+5.  Upgradable non-abstract contracts must include a single external or public initializer named `initilize()`.
+
+6.  The initializer of a non-abstract contract must call all NON-empty internal initializers of
+    all parent smart contracts in the order of inheritance.
+    If a parent smart contract has two initializers, the main one must be called inside the `initilize()` function.
+
+7.  EMPTY internal initializers of all parent contracts must NOT be called inside the `initilize()` function
+    except initializers of parent smart contracts that are defined in the current project (see next point).
+
+8.  The initializer of a non-abstract contract must call all EMPTY internal initializers of
+    parent smart contracts that are defined in the current project.
+    This is important to avoid errors during test coverage assessment.
+
+9.  Internal initializers must use the `onlyInitializing` modifier.
+
+10. External and public initializers must use the `initializer` modifier.
+
+11. All initializers must be documented with NatSpec comments, including descriptions for all input parameters (if any).
+
+12. In the NatSpec comments of the initializer of a non-abstract contract the link to
+    the OpenZeppelin's upgradeable pattern documentation must be included, like:
+    ```solidity
+    /**
+     * @dev Initializer of the upgradable contract.
+     *
+     * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
+     */
+    ```
+
+13. In the NatSpec comments of the internal initializer of an abstract contract the link to
+    the OpenZeppelin's documentation about multiple inheritance in upgradeable contracts must be included, like:
+    ```solidity
+    /**
+     * @dev The unchained internal initializer of the upgradable contract
+     *
+     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
+     */
+    ```
+
+# 3. Error Handling Rules
+
+1. Use custom errors instead of revert strings for gas efficiency.
+
+2. Follow a consistent naming pattern for errors with the contract name suffix (e.g., `ContractName_ErrorDescription`).
+
+3. Include relevant parameters into custom errors when appropriate.
+
+
+# 4. Events Rules
+
+1. Emit events for all state-changing operations.
+
+2. Select clear and descriptive event names.
+
+3. Include both old and new values in events when updating state.
+
+4. Index event parameters that might be used for filtering.
+
+5. Document events in NatSpec comments of functions that emit them, using the formats like:
+   `Emits an {EventName} event`, `Emits an {EventName} event for each ...`.
+   Do not inlcude events that are NOT defined in the project files, e.g. from third-party libraries.
+
+
+# 5. Comments Rules
+
+1.  If NatSpec comments for a code entity consist of more than one line, use the `/** */` comment style.
+
+2.  If NatSpec comments for a code entity consist of a single line, use the `///` comment style.
+
+3.  Put the licence identifier comment at the beginning of a Solidity file, like: `// SPDX-License-Identifier: MIT`.
+
+4.  NatSpec tags `@title` and `@author` must exist in the comments for all interfaces, classes, libraries, e.g.
+    ```solidity
+    /**
+     * @title RescuableUpgradeable base contract
+     * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+     * @dev Allows to rescue ERC20 tokens locked up in the contract using the {RESCUER_ROLE} role.
+       */
+       abstract contract RescuableUpgradeable is AccessControlExtUpgradeable {....}
+    ```
+
+5.  Sections of code within interfaces, contracts, libraries must be separated by section separator comments, e.g.:
+    ```solidity
+    contract MyContract {
+        // ------------------ Constants ------------------------------- //
+
+        ....
+        bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
+        ....
+
+        // ------------------ Constructor ----------------------------- //
+
+        ....
+        constructor() { _disableInitializers();}
+
+        // ------------------ Initializers ---------------------------- //
+
+        ....
+        function initialize(address token_) external initializer {....}
+
+        // ------------------ Transactional functions ----------------- //
+
+        function setOperationalTreasury(address newTreasury) external onlyRole(OWNER_ROLE) {....}
+        ....
+
+        // ------------------ View functions -------------------------- //
+
+        ....
+        function getOperation(bytes32 opId) external view returns (Operation memory) {....}
+        ....
+
+        // ------------------ Pure functions -------------------------- //
+
+        ....
+        function proveMyContract() external pure {}
+        ....
+
+        // ------------------ Internal functions ---------------------- //
+        
+        ....
+        function _executeOperation(address account, uint256 amount, bytes32 opId, uint256 operationKind) internal { }
+        ....
+    }
+    ```
+
+6.  Section separator comments must be single-line and exactly 70 characters long.
+
+7.  The first section separator comment in an interface, contract, or library may be omitted.
+
+8.  The section separator comment must be omitted if the interface, contract, library contains only one logical section.
+    Example: an interface containing only a list of custom errors.
+
+9.  NatSpec comments for an enum must include descriptions for all enum values including their number equivalents like:
+    ```solidity
+    /**
+     * @dev Possible statuses of a an operation used in the blueprint smart contract.
+     *
+     * The values:
+     *
+     * - Nonexistent = 0 -- The operation does not exist (the default value).
+     * - Deposit = 1 ------ The deposit operation has been executed.
+     * - Withdrawal = 2 --- The withdrawal operation has been executed.
+     */
+    enum OperationStatus {
+        Nonexistent,
+        Deposit,
+        Withdrawal
+    }
+    ```
+
+10. NatSpec comments for a structure must include descriptions for all fields like:
+     ```solidity
+     /**
+      * @dev The data of a single operation of the blueprint smart-contract.
+      *
+      * The fields:
+      *
+      * - status --- The status of the operation according to the {OperationStatus} enum.
+      * - account -- The address of the account involved in the operation.
+      * - amount --- The amount parameter of the related operation.
+      */
+     struct Operation {
+         uint8 status;
+         address account;
+         uint64 amount;
+         // uint24 __reserved; // Reserved for future use until the end of the storage slot
+     }
+     ```
+    
+11. Structures that are used for storage must include comments about free space until the end of a storage slot and
+    about slot numbers, like:
+    ```solidity
+    struct AccountState {
+        // Slot 1
+        bytes32 lastOpId;
+        // No reserve until the end of the storage slot
+
+        // Slot 2
+        uint64 balance;
+        uint32 operationCount;
+        // uint160 __reserved; // Reserved for future use until the end of the storage slot
+    }
+    ```
+
+12. Storage structures that fit into a single storage slot must not include comments about slot numbers,
+    but still must have comments about free space to the end of the storage slot.
+
+13. Structures that used only with the `memory` or `calldata` modifiers must not include comments about slot numbers and
+    free space to the end of the storage slot.

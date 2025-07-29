@@ -1,0 +1,1298 @@
+---
+alwaysApply: false
+---
+# 1. Example Project
+
+## 1.1 File Structure
+
+* `contracts/`
+  * `Blueprint.sol`
+  * `BlueprintStorageLayout.sol`
+  * `base/`
+    * `AccessControlExtUpgradeable.sol`
+    * `PausableExtUpgradeable.sol`
+    * `RescuableUpgradeable.sol`
+    * `UUPSExtUpgradeable.sol`
+    * `Versionable.sol`
+  * `interfaces/`
+    * `IBlueprint.sol`
+    * `IBlueprintTypes.sol`
+    * `IVersionable.sol`
+  * `mocks/`
+    * `base/`
+      * `AccessControlExtUpgradeableMock.sol`
+      * `PausableExtUpgradeableMock.sol`
+      * `RescuableUpgradeableMock.sol`
+      * `UUPSExtUpgradeableMock.sol`
+    * `tokens/`
+      * `ERC20TokenMock.sol`
+  * `testables/`
+    * `BlueprintTestable.sol`
+
+
+## 1.2 Project Files
+
+### Directory `contracts/`
+
+#### File `contracts/Blueprint.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.8.24;
+
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import { AccessControlExtUpgradeable } from "./base/AccessControlExtUpgradeable.sol";
+import { PausableExtUpgradeable } from "./base/PausableExtUpgradeable.sol";
+import { RescuableUpgradeable } from "./base/RescuableUpgradeable.sol";
+import { Versionable } from "./base/Versionable.sol";
+import { UUPSExtUpgradeable } from "./base/UUPSExtUpgradeable.sol";
+
+import { IBlueprint } from "./interfaces/IBlueprint.sol";
+import { IBlueprintPrimary } from "./interfaces/IBlueprint.sol";
+import { IBlueprintConfiguration } from "./interfaces/IBlueprint.sol";
+
+import { BlueprintStorageLayout } from "./BlueprintStorageLayout.sol";
+
+/**
+ * @title Blueprint contract
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev The smart contract is designed as a reference and template one.
+ * It executes deposit and withdrawal operations using the underlying token smart contract and stores related data.
+ *
+ * See details about the contract in the comments of the {IBlueprint} interface.
+ */
+contract Blueprint is
+    BlueprintStorageLayout,
+    AccessControlExtUpgradeable,
+    PausableExtUpgradeable,
+    RescuableUpgradeable,
+    UUPSExtUpgradeable,
+    Versionable,
+    IBlueprint
+{
+    // ------------------ Constants ------------------------------- //
+
+    /// @dev The kind of operation that is deposit.
+    uint256 internal constant OPERATION_KIND_DEPOSIT = 0;
+
+    /// @dev The kind of operation that is withdrawal.
+    uint256 internal constant OPERATION_KIND_WITHDRAWAL = 1;
+
+    // ------------------ Constructor ----------------------------- //
+
+    /**
+     * @dev Constructor that prohibits the initialization of the implementation of the upgradeable contract.
+     *
+     * See details:
+     * https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable#initializing_the_implementation_contract
+     *
+     * @custom:oz-upgrades-unsafe-allow constructor
+     */
+    constructor() {
+        _disableInitializers();
+    }
+
+    // ------------------ Initializers ---------------------------- //
+
+    /**
+     * @dev Initializer of the upgradeable contract.
+     *
+     * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
+     *
+     * @param token_ The address of the token to set as the underlying one.
+     */
+    function initialize(address token_) external initializer {
+        __AccessControlExt_init_unchained();
+        __PausableExt_init_unchained();
+        __Rescuable_init_unchained();
+        __UUPSExt_init_unchained(); // This is needed only to avoid errors during coverage assessment
+
+        if (token_ == address(0)) {
+            revert Blueprint_TokenAddressZero();
+        }
+
+        _getBlueprintStorage().token = token_;
+
+        _setRoleAdmin(MANAGER_ROLE, GRANTOR_ROLE);
+        _grantRole(OWNER_ROLE, _msgSender());
+    }
+
+    // ------------------ Transactional functions ----------------- //
+
+    /**
+     * @inheritdoc IBlueprintConfiguration
+     *
+     * @dev Requirements:
+     *
+     * - The caller must have the {OWNER_ROLE} role.
+     * - The new operational treasury address must not be zero.
+     * - The new operational treasury address must not be the same as already configured.
+     */
+    function setOperationalTreasury(address newTreasury) external onlyRole(OWNER_ROLE) {
+        BlueprintStorage storage $ = _getBlueprintStorage();
+        address oldTreasury = $.operationalTreasury;
+        if (newTreasury == oldTreasury) {
+            revert Blueprint_TreasuryAddressAlreadyConfigured();
+        }
+        if (newTreasury != address(0)) {
+            if (IERC20($.token).allowance(newTreasury, address(this)) == 0) {
+                revert Blueprint_TreasuryAllowanceZero();
+            }
+        }
+
+        emit OperationalTreasuryChanged(newTreasury, oldTreasury);
+        $.operationalTreasury = newTreasury;
+    }
+
+    /**
+     * @inheritdoc IBlueprintPrimary
+     *
+     * @dev Requirements:
+     *
+     * - The contract must not be paused.
+     * - The caller must have the {MANAGER_ROLE} role.
+     * - The provided account address must not be zero.
+     * - The provided operation identifier must not be zero.
+     */
+    function deposit(
+        address account, // Tools: this comment prevents Prettier from formatting into a single line
+        uint256 amount,
+        bytes32 opId
+    ) external whenNotPaused onlyRole(MANAGER_ROLE) {
+        _executeOperation(account, amount, opId, OPERATION_KIND_DEPOSIT);
+    }
+
+    /**
+     * @inheritdoc IBlueprintPrimary
+     *
+     * @dev Requirements:
+     *
+     * - The contract must not be paused.
+     * - The caller must have the {MANAGER_ROLE} role.
+     * - The provided account address must not be zero.
+     * - The provided operation identifier must not be zero.
+     */
+    function withdraw(
+        address account, // Tools: this comment prevents Prettier from formatting into a single line
+        uint256 amount,
+        bytes32 opId
+    ) external whenNotPaused onlyRole(MANAGER_ROLE) {
+        _executeOperation(account, amount, opId, OPERATION_KIND_WITHDRAWAL);
+    }
+
+    // ------------------ View functions -------------------------- //
+
+    /// @inheritdoc IBlueprintPrimary
+    function getOperation(bytes32 opId) external view returns (Operation memory) {
+        return _getBlueprintStorage().operations[opId];
+    }
+
+    /// @inheritdoc IBlueprintPrimary
+    function getAccountState(address account) external view returns (AccountState memory) {
+        return _getBlueprintStorage().accountStates[account];
+    }
+
+    /// @inheritdoc IBlueprintPrimary
+    function balanceOf(address account) public view returns (uint256) {
+        return _getBlueprintStorage().accountStates[account].balance;
+    }
+
+    /// @inheritdoc IBlueprintPrimary
+    function underlyingToken() external view returns (address) {
+        return _getBlueprintStorage().token;
+    }
+
+    /// @inheritdoc IBlueprintConfiguration
+    function operationalTreasury() external view returns (address) {
+        return _getBlueprintStorage().operationalTreasury;
+    }
+
+    // ------------------ Pure functions -------------------------- //
+
+    /// @inheritdoc IBlueprint
+    function proveBlueprint() external pure {}
+
+    // ------------------ Internal functions ---------------------- //
+
+    /**
+     * @dev Executes an operation on the contract.
+     * @param account The account involved in the operation.
+     * @param amount The amount of the operation.
+     * @param opId The off-chain identifier of the operation.
+     * @param operationKind The kind of operation: 0 - deposit, 1 - withdrawal.
+     */
+    function _executeOperation(address account, uint256 amount, bytes32 opId, uint256 operationKind) internal {
+        _checkOperationParameters(account, amount, opId);
+        BlueprintStorage storage $ = _getBlueprintStorage();
+        address treasury = _getAndCheckOperationalTreasury($);
+
+        Operation storage operation = _getAndCheckOperation(opId, $);
+        operation.account = account;
+        operation.amount = uint64(amount);
+
+        AccountState storage state = $.accountStates[account];
+
+        uint256 oldBalance = state.balance;
+        uint256 newBalance = oldBalance;
+
+        if (operationKind == OPERATION_KIND_DEPOSIT) {
+            operation.status = OperationStatus.Deposit;
+            newBalance += amount;
+            if (newBalance > type(uint64).max) {
+                revert Blueprint_BalanceExcess();
+            }
+        } else {
+            newBalance -= amount;
+            operation.status = OperationStatus.Withdrawal;
+        }
+
+        state.balance = uint64(newBalance);
+        state.operationCount += 1;
+        state.lastOpId = opId;
+
+        emit BalanceUpdated(
+            opId, // Tools: this comment prevents Prettier from formatting into a single line
+            account,
+            newBalance,
+            oldBalance
+        );
+
+        if (operationKind == OPERATION_KIND_DEPOSIT) {
+            IERC20($.token).transferFrom(account, treasury, amount);
+        } else {
+            IERC20($.token).transferFrom(treasury, account, amount);
+        }
+    }
+
+    /**
+     * @dev Checks the parameters of an operation.
+     * @param account The account involved in the operation.
+     * @param amount The amount of the operation.
+     * @param opId The off-chain identifier of the operation.
+     */
+    function _checkOperationParameters(address account, uint256 amount, bytes32 opId) internal pure {
+        if (account == address(0)) {
+            revert Blueprint_AccountAddressZero();
+        }
+        if (opId == bytes32(0)) {
+            revert Blueprint_OperationIdZero();
+        }
+        if (amount > type(uint64).max) {
+            revert Blueprint_AmountExcess();
+        }
+    }
+
+    /// @dev Returns the operational treasury address after checking it.
+    function _getAndCheckOperationalTreasury(BlueprintStorage storage $) internal view returns (address) {
+        address operationalTreasury_ = $.operationalTreasury;
+        if (operationalTreasury_ == address(0)) {
+            revert Blueprint_OperationalTreasuryAddressZero();
+        }
+        return operationalTreasury_;
+    }
+
+    /**
+     * @dev Fetches the current data of an operation and checks it.
+     * @param opId The off-chain identifier of the operation.
+     * @return The current operation.
+     */
+    function _getAndCheckOperation(bytes32 opId, BlueprintStorage storage $) internal view returns (Operation storage) {
+        Operation storage operation = $.operations[opId];
+        if (operation.status != OperationStatus.Nonexistent) {
+            revert Blueprint_OperationAlreadyExecuted(opId);
+        }
+        return operation;
+    }
+
+    /**
+     * @dev The upgrade validation function for the UUPSExtUpgradeable contract.
+     * @param newImplementation The address of the new implementation.
+     */
+    function _validateUpgrade(address newImplementation) internal view override onlyRole(OWNER_ROLE) {
+        try IBlueprint(newImplementation).proveBlueprint() {} catch {
+            revert Blueprint_ImplementationAddressInvalid();
+        }
+    }
+}
+```
+
+#### File `contracts/BlueprintStorageLayout.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.18;
+
+import { IBlueprintTypes } from "./interfaces/IBlueprintTypes.sol";
+
+/**
+ * @title BlueprintStorageLayout contract
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev Defines the storage layout for the reference smart-contract.
+ *
+ * See details about the contract in the comments of the {IBlueprint} interface.
+ */
+abstract contract BlueprintStorageLayout is IBlueprintTypes {
+    // ------------------ Constants ------------------------------- //
+
+    /// @dev The role of manager that is allowed to deposit and withdraw tokens to the contract.
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+
+    // ------------------ Storage layout -------------------------- //
+
+    /*
+     * ERC-7201: Namespaced Storage Layout
+     * keccak256(abi.encode(uint256(keccak256("cloudwalk.storage.Blueprint")) - 1)) & ~bytes32(uint256(0xff))
+     */
+    bytes32 private constant BLUEPRINT_STORAGE_LOCATION =
+        0xafe7a9a1707fd5088d626d487a8abd113f3fb4bc089bd4284d3e123585a48c00;
+
+    /**
+     * @dev Defines the contract storage structure.
+     *
+     * The fields:
+     *
+     * - token ---------------- The address of the underlying token.
+     * - operationalTreasury -- The address of the operational treasury.
+     * - operations ----------- The mapping of an operation structure for a given off-chain operation identifier.
+     * - accountStates -------- The mapping of a state for a given account.
+     *
+     * Notes:
+     * 1. The operational treasury is used to deposit and withdraw tokens through special functions.
+     *
+     * @custom:storage-location erc7201:cloudwalk.storage.Blueprint
+     */
+    struct BlueprintStorage {
+        // Slot 1
+        address token;
+        // uint96 __reserved1; // Reserved for future use until the end of the storage slot
+
+        // Slot 2
+        address operationalTreasury;
+        // uint96 __reserved2; // Reserved for future use until the end of the storage slot
+
+        // Slot 3
+        mapping(bytes32 opId => Operation operation) operations;
+        // No reserve until the end of the storage slot
+
+        // Slot 4
+        mapping(address account => AccountState state) accountStates;
+        // No reserve until the end of the storage slot
+    }
+
+    // ------------------ Internal functions ---------------------- //
+
+    /// @dev Returns the storage slot location for the `BlueprintStorage` struct.
+    function _getBlueprintStorage() internal pure returns (BlueprintStorage storage $) {
+        assembly {
+            $.slot := BLUEPRINT_STORAGE_LOCATION
+        }
+    }
+}
+```
+
+### Directory `contracts/base/`
+
+#### File `contracts/base/AccessControlExtUpgradeable.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.20;
+
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+
+/**
+ * @title AccessControlExtUpgradeable base contract
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev Extends the OpenZeppelin's {AccessControlUpgradeable} contract by introducing new roles and
+ *      adding functions for granting and revoking roles in batch.
+ */
+abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
+    // ------------------ Constants ------------------------------- //
+
+    /// @dev The role of this contract owner.
+    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
+
+    /// @dev The role of a grantor that is allowed to grant and revoke other roles, except itself and the owner role.
+    bytes32 public constant GRANTOR_ROLE = keccak256("GRANTOR_ROLE");
+
+    // ------------------ Initializers ---------------------------- //
+
+    /**
+     * @dev The unchained internal initializer of the upgradeable contract
+     *
+     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
+     *
+     * Note: The `..._init()` initializer has not been provided as redundant.
+     */
+    function __AccessControlExt_init_unchained() internal onlyInitializing {
+        _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);
+        _setRoleAdmin(GRANTOR_ROLE, OWNER_ROLE);
+    }
+
+    // ------------------ Transactional functions ----------------- //
+
+    /**
+     * @dev Grants a role to accounts in batch.
+     *
+     * Emits a {RoleGranted} event for each account that has not been granted the provided role previously.
+     *
+     * Requirement: the caller must have the role that is the admin for the role that is being granted.
+     *
+     * @param role The role to grant.
+     * @param accounts The accounts to grant the role to.
+     */
+    function grantRoleBatch(bytes32 role, address[] memory accounts) public virtual onlyRole(getRoleAdmin(role)) {
+        uint256 count = accounts.length;
+        for (uint256 i = 0; i < count; ) {
+            _grantRole(role, accounts[i]);
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /**
+     * @dev Revokes a role from accounts in batch.
+     *
+     * Emits a {RoleRevoked} event for each account that has the provided role previously.
+     *
+     * Requirement: the caller must have the role that is the admin for the role that is being revoked.
+     *
+     * @param role The role to revoke.
+     * @param accounts The accounts to revoke the role from.
+     */
+    function revokeRoleBatch(bytes32 role, address[] memory accounts) public virtual onlyRole(getRoleAdmin(role)) {
+        uint256 count = accounts.length;
+        for (uint256 i = 0; i < count; ) {
+            _revokeRole(role, accounts[i]);
+            unchecked {
+                ++i;
+            }
+        }
+    }
+}
+```
+
+#### File `contracts/base/PausableExtUpgradeable.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.20;
+
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+
+import { AccessControlExtUpgradeable } from "./AccessControlExtUpgradeable.sol";
+
+/**
+ * @title PausableExtUpgradeable base contract
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev Extends the OpenZeppelin's {PausableUpgradeable} contract by adding the {PAUSER_ROLE} role and implementing
+ *      the external pausing and unpausing functions.
+ */
+abstract contract PausableExtUpgradeable is AccessControlExtUpgradeable, PausableUpgradeable {
+    // ------------------ Constants ------------------------------- //
+
+    /// @dev The role of a pauser that is allowed to trigger the paused or unpaused state of the contract.
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+
+    // ------------------ Initializers ---------------------------- //
+
+    /**
+     * @dev The unchained internal initializer of the upgradeable contract
+     *
+     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
+     *
+     * Note: The `..._init()` initializer has not been provided as redundant.
+     */
+    function __PausableExt_init_unchained() internal onlyInitializing {
+        _setRoleAdmin(PAUSER_ROLE, GRANTOR_ROLE);
+    }
+
+    // ------------------ Transactional functions ----------------- //
+
+    /**
+     * @dev Triggers the paused state of the contract.
+     *
+     * Requirement: the caller must have the {PAUSER_ROLE} role.
+     */
+    function pause() public onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    /**
+     * @dev Triggers the unpaused state of the contract.
+     *
+     * Requirement: the caller must have the {PAUSER_ROLE} role.
+     */
+    function unpause() public onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
+}
+```
+
+#### File `contracts/base/RescuableUpgradeable.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.20;
+
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+import { AccessControlExtUpgradeable } from "./AccessControlExtUpgradeable.sol";
+
+/**
+ * @title RescuableUpgradeable base contract
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev Allows rescuing ERC20 tokens locked in the contract using the {RESCUER_ROLE} role.
+ */
+abstract contract RescuableUpgradeable is AccessControlExtUpgradeable {
+    // ------------------ Types ----------------------------------- //
+
+    using SafeERC20 for IERC20;
+
+    // ------------------ Constants ------------------------------- //
+
+    /// @dev The role of a rescuer that is allowed to rescue tokens locked in the contract.
+    bytes32 public constant RESCUER_ROLE = keccak256("RESCUER_ROLE");
+
+    // ------------------ Initializers ---------------------------- //
+
+    /**
+     * @dev The unchained internal initializer of the upgradeable contract
+     *
+     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
+     *
+     * Note: The `..._init()` initializer has not been provided as redundant.
+     */
+    function __Rescuable_init_unchained() internal onlyInitializing {
+        _setRoleAdmin(RESCUER_ROLE, GRANTOR_ROLE);
+    }
+
+    // ------------------ Transactional functions ----------------- //
+
+    /**
+     * @dev Rescues tokens that were accidentally transferred to this contract.
+     *
+     * Does not emit special events except ones related to the token transfer.
+     *
+     * Requirements:
+     *
+     * - The caller must have the {RESCUER_ROLE} role.
+     * - The provided account address must not be zero. It is usually checked inside the token smart-contract.
+     *
+     * @param token The address of the token smart contract to rescue its coins from this smart contract's account.
+     * @param account The account to transfer the rescued tokens to.
+     * @param amount The amount of tokens to rescue.
+     */
+    function rescueERC20(
+        address token, // Tools: this comment prevents Prettier from formatting into a single line
+        address account,
+        uint256 amount
+    ) public onlyRole(RESCUER_ROLE) {
+        IERC20(token).safeTransfer(account, amount);
+    }
+}
+```
+
+#### File `contracts/base/UUPSExtUpgradeable.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.20;
+
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
+/**
+ * @title UUPSExtUpgradeable base contract
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev Extends OpenZeppelin's {UUPSUpgradeable} contract with additional checks for the new implementation address.
+ */
+abstract contract UUPSExtUpgradeable is UUPSUpgradeable {
+    // ------------------ Errors ---------------------------------- //
+
+    /// @dev Thrown if the provided new implementation address is not a contract.
+    error UUPSExtUpgradeable_ImplementationAddressNotContract();
+
+    /// @dev Thrown if the provided new implementation contract address is zero.
+    error UUPSExtUpgradeable_ImplementationAddressZero();
+
+    // ------------------ Initializers ---------------------------- //
+
+    /**
+     * @dev Unchained internal initializer of the upgradeable contract.
+     *
+     * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
+     *
+     * Note: The `..._init()` initializer has not been provided as redundant.
+     */
+    function __UUPSExt_init_unchained() internal onlyInitializing {}
+
+    // ------------------ Internal functions ---------------------- //
+
+    /**
+     * @dev Overrides the upgrade authorization function for UUPSUpgradeable.
+     * @param newImplementation The address of the new implementation of a proxy smart contract.
+     */
+    function _authorizeUpgrade(address newImplementation) internal override {
+        if (newImplementation == address(0)) {
+            revert UUPSExtUpgradeable_ImplementationAddressZero();
+        }
+
+        if (newImplementation.code.length == 0) {
+            revert UUPSExtUpgradeable_ImplementationAddressNotContract();
+        }
+
+        _validateUpgrade(newImplementation);
+    }
+
+    /**
+     * @dev Executes further validation steps of the upgrade, including authorization and implementation address checks.
+     *
+     * It is expected that this function will be overridden in successor contracts.
+     *
+     * @param newImplementation The address of the new implementation.
+     */
+    function _validateUpgrade(address newImplementation) internal virtual;
+}
+```
+
+#### File `contracts/base/Versionable.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+import "../interfaces/IVersionable.sol";
+
+/**
+ * @title Versionable base contract
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev Defines the contract version.
+ */
+abstract contract Versionable is IVersionable {
+    /// @inheritdoc IVersionable
+    function $__VERSION() external pure returns (Version memory) {
+        return Version(1, 1, 0);
+    }
+}
+```
+
+### Directory `contracts/interfaces/`
+
+#### File `contracts/interfaces/IBlueprint.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+import { IBlueprintTypes } from "./IBlueprintTypes.sol";
+
+/**
+ * @title IBlueprintPrimary interface
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev The primary part of the blueprint smart contract interface.
+ *
+ * See details about the contract in the comments of the {IBlueprint} interface.
+ */
+interface IBlueprintPrimary is IBlueprintTypes {
+    // ------------------ Events ---------------------------------- //
+
+    /**
+     * @dev Emitted when the balance of a specific account on the smart contract has been updated.
+     *
+     * The balance update can happen due to a deposit or withdrawal operation.
+     *
+     * @param opId The off-chain identifier of the operation.
+     * @param account The account whose balance has been updated.
+     * @param newBalance The updated balance of the account.
+     * @param oldBalance The previous balance of the account.
+     */
+    event BalanceUpdated(
+        bytes32 indexed opId, // Tools: this comment prevents Prettier from formatting into a single line
+        address indexed account,
+        uint256 newBalance,
+        uint256 oldBalance
+    );
+
+    // ------------------ Transactional functions ----------------- //
+
+    /**
+     * @dev Deposits tokens to the smart contract.
+     *
+     * During the function call the specified amount of tokens will be transferred from the caller to
+     * the configured treasury of the contract and the balance of the provided account will be increased accordingly.
+     *
+     * This function can be called only by an account with a special role.
+     *
+     * Emits a {BalanceUpdated} event.
+     *
+     * @param account The account to increase balance for.
+     * @param amount The amount to increase the balance by.
+     * @param opId The off-chain identifier of the operation.
+     */
+    function deposit(
+        address account, // Tools: this comment prevents Prettier from formatting into a single line
+        uint256 amount,
+        bytes32 opId
+    ) external;
+
+    /**
+     * @dev Withdraws tokens from the smart contract.
+     *
+     * During the function call the specified amount of tokens will be transferred back from
+     * the configured treasury of the contract to the provided account and
+     * the balance of the account will be decreased accordingly.
+     *
+     * This function can be called only by an account with a special role.
+     *
+     * Emits a {BalanceUpdated} event.
+     *
+     * @param account The account to decrease the balance for.
+     * @param amount The amount to decrease the balance by.
+     * @param opId The off-chain identifier of the operation.
+     */
+    function withdraw(
+        address account, // Tools: this comment prevents Prettier from formatting into a single line
+        uint256 amount,
+        bytes32 opId
+    ) external;
+
+    // ------------------ View and pure functions ----------------- //
+
+    /**
+     * @dev Returns the data of a single operation on the smart contract.
+     * @param opId The off-chain identifier of the operation.
+     * @return operation The data of the operation.
+     */
+    function getOperation(bytes32 opId) external view returns (Operation memory operation);
+
+    /**
+     * @dev Returns the state of an account.
+     * @param account The account to get the state of.
+     * @return state The state of the account.
+     */
+    function getAccountState(address account) external view returns (AccountState memory state);
+
+    /**
+     * @dev Retrieves the balance of an account.
+     *
+     * This function is a shortcut for `getAccountState().balance`.
+     *
+     * @param account The account to check the balance of.
+     * @return The resulting amount of tokens that were transferred to the contract after all operations.
+     */
+    function balanceOf(address account) external view returns (uint256);
+
+    /// @dev Returns the address of the underlying token contract.
+    function underlyingToken() external view returns (address);
+}
+
+/**
+ * @title IBlueprintConfiguration interface
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev The configuration part of the blueprint smart contract interface.
+ */
+interface IBlueprintConfiguration {
+    // ------------------ Events ---------------------------------- //
+
+    /**
+     * @dev Emitted when the operational treasury address has been changed.
+     *
+     * See the {operationalTreasury} view function comments for more details.
+     *
+     * @param newTreasury The updated address of the operational treasury.
+     * @param oldTreasury The previous address of the operational treasury.
+     */
+    event OperationalTreasuryChanged(address newTreasury, address oldTreasury);
+
+    // ------------------ Transactional functions ----------------- //
+
+    /**
+     * @dev Sets the operational treasury address.
+     *
+     * This function can be called only by an account with a special role.
+     *
+     * Emits an {OperationalTreasuryChanged} event.
+     *
+     * @param newTreasury The new address of the operational treasury to set.
+     */
+    function setOperationalTreasury(address newTreasury) external;
+
+    // ------------------ View functions -------------------------- //
+
+    /// @dev Returns the address of the operational treasury of this smart contract.
+    function operationalTreasury() external view returns (address);
+}
+
+/**
+ * @title IBlueprintErrors interface
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev Defines the custom errors used in the blueprint contract.
+ *
+ * The errors are ordered alphabetically.
+ */
+interface IBlueprintErrors {
+    /// @dev Thrown if the provided account address is zero.
+    error Blueprint_AccountAddressZero();
+
+    /// @dev Thrown if the provided amount is greater than the allowed maximum.
+    error Blueprint_AmountExcess();
+
+    /// @dev Thrown if the result account balance is greater than the allowed maximum.
+    error Blueprint_BalanceExcess();
+
+    /// @dev Thrown if the provided new implementation address is not of a blueprint contract.
+    error Blueprint_ImplementationAddressInvalid();
+
+    /**
+     * @dev Thrown if the operation with the provided identifier is already executed.
+     * @param opId The provided off-chain identifier of the related operation.
+     */
+    error Blueprint_OperationAlreadyExecuted(bytes32 opId);
+
+    /// @dev Thrown if the provided off-chain operation identifier is zero.
+    error Blueprint_OperationIdZero();
+
+    /**
+     * @dev Thrown if the provided underlying token address is zero.
+     *
+     * This error can be thrown during the contract initialization.
+     */
+    error Blueprint_TokenAddressZero();
+
+    /// @dev Thrown if the provided treasury address is already configured.
+    error Blueprint_TreasuryAddressAlreadyConfigured();
+
+    /// @dev Thrown if the configured operational treasury address is zero, so token transfer operations are disabled.
+    error Blueprint_OperationalTreasuryAddressZero();
+
+    /// @dev Thrown if the provided treasury has not granted the contract allowance to spend tokens.
+    error Blueprint_TreasuryAllowanceZero();
+}
+
+/**
+ * @title IBlueprint interface
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev The full interface of the blueprint smart contract.
+ *
+ * The smart contract is designed as a reference and template one.
+ * It allows to deposit or withdraw tokens with specifying an external (off-chain) identifier.
+ * The contract itself does not store tokens on its account.
+ * It uses an external storage called the operational treasury that can be configured by the owner of the contract.
+ * The contract can be paused, in that case only configuration and non-transactional functions can be called.
+ * Deposit, withdrawal, and similar functions are reverted if the contract is paused.
+ *
+ * Some logic and entities of this contract are just for demonstration purposes and do not have any real use.
+ */
+interface IBlueprint is IBlueprintPrimary, IBlueprintConfiguration, IBlueprintErrors {
+    /**
+     * @dev Proves the contract is the blueprint one. A marker function.
+     *
+     * It is used for simple contract compliance checks, e.g. during an upgrade.
+     * This avoids situations where a wrong contract address is specified by mistake.
+     */
+    function proveBlueprint() external pure;
+}
+```
+
+#### File `contracts/interfaces/IBlueprintTypes.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+/**
+ * @title IBlueprintTypes interface
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev Defines the types used in the blueprint smart contract.
+ *
+ * See details about the contract in the comments of the {IBlueprint} interface.
+ */
+interface IBlueprintTypes {
+    /**
+     * @dev Possible statuses of an operation used in the blueprint smart contract.
+     *
+     * The values:
+     *
+     * - Nonexistent = 0 -- The operation does not exist (the default value).
+     * - Deposit = 1 ------ The deposit operation has been executed.
+     * - Withdrawal = 2 --- The withdrawal operation has been executed.
+     */
+    enum OperationStatus {
+        Nonexistent,
+        Deposit,
+        Withdrawal
+    }
+
+    /**
+     * @dev The data of a single operation of the blueprint smart-contract.
+     *
+     * The fields:
+     *
+     * - status --- The status of the operation according to the {OperationStatus} enum.
+     * - account -- The address of the account involved in the operation.
+     * - amount --- The amount parameter of the related operation.
+     */
+    struct Operation {
+        OperationStatus status;
+        address account;
+        uint64 amount;
+        // uint24 __reserved; // Reserved for future use until the end of the storage slot
+    }
+
+    /**
+     * @dev The state of a single account within the blueprint smart-contract.
+     *
+     * The fields:
+     *
+     * - lastOpId -------- The identifier of the last operation related to the account.
+     * - balance --------- The balance of the account.
+     * - operationCount -- The number of operations related to the account.
+     */
+    struct AccountState {
+        // Slot 1
+        bytes32 lastOpId;
+        // No reserve until the end of the storage slot
+
+        // Slot 2
+        uint64 balance;
+        uint32 operationCount;
+        // uint160 __reserved; // Reserved for future use until the end of the storage slot
+    }
+}
+```
+
+#### File `contracts/interfaces/IVersionable.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+/**
+ * @title IVersionable interface
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev Defines code entities to get the version of a contract.
+ */
+interface IVersionable {
+    // ------------------ Types ---------------------------------- //
+
+    /**
+     * @dev Defines the version of a contract.
+     *
+     * The fields:
+     *
+     * - major -- The major version of the contract.
+     * - minor -- The minor version of the contract.
+     * - patch -- The patch version of the contract.
+     */
+    struct Version {
+        uint16 major;
+        uint16 minor;
+        uint16 patch;
+    }
+
+    // ------------------ Pure functions -------------------------- //
+
+    /// @dev Returns the version of the contract.
+    function $__VERSION() external pure returns (Version memory);
+}
+```
+
+### Directory `contracts/mocks/`
+
+### Directory `contracts/mocks/base/`
+
+#### File `contracts/mocks/base/AccessControlExtUpgradeableMock.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.20;
+
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
+import { AccessControlExtUpgradeable } from "../../base/AccessControlExtUpgradeable.sol";
+
+/**
+ * @title AccessControlExtUpgradeableMock contract
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev An implementation of the {AccessControlExtUpgradeable} contract for test purposes.
+ */
+contract AccessControlExtUpgradeableMock is AccessControlExtUpgradeable, UUPSUpgradeable {
+    /// @dev The role of a user of this contract.
+    bytes32 public constant USER_ROLE = keccak256("USER_ROLE");
+
+    // ------------------ Initializers ---------------------------- //
+
+    /**
+     * @dev The initialize function of the upgradeable contract.
+     *
+     * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
+     */
+    function initialize() public initializer {
+        __AccessControlExt_init_unchained();
+
+        _setRoleAdmin(USER_ROLE, GRANTOR_ROLE);
+        _grantRole(OWNER_ROLE, _msgSender());
+
+        // Only to provide 100% test coverage
+        _authorizeUpgrade(address(0));
+    }
+
+    // ------------------ Transactional functions ----------------- //
+
+    /// @dev Calls the parent internal unchained initialization function to verify the 'onlyInitializing' modifier.
+    function callParentInitializerUnchained() external {
+        __AccessControlExt_init_unchained();
+    }
+
+    // ------------------ Internal functions ---------------------- //
+
+    /**
+     * @dev The implementation of the upgrade authorization function of the parent UUPSUpgradeable contract.
+     * @param newImplementation The address of the new implementation.
+     */
+    function _authorizeUpgrade(address newImplementation) internal pure override {
+        newImplementation; // Suppresses a compiler warning about the unused variable.
+    }
+}
+```
+
+#### File `contracts/mocks/base/PausableExtUpgradeableMock.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.20;
+
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
+import { PausableExtUpgradeable } from "../../base/PausableExtUpgradeable.sol";
+
+/**
+ * @title PausableExtUpgradeableMock contract
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev An implementation of the {PausableExtUpgradeable} contract for test purposes.
+ */
+contract PausableExtUpgradeableMock is PausableExtUpgradeable, UUPSUpgradeable {
+    // ------------------ Initializers ---------------------------- //
+
+    /**
+     * @dev The initialize function of the upgradeable contract.
+     *
+     * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
+     */
+    function initialize() public initializer {
+        __AccessControlExt_init_unchained();
+        __PausableExt_init_unchained();
+
+        _grantRole(OWNER_ROLE, _msgSender());
+
+        // Only to provide 100% test coverage
+        _authorizeUpgrade(address(0));
+    }
+
+    // ------------------ Transactional functions ----------------- //
+
+    /// @dev Calls the parent internal unchained initialization function to verify the 'onlyInitializing' modifier.
+    function callParentInitializerUnchained() external {
+        __PausableExt_init_unchained();
+    }
+
+    // ------------------ Internal functions ---------------------- //
+
+    /**
+     * @dev The implementation of the upgrade authorization function of the parent UUPSUpgradeable contract.
+     * @param newImplementation The address of the new implementation.
+     */
+    function _authorizeUpgrade(address newImplementation) internal pure override {
+        newImplementation; // Suppresses a compiler warning about the unused variable
+    }
+}
+```
+
+#### File `contracts/mocks/base/RescuableUpgradeableMock.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.20;
+
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
+import { RescuableUpgradeable } from "../../base/RescuableUpgradeable.sol";
+
+/**
+ * @title RescuableUpgradeableMock contract
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev An implementation of the {RescuableUpgradeable} contract for test purposes.
+ */
+contract RescuableUpgradeableMock is RescuableUpgradeable, UUPSUpgradeable {
+    // ------------------ Initializers ---------------------------- //
+
+    /**
+     * @dev The initialize function of the upgradeable contract.
+     *
+     * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
+     */
+    function initialize() public initializer {
+        __AccessControlExt_init_unchained();
+        __Rescuable_init_unchained();
+
+        _grantRole(OWNER_ROLE, _msgSender());
+
+        // Only to provide 100% test coverage
+        _authorizeUpgrade(address(0));
+    }
+
+    // ------------------ Transactional functions ----------------- //
+
+    /// @dev Calls the parent internal unchained initialization function to verify the 'onlyInitializing' modifier.
+    function callParentInitializerUnchained() external {
+        __Rescuable_init_unchained();
+    }
+
+    // ------------------ Internal functions ---------------------- //
+
+    /**
+     * @dev The implementation of the upgrade authorization function of the parent UUPSUpgradeable contract.
+     * @param newImplementation The address of the new implementation.
+     */
+    function _authorizeUpgrade(address newImplementation) internal pure override {
+        newImplementation; // Suppresses a compiler warning about the unused variable
+    }
+}
+```
+
+#### File `contracts/mocks/base/UUPSExtUpgradeableMock.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.20;
+
+import { UUPSExtUpgradeable } from "../../base/UUPSExtUpgradeable.sol";
+
+/**
+ * @title UUPSExtUpgradeableMock contract
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev An implementation of the {UUPSExtUpgradeable} contract for test purposes.
+ */
+contract UUPSExtUpgradeableMock is UUPSExtUpgradeable {
+    // ------------------ Events ---------------------------------- //
+
+    /// @dev Emitted when the internal `_validateUpgrade()` function is called with the function's parameters.
+    event MockValidateUpgradeCall(address newImplementation);
+
+    // ------------------ Initializers ---------------------------- //
+
+    /**
+     * @dev The initialize function of the upgradeable contract.
+     *
+     * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
+     */
+    function initialize() public initializer {
+        __UUPSExt_init_unchained(); // This is needed only to avoid errors during coverage assessment
+    }
+
+    // ------------------ Transactional functions ----------------- //
+
+    /// @dev Calls the parent internal unchained initialization function to verify the 'onlyInitializing' modifier.
+    function callParentInitializerUnchained() external {
+        __UUPSExt_init_unchained();
+    }
+
+    // ------------------ Internal functions ---------------------- //
+
+    /**
+     * @dev An implementation of the validateUpgrade function of the UUPSExtUpgradeable contract.
+     *
+     * Does not execute any validation steps, just emits an event with the function parameter.
+     *
+     * @param newImplementation The address of the new implementation.
+     */
+    function _validateUpgrade(address newImplementation) internal override {
+        emit MockValidateUpgradeCall(newImplementation);
+    }
+}
+```
+
+### Directory `contracts/mocks/tokens/`
+
+#### File `contracts/mocks/tokens/ERC20TokenMock.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.20;
+
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+/**
+ * @title ERC20TokenMock contract
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev An implementation of the {ERC20} contract for testing purposes.
+ */
+contract ERC20TokenMock is ERC20 {
+    // ------------------ Constructor ----------------------------- //
+
+    /**
+     * @dev The constructor of the contract.
+     * @param name_ The name of the token to set for this ERC20-compatible contract.
+     * @param symbol_ The symbol of the token to set for this ERC20-compatible contract.
+     */
+    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {}
+
+    // ------------------ Transactional functions ----------------- //
+
+    /**
+     * @dev Calls the appropriate internal function to mint needed amount of tokens for an account.
+     * @param account The address of an account to mint for.
+     * @param amount The amount of tokens to mint.
+     */
+    function mint(address account, uint256 amount) external {
+        _mint(account, amount);
+    }
+}
+```
+
+### Directory `contracts/testables/`
+
+#### File `contracts/testables/BlueprintTestable.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.24;
+
+import { Blueprint } from "../Blueprint.sol";
+
+/**
+ * @title BlueprintTestable contract
+ * @author CloudWalk Inc. (See https://www.cloudwalk.io)
+ * @dev The version of the blueprint contract with additions required for testing.
+ * @custom:oz-upgrades-unsafe-allow missing-initializer
+ */
+contract BlueprintTestable is Blueprint {
+    /**
+     * @dev Sets the state of an account.
+     * @param account The account to set the state of.
+     * @param newState The new state of the account.
+     */
+    function setAccountState(address account, AccountState calldata newState) public {
+        _getBlueprintStorage().accountStates[account] = newState;
+    }
+}
+```
