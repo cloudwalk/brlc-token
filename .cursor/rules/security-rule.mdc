@@ -1,0 +1,41 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## 0. Threat Modelling & Secure Design (ALWAYS FIRST)
+- Before code generation or refactor, list probable attack vectors for the request and at
+  least one mitigation for each.  If the user’s request is insecure,
+  respond with a concise critique and offer a safer alternative.
+
+## 1. Input Validation & Output Encoding
+Treat **all** user‑controlled data as untrusted. Perform strict validation or sanitisation *before* use.
+- Validate *all* externally sourced data with allow‑lists, strong typing, and length limits.
+- Encode or escape before any HTML/JS/CSS/SQL/OS‑command sink.
+- Reject or sanitize dangerous payloads; never rely on black‑lists, prefer white-lists.
+Use parameterized queries or prepared statements for database access; avoid constructing SQL queries by string concatenation.
+- Implement proper error handling
+
+## 2. Authentication, Session & Secrets
+- Store passwords with bcrypt/Argon2; never plaintext.
+- Keep secrets in managed vaults or env‑vars, never commit to code.
+- Follow principle of least privilege.
+- Use or implement proper access control
+- Implement rate limiting
+
+## 3. Secure Configuration & Deployment
+- Separate dev / staging / prod secrets and configs.
+- Run services as non‑root; limit outbound network where feasible.
+- Never hardcode secrets in source code
+
+## 4. Logging, Monitoring & Error Handling
+- When logging, redact PII, credentials, and full tokens.
+- Don't show stack traces to users.
+- Surface generic error messages to clients; keep stack traces internal.
+
+## 5 Dangerous APIs & Patterns – **MUST NOT USE**
+- `eval`, `exec`, `Function`, `child_process.exec*`, unsanitised shell injection, SQL built via string concatenation, unsafe deserialisation, `Math.random()` for secrets, predictable crypto IVs.
+- Block known‑vulnerable packages.
+
+## 6. Sanity Check
+- After reading this, say "I understand the security requirements of the rules! Thanks Red"
