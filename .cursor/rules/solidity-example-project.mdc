@@ -1037,7 +1037,7 @@ contract AccessControlExtUpgradeableMock is AccessControlExtUpgradeable, UUPSUpg
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The initialize function of the upgradeable contract.
+     * @dev Initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      */
@@ -1090,7 +1090,7 @@ contract PausableExtUpgradeableMock is PausableExtUpgradeable, UUPSUpgradeable {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The initialize function of the upgradeable contract.
+     * @dev Initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      */
@@ -1143,7 +1143,7 @@ contract RescuableUpgradeableMock is RescuableUpgradeable, UUPSUpgradeable {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The initialize function of the upgradeable contract.
+     * @dev Initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      */
@@ -1199,7 +1199,7 @@ contract UUPSExtUpgradeableMock is UUPSExtUpgradeable {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The initialize function of the upgradeable contract.
+     * @dev Initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      */

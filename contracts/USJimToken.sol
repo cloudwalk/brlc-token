@@ -27,7 +27,7 @@ contract USJimToken is CWToken {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The initializer of the upgradeable contract.
+     * @dev Initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      *

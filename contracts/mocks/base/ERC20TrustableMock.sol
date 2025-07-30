@@ -11,7 +11,7 @@ import { ERC20Trustable } from "../../base/ERC20Trustable.sol";
  */
 contract ERC20TrustableMock is ERC20Trustable {
     /**
-     * @dev The initialize function of the upgradeable contract.
+     * @dev Initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      *
