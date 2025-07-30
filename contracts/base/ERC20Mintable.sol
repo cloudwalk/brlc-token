@@ -38,7 +38,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         // Slot 1
         uint64 amount;
         uint64 release;
-        // uint128 __reserved1; // Reserved for future use until the end of the storage slot
+        // uint128 __reserved1; // Reserved until the end of the storage slot
     }
 
     // ------------------ Constants ------------------------------- //
@@ -92,7 +92,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
         // Slot 2
         uint16 maxPendingPremintsCount;
-        // uint240 __reserved1; // Reserved for future use until the end of the storage slot
+        // uint240 __reserved1; // Reserved until the end of the storage slot
 
         // Slot 3
         mapping(uint256 => uint256) premintReschedulings;
