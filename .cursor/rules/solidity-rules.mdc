@@ -208,7 +208,7 @@ alwaysApply: false
      /**
       * @dev The data of a single operation of the blueprint smart-contract.
       *
-      * The fields:
+      * Fields:
       *
       * - status --- The status of the operation according to the {OperationStatus} enum.
       * - account -- The address of the account involved in the operation.

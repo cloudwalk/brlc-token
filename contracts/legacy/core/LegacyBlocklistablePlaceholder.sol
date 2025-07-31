@@ -34,7 +34,7 @@ abstract contract LegacyBlocklistablePlaceholder {
     /**
      * @dev Defines the additional storage of the Blocklistable base contract.
      *
-     * The fields:
+     * Fields:
      *
      * - blocklisters -- The mapping of presence in the blocklist for a given address.
      * - enabled ------- The enabled/disabled status of the blocklist.

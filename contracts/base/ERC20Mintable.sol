@@ -16,7 +16,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @dev The premint state of a single account.
      *
-     * The fields:
+     * Fields:
      *
      * - premintRecords -- The array of premint records.
      *
@@ -28,7 +28,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @dev The data of a single premint record.
      *
-     * The fields:
+     * Fields:
      *
      * - amount --- The amount of tokens to premint.
      * - release -- The release timestamp of the premint.
@@ -75,7 +75,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @dev Defines the storage of the ERC20Mintable base contract.
      *
-     * The fields:
+     * Fields:
      *
      * - premints --------------------- The mapping of premint states for accounts.
      * - maxPendingPremintsCount ------ The maximum number of pending premints.
