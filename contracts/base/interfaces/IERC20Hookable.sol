@@ -24,7 +24,7 @@ interface IERC20Hookable {
     /**
      * @dev The data of a single hook.
      *
-     * The fields:
+     * Fields:
      *
      * - account -- The address of the contract to call the hook.
      * - policy --- The error handling policy of the hook.

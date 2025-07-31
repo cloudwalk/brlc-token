@@ -352,7 +352,7 @@ abstract contract BlueprintStorageLayout is IBlueprintTypes {
     /**
      * @dev Defines the contract storage structure.
      *
-     * The fields:
+     * Fields:
      *
      * - token ---------------- The address of the underlying token.
      * - operationalTreasury -- The address of the operational treasury.
@@ -367,11 +367,11 @@ abstract contract BlueprintStorageLayout is IBlueprintTypes {
     struct BlueprintStorage {
         // Slot 1
         address token;
-        // uint96 __reserved1; // Reserved for future use until the end of the storage slot
+        // uint96 __reserved1; // Reserved until the end of the storage slot
 
         // Slot 2
         address operationalTreasury;
-        // uint96 __reserved2; // Reserved for future use until the end of the storage slot
+        // uint96 __reserved2; // Reserved until the end of the storage slot
 
         // Slot 3
         mapping(bytes32 opId => Operation operation) operations;
@@ -422,7 +422,7 @@ abstract contract AccessControlExtUpgradeable is AccessControlUpgradeable {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The unchained internal initializer of the upgradeable contract
+     * @dev The unchained internal initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      *
@@ -503,7 +503,7 @@ abstract contract PausableExtUpgradeable is AccessControlExtUpgradeable, Pausabl
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The unchained internal initializer of the upgradeable contract
+     * @dev The unchained internal initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      *
@@ -565,7 +565,7 @@ abstract contract RescuableUpgradeable is AccessControlExtUpgradeable {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The unchained internal initializer of the upgradeable contract
+     * @dev The unchained internal initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/contracts/5.x/upgradeable#multiple-inheritance
      *
@@ -938,7 +938,7 @@ interface IBlueprintTypes {
     /**
      * @dev The data of a single operation of the blueprint smart-contract.
      *
-     * The fields:
+     * Fields:
      *
      * - status --- The status of the operation according to the {OperationStatus} enum.
      * - account -- The address of the account involved in the operation.
@@ -948,13 +948,13 @@ interface IBlueprintTypes {
         OperationStatus status;
         address account;
         uint64 amount;
-        // uint24 __reserved; // Reserved for future use until the end of the storage slot
+        // uint24 __reserved; // Reserved until the end of the storage slot
     }
 
     /**
      * @dev The state of a single account within the blueprint smart-contract.
      *
-     * The fields:
+     * Fields:
      *
      * - lastOpId -------- The identifier of the last operation related to the account.
      * - balance --------- The balance of the account.
@@ -968,7 +968,7 @@ interface IBlueprintTypes {
         // Slot 2
         uint64 balance;
         uint32 operationCount;
-        // uint160 __reserved; // Reserved for future use until the end of the storage slot
+        // uint160 __reserved; // Reserved until the end of the storage slot
     }
 }
 ```
@@ -991,7 +991,7 @@ interface IVersionable {
     /**
      * @dev Defines the version of a contract.
      *
-     * The fields:
+     * Fields:
      *
      * - major -- The major version of the contract.
      * - minor -- The minor version of the contract.
@@ -1037,7 +1037,7 @@ contract AccessControlExtUpgradeableMock is AccessControlExtUpgradeable, UUPSUpg
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The initialize function of the upgradeable contract.
+     * @dev Initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      */
@@ -1090,7 +1090,7 @@ contract PausableExtUpgradeableMock is PausableExtUpgradeable, UUPSUpgradeable {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The initialize function of the upgradeable contract.
+     * @dev Initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      */
@@ -1143,7 +1143,7 @@ contract RescuableUpgradeableMock is RescuableUpgradeable, UUPSUpgradeable {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The initialize function of the upgradeable contract.
+     * @dev Initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      */
@@ -1199,7 +1199,7 @@ contract UUPSExtUpgradeableMock is UUPSExtUpgradeable {
     // ------------------ Initializers ---------------------------- //
 
     /**
-     * @dev The initialize function of the upgradeable contract.
+     * @dev Initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      */

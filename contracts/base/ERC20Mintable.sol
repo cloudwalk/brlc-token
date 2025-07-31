@@ -16,7 +16,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @dev The premint state of a single account.
      *
-     * The fields:
+     * Fields:
      *
      * - premintRecords -- The array of premint records.
      *
@@ -28,7 +28,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @dev The data of a single premint record.
      *
-     * The fields:
+     * Fields:
      *
      * - amount --- The amount of tokens to premint.
      * - release -- The release timestamp of the premint.
@@ -38,7 +38,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
         // Slot 1
         uint64 amount;
         uint64 release;
-        // uint128 __reserved1; // Reserved for future use until the end of the storage slot
+        // uint128 __reserved1; // Reserved until the end of the storage slot
     }
 
     // ------------------ Constants ------------------------------- //
@@ -75,7 +75,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     /**
      * @dev Defines the storage of the ERC20Mintable base contract.
      *
-     * The fields:
+     * Fields:
      *
      * - premints --------------------- The mapping of premint states for accounts.
      * - maxPendingPremintsCount ------ The maximum number of pending premints.
@@ -92,7 +92,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
 
         // Slot 2
         uint16 maxPendingPremintsCount;
-        // uint240 __reserved1; // Reserved for future use until the end of the storage slot
+        // uint240 __reserved1; // Reserved until the end of the storage slot
 
         // Slot 3
         mapping(uint256 => uint256) premintReschedulings;
@@ -216,7 +216,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * - The `amount` value must be greater than zero.
      */
     function mintFromReserve(
-        address account, // Tools: this comment prevents Prettier from formatting into a single line.
+        address account, // Tools: prevent Prettier one-liner
         uint256 amount
     ) external whenNotPaused onlyRole(RESERVE_MINTER_ROLE) {
         _mintInternal(account, amount);
@@ -239,7 +239,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * - The number of pending premints must be less than the limit.
      */
     function premintIncrease(
-        address account, // Tools: this comment prevents Prettier from formatting into a single line.
+        address account, // Tools: prevent Prettier one-liner
         uint256 amount,
         uint256 release
     ) external onlyRole(PREMINT_MANAGER_ROLE) {
@@ -263,7 +263,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
      * - The number of pending premints must be less than the limit.
      */
     function premintDecrease(
-        address account, // Tools: this comment prevents Prettier from formatting into a single line.
+        address account, // Tools: prevent Prettier one-liner
         uint256 amount,
         uint256 release
     ) external onlyRole(PREMINT_MANAGER_ROLE) {
@@ -434,7 +434,7 @@ abstract contract ERC20Mintable is ERC20Base, IERC20Mintable {
     }
 
     function _premint(
-        address account, // Tools: this comment prevents Prettier from formatting into a single line.
+        address account, // Tools: prevent Prettier one-liner
         uint256 amount,
         uint256 release,
         bool decreasing

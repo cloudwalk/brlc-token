@@ -11,7 +11,7 @@ interface IERC20ComplexBalance {
     /**
      * @dev The complex balance of an accounts.
      *
-     * The fields:
+     * Fields:
      *
      * - total ------- The total amount of tokens that is equal the value returned by the usual `balanceOf()` function.
      * - free -------- The amount of tokens that are available without any limitations described in next fields.

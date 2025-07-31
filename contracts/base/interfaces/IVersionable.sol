@@ -13,7 +13,7 @@ interface IVersionable {
     /**
      * @dev Defines the version of a contract.
      *
-     * The fields:
+     * Fields:
      *
      * - major -- The major version of the contract.
      * - minor -- The minor version of the contract.

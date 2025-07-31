@@ -34,7 +34,7 @@ abstract contract LegacyBlocklistablePlaceholder {
     /**
      * @dev Defines the additional storage of the Blocklistable base contract.
      *
-     * The fields:
+     * Fields:
      *
      * - blocklisters -- The mapping of presence in the blocklist for a given address.
      * - enabled ------- The enabled/disabled status of the blocklist.
@@ -47,7 +47,7 @@ abstract contract LegacyBlocklistablePlaceholder {
 
         // Slot 2
         bool enabled;
-        // uint248 __reserved1; // Reserved for future use until the end of the storage slot
+        // uint248 __reserved1; // Reserved until the end of the storage slot
     }
 
     // ------------------ Storage variables ----------------------- //

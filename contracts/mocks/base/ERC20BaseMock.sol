@@ -11,7 +11,7 @@ import { ERC20Base } from "../../base/ERC20Base.sol";
  */
 contract ERC20BaseMock is ERC20Base {
     /**
-     * @dev The initialize function of the upgradeable contract.
+     * @dev Initializer of the upgradeable contract.
      *
      * See details: https://docs.openzeppelin.com/upgrades-plugins/writing-upgradeable
      *
@@ -24,8 +24,8 @@ contract ERC20BaseMock is ERC20Base {
 
     /**
      * @dev Calls the parent internal initializing function to verify the 'onlyInitializing' modifier.
-     * @param name_ The name of the token,
-     * @param symbol_ The symbol of the token,
+     * @param name_ The name of the token.
+     * @param symbol_ The symbol of the token.
      */
     function callParentInitializer(string memory name_, string memory symbol_) public {
         __ERC20Base_init(name_, symbol_);

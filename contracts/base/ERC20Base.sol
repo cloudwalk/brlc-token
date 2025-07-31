@@ -81,7 +81,7 @@ abstract contract ERC20Base is
      * @dev Requirement: the contract must not be paused.
      */
     function _approve(
-        address owner, // Tools: this comment prevents Prettier from formatting into a single line.
+        address owner, // Tools: prevent Prettier one-liner
         address spender,
         uint256 amount
     ) internal virtual override whenNotPaused {
@@ -94,7 +94,7 @@ abstract contract ERC20Base is
      * @dev Requirements: The contract must not be paused.
      */
     function _spendAllowance(
-        address owner, // Tools: this comment prevents Prettier from formatting into a single line.
+        address owner, // Tools: prevent Prettier one-liner
         address spender,
         uint256 amount
     ) internal virtual override whenNotPaused {
@@ -107,7 +107,7 @@ abstract contract ERC20Base is
      * @dev Requirements: The contract must not be paused.
      */
     function _beforeTokenTransfer(
-        address from, // Tools: this comment prevents Prettier from formatting into a single line.
+        address from, // Tools: prevent Prettier one-liner
         address to,
         uint256 amount
     ) internal virtual override whenNotPaused {
