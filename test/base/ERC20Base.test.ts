@@ -10,8 +10,8 @@ describe("Contract 'ERC20Base'", async () => {
   const TOKEN_SYMBOL = "BRLC";
   const TOKEN_DECIMALS = 6;
 
-  const TOKEN_AMOUNT: number = 100;
-  const TOKEN_ALLOWANCE: number = 200;
+  const TOKEN_AMOUNT = 100;
+  const TOKEN_ALLOWANCE = 200;
 
   // Events of the lib contracts
   const EVENT_NAME_APPROVAL = "Approval";
@@ -43,7 +43,7 @@ describe("Contract 'ERC20Base'", async () => {
     let token = await upgrades.deployProxy(
       tokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL],
-      { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
+      { unsafeSkipProxyAdminCheck: true }, // This is necessary to run tests on other networks
     ) as Contract;
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
@@ -112,7 +112,7 @@ describe("Contract 'ERC20Base'", async () => {
       await expect(tx).to.changeTokenBalances(
         token,
         [user1, user2, token],
-        [-TOKEN_AMOUNT, TOKEN_AMOUNT, 0]
+        [-TOKEN_AMOUNT, TOKEN_AMOUNT, 0],
       );
       await expect(tx)
         .to.emit(token, EVENT_NAME_TRANSFER)
@@ -159,7 +159,7 @@ describe("Contract 'ERC20Base'", async () => {
       await expect(tx).to.changeTokenBalances(
         token,
         [user1, user2],
-        [-TOKEN_AMOUNT, TOKEN_AMOUNT]
+        [-TOKEN_AMOUNT, TOKEN_AMOUNT],
       );
       await expect(tx)
         .to.emit(token, EVENT_NAME_TRANSFER)

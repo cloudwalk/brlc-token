@@ -66,7 +66,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
 
     return {
       rescuableMock,
-      tokenMock
+      tokenMock,
     };
   }
 
@@ -112,7 +112,7 @@ describe("Contract 'RescuableUpgradeable'", async () => {
       await expect(tx).to.changeTokenBalances(
         tokenMock,
         [rescuableMock, deployer, rescuer],
-        [-TOKEN_AMOUNT, +TOKEN_AMOUNT, 0]
+        [-TOKEN_AMOUNT, +TOKEN_AMOUNT, 0],
       );
       await expect(tx)
         .to.emit(tokenMock, EVENT_NAME_TRANSFER)

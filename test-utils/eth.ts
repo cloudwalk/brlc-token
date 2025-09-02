@@ -53,7 +53,7 @@ export async function increaseBlockTimestampTo(target: number) {
 export async function getNumberOfEvents(
   tx: Promise<TransactionResponse>,
   contract: Contract,
-  eventName: string
+  eventName: string,
 ): Promise<number> {
   const topic = contract.filters[eventName].fragment.topicHash;
   return (await proveTx(tx)).logs.filter(log => log.topics[0] == topic).length;

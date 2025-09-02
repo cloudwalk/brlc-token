@@ -24,11 +24,11 @@ class Logger {
     this.startTimeFormatted = Logger.formatDate(this.startTime);
   }
 
-  increaseLogIndent(numberOfSteps: number = 1) {
+  increaseLogIndent(numberOfSteps = 1) {
     this.logIndent += this.logSingleLevelIndent.repeat(numberOfSteps);
   }
 
-  decreaseLogIndent(numberOfSteps: number = 1) {
+  decreaseLogIndent(numberOfSteps = 1) {
     while (numberOfSteps-- > 0) {
       const endIndex = this.logIndent.lastIndexOf(this.logSingleLevelIndent);
       if (endIndex >= 0) {
@@ -67,7 +67,7 @@ class Logger {
 }
 
 // Script constants
-const ADDRESS_STUB: string = "0x1235678000000000000000000000000087654321";
+const ADDRESS_STUB = "0x1235678000000000000000000000000087654321";
 const UINT256_MAX = ethers.MaxUint256;
 const OWNER_ROLE = ethers.id("OWNER_ROLE");
 const MINTER_ROLE = ethers.id("MINTER_ROLE");
@@ -124,7 +124,7 @@ async function main() {
   logger.log("🎉 Everything is done successfully");
 }
 
-main().then().catch(err => {
+main().catch((err) => {
   throw err;
 });
 
@@ -133,7 +133,7 @@ async function checkNetwork(owner: HardhatEthersSigner) {
   if (actualNetwork.chainId !== BigInt(CHAIN_ID)) {
     throw Error(
       `❌ The network chain ID does not match the expected one. ` +
-      `Expected: ${CHAIN_ID}, Actual: ${actualNetwork.chainId}`
+      `Expected: ${CHAIN_ID}, Actual: ${actualNetwork.chainId}`,
     );
   }
   logger.increaseLogIndent();
@@ -156,7 +156,7 @@ async function checkAndConfigureOwnerRolesOnTheContract(contract: Contract, owne
     "function updateMainMinter(address newMinter) external",
     "function configureMinter(address minter, uint256 allowance) external",
     "function isTrustedAccount(address account) view returns (bool)",
-    "function configureTrustedAccount(address account, bool isTrusted) external"
+    "function configureTrustedAccount(address account, bool isTrusted) external",
   ];
   const oldContract = new ethers.Contract(contract.target, oldAbi, contract.runner);
 
@@ -242,7 +242,7 @@ async function upgradeContract(contract: Contract, factory: ContractFactory) {
   const upgradedContract = await upgrades.upgradeProxy(
     contract.target,
     factory,
-    { redeployImplementation: "always" }
+    { redeployImplementation: "always" },
   );
   await upgradedContract.waitForDeployment();
 }
