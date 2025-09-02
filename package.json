@@ -1,20 +1,47 @@
 {
   "dependencies": {
-    "@openzeppelin/contracts-upgradeable": "^5.3.0"
+    "@openzeppelin/contracts-upgradeable": "^5.4.0"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@openzeppelin/hardhat-upgrades": "^3.9.0",
-    "@stylistic/eslint-plugin": "^1.8.1",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "dotenv": "^16.6.0",
-    "eslint": "^8.57.1",
-    "hardhat-contract-sizer": "^2.10.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.1",
+    "dotenv": "^17.2.1",
+    "eslint": "^9.33.0",
+    "hardhat-contract-sizer": "^2.10.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
     "prettier": "^3.6.2",
-    "prettier-plugin-solidity": "^1.4.3"
+    "typescript": "^5.9.2"
   },
+  "optionalDependencies": {
+    "@cloudwalk/eslint-config-smart-contracts": "^1.0.0",
+    "@cloudwalk/solidity-prettier-config": "^1.0.0"
+  },
+  "lint-staged": {
+    "*.{js,ts}": [
+      "npm run eslint:fix"
+    ],
+    "*.sol": [
+      "npm run prettier:fix"
+    ]
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "prettier": "@cloudwalk/solidity-prettier-config",
   "scripts": {
-    "prettier": "npx prettier --write 'scripts/**/*.ts' 'test/**/*.ts' 'test-utils/**/*.ts'; npx prettier --write --plugin=prettier-plugin-solidity 'contracts/**/*.sol'"
+    "prettier": "npm run prettier:fix",
+    "prettier:fix": "prettier --write \"**/*.sol\"",
+    "prettier:check": "prettier --check \"**/*.sol\"",
+    "eslint": "npm run eslint:fix",
+    "eslint:fix": "eslint --fix",
+    "eslint:check": "eslint",
+    "lint": "npm run prettier:check && npm run eslint:check",
+    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
+    "build": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "test:coverage": "npx hardhat coverage",
+    "prepare": "husky",
+    "contracts:size": "npx hardhat size-contracts"
   }
 }
