@@ -7,7 +7,7 @@ import { setUpFixture } from "../../test-utils/common";
 
 enum ErrorHandlingPolicy {
   Revert = 0,
-  Event = 1
+  Event = 1,
 }
 
 interface HookConfig {
@@ -79,7 +79,7 @@ describe("Contract 'ERC20Hookable'", async () => {
     let token = await upgrades.deployProxy(
       tokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL],
-      { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
+      { unsafeSkipProxyAdminCheck: true }, // This is necessary to run tests on other networks
     ) as Contract;
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
@@ -143,12 +143,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Revert
-        }
+          policy: ErrorHandlingPolicy.Revert,
+        },
       ];
       expect(await token.getBeforeTokenTransferHooks()).to.deep.equal([]);
       await expect(token.setBeforeTokenTransferHooks(hooks))
@@ -161,12 +161,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Revert
-        }
+          policy: ErrorHandlingPolicy.Revert,
+        },
       ];
       await expect(connect(token, user).setBeforeTokenTransferHooks(hooks))
         .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
@@ -180,12 +180,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Revert
-        }
+          policy: ErrorHandlingPolicy.Revert,
+        },
       ];
       expect(await token.getAfterTokenTransferHooks()).to.deep.equal([]);
       await expect(token.setAfterTokenTransferHooks(hooks))
@@ -198,12 +198,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Revert
-        }
+          policy: ErrorHandlingPolicy.Revert,
+        },
       ];
       await expect(connect(token, user).setAfterTokenTransferHooks(hooks))
         .to.be.revertedWithCustomError(token, ERROR_NAME_ACCESS_CONTROL_UNAUTHORIZED_ACCOUNT)
@@ -217,12 +217,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Revert
-        }
+          policy: ErrorHandlingPolicy.Revert,
+        },
       ];
       await proveTx(token.setBeforeTokenTransferHooks(hooks));
       const tx = connect(token, user).transfer(user.address, 0);
@@ -238,12 +238,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Revert
-        }
+          policy: ErrorHandlingPolicy.Revert,
+        },
       ];
       await proveTx(token.setBeforeTokenTransferHooks(hooks));
       const tx = connect(token, user).transfer(user.address, 0);
@@ -259,12 +259,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Revert
-        }
+          policy: ErrorHandlingPolicy.Revert,
+        },
       ];
       await proveTx(token.setBeforeTokenTransferHooks(hooks));
       const tx = connect(token, user).transfer(user.address, 0);
@@ -281,12 +281,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Event
-        }
+          policy: ErrorHandlingPolicy.Event,
+        },
       ];
       await proveTx(token.setBeforeTokenTransferHooks(hooks));
       const tx1 = connect(token, user).transfer(user.address, 0);
@@ -327,12 +327,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Event
-        }
+          policy: ErrorHandlingPolicy.Event,
+        },
       ];
       await proveTx(token.setBeforeTokenTransferHooks(hooks));
       const tx1 = connect(token, user).transfer(user.address, 0);
@@ -373,12 +373,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Event
-        }
+          policy: ErrorHandlingPolicy.Event,
+        },
       ];
       await proveTx(token.setBeforeTokenTransferHooks(hooks));
       const tx1 = connect(token, user).transfer(user.address, 0);
@@ -392,13 +392,13 @@ describe("Contract 'ERC20Hookable'", async () => {
         getAddress(hook1),
         ZERO_REVERT_REASON_MESSAGE,
         ZERO_PANIC_ERROR_CODE,
-        REVERT_LOW_LEVEL_DATA_BEFORE
+        REVERT_LOW_LEVEL_DATA_BEFORE,
       );
       await expect(tx2).to.emit(token, EVENT_NAME_BEFORE_TOKEN_TRANSFER_HOOK_FAILURE).withArgs(
         getAddress(hook2),
         ZERO_REVERT_REASON_MESSAGE,
         ZERO_PANIC_ERROR_CODE,
-        REVERT_LOW_LEVEL_DATA_BEFORE
+        REVERT_LOW_LEVEL_DATA_BEFORE,
       );
       await expect(tx2).not.to.emit(hook1, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
       await expect(tx2).not.to.emit(hook2, EVENT_NAME_TEST_BEFORE_TOKEN_TRANSFER_HOOK);
@@ -411,12 +411,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Revert
-        }
+          policy: ErrorHandlingPolicy.Revert,
+        },
       ];
       await proveTx(token.setAfterTokenTransferHooks(hooks));
       const tx = connect(token, user).transfer(user.address, 0);
@@ -432,12 +432,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Revert
-        }
+          policy: ErrorHandlingPolicy.Revert,
+        },
       ];
       await proveTx(token.setAfterTokenTransferHooks(hooks));
       const tx = connect(token, user).transfer(user.address, 0);
@@ -453,12 +453,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Revert
-        }
+          policy: ErrorHandlingPolicy.Revert,
+        },
       ];
       await proveTx(token.setAfterTokenTransferHooks(hooks));
       const tx = connect(token, user).transfer(user.address, 0);
@@ -475,12 +475,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Event
-        }
+          policy: ErrorHandlingPolicy.Event,
+        },
       ];
       await proveTx(token.setAfterTokenTransferHooks(hooks));
       const tx1 = connect(token, user).transfer(user.address, 0);
@@ -521,12 +521,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Event
-        }
+          policy: ErrorHandlingPolicy.Event,
+        },
       ];
       await proveTx(token.setAfterTokenTransferHooks(hooks));
       const tx1 = connect(token, user).transfer(user.address, 0);
@@ -567,12 +567,12 @@ describe("Contract 'ERC20Hookable'", async () => {
       const hooks: HookConfig[] = [
         {
           account: getAddress(hook1),
-          policy: ErrorHandlingPolicy.Event
+          policy: ErrorHandlingPolicy.Event,
         },
         {
           account: getAddress(hook2),
-          policy: ErrorHandlingPolicy.Event
-        }
+          policy: ErrorHandlingPolicy.Event,
+        },
       ];
       await proveTx(token.setAfterTokenTransferHooks(hooks));
       const tx1 = connect(token, user).transfer(user.address, 0);
@@ -586,13 +586,13 @@ describe("Contract 'ERC20Hookable'", async () => {
         getAddress(hook1),
         ZERO_REVERT_REASON_MESSAGE,
         ZERO_PANIC_ERROR_CODE,
-        REVERT_LOW_LEVEL_DATA_AFTER
+        REVERT_LOW_LEVEL_DATA_AFTER,
       );
       await expect(tx2).to.emit(token, EVENT_NAME_AFTER_TOKEN_TRANSFER_HOOK_FAILURE).withArgs(
         getAddress(hook2),
         ZERO_REVERT_REASON_MESSAGE,
         ZERO_PANIC_ERROR_CODE,
-        REVERT_LOW_LEVEL_DATA_AFTER
+        REVERT_LOW_LEVEL_DATA_AFTER,
       );
       await expect(tx2).not.to.emit(hook1, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK);
       await expect(tx2).not.to.emit(hook2, EVENT_NAME_TEST_AFTER_TOKEN_TRANSFER_HOOK);

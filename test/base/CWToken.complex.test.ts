@@ -68,7 +68,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
     let token = await upgrades.deployProxy(
       tokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL],
-      { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
+      { unsafeSkipProxyAdminCheck: true }, // This is necessary to run tests on other networks
     ) as Contract;
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
@@ -130,7 +130,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
     props: {
       token: Contract;
       amounts: TokenAmounts;
-    }
+    },
   ) {
     const timestamp = (await getLatestBlockTimestamp()) + 100;
     const { token, amounts } = props;
@@ -215,7 +215,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       await expect(connect(token, sender).transfer(receiver.address, transferAmount)).to.changeTokenBalances(
         token,
         [sender, receiver],
-        [-transferAmount, transferAmount]
+        [-transferAmount, transferAmount],
       );
       amounts.total -= transferAmount;
       await checkComplexBalance({ token, amounts });
@@ -267,7 +267,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 5,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -276,7 +276,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 10,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -286,7 +286,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 15,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -296,7 +296,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 20,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -305,7 +305,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 25,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
       });
@@ -316,7 +316,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 5,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -325,7 +325,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 10,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -334,7 +334,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 15,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -344,7 +344,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 20,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -353,7 +353,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 25,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
       });
@@ -374,7 +374,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         await failTransferWithCustomErrorAndCheck({
           errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
-          transferAmount: 15
+          transferAmount: 15,
         });
       });
 
@@ -382,7 +382,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         await failTransferWithCustomErrorAndCheck({
           errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
-          transferAmount: 20
+          transferAmount: 20,
         });
       });
 
@@ -404,7 +404,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 5,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -413,7 +413,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 10,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -423,7 +423,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 15,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -433,7 +433,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 20,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -442,7 +442,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 25,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
       });
@@ -453,7 +453,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 5,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -463,7 +463,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 10,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -473,7 +473,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 15,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -482,7 +482,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 20,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -491,7 +491,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 25,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
       });
@@ -511,7 +511,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 5,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -521,7 +521,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 10,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -531,7 +531,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 15,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -541,7 +541,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 20,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -550,7 +550,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 25,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
       });
@@ -561,7 +561,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 5,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -570,7 +570,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 10,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -580,7 +580,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 15,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -591,7 +591,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 20,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -600,7 +600,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 25,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
       });
@@ -613,7 +613,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         await failTransferWithCustomErrorAndCheck({
           errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
-          transferAmount: 5
+          transferAmount: 5,
         });
       });
 
@@ -621,7 +621,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         await failTransferWithCustomErrorAndCheck({
           errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
-          transferAmount: 10
+          transferAmount: 10,
         });
       });
 
@@ -629,7 +629,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         await failTransferWithCustomErrorAndCheck({
           errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
-          transferAmount: 15
+          transferAmount: 15,
         });
       });
 
@@ -637,14 +637,14 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
         await failTransferWithCustomErrorAndCheck({
           errorName: ERROR_NAME_TRANSFER_EXCEEDED_FROZEN_AMOUNT,
           initialAmounts,
-          transferAmount: 20
+          transferAmount: 20,
         });
       });
 
       it("25 tokens are transferred", async () => {
         await failTransferDueToLackOfBalanceAndCheck({
           initialAmounts,
-          transferAmount: 25
+          transferAmount: 25,
         });
       });
     });
@@ -663,7 +663,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 5,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -673,7 +673,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 10,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -683,7 +683,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 15,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -693,7 +693,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 20,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
 
@@ -702,7 +702,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 25,
             timestamp,
-            awaitPreminting: false
+            awaitPreminting: false,
           });
         });
       });
@@ -713,7 +713,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 5,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -722,7 +722,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 10,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -731,7 +731,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 15,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -740,7 +740,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 20,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
 
@@ -749,7 +749,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
             initialAmounts,
             transferAmount: 25,
             timestamp,
-            awaitPreminting: true
+            awaitPreminting: true,
           });
         });
       });
@@ -789,11 +789,11 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
       const { initialAmounts, transferAmount } = props;
       const amounts = await setUpComplexBalances({ token, amounts: { ...initialAmounts } });
       await expect(
-        connect(token, freezer).transferFrozen(sender.address, receiver.address, transferAmount)
+        connect(token, freezer).transferFrozen(sender.address, receiver.address, transferAmount),
       ).to.changeTokenBalances(
         token,
         [sender, receiver],
-        [-transferAmount, transferAmount]
+        [-transferAmount, transferAmount],
       );
       amounts.frozen -= transferAmount;
       amounts.total -= transferAmount;
@@ -823,7 +823,7 @@ describe("Contract 'CWToken' - Premintable and Freezable scenarios", async () =>
           await failTransferFrozenWithCustomErrorAndCheck({
             errorName: ERROR_NAME_LACK_OF_FROZEN_BALANCE,
             initialAmounts,
-            transferAmount: 10
+            transferAmount: 10,
           });
         });
       });

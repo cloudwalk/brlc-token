@@ -61,7 +61,7 @@ describe("Contract 'ERC20Mintable'", async () => {
 
   enum PremintFunction {
     Increase = 0,
-    Decrease = 1
+    Decrease = 1,
   }
 
   interface Premint {
@@ -92,7 +92,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       preminterAgent,
       preminterRescheduler,
       user,
-      recipient
+      recipient,
     ] = await ethers.getSigners();
     tokenFactory = await ethers.getContractFactory("ERC20MintableMock");
     tokenFactory = tokenFactory.connect(deployer); // Explicitly specifying the deployer account
@@ -102,7 +102,7 @@ describe("Contract 'ERC20Mintable'", async () => {
     let token = await upgrades.deployProxy(
       tokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL],
-      { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
+      { unsafeSkipProxyAdminCheck: true }, // This is necessary to run tests on other networks
     ) as Contract;
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
@@ -236,7 +236,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       await expect(tx).to.changeTokenBalances(
         token,
         [burnerOrdinary, deployer, token],
-        [-TOKEN_AMOUNT, 0, 0]
+        [-TOKEN_AMOUNT, 0, 0],
       );
     });
 
@@ -356,7 +356,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       await expect(tx).to.changeTokenBalances(
         token,
         [burnerReserve, deployer, token],
-        [-TOKEN_AMOUNT / 2, 0, 0]
+        [-TOKEN_AMOUNT / 2, 0, 0],
       );
 
       expect(await token.totalReserveSupply()).to.eq(TOKEN_AMOUNT / 2);
@@ -478,13 +478,13 @@ describe("Contract 'ERC20Mintable'", async () => {
           tx = await connect(token, preminterAgent).premintDecrease(
             user.address,
             amount,
-            release
+            release,
           );
         } else {
           tx = await connect(token, preminterAgent).premintIncrease(
             user.address,
             amount,
-            release
+            release,
           );
         }
 
@@ -533,7 +533,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         await proveTx(connect(token, preminterAgent).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
         await executeAndCheckPremint(token, {
           amount: 1,
-          oldAmount: TOKEN_AMOUNT
+          oldAmount: TOKEN_AMOUNT,
         });
       });
 
@@ -543,7 +543,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         await executeAndCheckPremint(token, {
           amount: 1,
           oldAmount: TOKEN_AMOUNT,
-          premintFunction: PremintFunction.Decrease
+          premintFunction: PremintFunction.Decrease,
         });
       });
 
@@ -554,7 +554,7 @@ describe("Contract 'ERC20Mintable'", async () => {
           amount: TOKEN_AMOUNT,
           oldAmount: TOKEN_AMOUNT,
           premintCount: 0,
-          premintFunction: PremintFunction.Decrease
+          premintFunction: PremintFunction.Decrease,
         });
       });
 
@@ -572,7 +572,7 @@ describe("Contract 'ERC20Mintable'", async () => {
           release: timestamp * 2,
           premintCount: MAX_PENDING_PREMINTS_COUNT,
           premintIndex: MAX_PENDING_PREMINTS_COUNT - 1,
-          balanceOfPremint: TOKEN_AMOUNT * MAX_PENDING_PREMINTS_COUNT + 1
+          balanceOfPremint: TOKEN_AMOUNT * MAX_PENDING_PREMINTS_COUNT + 1,
         });
       });
 
@@ -590,7 +590,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         await executeAndCheckPremint(token, {
           release: newTimestamp + 10,
           premintCount: 1,
-          premintIndex: 0
+          premintIndex: 0,
         });
       });
 
@@ -598,10 +598,10 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const timestamps: number[] = Array.from(
           { length: MAX_PENDING_PREMINTS_COUNT },
-          (_v, i) => timestamp + (i + 1) * 10
+          (_v, i) => timestamp + (i + 1) * 10,
         );
-        for (let i = 0; i < timestamps.length; i++) {
-          await proveTx(connect(token, preminterAgent).premintIncrease(user.address, TOKEN_AMOUNT, timestamps[i]));
+        for (const timestamp of timestamps) {
+          await proveTx(connect(token, preminterAgent).premintIncrease(user.address, TOKEN_AMOUNT, timestamp));
         }
         // set time to expire premints in the beginning of array
         await increaseBlockTimestampTo(timestamps[1] + 1);
@@ -613,7 +613,7 @@ describe("Contract 'ERC20Mintable'", async () => {
           premintCount: MAX_PENDING_PREMINTS_COUNT - 2,
           premintIndex: 2,
           balanceOfPremint: TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) + 1,
-          premintFunction: PremintFunction.Increase
+          premintFunction: PremintFunction.Increase,
         });
       });
 
@@ -621,7 +621,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const timestamps: number[] = Array.from(
           { length: MAX_PENDING_PREMINTS_COUNT },
-          (_v, i) => timestamp + (i + 1) * 10
+          (_v, i) => timestamp + (i + 1) * 10,
         );
         timestamps[2] = timestamp + 1;
         timestamps[3] = timestamp + 2;
@@ -640,7 +640,7 @@ describe("Contract 'ERC20Mintable'", async () => {
           premintCount: MAX_PENDING_PREMINTS_COUNT - 2,
           premintIndex: 1,
           balanceOfPremint: TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) - 1,
-          premintFunction: PremintFunction.Decrease
+          premintFunction: PremintFunction.Decrease,
         });
       });
 
@@ -648,7 +648,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const timestamps: number[] = Array.from(
           { length: MAX_PENDING_PREMINTS_COUNT },
-          (_v, i) => timestamp + (i + 1) * 10
+          (_v, i) => timestamp + (i + 1) * 10,
         );
         timestamps[MAX_PENDING_PREMINTS_COUNT - 1] = timestamp + 2;
         timestamps[MAX_PENDING_PREMINTS_COUNT - 2] = timestamp + 1;
@@ -668,7 +668,7 @@ describe("Contract 'ERC20Mintable'", async () => {
           premintCount: MAX_PENDING_PREMINTS_COUNT - 2,
           premintIndex: 1,
           balanceOfPremint: TOKEN_AMOUNT * (MAX_PENDING_PREMINTS_COUNT - 2) - 1,
-          premintFunction: PremintFunction.Decrease
+          premintFunction: PremintFunction.Decrease,
         });
       });
     });
@@ -792,20 +792,20 @@ describe("Contract 'ERC20Mintable'", async () => {
     async function reschedulePremintReleaseAndCheckEvents(
       token: Contract,
       originalRelease: number,
-      targetRelease: number
+      targetRelease: number,
     ) {
       const oldTargetRelease = await token.resolvePremintRelease(originalRelease);
       await expect(connect(token, preminterRescheduler).reschedulePremintRelease(
         originalRelease,
-        targetRelease
+        targetRelease,
       )).to.emit(
         token,
-        EVENT_NAME_PREMINT_RELEASE_RESCHEDULED
+        EVENT_NAME_PREMINT_RELEASE_RESCHEDULED,
       ).withArgs(
         preminterRescheduler.address,
         originalRelease,
         targetRelease,
-        oldTargetRelease
+        oldTargetRelease,
       );
     }
 
@@ -815,7 +815,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         const originalReleaseTimestamps: number[] = [timestamp, timestamp + 10];
         const targetReleaseTimestamp = timestamp + 20;
         const expectedPremints: Premint[] = originalReleaseTimestamps.map(
-          timestamp => ({ amount: TOKEN_AMOUNT, release: timestamp })
+          timestamp => ({ amount: TOKEN_AMOUNT, release: timestamp }),
         );
 
         for (const premint of expectedPremints) {
@@ -849,10 +849,10 @@ describe("Contract 'ERC20Mintable'", async () => {
 
         // Check that the premints are still here after adding and removing a new one
         await proveTx(
-          connect(token, preminterAgent).premintIncrease(user.address, newPremint.amount, newPremint.release)
+          connect(token, preminterAgent).premintIncrease(user.address, newPremint.amount, newPremint.release),
         );
         await proveTx(
-          connect(token, preminterAgent).premintDecrease(user.address, newPremint.amount, newPremint.release)
+          connect(token, preminterAgent).premintDecrease(user.address, newPremint.amount, newPremint.release),
         );
         await checkPremints(token, expectedPremints);
         expect(await token.balanceOfPremint(user.address)).to.eq(expectedPremintBalance);
@@ -862,10 +862,10 @@ describe("Contract 'ERC20Mintable'", async () => {
 
         // Check that the premints are still here after adding and removing a new one
         await proveTx(
-          connect(token, preminterAgent).premintIncrease(user.address, newPremint.amount, newPremint.release)
+          connect(token, preminterAgent).premintIncrease(user.address, newPremint.amount, newPremint.release),
         );
         await proveTx(
-          connect(token, preminterAgent).premintDecrease(user.address, newPremint.amount, newPremint.release)
+          connect(token, preminterAgent).premintDecrease(user.address, newPremint.amount, newPremint.release),
         );
         await checkPremints(token, expectedPremints);
         expect(await token.balanceOfPremint(user.address)).to.eq(expectedPremintBalance);
@@ -875,11 +875,11 @@ describe("Contract 'ERC20Mintable'", async () => {
 
         // Check that the premints disappeared after adding a new one
         await proveTx(
-          connect(token, preminterAgent).premintIncrease(user.address, newPremint.amount, newPremint.release)
+          connect(token, preminterAgent).premintIncrease(user.address, newPremint.amount, newPremint.release),
         );
         await checkPremints(token, [newPremint]);
         await proveTx(
-          connect(token, preminterAgent).premintDecrease(user.address, newPremint.amount, newPremint.release)
+          connect(token, preminterAgent).premintDecrease(user.address, newPremint.amount, newPremint.release),
         );
         expect(await token.balanceOfPremint(user.address)).to.eq(0);
       });
@@ -893,7 +893,7 @@ describe("Contract 'ERC20Mintable'", async () => {
         await proveTx(connect(token, preminterAgent).premintIncrease(
           user.address,
           expectedPremint.amount,
-          expectedPremint.release
+          expectedPremint.release,
         ));
         await reschedulePremintReleaseAndCheckEvents(token, originalReleaseTimestamp, targetReleaseTimestamp);
         expectedPremint.release = targetReleaseTimestamp;
@@ -909,11 +909,11 @@ describe("Contract 'ERC20Mintable'", async () => {
 
         // Check that the premints disappeared after adding a new one
         await proveTx(
-          connect(token, preminterAgent).premintIncrease(user.address, newPremint.amount, newPremint.release)
+          connect(token, preminterAgent).premintIncrease(user.address, newPremint.amount, newPremint.release),
         );
         await checkPremints(token, [newPremint]);
         await proveTx(
-          connect(token, preminterAgent).premintDecrease(user.address, newPremint.amount, newPremint.release)
+          connect(token, preminterAgent).premintDecrease(user.address, newPremint.amount, newPremint.release),
         );
         expect(await token.balanceOfPremint(user.address)).to.eq(0);
 
@@ -1096,7 +1096,7 @@ describe("Contract 'ERC20Mintable'", async () => {
       await expect(tx).to.changeTokenBalances(
         token,
         [user, recipient],
-        [-TOKEN_AMOUNT, TOKEN_AMOUNT]
+        [-TOKEN_AMOUNT, TOKEN_AMOUNT],
       );
       await expect(tx)
         .to.emit(token, EVENT_NAME_TRANSFER)

@@ -20,7 +20,7 @@ describe("Contract 'CWToken'", async () => {
   const EXPECTED_VERSION: Version = {
     major: 1,
     minor: 5,
-    patch: 2
+    patch: 2,
   };
 
   // Errors of the lib contracts
@@ -54,7 +54,7 @@ describe("Contract 'CWToken'", async () => {
     let token = await upgrades.deployProxy(
       tokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL],
-      { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
+      { unsafeSkipProxyAdminCheck: true }, // This is necessary to run tests on other networks
     ) as Contract;
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
@@ -137,14 +137,14 @@ describe("Contract 'CWToken'", async () => {
     it("Returns expected values", async () => {
       const { token } = await setUpFixture(deployToken);
       const tokenVersion = await token.$__VERSION();
-      Object.keys(EXPECTED_VERSION).forEach(property => {
+      Object.keys(EXPECTED_VERSION).forEach((property) => {
         const value = tokenVersion[property];
         if (typeof value === "undefined" || typeof value === "function" || typeof value === "object") {
           throw Error(`Property "${property}" is not found`);
         }
         expect(value).to.eq(
           EXPECTED_VERSION[property],
-          `Mismatch in the "${property}" property`
+          `Mismatch in the "${property}" property`,
         );
       });
     });

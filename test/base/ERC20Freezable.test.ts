@@ -57,7 +57,7 @@ describe("Contract 'ERC20Freezable'", async () => {
     let token = await upgrades.deployProxy(
       tokenFactory,
       [TOKEN_NAME, TOKEN_SYMBOL],
-      { unsafeSkipProxyAdminCheck: true } // This is necessary to run tests on other networks
+      { unsafeSkipProxyAdminCheck: true }, // This is necessary to run tests on other networks
     ) as Contract;
     await token.waitForDeployment();
     token = connect(token, deployer); // Explicitly specifying the initial account
@@ -128,7 +128,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       expect(await token.balanceOf(user1.address)).to.eq(0);
 
       expect(
-        await tokenViaFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT)
+        await tokenViaFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT),
       ).to.deep.eq([TOKEN_AMOUNT, 0]);
       await expect(tokenViaFreezer.freeze(user1.address, TOKEN_AMOUNT))
         .to.emit(token, EVENT_NAME_FREEZE)
@@ -138,7 +138,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       await proveTx(token.mint(user1.address, TOKEN_AMOUNT));
       expect(await token.balanceOf(user1.address)).to.eq(TOKEN_AMOUNT);
       expect(
-        await tokenViaFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT + 1)
+        await tokenViaFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT + 1),
       ).to.deep.eq([TOKEN_AMOUNT + 1, TOKEN_AMOUNT]);
       await expect(tokenViaFreezer.freeze(user1.address, TOKEN_AMOUNT + 1))
         .to.emit(token, EVENT_NAME_FREEZE)
@@ -146,7 +146,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT + 1);
 
       expect(
-        await tokenViaFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT + 2)
+        await tokenViaFreezer.freeze.staticCall(user1.address, TOKEN_AMOUNT + 2),
       ).to.deep.eq([TOKEN_AMOUNT + 2, TOKEN_AMOUNT + 1]);
       await expect(tokenViaFreezer.freeze(user1.address, TOKEN_AMOUNT - 2))
         .to.emit(token, EVENT_NAME_FREEZE)
@@ -200,7 +200,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       expect(await token.balanceOfFrozen(user1.address)).to.eq(0);
 
       expect(
-        await tokenViaFreezer.freezeIncrease.staticCall(user1.address, TOKEN_AMOUNT)
+        await tokenViaFreezer.freezeIncrease.staticCall(user1.address, TOKEN_AMOUNT),
       ).to.deep.eq([TOKEN_AMOUNT, 0]);
       await expect(tokenViaFreezer.freezeIncrease(user1.address, TOKEN_AMOUNT))
         .to.emit(token, EVENT_NAME_FREEZE)
@@ -208,7 +208,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNT);
 
       expect(
-        await tokenViaFreezer.freezeIncrease.staticCall(user1.address, TOKEN_AMOUNTx2)
+        await tokenViaFreezer.freezeIncrease.staticCall(user1.address, TOKEN_AMOUNTx2),
       ).to.deep.eq([TOKEN_AMOUNTx3, TOKEN_AMOUNT]);
       await expect(tokenViaFreezer.freezeIncrease(user1.address, TOKEN_AMOUNTx2))
         .to.emit(token, EVENT_NAME_FREEZE)
@@ -260,7 +260,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       await proveTx(tokenViaFreezer.freezeIncrease(user1.address, TOKEN_AMOUNTx3));
 
       expect(
-        await tokenViaFreezer.freezeDecrease.staticCall(user1.address, TOKEN_AMOUNT)
+        await tokenViaFreezer.freezeDecrease.staticCall(user1.address, TOKEN_AMOUNT),
       ).to.deep.eq([TOKEN_AMOUNTx2, TOKEN_AMOUNTx3]);
       await expect(tokenViaFreezer.freezeDecrease(user1.address, TOKEN_AMOUNT))
         .to.emit(token, EVENT_NAME_FREEZE)
@@ -268,7 +268,7 @@ describe("Contract 'ERC20Freezable'", async () => {
       expect(await token.balanceOfFrozen(user1.address)).to.eq(TOKEN_AMOUNTx2);
 
       expect(
-        await tokenViaFreezer.freezeDecrease.staticCall(user1.address, TOKEN_AMOUNTx2)
+        await tokenViaFreezer.freezeDecrease.staticCall(user1.address, TOKEN_AMOUNTx2),
       ).to.deep.eq([0, TOKEN_AMOUNTx2]);
       await expect(tokenViaFreezer.freezeDecrease(user1.address, TOKEN_AMOUNTx2))
         .to.emit(token, EVENT_NAME_FREEZE)
@@ -354,12 +354,12 @@ describe("Contract 'ERC20Freezable'", async () => {
         expect(await connect(token, freezerTransferor).transferFrozen.staticCall(
           user1.address,
           user2.address,
-          transferAmount
+          transferAmount,
         )).to.deep.eq([newFrozenAmount, oldFrozenAmount]);
         const tx = connect(token, freezerTransferor).transferFrozen(
           user1.address,
           user2.address,
-          transferAmount
+          transferAmount,
         );
         await expect(tx)
           .to.emit(token, EVENT_NAME_FREEZE_TRANSFER)
@@ -374,7 +374,7 @@ describe("Contract 'ERC20Freezable'", async () => {
         await executeAndCheckTransferFrozen({
           balance: TOKEN_AMOUNT,
           frozenAmount: TOKEN_AMOUNT - 1,
-          transferAmount: TOKEN_AMOUNT - 1
+          transferAmount: TOKEN_AMOUNT - 1,
         });
       });
 
@@ -382,7 +382,7 @@ describe("Contract 'ERC20Freezable'", async () => {
         await executeAndCheckTransferFrozen({
           balance: TOKEN_AMOUNT,
           frozenAmount: TOKEN_AMOUNT,
-          transferAmount: TOKEN_AMOUNT
+          transferAmount: TOKEN_AMOUNT,
         });
       });
 
@@ -390,7 +390,7 @@ describe("Contract 'ERC20Freezable'", async () => {
         await executeAndCheckTransferFrozen({
           balance: TOKEN_AMOUNT,
           frozenAmount: TOKEN_AMOUNT + 1,
-          transferAmount: TOKEN_AMOUNT
+          transferAmount: TOKEN_AMOUNT,
         });
       });
     });
@@ -440,7 +440,7 @@ describe("Contract 'ERC20Freezable'", async () => {
           totalBalanceBefore: number;
           frozenBalanceBefore: number;
           transferAmount: number;
-        }
+        },
       ) {
         const { token } = await setUpFixture(deployAndConfigureToken);
         const { totalBalanceBefore, frozenBalanceBefore, transferAmount } = props;
@@ -449,7 +449,7 @@ describe("Contract 'ERC20Freezable'", async () => {
         await expect(connect(token, user1).transfer(user2.address, transferAmount)).to.changeTokenBalances(
           token,
           [user1, user2],
-          [-transferAmount, transferAmount]
+          [-transferAmount, transferAmount],
         );
         const totalBalanceAfter = totalBalanceBefore - transferAmount;
         expect(await token.balanceOf(user1.address)).to.equal(totalBalanceAfter);
@@ -460,7 +460,7 @@ describe("Contract 'ERC20Freezable'", async () => {
         await checkTransfer({
           totalBalanceBefore: TOKEN_AMOUNT + 5,
           frozenBalanceBefore: TOKEN_AMOUNT,
-          transferAmount: 5
+          transferAmount: 5,
         });
       });
 
@@ -468,7 +468,7 @@ describe("Contract 'ERC20Freezable'", async () => {
         await checkTransfer({
           totalBalanceBefore: TOKEN_AMOUNT + 5,
           frozenBalanceBefore: TOKEN_AMOUNT,
-          transferAmount: 10
+          transferAmount: 10,
         });
       });
     });
