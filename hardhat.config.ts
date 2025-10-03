@@ -6,44 +6,48 @@ import "hardhat-gas-reporter";
 import dotenv from "dotenv";
 
 dotenv.config();
+const DEFAULT_MNEMONIC = "test test test test test test test test test test test junk";
+
+function mnemonicOrDefault(mnemonic: string | undefined) {
+  return {
+    mnemonic: mnemonic ?? DEFAULT_MNEMONIC,
+  };
+}
+
+function pkOrEmpty(pk: string | undefined) {
+  return pk ? [pk] : undefined;
+}
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: process.env.SOLIDITY_VERSION ?? "",
+    version: "0.8.24",
     settings: {
       optimizer: {
-        enabled: process.env.OPTIMIZER_ENABLED === "true",
-        runs: Number(process.env.OPTIMIZER_RUNS),
+        enabled: true,
+        runs: Number(process.env.OPTIMIZER_RUNS ?? 1000),
       },
     },
   },
   networks: {
     hardhat: {
-      accounts: {
-        mnemonic: process.env.HARDHAT_MNEMONIC,
-      },
+      accounts: mnemonicOrDefault(process.env.HARDHAT_MNEMONIC),
+    },
+    stratus: {
+      url: `http://localhost:${process.env.STRATUS_PORT || 3000}`,
+      accounts: mnemonicOrDefault(process.env.STRATUS_MNEMONIC),
+      timeout: 40000,
     },
     ganache: {
-      url: process.env.GANACHE_RPC,
-      accounts: {
-        mnemonic: process.env.GANACHE_MNEMONIC,
-      },
+      url: process.env.GANACHE_RPC ?? "",
+      accounts: mnemonicOrDefault(process.env.GANACHE_MNEMONIC),
     },
     cw_testnet: {
-      url: process.env.CW_TESTNET_RPC,
-      accounts: process.env.CW_TESTNET_PK
-        ? [process.env.CW_TESTNET_PK]
-        : {
-            mnemonic: process.env.CW_TESTNET_MNEMONIC ?? "",
-          },
+      url: process.env.CW_TESTNET_RPC ?? "",
+      accounts: pkOrEmpty(process.env.CW_TESTNET_PK) ?? mnemonicOrDefault(process.env.CW_TESTNET_MNEMONIC),
     },
     cw_mainnet: {
-      url: process.env.CW_MAINNET_RPC,
-      accounts: process.env.CW_MAINNET_PK
-        ? [process.env.CW_MAINNET_PK]
-        : {
-            mnemonic: process.env.CW_MAINNET_MNEMONIC ?? "",
-          },
+      url: process.env.CW_MAINNET_RPC ?? "",
+      accounts: pkOrEmpty(process.env.CW_MAINNET_PK) ?? mnemonicOrDefault(process.env.CW_MAINNET_MNEMONIC),
     },
   },
   gasReporter: {
