@@ -12,7 +12,8 @@ This repository contains BRLC token smart contracts.
 
 ## Project Setup
 
-Read [Documentation](https://github.com/cloudwalk/brlc-dev-ex/blob/main/docs/DEVELOPMENT.md).
+This repository is mirrored from the [BRLC monorepo](https://github.com/cloudwalk/brlc-monorepo).
+All development happens in the monorepo.
 
 ## Licensing
 
